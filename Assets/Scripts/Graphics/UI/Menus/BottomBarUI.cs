@@ -11,7 +11,11 @@ namespace DLS.Graphics
 {
 	public static class BottomBarUI
 	{
+		#if UNITY_ANDROID
+		public const float barHeight = 5;
+		#else
 		public const float barHeight = 3;
+		#endif
 		const float padY = 0.3f;
 		const float buttonSpacing = 0.25f;
 		const float buttonHeight = barHeight - padY * 2;

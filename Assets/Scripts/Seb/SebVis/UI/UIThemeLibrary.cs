@@ -12,10 +12,19 @@ namespace Seb.Vis.UI
 			BlueTest
 		}
 
+		#if UNITY_ANDROID
+		public const float mobileFontScaleFactor = 1.6f;
+		public const float FontSizeSmall = 1*mobileFontScaleFactor;
+		public const float FontSizeMedium = 1.5f*mobileFontScaleFactor;
+		public const float FontSizeLarge = 2*mobileFontScaleFactor;
+		public const float FontSizeVeryLarge = 3*mobileFontScaleFactor;
+		#else
+
 		public const float FontSizeSmall = 1;
 		public const float FontSizeMedium = 1.5f;
 		public const float FontSizeLarge = 2;
 		public const float FontSizeVeryLarge = 3;
+		#endif
 		public const float FontSizeButton = FontSizeMedium;
 
 		public const FontType DefaultFont = FontType.JetbrainsMonoBold;
