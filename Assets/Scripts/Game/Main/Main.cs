@@ -30,11 +30,11 @@ namespace DLS.Game
 		{
 			if (UIDrawer.ActiveMenu != UIDrawer.MenuType.MainMenu)
 			{
+				WorldDrawer.DrawWorld(ActiveProject);
 				CameraController.Update();
 				ActiveProject.Update();
 
 				InteractionState.ClearFrame();
-				WorldDrawer.DrawWorld(ActiveProject);
 			}
 
 			UIDrawer.Draw();

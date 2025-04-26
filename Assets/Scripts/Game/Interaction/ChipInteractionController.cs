@@ -59,8 +59,12 @@ namespace DLS.Game
 
 		public void Update()
 		{
+			#if UNITY_ANDROID
+			HandleTouchInput();
+			#else
 			HandleKeyboardInput();
 			HandleMouseInput();
+			#endif
 		}
 
 		public void Delete(IMoveable element, bool clearSelection = true, bool recordUndo = true)
@@ -230,6 +234,27 @@ namespace DLS.Game
 			if (KeyboardShortcuts.CancelShortcutTriggered)
 			{
 				CancelEverything();
+			}
+		}
+
+		void HandleTouchInput()
+		{
+
+			if(Input.touchCount == 1){
+				Touch touch = Input.GetTouch(0);
+				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+				{
+					// Touch started on UI → ignore it
+					Debug.Log("Touch UI");
+					return;
+				}
+				if(touch.phase == TouchPhase.Began){
+					HandleSingleTap();
+				}else if(touch.phase == TouchPhase.Moved){
+					if (HasControl) UpdatePositionsToMouse();
+				}else if(touch.phase == TouchPhase.Ended){
+				
+				}
 			}
 		}
 
@@ -433,6 +458,108 @@ namespace DLS.Game
 			ClearSelection();
 		}
 
+		void HandleSingleTap(){
+
+			// Confirm placement of new item
+			if (IsPlacingElementOrCreatingWire)
+			{
+				// Place wire
+				if (IsCreatingWire) //
+				{
+					if (TryFinishPlacingWire())
+					{
+						CancelPlacingItems();
+						MobileUIController.Instance.HidePlacementButtons();
+					}
+					else if (CanAddWirePoint())
+					{
+						if(WireToPlace.WirePointCount<=1)
+							WireToPlace.AddWirePoint(InputHelper.MousePosWorld);
+						else
+							WireToPlace.SetLastWirePoint(InputHelper.MousePosWorld);
+					}
+				}
+				// Place subchip / devpin
+				else
+				{
+					//FinishPlacingNewElements();
+					UpdatePositionsToMouse();
+				}
+			}
+			else
+			{
+				Vector2 touchPosWorld = TouchInputHelper.TouchPositionWorld();
+				// Mouse down on pin: start placing wire
+				//if (element is PinInstance pin && HasControl) {
+				if (InteractionState.ElementUnderMouse is PinInstance pin && HasControl){
+					WireInstance.ConnectionInfo connectionInfo = new() { pin = pin };
+					StartPlacingWire(connectionInfo);
+					MobileUIController.Instance.ShowPlacementButtons(
+						TryAddWirePoint,
+						CancelPlacingItems
+					);
+				}
+				// Mouse down on wire
+				//else if (element is WireInstance wire && HasControl)
+				else if (InteractionState.ElementUnderMouse is WireInstance wire && HasControl)
+				{
+					// Insert a point on the currently edited wire
+					if (wire == wireToEdit)
+					{
+						if (wireEditCanInsertPoint)
+						{
+							(Vector2 point, int segmentIndex) = WireLayoutHelper.GetClosestPointOnWire(wireToEdit, InputHelper.MousePosWorld);
+							wireToEdit.InsertPoint(point, segmentIndex);
+							wireEditPointIndex = segmentIndex + 1;
+						}
+					}
+					// Start placing a new wire from this point on the selected wire
+					else
+					{
+						WireInstance.ConnectionInfo connectionInfo = CreateWireToWireConnectionInfo(wire, wire.SourcePin);
+						StartPlacingWire(connectionInfo);
+						MobileUIController.Instance.ShowPlacementButtons(
+							TryAddWirePoint,
+							CancelPlacingItems
+						);
+					}
+				}
+				// Tapped on selectable element: select it and prepare to start moving current selection
+				//else if (element is IMoveable e)
+				else if (InteractionState.ElementUnderMouse is IMoveable e)
+				{
+					bool addToSelection = KeyboardShortcuts.MultiModeHeld;
+					Select(e, addToSelection);
+					StartMovingSelectedItems();
+					MobileUIController.Instance.ShowPlacementButtons(
+						FinishMovingElements,
+						CancelPlacingItems
+					);
+				}
+				// Tapped on free space
+				else if (InteractionState.ElementUnderMouse == null && !IsPlacingElementOrCreatingWire && !IsMovingSelection)
+				{
+					ClearSelection(); // don't clear if in 'multi-mode' (to allow box selecting multiple times)
+					//IsCreatingSelectionBox = true;
+				}
+
+				if (wireToEdit != null && wireEditPointIndex != -1)
+				{
+					isMovingWireEditPoint = true;
+					wireEditPointSelectedIndex = wireEditPointIndex;
+					wireEditPointOld = wireToEdit.GetWirePoint(wireEditPointIndex);
+				}
+			}
+		}
+
+		void TryAddWirePoint(){
+			WireToPlace.AddWirePoint(WireToPlace.GetWirePoint(WireToPlace.WirePointCount-1));
+			MobileUIController.Instance.ShowPlacementButtons(
+				TryAddWirePoint,
+				CancelPlacingItems
+			);
+		}
+
 		void HandleLeftMouseDown()
 		{
 			SelectionBoxStartPos = InputHelper.MousePosWorld;
@@ -567,6 +694,10 @@ namespace DLS.Game
 			{
 				wire.ApplyMoveOffset();
 			}
+			#if UNITY_ANDROID
+				ClearSelection();
+				MobileUIController.Instance.HidePlacementButtons();
+			#endif
 		}
 
 		void FinishPlacingNewElements()
@@ -606,6 +737,10 @@ namespace DLS.Game
 			{
 				DuplicateElements(newlyPlacedElements);
 			}
+
+			#if UNITY_ANDROID
+				MobileUIController.Instance.HidePlacementButtons();
+			#endif
 		}
 
 		public void EnterWireEditMode(WireInstance wire)
@@ -676,7 +811,11 @@ namespace DLS.Game
 
 		void UpdatePositionsToMouse()
 		{
+			#if UNITY_ANDROID
+			Vector2 mousePos = TouchInputHelper.TouchPositionWorld();
+			#else
 			Vector2 mousePos = InputHelper.MousePosWorld;
+			#endif
 			bool snapToGrid = project.ShouldSnapToGrid;
 
 			if (IsCreatingWire)
@@ -859,6 +998,12 @@ namespace DLS.Game
 
 		public IMoveable StartPlacing(ChipDescription chipDescription, Vector2 position, bool isDuplicating)
 		{
+			#if UNITY_ANDROID
+			MobileUIController.Instance.ShowPlacementButtons(
+				FinishPlacingNewElements,
+				CancelPlacingItems
+			);
+			#endif
 			const float busPairSpacing = DrawSettings.GridSize * 8;
 
 			newElementsAreDuplicatedElements = isDuplicating;
