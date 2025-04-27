@@ -29,14 +29,22 @@ namespace DLS.Game
 		static ViewState mainMenuView = new();
 		public static ViewState activeView;
 		static Dictionary<string, ViewState> chipViewStateLookup = new();
+        private static float currentPinchDistance;
+        private static bool isPinching;
+        private static float initialPinchDistance;
+        private static Vector2 initialPinchMidPoint;
 
-		static bool CanMove => UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup or UIDrawer.MenuType.ChipCustomization;
+        public static bool PinchFrameStarted { get; private set; }
+
+        static bool CanMove => UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup or UIDrawer.MenuType.ChipCustomization;
 		static bool CanZoom => UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup or UIDrawer.MenuType.ChipCustomization;
 		static bool CanStartNewInput => !InteractionState.MouseIsOverUI;
 
 		static bool InChipView => UIDrawer.ActiveMenu != UIDrawer.MenuType.ChipCustomization;
 
-		public static void Reset()
+        public static float PinchScale { get; private set; }
+
+        public static void Reset()
 		{
 			chipViewStateLookup = new Dictionary<string, ViewState>();
 			customizeView = new ViewState();
@@ -64,19 +72,79 @@ namespace DLS.Game
 					chipViewStateLookup.Remove(Project.ActiveProject.ViewedChip.ChipName);
 				}
 
-				Vector2 mouseScreenPos = InputHelper.MousePos;
-				Vector2 mouseWorldPos = camera.ScreenToWorldPoint(mouseScreenPos);
+				#if UNITY_ANDROID
+					
+					//HandleTouchInput();
 
-				HandlePanInput(mouseScreenPos, mouseWorldPos);
-				HandleZoomInput(mouseScreenPos);
+					Vector2 mouseScreenPos = TouchInputHelper.Instance.TouchPosition;
+					Vector2 mouseWorldPos = camera.ScreenToWorldPoint(mouseScreenPos);
+					HandlePanInput(mouseScreenPos,mouseWorldPos);
+					HandleZoomInput(mouseScreenPos);
+				#else
+					Vector2 mouseScreenPos = InputHelper.MousePos;
+					Vector2 mouseWorldPos = camera.ScreenToWorldPoint(mouseScreenPos);
+
+					HandlePanInput(mouseScreenPos, mouseWorldPos);
+					HandleZoomInput(mouseScreenPos);
+				#endif
 			}
 
 			UpdateCameraState();
 		}
 
-		// Pan with middle-mouse drag or alt+left-mouse drag
-		static void HandlePanInput(Vector2 mouseScreenPos, Vector2 mouseWorldPos)
+		#if UNITY_ANDROID
+		static float zoomStartSize = CameraController.StartupOrthoSize;
+		static bool isTouchPanning;
+		static Vector2 panTouchStartScreen;
+		static Vector2 panTouchStartWorld;
+        private static float targetZoom;
+        private static float zoomPrev;
+		#endif
+
+        static void HandleTouchInput(){
+
+			if (Input.touchCount == 1){
+
+				Touch touch = Input.GetTouch(0);
+				Vector2 t = touch.position;
+				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+				{
+					// Touch started on UI → ignore it
+					Debug.Log("Touch UI");
+					return;
+				}
+
+				// If no seleceted components
+				if (Project.ActiveProject.controller.SelectedElements.Count == 0)
+				{
+
+					//if (touch.phase == TouchPhase.Began)
+					if (!isTouchPanning)
+					{
+						// Start of drag
+						isTouchPanning = true;
+						panTouchStartWorld = camera.ScreenToWorldPoint(t);
+					}
+					else if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
+					{
+						// During drag
+						Vector2 currentWorldPos = camera.ScreenToWorldPoint(t);
+						Vector2 delta = panTouchStartWorld - currentWorldPos;
+						MovePosition(delta);
+					}
+					else if (touch.phase == TouchPhase.Ended)
+					{
+
+					}
+				}
+
+			}
+		}
+
+
+		static void HandlePanInputOld(Vector2 mouseScreenPos, Vector2 mouseWorldPos)
 		{
+		// Pan with middle-mouse drag or alt+left-mouse drag
 			if (CanMove)
 			{
 				bool altLeftMouseDown = KeyboardShortcuts.CameraActionKeyHeld && InputHelper.IsMouseDownThisFrame(MouseButton.Left);
@@ -104,8 +172,139 @@ namespace DLS.Game
 			}
 		}
 
-		// Zoom with middle mouse scroll, or alt+right-mouse drag
+		static void HandlePanInput(Vector2 mouseScreenPos, Vector2 mouseWorldPos)
+		{
+			if (CanMove)
+			{
+				#if UNITY_ANDROID
+				if (TouchInputHelper.Instance != null &&
+		    		TouchInputHelper.Instance.Dragging &&
+		    		Project.ActiveProject.controller.SelectedElements.Count == 0)
+				{
+					if (!isTouchPanning)
+					{
+						// Start of drag
+						isTouchPanning = true;
+						panTouchStartScreen = TouchInputHelper.Instance.TouchPosition;
+						panTouchStartWorld = camera.ScreenToWorldPoint(panTouchStartScreen);
+					}
+					else
+					{
+						// During drag
+						Vector2 currentScreen = TouchInputHelper.Instance.TouchPosition;
+						Vector2 currentWorld = camera.ScreenToWorldPoint(currentScreen);
+						Vector2 delta = panTouchStartWorld - currentWorld;
+						MovePosition(delta);
+					}
+				}
+				else
+				{
+					isTouchPanning = false;
+				}
+				#endif
+
+				bool altLeftMouseDown = KeyboardShortcuts.CameraActionKeyHeld && InputHelper.IsMouseDownThisFrame(MouseButton.Left);
+				bool middleMouseDown = InputHelper.IsMouseDownThisFrame(MouseButton.Middle);
+
+				if ((altLeftMouseDown || middleMouseDown) && !isDragZoomingCamera)
+				{
+					mouseDragScreenPosOld = mouseScreenPos;
+					isMovingCamera = CanStartNewInput;
+					ContextMenu.CloseContextMenu();
+				}
+
+				if ((InputHelper.IsMouseHeld(MouseButton.Middle) || InputHelper.IsMouseHeld(MouseButton.Left)) && isMovingCamera)
+				{
+					Vector2 mouseWorldPosOld = camera.ScreenToWorldPoint(mouseDragScreenPosOld);
+					MovePosition(mouseWorldPosOld - mouseWorldPos);
+					mouseDragScreenPosOld = mouseScreenPos;
+				}
+			}
+
+			// Release
+			if (InputHelper.IsMouseUpThisFrame(MouseButton.Middle) || InputHelper.IsMouseUpThisFrame(MouseButton.Left))
+			{
+				isMovingCamera = false;
+				#if UNITY_ANDROID
+				isTouchPanning = false;
+				#endif
+			}
+		}
+
+				// Zoom with middle mouse scroll, or alt+right-mouse drag
 		static void HandleZoomInput(Vector2 mouseScreenPos)
+		{
+			if (CanStartNewInput && CanZoom)
+			{
+				Vector2 mouseWorldPosAfterPanning = camera.ScreenToWorldPoint(mouseScreenPos);
+				float zoomPrev = activeView.OrthoSize;
+				float targetZoom = zoomPrev;
+
+				bool pinchZoomed = false;
+
+		#if UNITY_ANDROID
+				if (TouchInputHelper.Instance != null && TouchInputHelper.Instance.Pinching)
+				{
+					if (Project.ActiveProject.controller.SelectedElements.Count == 0)
+					{
+						if (TouchInputHelper.Instance.PinchFrameStarted)
+							zoomStartSize = activeView.OrthoSize;
+
+						float pinchScale = TouchInputHelper.Instance.PinchScale;
+						float zoomFactor = Mathf.Clamp(pinchScale, 0.5f, 2f);
+
+						targetZoom = zoomStartSize / zoomFactor;
+						pinchZoomed = true;
+					}
+				}
+		#endif
+
+				// Only apply mouse-based zoom if pinch zoom didn't happen
+				if (!pinchZoomed)
+				{
+					if (isDragZoomingCamera)
+					{
+						Vector2 delta = mouseScreenPos - dragZoomMousePrev;
+						dragZoomMousePrev = mouseScreenPos;
+						float zoomDeltaRaw = -delta.magnitude * Mathf.Sign(Mathf.Abs(delta.x) > Mathf.Abs(delta.y) ? delta.x : -delta.y);
+						float zoomDelta = zoomDeltaRaw / Screen.width * zoomSpeed * 5 * zoomPrev;
+						targetZoom = zoomPrev + zoomDelta;
+					}
+					else if (CanMiddleMouseZoom())
+					{
+						float deltaZoom = -InputHelper.MouseScrollDelta.y * zoomPrev * zoomSpeed * 0.1f;
+						targetZoom = zoomPrev + deltaZoom;
+					}
+				}
+
+				SetZoom(targetZoom);
+
+				if (zoomPrev != activeView.OrthoSize)
+				{
+					ContextMenu.CloseContextMenu();
+
+					if (zoomToMouse && CanMove && !isDragZoomingCamera)
+					{
+						Vector2 mouseWorldPosAfterZoom = camera.ScreenToWorldPoint(mouseScreenPos);
+						MovePosition(mouseWorldPosAfterPanning - mouseWorldPosAfterZoom);
+					}
+				}
+
+				if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && KeyboardShortcuts.CameraActionKeyHeld && !isMovingCamera)
+				{
+					isDragZoomingCamera = true;
+					dragZoomMousePrev = mouseScreenPos;
+				}
+			}
+
+			if (InputHelper.IsMouseUpThisFrame(MouseButton.Right))
+			{
+				isDragZoomingCamera = false;
+			}
+		}
+
+		// Zoom with middle mouse scroll, or alt+right-mouse drag
+		static void HandleZoomInputOLD(Vector2 mouseScreenPos)
 		{
 			if (CanStartNewInput && CanZoom)
 			{
