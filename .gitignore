@@ -71,3 +71,24 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /.idea
 /.vsconfig
+
+# Ignore CMake and ninja build artifacts
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+*.ninja
+*.txt
+*.bin
+compile_commands.json
+
+#IDK
+.ninja_deps
+.ninja_log
+
+# Ignore random build output
+_utmp/
+build-android/
+*.json
+
+# Ignore platform-tools temp
+platform-tools/
