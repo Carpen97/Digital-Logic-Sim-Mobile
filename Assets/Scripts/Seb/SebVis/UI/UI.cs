@@ -33,6 +33,13 @@ namespace Seb.Vis.UI
 		static readonly Dictionary<UIHandle, bool> checkBoxStates = new();
 
 
+		#if UNITY_ANDROID
+		static TouchScreenKeyboard keyboard;
+		static string lastSyncedText = "";
+		static bool keyboardWasClosedThisFrame = false;
+		#endif
+
+
 		// Scroll draw state
 		static readonly ScrollViewDrawContentFunc drawScrollContent = DrawScrollContent;
 		static ScrollViewDrawElementFunc scollContext_activeScrollDrawElementFunc;
@@ -53,7 +60,6 @@ namespace Seb.Vis.UI
 		public static Vector2 TopRight => new(Width, Height);
 		public static Vector2 BottomLeft => new(0, 0);
 		public static Vector2 BottomRight => new(Width, 0);
-
 		// Canvas size in screenspace
 		static Vector2 canvasSize => currUIScope.canvasSize;
 		static Vector2 screenSize => currUIScope.screenSize;
@@ -368,6 +374,19 @@ namespace Seb.Vis.UI
 				{
 					state.SetFocus(mouseInBounds);
 					state.isMouseDownInBounds = mouseInBounds;
+					#if UNITY_ANDROID
+					if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
+					{
+						bool mouseInsideMask = Draw.IsPointInsideActiveMask(InputHelper.MousePos);
+						bool mouseOver = mouseInsideMask && InputHelper.MouseInBounds_ScreenSpace(ss.centre, ss.size);
+
+						if (mouseOver && keyboard == null && !keyboardWasClosedThisFrame)
+						{
+							keyboard = TouchScreenKeyboard.Open(state.text, TouchScreenKeyboardType.Default);
+							lastSyncedText = state.text;
+						}
+					}
+					#endif
 
 					// Set caret pos based on mouse position
 					if (mouseInBounds) state.SetCursorIndex(CharIndexBeforeMouse(textCentreLeft_ss.x), InputHelper.ShiftIsHeld);
@@ -383,18 +402,40 @@ namespace Seb.Vis.UI
 				{
 					state.SetFocus(true);
 				}
+			
+				#if UNITY_ANDROID
+				if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
+				{
+					bool mouseInsideMask = Draw.IsPointInsideActiveMask(InputHelper.MousePos);
+					bool mouseOver = mouseInsideMask && InputHelper.MouseInBounds_ScreenSpace(ss.centre, ss.size);
+					if (mouseOver && keyboard == null)
+					{
+						keyboard = TouchScreenKeyboard.Open(state.text, TouchScreenKeyboardType.Default);
+						lastSyncedText = state.text;
+					}
+				}
+				#endif
 
-				// Draw focus outline and update text
 				if (state.focused)
 				{
 					const float outlineWidth = 0.05f;
 					Draw.QuadOutline(ss.centre, ss.size, outlineWidth * scale, theme.focusBorderCol);
+					#if UNITY_ANDROID
+					if (keyboard != null && keyboard.status == TouchScreenKeyboard.Status.Visible)
+					{
+						if (keyboard.text != lastSyncedText)
+						{
+							state.SetText(keyboard.text);
+							lastSyncedText = keyboard.text;
+						}
+					}
+					#else
 					foreach (char c in InputHelper.InputStringThisFrame)
 					{
-						bool invalidChar = char.IsControl(c) || char.IsSurrogate(c) || char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.Format || char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.PrivateUse;
-						if (invalidChar) continue;
+						if (char.IsControl(c) || char.IsSurrogate(c)) continue;
 						state.TryInsertText(c + "", validation);
 					}
+					#endif
 
 					// Paste from clipboard
 					if (InputHelper.CtrlIsHeld && InputHelper.IsKeyDownThisFrame(KeyCode.V))
@@ -420,19 +461,16 @@ namespace Seb.Vis.UI
 
 						// Arrow keys
 						bool select = InputHelper.ShiftIsHeld;
-						bool leftArrow = CanTrigger(ref state.arrowKeyTrigger, KeyCode.LeftArrow);
-						bool rightArrow = CanTrigger(ref state.arrowKeyTrigger, KeyCode.RightArrow);
-						bool jumpToPrevWordStart = InputHelper.CtrlIsHeld && leftArrow;
-						bool jumpToNextWordEnd = InputHelper.CtrlIsHeld && rightArrow;
-						bool jumpToStart = InputHelper.IsKeyDownThisFrame(KeyCode.UpArrow) || InputHelper.IsKeyDownThisFrame(KeyCode.PageUp) || InputHelper.IsKeyDownThisFrame(KeyCode.Home) || (jumpToPrevWordStart && InputHelper.AltIsHeld);
-						bool jumpToEnd = InputHelper.IsKeyDownThisFrame(KeyCode.DownArrow) || InputHelper.IsKeyDownThisFrame(KeyCode.PageDown) || InputHelper.IsKeyDownThisFrame(KeyCode.End) || (jumpToNextWordEnd && InputHelper.AltIsHeld);
+						bool jumpToStart = InputHelper.IsKeyDownThisFrame(KeyCode.UpArrow) || (InputHelper.CtrlIsHeld && InputHelper.IsKeyDownThisFrame(KeyCode.LeftArrow));
+						bool jumpToEnd = InputHelper.IsKeyDownThisFrame(KeyCode.DownArrow) || (InputHelper.CtrlIsHeld && InputHelper.IsKeyDownThisFrame(KeyCode.RightArrow));
 
 						if (jumpToStart) state.SetCursorIndex(0, select);
 						else if (jumpToEnd) state.SetCursorIndex(state.text.Length, select);
-						else if (jumpToNextWordEnd) state.SetCursorIndex(state.NextWordEndIndex(), select);
-						else if (jumpToPrevWordStart) state.SetCursorIndex(state.PrevWordIndex(), select);
-						else if (leftArrow) state.DecrementCursor(select);
-						else if (rightArrow) state.IncrementCursor(select);
+						else
+						{
+							if (CanTrigger(ref state.arrowKeyTrigger, KeyCode.LeftArrow)) state.DecrementCursor(select);
+							if (CanTrigger(ref state.arrowKeyTrigger, KeyCode.RightArrow)) state.IncrementCursor(select);
+						}
 
 						bool copyTriggered = InputHelper.CtrlIsHeld && InputHelper.IsKeyDownThisFrame(KeyCode.C);
 						bool cutTriggered = InputHelper.CtrlIsHeld && InputHelper.IsKeyDownThisFrame(KeyCode.X);
@@ -455,6 +493,20 @@ namespace Seb.Vis.UI
 						if (InputHelper.CtrlIsHeld && InputHelper.IsKeyDownThisFrame(KeyCode.A)) state.SelectAll();
 					}
 				}
+
+				#if UNITY_ANDROID
+				if (keyboard != null &&
+					(keyboard.status == TouchScreenKeyboard.Status.Canceled || keyboard.status == TouchScreenKeyboard.Status.Done))
+				{
+					keyboard = null;
+					lastSyncedText = "";
+					keyboardWasClosedThisFrame = true;
+				}
+				else
+				{
+					keyboardWasClosedThisFrame = false;
+				}
+				#endif
 
 				// Draw text
 				using (CreateMaskScope(centre, size))
@@ -604,7 +656,6 @@ namespace Seb.Vis.UI
 
 		public static Color DrawColourPicker(UIHandle id, Vector2 pos, float width, Anchor anchor = Anchor.Centre)
 		{
-			Color colRgb = Color.magenta;
 			ColourPickerState state = GetColourPickerState(id);
 			Vector2 centre = CalculateCentre(pos, Vector2.one * width, anchor);
 
@@ -616,17 +667,13 @@ namespace Seb.Vis.UI
 			float satValWidth = width - (hueBarWidth + hueBarSpacing);
 			Vector2 satValSize = Vector2.one * satValWidth;
 			Vector2 satValCentre = CalculateCentre(centre + new Vector2(-width, width) / 2, satValSize, Anchor.TopLeft);
-			// Calculate hue bar position
-			Vector2 hueBarSize = new(hueBarWidth, satValSize.y);
-			Vector2 hueCentre = CalculateCentre(centre + new Vector2(width, width) / 2, hueBarSize, Anchor.TopRight);
-			// Calculate element bounds
-			Vector2 elementLeft = satValCentre + Vector2.left * satValWidth / 2;
-			Vector2 elementRight = hueCentre + Vector2.right * hueBarWidth / 2;
-			Vector2 elementCentre = (elementLeft + elementRight) / 2;
-			Vector2 elementSize = new(elementRight.x - elementLeft.x, satValSize.y);
+			Color colRgb = Color.magenta;
 
 			if (IsRendering)
 			{
+				// Calculate hue bar position
+				Vector2 hueBarSize = new(hueBarWidth, satValSize.y);
+				Vector2 hueCentre = CalculateCentre(centre + new Vector2(width, width) / 2, hueBarSize, Anchor.TopRight);
 				(Vector2 centre, Vector2 size) hue_ss = UIToScreenSpace(hueCentre, hueBarSize);
 				(Vector2 centre, Vector2 size) satVal_ss = UIToScreenSpace(satValCentre, satValSize);
 
@@ -695,8 +742,7 @@ namespace Seb.Vis.UI
 				}
 			}
 
-
-			OnFinishedDrawingUIElement(elementCentre, elementSize);
+			OnFinishedDrawingUIElement(centre, new Vector2(width, satValSize.y));
 			return colRgb;
 		}
 
@@ -865,6 +911,7 @@ namespace Seb.Vis.UI
 				{
 					if (mouseOver) state.NotifyPressed();
 					else state.NotifyCancelled();
+					
 				}
 
 				if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
@@ -1023,13 +1070,11 @@ namespace Seb.Vis.UI
 			if (numElements <= 0) return 0;
 			return (boundsSize - spacing * (numElements - 1)) / numElements;
 		}
-
 		public static string CreateColouredText(string text, Color color)
 		{
 			return $"<color=#{ColorUtility.ToHtmlStringRGBA(color)}>{text}</color>";
 		}
 
-		// TODO: Handle rich text tags
 		public static string LineBreakByCharCount(ReadOnlySpan<char> text, int maxCharsPerLine)
 		{
 			maxCharsPerLine = Mathf.Max(1, maxCharsPerLine);
@@ -1052,7 +1097,6 @@ namespace Seb.Vis.UI
 			return sb.ToString();
 		}
 
-
 		static ReadOnlySpan<char> GetNextLine(ref ReadOnlySpan<char> text, int maxLineLength)
 		{
 			string word = string.Empty;
@@ -1061,7 +1105,6 @@ namespace Seb.Vis.UI
 			for (int i = 0; i < text.Length; i++)
 			{
 				char c = text[i];
-
 				// End of word
 				if (c is ' ' or '\n' || i == text.Length - 1)
 				{
