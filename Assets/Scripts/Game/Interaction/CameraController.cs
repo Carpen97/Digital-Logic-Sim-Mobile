@@ -54,6 +54,7 @@ namespace DLS.Game
 			camera = Object.FindAnyObjectByType<Camera>();
 			camT = camera.transform;
 
+			AdjustCameraToScreen();
 			UpdateCameraState();
 			camera.backgroundColor = DrawSettings.ActiveTheme.BackgroundCol;
 		}
@@ -79,7 +80,8 @@ namespace DLS.Game
 					Vector2 mouseScreenPos = TouchInputHelper.Instance.TouchPosition;
 					Vector2 mouseWorldPos = camera.ScreenToWorldPoint(mouseScreenPos);
 					HandlePanInput(mouseScreenPos,mouseWorldPos);
-					HandleZoomInput(mouseScreenPos);
+					//HandleZoomInput(mouseScreenPos);
+					HandleZoomInputMobile();
 				#else
 					Vector2 mouseScreenPos = InputHelper.MousePos;
 					Vector2 mouseWorldPos = camera.ScreenToWorldPoint(mouseScreenPos);
@@ -98,8 +100,51 @@ namespace DLS.Game
 		static Vector2 panTouchStartScreen;
 		static Vector2 panTouchStartWorld;
         private static float targetZoom;
-        private static float zoomPrev;
+        private static float zoomPrev =1f;
+
+		static Vector2 t1StartPos;
+		static Vector2 t2StartPos;
+		static Vector2 startWorldMidPoint;
 		#endif
+
+		static void HandleZoomInputMobile()
+		{
+			if (Input.touchCount != 2) return;
+
+			Touch t1 = Input.GetTouch(0);
+			Touch t2 = Input.GetTouch(1);
+
+			Vector2 touch1ScreenPos = t1.position;
+			Vector2 touch2ScreenPos = t2.position;
+
+			// When starting pinch
+			if (t1.phase == TouchPhase.Began || t2.phase == TouchPhase.Began)
+			{
+				t1StartPos = touch1ScreenPos;
+				t2StartPos = touch2ScreenPos;
+				zoomPrev = activeView.OrthoSize;
+		
+				// Save the midpoint in world coordinates
+				startWorldMidPoint = (camera.ScreenToWorldPoint(t1StartPos) + camera.ScreenToWorldPoint(t2StartPos)) * 0.5f;
+			}
+			else
+			{
+				float oldDist = Vector2.Distance(t1StartPos, t2StartPos);
+				float newDist = Vector2.Distance(touch1ScreenPos, touch2ScreenPos);
+
+				if (Mathf.Abs(oldDist) < 0.01f) return; // Avoid divide-by-zero
+
+				float zoomFactor = oldDist / newDist;
+				float newZoom = zoomPrev * zoomFactor;
+				SetZoom(newZoom);
+
+				// After zooming, keep the world midpoint under fingers
+				Vector2 currentWorldMidPoint = (camera.ScreenToWorldPoint(touch1ScreenPos) + camera.ScreenToWorldPoint(touch2ScreenPos)) * 0.5f;
+				Vector2 delta = startWorldMidPoint - currentWorldMidPoint;
+				MovePosition(delta);
+			}
+		}
+
 
         static void HandleTouchInput(){
 
@@ -179,7 +224,9 @@ namespace DLS.Game
 				#if UNITY_ANDROID
 				if (TouchInputHelper.Instance != null &&
 		    		TouchInputHelper.Instance.Dragging &&
-		    		Project.ActiveProject.controller.SelectedElements.Count == 0)
+		    		Project.ActiveProject.controller.SelectedElements.Count == 0 &&
+					!MobileUIController.Instance.isBoxSelectToolActive
+				)
 				{
 					if (!isTouchPanning)
 					{
@@ -240,41 +287,18 @@ namespace DLS.Game
 				float zoomPrev = activeView.OrthoSize;
 				float targetZoom = zoomPrev;
 
-				bool pinchZoomed = false;
-
-		#if UNITY_ANDROID
-				if (TouchInputHelper.Instance != null && TouchInputHelper.Instance.Pinching)
+				if (isDragZoomingCamera)
 				{
-					if (Project.ActiveProject.controller.SelectedElements.Count == 0)
-					{
-						if (TouchInputHelper.Instance.PinchFrameStarted)
-							zoomStartSize = activeView.OrthoSize;
-
-						float pinchScale = TouchInputHelper.Instance.PinchScale;
-						float zoomFactor = Mathf.Clamp(pinchScale, 0.5f, 2f);
-
-						targetZoom = zoomStartSize / zoomFactor;
-						pinchZoomed = true;
-					}
+					Vector2 delta = mouseScreenPos - dragZoomMousePrev;
+					dragZoomMousePrev = mouseScreenPos;
+					float zoomDeltaRaw = -delta.magnitude * Mathf.Sign(Mathf.Abs(delta.x) > Mathf.Abs(delta.y) ? delta.x : -delta.y);
+					float zoomDelta = zoomDeltaRaw / Screen.width * zoomSpeed * 5 * zoomPrev;
+					targetZoom = zoomPrev + zoomDelta;
 				}
-		#endif
-
-				// Only apply mouse-based zoom if pinch zoom didn't happen
-				if (!pinchZoomed)
+				else if (CanMiddleMouseZoom())
 				{
-					if (isDragZoomingCamera)
-					{
-						Vector2 delta = mouseScreenPos - dragZoomMousePrev;
-						dragZoomMousePrev = mouseScreenPos;
-						float zoomDeltaRaw = -delta.magnitude * Mathf.Sign(Mathf.Abs(delta.x) > Mathf.Abs(delta.y) ? delta.x : -delta.y);
-						float zoomDelta = zoomDeltaRaw / Screen.width * zoomSpeed * 5 * zoomPrev;
-						targetZoom = zoomPrev + zoomDelta;
-					}
-					else if (CanMiddleMouseZoom())
-					{
-						float deltaZoom = -InputHelper.MouseScrollDelta.y * zoomPrev * zoomSpeed * 0.1f;
-						targetZoom = zoomPrev + deltaZoom;
-					}
+					float deltaZoom = -InputHelper.MouseScrollDelta.y * zoomPrev * zoomSpeed * 0.1f;
+					targetZoom = zoomPrev + deltaZoom;
 				}
 
 				SetZoom(targetZoom);
@@ -450,6 +474,28 @@ namespace DLS.Game
 			view.Pos = bounds.Centre + Vector2.down * bottomBarWorldHeight / 2;
 			return view;
 		}
+
+		static void AdjustCameraToScreen()
+		{
+			if (camera == null) return;
+
+			float screenAspect = (float)Screen.width / Screen.height;
+			float targetAspect = 16f / 9f; // Designed for 16:9 aspect ratio
+
+			// Expand camera size if screen is wider than target
+			if (screenAspect > targetAspect)
+			{
+				float scaleFactor = screenAspect / targetAspect;
+				activeView.OrthoSize = StartupOrthoSize * scaleFactor;
+			}
+			else
+			{
+				activeView.OrthoSize = StartupOrthoSize;
+			}
+
+			UpdateCameraState();
+		}
+
 
 		public static void NotifyChipNameChanged(string nameNew)
 		{
