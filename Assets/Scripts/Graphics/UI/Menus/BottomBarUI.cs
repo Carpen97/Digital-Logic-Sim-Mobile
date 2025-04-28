@@ -22,6 +22,17 @@ namespace DLS.Graphics
 
 		const string shortcutTextCol = "<color=#666666ff>";
 
+		#if UNITY_ANDROID
+		static readonly string[] menuButtonNames =
+		{
+			$"  NEW CHIP  ",
+			$"  SAVE CHIP  ",
+			$"  FIND CHIP  ",
+			$"  LIBRARY  ",
+			$"  PREFS  ",
+			$"  QUIT  "
+		};
+		#else
 		static readonly string[] menuButtonNames =
 		{
 			$"NEW CHIP     {shortcutTextCol}Ctrl+N",
@@ -31,6 +42,7 @@ namespace DLS.Graphics
 			$"PREFS        {shortcutTextCol}Ctrl+P",
 			$"QUIT         {shortcutTextCol}Ctrl+Q"
 		};
+		#endif
 
 		const int NewChipButtonIndex = 0;
 		const int SaveChipButtonIndex = 1;

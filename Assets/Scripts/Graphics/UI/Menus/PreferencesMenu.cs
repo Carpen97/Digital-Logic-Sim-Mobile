@@ -11,7 +11,11 @@ namespace DLS.Graphics
 	public static class PreferencesMenu
 	{
 		const float entrySpacing = 0.5f;
+		#if UNITY_ANDROID
+		const float menuWidth = 80;
+		#else
 		const float menuWidth = 55;
+		#endif
 		const float verticalOffset = 22;
 
 		public const int DisplayMode_Always = 0;
@@ -20,9 +24,14 @@ namespace DLS.Graphics
 
 		static readonly string[] PinDisplayOptions =
 		{
+			//#if !UNITY_ANDROID
 			"Always",
 			"On Hover",
 			"Tab to Toggle",
+			//#else
+			//"On",
+			//"Off"
+			//#endif
 		};
 
 		static readonly string[] GridDisplayOptions =
@@ -33,14 +42,18 @@ namespace DLS.Graphics
 
 		static readonly string[] SnappingOptions =
 		{
+			//#if !UNITY_ANDROID
 			"Hold Ctrl",
+			//#endif
 			"If Grid Shown",
 			"Always"
 		};
 
 		static readonly string[] StraightWireOptions =
 		{
+			//#if !UNITY_ANDROID
 			"Hold Shift",
+			//#endif
 			"If Grid Shown",
 			"Always"
 		};
@@ -64,7 +77,11 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_SimFrequencyField = new("PREFS_SimTickTarget");
 		static readonly UIHandle ID_ClockSpeedInput = new("PREFS_ClockSpeed");
 
+		#if UNITY_ANDROID
+		static readonly string showGridLabel = "Show grid";
+		#else
 		static readonly string showGridLabel = "Show grid" + CreateShortcutString("Ctrl+G");
+		#endif
 		static readonly string simStatusLabel = "Sim Status" + CreateShortcutString("Ctrl+Space");
 		static readonly Func<string, bool> integerInputValidator = ValidateIntegerInput;
 
@@ -94,14 +111,31 @@ namespace DLS.Graphics
 
 			using (UI.BeginBoundsScope(true))
 			{
-				// ---- Draw settings ----
+				// --- Draw settings ---
 				DrawHeader("DISPLAY:");
 				int mainPinNamesMode = DrawNextWheel("Show I/O pin names", PinDisplayOptions, ID_MainPinNames);
 				int chipPinNamesMode = DrawNextWheel("Show chip pin names", PinDisplayOptions, ID_ChipPinNames);
 				int gridDisplayMode = DrawNextWheel(showGridLabel, GridDisplayOptions, ID_GridDisplay);
+
 				DrawHeader("EDITING:");
-				int snappingMode = DrawNextWheel("Snap to grid", SnappingOptions, ID_Snapping);
-				int straightWireMode = DrawNextWheel("Straight wires", StraightWireOptions, ID_StraightWires);
+
+				// 🛠 CLAMP snappingMode and straightWireMode on Android
+				int snappingMode = 0;
+				int straightWireMode = 0;
+
+				#if UNITY_ANDROID
+    				snappingMode = Mathf.Clamp(Project.ActiveProject.description.Prefs_Snapping, 0, SnappingOptions.Length - 1);
+    				straightWireMode = Mathf.Clamp(Project.ActiveProject.description.Prefs_StraightWires, 0, StraightWireOptions.Length - 1);
+				#else
+    				snappingMode = Project.ActiveProject.description.Prefs_Snapping;
+    				straightWireMode = Project.ActiveProject.description.Prefs_StraightWires;
+				#endif
+
+				// Then draw using the clamped index:
+				MenuHelper.LabeledOptionsWheel("Snap to grid", labelCol, labelPosCurr, entrySize, ID_Snapping, SnappingOptions, settingFieldSize.x, true);
+				AddSpacing();
+				MenuHelper.LabeledOptionsWheel("Straight wires", labelCol, labelPosCurr, entrySize, ID_StraightWires, StraightWireOptions, settingFieldSize.x, true);
+				AddSpacing();
 
 				DrawHeader("SIMULATION:");
 				bool pauseSim = MenuHelper.LabeledOptionsWheel(simStatusLabel, labelCol, labelPosCurr, entrySize, ID_SimStatus, SimulationStatusOptions, settingFieldSize.x, true) == 1;
@@ -195,22 +229,29 @@ namespace DLS.Graphics
 
 		static void UpdateUIFromDescription()
 		{
-			// No need to update if not in menu
 			if (UIDrawer.ActiveMenu != UIDrawer.MenuType.Preferences) return;
 
 			ProjectDescription projDesc = Project.ActiveProject.description;
 
-			// -- Wheels
 			UI.GetWheelSelectorState(ID_MainPinNames).index = projDesc.Prefs_MainPinNamesDisplayMode;
 			UI.GetWheelSelectorState(ID_ChipPinNames).index = projDesc.Prefs_ChipPinNamesDisplayMode;
 			UI.GetWheelSelectorState(ID_GridDisplay).index = projDesc.Prefs_GridDisplayMode;
+	
+			// 🛠 Clamp snapping and straight wire mode indexes
+			#if UNITY_ANDROID
+			UI.GetWheelSelectorState(ID_Snapping).index = Mathf.Clamp(projDesc.Prefs_Snapping, 0, SnappingOptions.Length - 1);
+			UI.GetWheelSelectorState(ID_StraightWires).index = Mathf.Clamp(projDesc.Prefs_StraightWires, 0, StraightWireOptions.Length - 1);
+			#else
 			UI.GetWheelSelectorState(ID_Snapping).index = projDesc.Prefs_Snapping;
 			UI.GetWheelSelectorState(ID_StraightWires).index = projDesc.Prefs_StraightWires;
+			#endif
+	
 			UI.GetWheelSelectorState(ID_SimStatus).index = projDesc.Prefs_SimPaused ? 1 : 0;
-			// -- Input fields
+
 			UI.GetInputFieldState(ID_SimFrequencyField).SetText(projDesc.Prefs_SimTargetStepsPerSecond + "", false);
 			UI.GetInputFieldState(ID_ClockSpeedInput).SetText(projDesc.Prefs_SimStepsPerClockTick + "", false);
 		}
+
 
 		public static void HandleKeyboardShortcuts()
 		{
@@ -280,6 +321,12 @@ namespace DLS.Graphics
 			return frequencyErrorCol;
 		}
 
+		#if UNITY_ANDROID
+
+		static string CreateShortcutString(string s) => "";
+		#else
+
 		static string CreateShortcutString(string s) => UI.CreateColouredText("  " +s, new Color(1, 1, 1, 0.3f));
+		#endif
 	}
 }

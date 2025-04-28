@@ -15,6 +15,7 @@ public class TouchInputHelper : MonoBehaviour {
 
 	public bool TapDetected { get; private set; }
 	public bool LongPressDetected { get; private set; }
+	public bool isPressingUI { get; private set; }
 	public bool Dragging => isDragging;
 	public bool Pinching => isPinching;
 
@@ -93,7 +94,7 @@ public class TouchInputHelper : MonoBehaviour {
 		PinchScale = 1f;
 
 
-#if UNITY_EDITOR
+		#if UNITY_EDITOR
 		// Simulate tap and drag with mouse in editor
 		if (Input.GetMouseButtonDown(0))
 		{
@@ -116,16 +117,16 @@ public class TouchInputHelper : MonoBehaviour {
 				TapDetected = true;
 			isDragging = false;
 		}
-#else
+		#else
 		if (Input.touchCount == 1)
 		{
 			Touch touch = Input.GetTouch(0);
 			if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId))
 			{
-				// Touch started on UI → ignore it
-				Debug.Log("Touch UI");
+				isPressingUI = true;
 				return;
 			}
+			isPressingUI = false;
 			touchCurrentPos = touch.position;
 
 			if (touch.phase == TouchPhase.Began)

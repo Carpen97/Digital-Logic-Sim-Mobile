@@ -130,7 +130,6 @@ namespace DLS.Graphics
 			}
 			else
 			{
-				HandleOpenMenuInput();
 
 				// Draw
 				if (IsOpen) DrawContextMenu(activeContextMenuEntries);
@@ -139,14 +138,22 @@ namespace DLS.Graphics
 				if (InputHelper.IsMouseDownThisFrame(MouseButton.Left) || KeyboardShortcuts.CancelShortcutTriggered)
 				{
 					CloseContextMenu();
+
 				}
+
+				HandleOpenMenuInput();
+
 			}
 		}
 
 		static void HandleOpenMenuInput()
 		{
 			// Open menu input
+			#if UNITY_ANDROID
+			if (MobileUIController.Instance.isWrenchToolActive && TouchInputHelper.TouchTapDown() &&!TouchInputHelper.Instance.isPressingUI)
+			#else
 			if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && !KeyboardShortcuts.CameraActionKeyHeld && !InteractionState.MouseIsOverUI)
+			#endif
 			{
 				bool inCustomizeMenu = UIDrawer.ActiveMenu == UIDrawer.MenuType.ChipCustomization;
 				IInteractable hoverElement = InteractionState.ElementUnderMouse;
@@ -158,6 +165,8 @@ namespace DLS.Graphics
 
 				if (openSubChipContextMenu || openDevPinContextMenu || openWireContextMenu || openSubchipOutputPinContextMenu)
 				{
+
+					MobileUIController.Instance.OnWrenchButtonPress();
 					interactionContextName = string.Empty;
 					interactionContext = hoverElement;
 					string headerName = string.Empty;
@@ -181,8 +190,9 @@ namespace DLS.Graphics
 							else if (ChipTypeHelper.IsBusType(subChip.ChipType)) activeContextMenuEntries = entries_builtinBus;
 							else activeContextMenuEntries = entries_builtinSubchip;
 						}
-
+						#if !UNITY_ANDROID
 						Project.ActiveProject.controller.Select(interactionContext as IMoveable, false);
+						#endif
 					}
 					else if (openDevPinContextMenu)
 					{
