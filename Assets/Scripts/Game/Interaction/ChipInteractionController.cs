@@ -5,6 +5,7 @@ using DLS.Graphics;
 using DLS.SaveSystem;
 using Seb.Helpers;
 using UnityEngine;
+using System;
 
 namespace DLS.Game
 {
@@ -32,12 +33,18 @@ namespace DLS.Game
 		Vector2 wireEditPointOld;
 		public int wireEditPointSelectedIndex;
 		public bool isMovingWireEditPoint;
+        private Vector2 touchPosForDuplicationOnMobile;
 
-		public DevChipInstance ActiveDevChip => project.ViewedChip;
+        public DevChipInstance ActiveDevChip => project.ViewedChip;
 		public bool IsMovingSelection { get; private set; }
 		public bool IsCreatingSelectionBox { get; private set; }
+		#if UNITY_ANDROID
+		public Vector2 SelectionBoxCentre => (TouchInputHelper.Instance.TouchStartPosition + TouchInputHelper.Instance.TouchWorldPosition) / 2;
+		public Vector2 SelectionBoxSize => Maths.Abs(TouchInputHelper.Instance.TouchStartPosition-TouchInputHelper.Instance.TouchWorldPosition);
+		#else
 		public Vector2 SelectionBoxCentre => (SelectionBoxStartPos + InputHelper.MousePosWorld) / 2;
 		public Vector2 SelectionBoxSize => Maths.Abs(SelectionBoxStartPos - InputHelper.MousePosWorld);
+		#endif
 
 		public bool HasControl => !UIDrawer.InInputBlockingMenu() && project.CanEditViewedChip;
 
@@ -129,8 +136,7 @@ namespace DLS.Game
 
 		public static bool IsSelected(IMoveable element) => element.IsSelected;
 
-
-		void DeleteSelected()
+		public void DeleteSelected()
 		{
 			// Delete selected subchips/pins
 			if (SelectedElements.Count > 0)
@@ -242,10 +248,14 @@ namespace DLS.Game
 
 			if(Input.touchCount == 1){
 				Touch touch = Input.GetTouch(0);
-				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) ||
+					InteractionState.MouseIsOverUI
+				)
 				{
-					// Touch started on UI → ignore it
 					Debug.Log("Touch UI");
+					return;
+				}
+				if(MobileUIController.Instance.isWrenchToolActive){
 					return;
 				}
 				if(touch.phase == TouchPhase.Began){
@@ -253,7 +263,26 @@ namespace DLS.Game
 				}else if(touch.phase == TouchPhase.Moved){
 					if (HasControl) UpdatePositionsToMouse();
 				}else if(touch.phase == TouchPhase.Ended){
-				
+					if(SelectedElements.Count>0){
+						touchPosForDuplicationOnMobile = InputHelper.MousePosWorld;
+					}
+					if (IsCreatingSelectionBox)
+					{
+						IsCreatingSelectionBox = false;
+						MobileUIController.Instance.OnBoxSelectToolPress();
+
+						float selectionBoxArea = Mathf.Abs(SelectionBoxSize.x * SelectionBoxSize.y);
+						if (selectionBoxArea > 0.000001f)
+						{
+							foreach (IMoveable element in ActiveDevChip.Elements)
+							{
+								if (element.ShouldBeIncludedInSelectionBox(SelectionBoxCentre, SelectionBoxSize))
+								{
+									Select(element);
+								}
+							}
+						}
+					}
 				}
 			}
 		}
@@ -394,6 +423,7 @@ namespace DLS.Game
 				}
 			}
 
+			#if !UNITY_ANDROID
 			// Find element closest to mouse to use as origin point for duplicated elements
 			Vector2 mousePos = InputHelper.MousePosWorld;
 			Vector2 closestElementPos = Vector2.zero;
@@ -412,9 +442,12 @@ namespace DLS.Game
 
 			Vector2 offset = InputHelper.MousePosWorld - closestElementPos;
 			moveElementMouseStartPos -= offset;
+			Debug.Log($"1 {moveElementMouseStartPos}");
+			#else
+			#endif
 		}
 
-		void DuplicateSelectedElements()
+		public void DuplicateSelectedElements()
 		{
 			DuplicateElements(SelectedElements);
 		}
@@ -459,8 +492,6 @@ namespace DLS.Game
 		}
 
 		void HandleSingleTap(){
-
-			// Confirm placement of new item
 			if (IsPlacingElementOrCreatingWire)
 			{
 				// Place wire
@@ -478,13 +509,19 @@ namespace DLS.Game
 						else
 							WireToPlace.SetLastWirePoint(InputHelper.MousePosWorld);
 					}
+				}else{ //IsPlacing Element
+					if(InteractionState.ElementUnderMouse is IMoveable element){
+						moveElementMouseStartPos = TouchInputHelper.Instance.TouchWorldPosition;
+						foreach (IMoveable moveableElement in SelectedElements)
+						{
+							moveableElement.MoveStartPosition = moveableElement.Position;
+							moveableElement.StraightLineReferencePoint = moveableElement.Position;
+							moveableElement.HasReferencePointForStraightLineMovement = true;
+						}
+					}
 				}
-				// Place subchip / devpin
-				else
-				{
-					//FinishPlacingNewElements();
-					UpdatePositionsToMouse();
-				}
+			}else if(MobileUIController.Instance.isWrenchToolActive){
+				SelectionBoxStartPos = TouchInputHelper.Instance.TouchWorldPosition;
 			}
 			else
 			{
@@ -526,20 +563,25 @@ namespace DLS.Game
 				}
 				// Tapped on selectable element: select it and prepare to start moving current selection
 				//else if (element is IMoveable e)
-				else if (InteractionState.ElementUnderMouse is IMoveable e)
+				else if (InteractionState.ElementUnderMouse is IMoveable element)
 				{
 					bool addToSelection = KeyboardShortcuts.MultiModeHeld;
-					Select(e, addToSelection);
+					Select(element, addToSelection);
+
+					Debug.Log("FLAG 2");
 					StartMovingSelectedItems();
 					MobileUIController.Instance.ShowPlacementButtons(
 						FinishMovingElements,
-						CancelPlacingItems
+						CancelMovingSelectedItems
 					);
 				}
 				// Tapped on free space
 				else if (InteractionState.ElementUnderMouse == null && !IsPlacingElementOrCreatingWire && !IsMovingSelection)
 				{
-					ClearSelection(); // don't clear if in 'multi-mode' (to allow box selecting multiple times)
+					if(MobileUIController.Instance.isBoxSelectToolActive)
+						IsCreatingSelectionBox = true;
+					else
+						ClearSelection(); 
 					//IsCreatingSelectionBox = true;
 				}
 
@@ -623,6 +665,7 @@ namespace DLS.Game
 				{
 					bool addToSelection = KeyboardShortcuts.MultiModeHeld;
 					Select(element, addToSelection);
+					Debug.Log("FLAG 1");
 					StartMovingSelectedItems();
 				}
 				// Mouse down over nothing: clear selection
@@ -808,6 +851,21 @@ namespace DLS.Game
 			}
 		}
 
+		public void MoveSelectionAfterDuplication(){
+			if (SelectedElements.Count == 0) return;
+
+			moveElementMouseStartPos = touchPosForDuplicationOnMobile;
+			Vector2 offset = new Vector2(-0.5f, -0.5f); // Small right and down offset (tweak as needed)
+			//Vector2 offset = Vector2.zero;
+
+			foreach (IMoveable element in SelectedElements)
+			{
+				element.Position += offset;
+				element.MoveStartPosition += offset;
+			}	
+			moveElementMouseStartPos += offset;
+		}
+
 
 		void UpdatePositionsToMouse()
 		{
@@ -833,6 +891,7 @@ namespace DLS.Game
 					Vector2 multiElementOffset = isBusTerminus ? Vector2.zero : Vector2.down * (itemPlacementCurrVerticalSpacing * i);
 
 					Vector2 totalOffset = moveOffset + multiElementOffset;
+
 					Vector2 targetPos = element.MoveStartPosition + totalOffset;
 
 					if (snapToGrid)
@@ -926,10 +985,15 @@ namespace DLS.Game
 		}
 
 
-		void StartMovingSelectedItems()
+		void StartMovingSelectedItems(bool isDuplicationOnMobileCall = false)
 		{
 			IsMovingSelection = true;
-			moveElementMouseStartPos = InputHelper.MousePosWorld;
+			if(!isDuplicationOnMobileCall){
+				moveElementMouseStartPos = InputHelper.MousePosWorld;
+				Debug.Log($"2 {moveElementMouseStartPos}");
+			}
+	
+
 
 			foreach (IMoveable moveableElement in SelectedElements)
 			{
@@ -1017,7 +1081,11 @@ namespace DLS.Game
 				CancelEverything();
 				isPlacingNewElements = true;
 				hasExittedMultiModeSincePlacementStart = false;
-				StartMovingSelectedItems();
+				#if UNITY_ANDROID
+					StartMovingSelectedItems(isDuplicating);
+				#else
+					StartMovingSelectedItems();
+				#endif
 			}
 
 			IMoveable elementToPlace;
@@ -1065,7 +1133,12 @@ namespace DLS.Game
 			}
 			else
 			{
-				moveElementMouseStartPos = InputHelper.MousePosWorld;
+				#if UNITY_ANDROID
+				#else
+					moveElementMouseStartPos = InputHelper.MousePosWorld;
+					Debug.Log($"3 {moveElementMouseStartPos}");
+				#endif
+
 				elementToPlace.MoveStartPosition = position;
 				elementToPlace.StraightLineReferencePoint = position;
 				elementToPlace.HasReferencePointForStraightLineMovement = isDuplicating;
@@ -1132,6 +1205,24 @@ namespace DLS.Game
 
 		void OnFinishedPlacingItems() => OnFinishedOrCancelledPlacingItems();
 
+		void CancelMovingSelectedItemsOnMobile()
+		{
+			// If canceling placement of bus terminus, destroy the linked bus origin 
+			if (isPlacingNewElements)
+			{
+				DuplicatedWires.Clear();
+
+				foreach (IMoveable element in SelectedElements)
+				{
+					if (element is SubChipInstance subChipInstance && subChipInstance.IsBus)
+					{
+						ActiveDevChip.TryDeleteSubChipByID(subChipInstance.LinkedBusPairID);
+					}
+				}
+			}
+
+			OnFinishedOrCancelledPlacingItems();
+		}
 		void CancelPlacingItems()
 		{
 			// If canceling placement of bus terminus, destroy the linked bus origin 
