@@ -30,11 +30,16 @@ namespace DLS.Game
 		{
 			if (UIDrawer.ActiveMenu != UIDrawer.MenuType.MainMenu)
 			{
-				WorldDrawer.DrawWorld(ActiveProject);
 				CameraController.Update();
-				ActiveProject.Update();
-
+				#if UNITY_ANDROID 
 				InteractionState.ClearFrame();
+				WorldDrawer.DrawWorld(ActiveProject);
+				ActiveProject.Update();
+				#else
+				ActiveProject.Update();
+				InteractionState.ClearFrame();
+				WorldDrawer.DrawWorld(ActiveProject);
+				#endif
 			}
 
 			UIDrawer.Draw();
