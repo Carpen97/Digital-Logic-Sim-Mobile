@@ -22,9 +22,11 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_ProjectNameInput = new("MainMenu_ProjectNameInputField");
 		static readonly UIHandle ID_DisplayResolutionWheel = new("MainMenu_DisplayResolutionWheel");
 		static readonly UIHandle ID_FullscreenWheel = new("MainMenu_FullscreenWheel");
+		static readonly UIHandle ID_Orientation = new("MainMenu_OrientationWheel");
 		static readonly UIHandle ID_ProjectsScrollView = new("MainMenu_ProjectsScrollView");
 
 		static readonly string[] SettingsWheelFullScreenOptions = { "OFF", "MAXIMIZED", "BORDERLESS", "EXCLUSIVE" };
+		static readonly string[] SettingsWheelOrientationOptions = { "LEFT LANDSCAPE", "RIGHT LANDSCAPE"};
 		static readonly FullScreenMode[] FullScreenModes = { FullScreenMode.Windowed, FullScreenMode.MaximizedWindow, FullScreenMode.FullScreenWindow, FullScreenMode.ExclusiveFullScreen };
 		static readonly string[] SettingsWheelVSyncOptions = { "DISABLED", "ENABLED" };
 
@@ -70,8 +72,12 @@ namespace DLS.Graphics
 		static (bool compatible, string message)[] projectCompatibilities;
 
 		static int selectedProjectIndex;
+		#if UNITY_ANDROID
+		static readonly string authorString = "Created by: Sebastian Lague\nMobile version by: David Carpenfelt";
+		#else
 
-		static readonly string authorString = "Created by: Sebastian Lague";
+		static readonly string authorString = "Created by: Sebastian Lague"
+		#endif
 		static readonly string versionString = $"Version: {Main.DLSVersion} ({Main.LastUpdatedString})";
 		static string SelectedProjectName => allProjectDescriptions[selectedProjectIndex].ProjectName;
 
@@ -300,6 +306,15 @@ namespace DLS.Graphics
 					break;
 				}
 			}
+
+			// Automatically set curr orientation mode
+			WheelSelectorState orientationWheelState = UI.GetWheelSelectorState(ID_Orientation);
+			if(Screen.orientation == ScreenOrientation.LandscapeLeft){
+				orientationWheelState.index= 0;
+			}else{
+				orientationWheelState.index= 1;
+			}
+
 		}
 
 		static void DrawSettingsScreen()
@@ -307,9 +322,13 @@ namespace DLS.Graphics
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
 			float regionWidth = 30;
+			Vector2 wheelSize = new(16, 2.5f);
+			#if UNITY_ANDROID	
+			regionWidth = 50;
+			wheelSize = new(30, 3.5f);
+			#endif
 			float labelOriginLeft = UI.Centre.x - regionWidth / 2;
 			float elementOriginRight = UI.Centre.x + regionWidth / 2;
-			Vector2 wheelSize = new(16, 2.5f);
 			Vector2 pos = new(labelOriginLeft, UI.Centre.y + 4);
 			using (UI.BeginBoundsScope(true))
 			{
@@ -323,18 +342,25 @@ namespace DLS.Graphics
 				EditedAppSettings.ResolutionX = Resolutions[resIndex].x;
 				EditedAppSettings.ResolutionY = Resolutions[resIndex].y;
 
+				//#if !UNITY_ANDROID
 				// -- Full screen --
 				pos += Vector2.down * 4;
 				UI.DrawText("Fullscreen", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				int fullScreenSettingIndex = UI.WheelSelector(ID_FullscreenWheel, SettingsWheelFullScreenOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				EditedAppSettings.fullscreenMode = FullScreenModes[fullScreenSettingIndex];
-				pos += Vector2.down * 4;
+				//#endif
 
 				// -- Vsync --
+				pos += Vector2.down * 4;
 				UI.DrawText("VSync", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				int vsyncSetting = UI.WheelSelector(EditedAppSettings.VSyncEnabled ? 1 : 0, SettingsWheelVSyncOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				EditedAppSettings.VSyncEnabled = vsyncSetting == 1;
 
+				pos += Vector2.down * 4;
+				UI.DrawText("Orientation", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				int orientation = UI.WheelSelector(ID_Orientation, SettingsWheelOrientationOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
+				EditedAppSettings.orientationIsLeftLandscape = orientation==0;
+				
 				// Background panel
 				UI.ModifyPanel(backgroundPanelID, UI.GetCurrentBoundsScope().Centre, UI.GetCurrentBoundsScope().Size + Vector2.one * 3, ColHelper.MakeCol255(37, 37, 43));
 			}
@@ -462,9 +488,19 @@ namespace DLS.Graphics
 		static void DrawAboutScreen()
 		{
 			ButtonTheme theme = DrawSettings.ActiveUITheme.MainMenuButtonTheme;
+			string about_text = 
+			"This project is based on Digital Logic Sim, created by Sebastian Lague.\n" +
+			"This mobile version was ported and adapted by David Carpenfelt to make it accessible on Android devices.\n\n" +
+			"If you need inspiration for how to play the game, check out Sebastian's YouTube playlist:\n";
 
-			UI.DrawText("Todo: write something helpful here...", theme.font, theme.fontSize, UI.Centre, Anchor.Centre, Color.white);
-			if (UI.Button("Back", theme, UI.CentreBottom + Vector2.up * 22, Vector2.zero, true, true, true))
+			UI.DrawText(about_text, theme.font, theme.fontSize*0.6f, UI.Centre, Anchor.Centre, Color.white);
+			if (UI.Button("Link to YouTube", theme, UI.CentreBottom + Vector2.up * 18, Vector2.zero, true, true, true))
+			{
+				BackToMain();
+				Application.OpenURL("https://www.youtube.com/watch?v=QZwneRb-zqA&list=PLFt_AvWsXl0dPhqVsKt1Ni_46ARyiCGSq");
+
+			}
+			if (UI.Button("Back", theme, UI.CentreBottom + Vector2.up * 12, Vector2.zero, true, true, true))
 			{
 				BackToMain();
 			}
@@ -478,9 +514,9 @@ namespace DLS.Graphics
 			float pad = 1;
 			Color col = new(1, 1, 1, 0.5f);
 
-			Vector2 versionPos = UI.PrevBounds.CentreLeft + Vector2.right * pad;
+			Vector2 versionPos = UI.PrevBounds.CentreLeft + Vector2.right * pad + Vector2.up * 0.7f;
 			Vector2 datePos = UI.PrevBounds.CentreRight + Vector2.left * pad;
-			UI.DrawText(authorString, theme.FontRegular, theme.FontSizeRegular, versionPos, Anchor.TextCentreLeft, col);
+			UI.DrawText(authorString, theme.FontRegular, theme.FontSizeRegular/2, versionPos, Anchor.TextCentreLeft, col);
 			UI.DrawText(versionString, theme.FontRegular, theme.FontSizeRegular, datePos, Anchor.TextCentreRight, col);
 		}
 

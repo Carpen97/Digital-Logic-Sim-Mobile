@@ -44,14 +44,9 @@ public class MobileUIController : MonoBehaviour
 
     void Update()
     {
-		bool inMenu = !(UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup or UIDrawer.MenuType.ChipCustomization);
+		bool inMenu = !(UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup);
 		if(inMenu){
-			confirmButton.SetActive(false);
-			cancelButton.SetActive(false);
-			wrenchTool.SetActive(false);
-			boxSelectTool.SetActive(false);
-			trashCanTool.SetActive(false);
-			copyTool.SetActive(false);
+			HideAll();
 		}else{
 			wrenchTool.SetActive(true);
 			boxSelectTool.SetActive(true);
@@ -60,6 +55,15 @@ public class MobileUIController : MonoBehaviour
 			copyTool.SetActive(temp);
 		}
     }
+
+	public void HideAll(){
+		confirmButton.SetActive(false);
+		cancelButton.SetActive(false);
+		wrenchTool.SetActive(false);
+		boxSelectTool.SetActive(false);
+		trashCanTool.SetActive(false);
+		copyTool.SetActive(false);
+	}
 
     // Call this when starting placement
     public void ShowPlacementButtons(System.Action onConfirm, System.Action onCancel)

@@ -12,7 +12,7 @@ namespace DLS.Game
 {
 	public static class CameraController
 	{
-		public const float StartupOrthoSize = 5;
+		public const float StartupOrthoSize = 1;
 
 		static readonly float zoomSpeed = 1f;
 		static readonly bool zoomToMouse = true;
@@ -74,32 +74,30 @@ namespace DLS.Game
 				}
 
 				#if UNITY_ANDROID
-					
-					//HandleTouchInput();
 
-					Vector2 mouseScreenPos = TouchInputHelper.Instance.TouchPosition;
-					Vector2 mouseWorldPos = camera.ScreenToWorldPoint(mouseScreenPos);
-					HandlePanInput(mouseScreenPos,mouseWorldPos);
-					//HandleZoomInput(mouseScreenPos);
-					HandleZoomInputMobile();
+					if(!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip){
+						Vector2 touchScreenPos = TouchInputHelper.Instance.TouchPosition;
+						Vector2 touchWorldPos = camera.ScreenToWorldPoint(touchScreenPos);
+						HandlePanInput(touchScreenPos, touchWorldPos);
+						HandleZoomInputMobile();
+					}
 				#else
+					// Editor, including when simulating Android
 					Vector2 mouseScreenPos = InputHelper.MousePos;
 					Vector2 mouseWorldPos = camera.ScreenToWorldPoint(mouseScreenPos);
-
 					HandlePanInput(mouseScreenPos, mouseWorldPos);
 					HandleZoomInput(mouseScreenPos);
 				#endif
+
 			}
 
 			UpdateCameraState();
 		}
 
 		#if UNITY_ANDROID
-		static float zoomStartSize = CameraController.StartupOrthoSize;
 		static bool isTouchPanning;
 		static Vector2 panTouchStartScreen;
 		static Vector2 panTouchStartWorld;
-        private static float targetZoom;
         private static float zoomPrev =1f;
 
 		static Vector2 t1StartPos;
@@ -183,37 +181,6 @@ namespace DLS.Game
 					}
 				}
 
-			}
-		}
-
-
-		static void HandlePanInputOld(Vector2 mouseScreenPos, Vector2 mouseWorldPos)
-		{
-		// Pan with middle-mouse drag or alt+left-mouse drag
-			if (CanMove)
-			{
-				bool altLeftMouseDown = KeyboardShortcuts.CameraActionKeyHeld && InputHelper.IsMouseDownThisFrame(MouseButton.Left);
-				bool middleMouseDown = InputHelper.IsMouseDownThisFrame(MouseButton.Middle);
-
-				if ((altLeftMouseDown || middleMouseDown) && !isDragZoomingCamera)
-				{
-					mouseDragScreenPosOld = mouseScreenPos;
-					isMovingCamera = CanStartNewInput;
-					ContextMenu.CloseContextMenu();
-				}
-
-				if ((InputHelper.IsMouseHeld(MouseButton.Middle) || InputHelper.IsMouseHeld(MouseButton.Left)) && isMovingCamera)
-				{
-					Vector2 mouseWorldPosOld = camera.ScreenToWorldPoint(mouseDragScreenPosOld);
-					MovePosition(mouseWorldPosOld - mouseWorldPos);
-					mouseDragScreenPosOld = mouseScreenPos;
-				}
-			}
-
-			// Release
-			if (InputHelper.IsMouseUpThisFrame(MouseButton.Middle) || InputHelper.IsMouseUpThisFrame(MouseButton.Left))
-			{
-				isMovingCamera = false;
 			}
 		}
 
@@ -314,59 +281,6 @@ namespace DLS.Game
 					}
 				}
 
-				if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && KeyboardShortcuts.CameraActionKeyHeld && !isMovingCamera)
-				{
-					isDragZoomingCamera = true;
-					dragZoomMousePrev = mouseScreenPos;
-				}
-			}
-
-			if (InputHelper.IsMouseUpThisFrame(MouseButton.Right))
-			{
-				isDragZoomingCamera = false;
-			}
-		}
-
-		// Zoom with middle mouse scroll, or alt+right-mouse drag
-		static void HandleZoomInputOLD(Vector2 mouseScreenPos)
-		{
-			if (CanStartNewInput && CanZoom)
-			{
-				Vector2 mouseWorldPosAfterPanning = camera.ScreenToWorldPoint(mouseScreenPos);
-				float zoomPrev = activeView.OrthoSize;
-				float targetZoom = zoomPrev;
-
-				if (isDragZoomingCamera)
-				{
-					Vector2 delta = mouseScreenPos - dragZoomMousePrev;
-					dragZoomMousePrev = mouseScreenPos;
-					float zoomDeltaRaw = -delta.magnitude * Mathf.Sign(Mathf.Abs(delta.x) > Mathf.Abs(delta.y) ? delta.x : -delta.y);
-					float zoomDelta = zoomDeltaRaw / Screen.width * zoomSpeed * 5 * zoomPrev;
-					targetZoom = zoomPrev + zoomDelta;
-				}
-				// Middle-mouse scroll zoom
-				else if (CanMiddleMouseZoom())
-				{
-					float deltaZoom = -InputHelper.MouseScrollDelta.y * zoomPrev * zoomSpeed * 0.1f;
-					targetZoom = zoomPrev + deltaZoom;
-				}
-
-				SetZoom(targetZoom);
-
-				if (zoomPrev != activeView.OrthoSize)
-				{
-					ContextMenu.CloseContextMenu();
-
-					// Adjust cam pos to centre zoom on mouse
-					if (zoomToMouse && CanMove && !isDragZoomingCamera)
-					{
-						Vector2 mouseWorldPosAfterZoom = camera.ScreenToWorldPoint(mouseScreenPos);
-						MovePosition(mouseWorldPosAfterPanning - mouseWorldPosAfterZoom);
-					}
-				}
-
-
-				// Alt-left mouse drag zoom
 				if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && KeyboardShortcuts.CameraActionKeyHeld && !isMovingCamera)
 				{
 					isDragZoomingCamera = true;

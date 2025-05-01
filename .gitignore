@@ -93,4 +93,9 @@ build-android/
 # Ignore platform-tools temp
 platform-tools/
 
+user.keystore
+Scripts.zip
+Scripts.zip.meta
+DLS.Unity
+
 

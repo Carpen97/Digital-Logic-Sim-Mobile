@@ -13,7 +13,7 @@ namespace DLS.Game
 	{
 		public static readonly Version DLSVersion = new(2, 1, 4);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
-		public static readonly string LastUpdatedString = "25 April 2025";
+		public static readonly string LastUpdatedString = "29 April 2025";
 		public static AppSettings ActiveAppSettings;
 
 		public static Project ActiveProject { get; private set; }
@@ -58,6 +58,14 @@ namespace DLS.Game
 			int height = newSettings.fullscreenMode is FullScreenMode.Windowed ? newSettings.ResolutionY : FullScreenResolution.y;
 			Screen.SetResolution(width, height, newSettings.fullscreenMode);
 			QualitySettings.vSyncCount = newSettings.VSyncEnabled ? 1 : 0;
+			if(Screen.orientation == ScreenOrientation.LandscapeRight && newSettings.orientationIsLeftLandscape){
+				Debug.Log("Setting Landscape Left");
+				Screen.orientation = ScreenOrientation.LandscapeLeft;
+			}else if (Screen.orientation == ScreenOrientation.LandscapeLeft && !newSettings.orientationIsLeftLandscape){
+				Screen.orientation = ScreenOrientation.LandscapeRight;
+				Debug.Log("Setting Landscape Right");
+			}
+			Debug.Log($"Orientation is {Screen.orientation}");
 		}
 
 		public static void LoadMainMenu()

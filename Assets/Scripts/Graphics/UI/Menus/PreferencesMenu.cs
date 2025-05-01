@@ -24,14 +24,15 @@ namespace DLS.Graphics
 
 		static readonly string[] PinDisplayOptions =
 		{
-			//#if !UNITY_ANDROID
+			#if UNITY_ANDROID
+			"On",
+			"Multi-Hover",
+			"Off"
+			#else
 			"Always",
 			"On Hover",
-			"Tab to Toggle",
-			//#else
-			//"On",
-			//"Off"
-			//#endif
+			"Tab to Toggle"
+			#endif
 		};
 
 		static readonly string[] GridDisplayOptions =
@@ -42,20 +43,28 @@ namespace DLS.Graphics
 
 		static readonly string[] SnappingOptions =
 		{
-			//#if !UNITY_ANDROID
+			#if UNITY_ANDROID
+			"Off",
+			"If Grid Shown",
+			"On"
+			#else
 			"Hold Ctrl",
-			//#endif
 			"If Grid Shown",
 			"Always"
+			#endif
 		};
 
 		static readonly string[] StraightWireOptions =
 		{
-			//#if !UNITY_ANDROID
+			#if UNITY_ANDROID
+			"Off",
+			"If Grid Shown",
+			"On"
+			#else
 			"Hold Shift",
-			//#endif
 			"If Grid Shown",
 			"Always"
+			#endif
 		};
 
 		static readonly string[] SimulationStatusOptions =
@@ -113,29 +122,19 @@ namespace DLS.Graphics
 			{
 				// --- Draw settings ---
 				DrawHeader("DISPLAY:");
-				int mainPinNamesMode = DrawNextWheel("Show I/O pin names", PinDisplayOptions, ID_MainPinNames);
+				int mainPinNamesMode = DrawNextWheel("Show I/O pin names", PinDisplayOptions, ID_MainPinNames); //-ERROR ORIGANTES HERE
 				int chipPinNamesMode = DrawNextWheel("Show chip pin names", PinDisplayOptions, ID_ChipPinNames);
 				int gridDisplayMode = DrawNextWheel(showGridLabel, GridDisplayOptions, ID_GridDisplay);
 
 				DrawHeader("EDITING:");
-
-				// 🛠 CLAMP snappingMode and straightWireMode on Android
-				int snappingMode = 0;
-				int straightWireMode = 0;
-
-				#if UNITY_ANDROID
-    				snappingMode = Mathf.Clamp(Project.ActiveProject.description.Prefs_Snapping, 0, SnappingOptions.Length - 1);
-    				straightWireMode = Mathf.Clamp(Project.ActiveProject.description.Prefs_StraightWires, 0, StraightWireOptions.Length - 1);
-				#else
-    				snappingMode = Project.ActiveProject.description.Prefs_Snapping;
-    				straightWireMode = Project.ActiveProject.description.Prefs_StraightWires;
-				#endif
-
+    			//int snappingMode = Project.ActiveProject.description.Prefs_Snapping;
+				int snappingMode = DrawNextWheel("Snap to grid", SnappingOptions, ID_Snapping);
+    			int straightWireMode = DrawNextWheel("Straight wires", StraightWireOptions, ID_StraightWires);
 				// Then draw using the clamped index:
-				MenuHelper.LabeledOptionsWheel("Snap to grid", labelCol, labelPosCurr, entrySize, ID_Snapping, SnappingOptions, settingFieldSize.x, true);
-				AddSpacing();
-				MenuHelper.LabeledOptionsWheel("Straight wires", labelCol, labelPosCurr, entrySize, ID_StraightWires, StraightWireOptions, settingFieldSize.x, true);
-				AddSpacing();
+				//MenuHelper.LabeledOptionsWheel("Snap to grid", labelCol, labelPosCurr, entrySize, ID_Snapping, SnappingOptions, settingFieldSize.x, true);
+				//AddSpacing();
+				//MenuHelper.LabeledOptionsWheel("Straight wires", labelCol, labelPosCurr, entrySize, ID_StraightWires, StraightWireOptions, settingFieldSize.x, true);
+				//AddSpacing();
 
 				DrawHeader("SIMULATION:");
 				bool pauseSim = MenuHelper.LabeledOptionsWheel(simStatusLabel, labelCol, labelPosCurr, entrySize, ID_SimStatus, SimulationStatusOptions, settingFieldSize.x, true) == 1;
@@ -185,6 +184,8 @@ namespace DLS.Graphics
 				else if (result == MenuHelper.CancelConfirmResult.Confirm)
 				{
 					// Save changes
+					Debug.Log("Saving new changes");
+					Debug.Log(project.description);
 					project.UpdateAndSaveProjectDescription(project.description);
 					UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
 				}

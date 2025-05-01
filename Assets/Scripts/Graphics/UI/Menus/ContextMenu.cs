@@ -277,15 +277,16 @@ namespace DLS.Graphics
 			ButtonTheme headerTheme = DrawSettings.ActiveUITheme.MenuPopupButtonTheme;
 			headerTheme.buttonCols.inactive = ColHelper.MakeCol(0.18f);
 			headerTheme.textCols.inactive = Color.white;
-
 			float menuWidth = Draw.CalculateTextBoundsSize(menuEntries[0].Text, theme.fontSize, theme.font).x + 1;
 			float menuWidthHeader = Draw.CalculateTextBoundsSize(contextMenuHeader, theme.fontSize, theme.font).x + 1;
 			menuWidth = Mathf.Max(menuWidth, menuWidthHeader);
 
 			Draw.ID panelID = UI.ReservePanel();
+			#if UNITY_ANDROID
+			Vector2 buttonSize = new(menuWidth, 2*2);
+			#else
 			Vector2 buttonSize = new(menuWidth, 2);
-
-
+			#endif
 			Vector2 pos = mouseOpenMenuPos;
 			if (pos.x + menuWidth > UI.Width)
 			{

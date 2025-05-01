@@ -184,7 +184,11 @@ namespace DLS.Graphics
 					scrollBarColNormal = scrollBarCol,
 					scrollBarColHover = Brighten(scrollBarCol, 0.05f, -0.025f),
 					scrollBarColPressed = Darken(scrollBarCol, 0.05f, 0.025f),
+					#if UNITY_ANDROID
+					scrollBarWidth = 2
+					#else
 					scrollBarWidth = 1
+					#endif
 				},
 				CheckBoxTheme = new CheckboxTheme
 				{
