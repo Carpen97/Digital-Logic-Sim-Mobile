@@ -11,9 +11,9 @@ namespace DLS.Game
 {
 	public static class Main
 	{
-		public static readonly Version DLSVersion = new(2, 1, 4);
+		public static readonly Version DLSVersion = new(2, 1, 5);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
-		public static readonly string LastUpdatedString = "25 April 2025";
+		public const string LastUpdatedString = "30 April 2025";
 		public static AppSettings ActiveAppSettings;
 
 		public static Project ActiveProject { get; private set; }
@@ -58,6 +58,14 @@ namespace DLS.Game
 			int height = newSettings.fullscreenMode is FullScreenMode.Windowed ? newSettings.ResolutionY : FullScreenResolution.y;
 			Screen.SetResolution(width, height, newSettings.fullscreenMode);
 			QualitySettings.vSyncCount = newSettings.VSyncEnabled ? 1 : 0;
+			if(Screen.orientation == ScreenOrientation.LandscapeRight && newSettings.orientationIsLeftLandscape){
+				Debug.Log("Setting Landscape Left");
+				Screen.orientation = ScreenOrientation.LandscapeLeft;
+			}else if (Screen.orientation == ScreenOrientation.LandscapeLeft && !newSettings.orientationIsLeftLandscape){
+				Screen.orientation = ScreenOrientation.LandscapeRight;
+				Debug.Log("Setting Landscape Right");
+			}
+			Debug.Log($"Orientation is {Screen.orientation}");
 		}
 
 		public static void LoadMainMenu()
@@ -103,7 +111,7 @@ namespace DLS.Game
 			{
 				string path = SavePaths.AllData;
 
-				if (!Directory.Exists(path)) throw new Exception("Path doesn not exist: " + path);
+				if (!Directory.Exists(path)) throw new Exception("Path does not not exist: " + path);
 
 				path = path.Replace("\\", "/");
 				string url = "file://" + (path.StartsWith("/") ? path : "/" + path);
@@ -144,6 +152,20 @@ namespace DLS.Game
 				int minor = int.Parse(versionParts[1]);
 				int patch = int.Parse(versionParts[2]);
 				return new Version(major, minor, patch);
+			}
+
+			public static bool TryParse(string versionString, out Version version)
+			{
+				try
+				{
+					version = Parse(versionString);
+					return true;
+				}
+				catch
+				{
+					version = null;
+					return false;
+				}
 			}
 
 			public override string ToString() => $"{Major}.{Minor}.{Patch}";

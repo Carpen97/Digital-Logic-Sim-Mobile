@@ -19,8 +19,13 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_CollectionsScrollbar = new("ChipLibrary_CollectionsScrollbar");
 		static readonly UIHandle ID_StarredScrollbar = new("ChipLibrary_StarredScrollbar");
 		static readonly UIHandle ID_NameInput = new("ChipLibrary_NameField");
+		#if UNITY_ANDROID
+		static readonly string[] buttonNames_moveSingleStep = { "MOVE UP", "DOWN" };
+		static readonly string[] buttonNames_jump = { "JUMP UP", "DOWN" };
+		#else
 		static readonly string[] buttonNames_moveSingleStep = { "MOVE UP", "MOVE DOWN" };
 		static readonly string[] buttonNames_jump = { "JUMP UP", "JUMP DOWN" };
+		#endif
 		static readonly string[] buttonNames_chipAction = { "USE", "OPEN", "DELETE" };
 		static readonly string[] buttonNames_collectionRenameOrDelete = { "RENAME", "DELETE" };
 

@@ -7,6 +7,7 @@ namespace DLS.Description
 		public int ResolutionX;
 		public int ResolutionY;
 		public FullScreenMode fullscreenMode;
+		public bool orientationIsLeftLandscape;
 		public bool VSyncEnabled;
 
 		public static AppSettings Default() =>
@@ -15,6 +16,7 @@ namespace DLS.Description
 				ResolutionX = 1920,
 				ResolutionY = 1080,
 				fullscreenMode = FullScreenMode.Windowed,
+				orientationIsLeftLandscape = false,
 				VSyncEnabled = true
 			};
 	}

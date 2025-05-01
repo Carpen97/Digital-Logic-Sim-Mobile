@@ -22,8 +22,8 @@ namespace DLS.Graphics
 		static Vector2 displayPosInitial;
 		static float displayScaleInitial;
 
+ 		public static bool IsResizingChip => selectedChipResizeDir != Vector2Int.zero;
 		static SubChipInstance CustomizeChip => ChipSaveMenu.ActiveCustomizeChip;
-
 		public static bool IsPlacingDisplay => displayInteractState == DisplayInteractState.Placing;
 
 		public static void DrawCustomizationScene()

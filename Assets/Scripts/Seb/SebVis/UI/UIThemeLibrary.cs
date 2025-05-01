@@ -25,7 +25,11 @@ namespace Seb.Vis.UI
 		public const float FontSizeLarge = 2;
 		public const float FontSizeVeryLarge = 3;
 		#endif
+		#if UNITY_ANDROID
+		public const float FontSizeButton = FontSizeLarge;
+		#else
 		public const float FontSizeButton = FontSizeMedium;
+		#endif
 
 		public const FontType DefaultFont = FontType.JetbrainsMonoBold;
 		public const float FontSizeDefault = FontSizeMedium;
