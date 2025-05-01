@@ -32,6 +32,7 @@ namespace DLS.SaveSystem
 			// Create and return the chip description
 			return new ChipDescription
 			{
+				DLSVersion = Main.DLSVersion.ToString(),
 				Name = name,
 				NameLocation = hasSavedDesc ? descOld.NameLocation : NameDisplayLocation.Centre,
 				Size = size,
@@ -62,20 +63,12 @@ namespace DLS.SaveSystem
 				subChip.Position,
 				// Don't save colour info for bus since it changes based on received input, so would just trigger unnecessary 'unsaved changes' warnings
 				subChip.IsBus ? null : subChip.OutputPins.Select(p => new OutputPinColourInfo(p.Colour, p.Address.PinID)).ToArray(),
-				subChip.InternalData
+				(uint[])subChip.InternalData?.Clone()
 			);
 		}
 
 		public static SubChipDescription CreateBuiltinSubChipDescriptionForPlacement(ChipType type, string name, int id, Vector2 position)
 		{
-			uint[] internalData = type switch
-			{
-				ChipType.Rom_256x16 => new uint[256],
-				ChipType.Key => new uint[] { 'K' },
-				ChipType.Pulse => new uint[] { 50, 0, 0 },
-				_ => ChipTypeHelper.IsBusType(type) ? new uint[2] : null
-			};
-
 			return new SubChipDescription
 			(
 				name,
@@ -83,8 +76,20 @@ namespace DLS.SaveSystem
 				string.Empty,
 				position,
 				Array.Empty<OutputPinColourInfo>(),
-				internalData
+				CreateDefaultInstanceData(type)
 			);
+		}
+
+		public static uint[] CreateDefaultInstanceData(ChipType type)
+		{
+			return type switch
+			{
+				ChipType.Rom_256x16 => new uint[256], // ROM contents
+				ChipType.Key => new uint[] { 'K' }, // Key binding
+				ChipType.Pulse => new uint[] { 50, 0, 0 }, // Pulse width, ticks remaining, input state old
+				ChipType.DisplayLED => new uint[] { 0 }, // LED colour
+				_ => ChipTypeHelper.IsBusType(type) ? new uint[2] : null
+			};
 		}
 
 		public static void UpdateWireIndicesForDescriptionCreation(DevChipInstance chip)
