@@ -29,7 +29,6 @@ namespace DLS.Game
 		// Snap point to grid, with option to allow snapping to centre of grid cells (rather than just the grid lines)
 		public static Vector2 SnapToGrid(Vector2 v, bool allowCentreSnapX = false, bool allowCentreSnapY = false)
 		{
-			Debug.Log("CALLING SNAPPING");
 			int xM = allowCentreSnapX ? 2 : 1;
 			int yM = allowCentreSnapY ? 2 : 1;
 

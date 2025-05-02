@@ -999,12 +999,15 @@ namespace DLS.Game
 		void StartMovingSelectedItems(bool isDuplicationOnMobileCall = false)
 		{
 			IsMovingSelection = true;
+			#if UNITY_ANDROID
+			MobileUIController.Instance.ShowPlacementButtons(
+				FinishPlacingNewElements,
+				CancelPlacingItems
+			);
 			if(!isDuplicationOnMobileCall){
 				moveElementMouseStartPos = InputHelper.MousePosWorld;
-				Debug.Log($"2 {moveElementMouseStartPos}");
 			}
-	
-
+			#endif
 
 			foreach (IMoveable moveableElement in SelectedElements)
 			{

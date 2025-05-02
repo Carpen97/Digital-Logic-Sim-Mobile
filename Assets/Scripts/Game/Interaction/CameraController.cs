@@ -40,7 +40,7 @@ namespace DLS.Game
 		static bool CanZoom => UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup or UIDrawer.MenuType.ChipCustomization;
 		static bool CanStartNewInput => !InteractionState.MouseIsOverUI;
 
-		static bool InChipView => UIDrawer.ActiveMenu != UIDrawer.MenuType.ChipCustomization;
+		public static bool InChipView => UIDrawer.ActiveMenu != UIDrawer.MenuType.ChipCustomization;
 
         public static float PinchScale { get; private set; }
 
