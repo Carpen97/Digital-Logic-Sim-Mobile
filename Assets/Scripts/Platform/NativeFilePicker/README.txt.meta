@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 9ddc26df7297d1047b4996ba9e9468d6
+timeCreated: 1563308465
+licenseType: Store
+TextScriptImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 173238
+  packageName: Native File Picker for Android & iOS
+  packageVersion: 1.4.0
+  assetPath: Assets/Plugins/NativeFilePicker/README.txt
+  uploadId: 746913

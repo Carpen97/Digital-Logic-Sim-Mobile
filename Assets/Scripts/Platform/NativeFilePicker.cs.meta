@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 429d10dd835c8764da255c638eefbc76
+timeCreated: 1498722610
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 173238
+  packageName: Native File Picker for Android & iOS
+  packageVersion: 1.4.0
+  assetPath: Assets/Plugins/NativeFilePicker/NativeFilePicker.cs
+  uploadId: 746913
