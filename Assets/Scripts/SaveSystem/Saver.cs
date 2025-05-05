@@ -86,6 +86,10 @@ namespace DLS.SaveSystem
 			}
 			//Directory.Move
 		}
+		public static void FinishImport()
+		{
+			AndroidIO.FinishImport();
+		}
 
 		public static bool HasUnsavedChanges(ChipDescription lastSaved, ChipDescription current)
 		{

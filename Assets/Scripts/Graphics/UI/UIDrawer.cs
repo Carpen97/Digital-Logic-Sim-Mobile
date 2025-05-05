@@ -19,6 +19,7 @@ namespace DLS.Graphics
 			RomEdit,
 			PulseEdit,
 			UnsavedChanges,
+			Overwrite,
 			Search,
 			ChipLabelPopup
 		}
@@ -65,6 +66,7 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.RebindKeyChip) RebindKeyChipMenu.DrawMenu();
 			else if (menuToDraw == MenuType.RomEdit) RomEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.UnsavedChanges) UnsavedChangesPopup.DrawMenu();
+			else if (menuToDraw == MenuType.Overwrite) ConfirmOverwritePopup.DrawMenu();
 			else if (menuToDraw == MenuType.Search) SearchPopup.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLabelPopup) ChipLabelMenu.DrawMenu();
 			else if (menuToDraw == MenuType.PulseEdit) PulseEditMenu.DrawMenu();

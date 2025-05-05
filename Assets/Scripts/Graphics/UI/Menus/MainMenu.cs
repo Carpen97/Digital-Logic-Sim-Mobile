@@ -7,6 +7,7 @@ using Seb.Helpers;
 using Seb.Vis;
 using Seb.Vis.UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DLS.Graphics
 {
@@ -43,6 +44,17 @@ namespace DLS.Graphics
 			FormatButtonString("Quit")
 		};
 
+		#if UNITY_ANDROID
+		static readonly string[] openProjectButtonNames =
+		{
+			FormatButtonString("Back"),
+			FormatButtonString("Delete"),
+			FormatButtonString("Duplicate"),
+			FormatButtonString("Rename"),
+			FormatButtonString("Open"),
+			FormatButtonString("Import")
+		};
+		#else 
 		static readonly string[] openProjectButtonNames =
 		{
 			FormatButtonString("Back"),
@@ -51,6 +63,7 @@ namespace DLS.Graphics
 			FormatButtonString("Rename"),
 			FormatButtonString("Open")
 		};
+		#endif
 
 		static readonly Vector2Int[] Resolutions =
 		{
@@ -122,6 +135,9 @@ namespace DLS.Graphics
 				case PopupKind.DeleteConfirmation:
 					DrawDeleteProjectConfirmationPopup();
 					break;
+				case PopupKind.OverwriteConfirmation:
+					DrawOverwriteProjectConfirmationPopup();
+					break;
 				case PopupKind.NamePopup_RenameProject:
 					DrawNamePopup();
 					break;
@@ -189,10 +205,16 @@ namespace DLS.Graphics
 			const int duplicateButtonIndex = 2;
 			const int renameButtonIndex = 3;
 			const int openButtonIndex = 4;
+			const int importButtonIndex = 5;
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
 			Vector2 pos = UI.Centre + new Vector2(0, -1);
+			#if UNITY_ANDROID
+			Vector2 size = new(80, 32);
+			#else
 			Vector2 size = new(68, 32);
+			#endif
+
 
 			UI.DrawScrollView(ID_ProjectsScrollView, pos, size, Anchor.Centre, theme.ScrollTheme, loadProjectScrollViewDrawer);
 			ButtonTheme buttonTheme = DrawSettings.ActiveUITheme.MainMenuButtonTheme;
@@ -202,7 +224,7 @@ namespace DLS.Graphics
 
 			for (int i = 0; i < openProjectButtonStates.Length; i++)
 			{
-				bool buttonEnabled = activePopup == PopupKind.None && (compatibleProject || i == backButtonIndex || (i == deleteButtonIndex && projectSelected));
+				bool buttonEnabled = activePopup == PopupKind.None && (compatibleProject || i == backButtonIndex  || i == importButtonIndex || (i == deleteButtonIndex && projectSelected));
 				openProjectButtonStates[i] = buttonEnabled;
 			}
 
@@ -221,6 +243,11 @@ namespace DLS.Graphics
 			else if (buttonIndex == duplicateButtonIndex) activePopup = PopupKind.NamePopup_DuplicateProject;
 			else if (buttonIndex == renameButtonIndex) activePopup = PopupKind.NamePopup_RenameProject;
 			else if (buttonIndex == openButtonIndex) Main.CreateOrLoadProject(SelectedProjectName, string.Empty);
+			else if (buttonIndex == importButtonIndex) Main.ImportProject();
+		}
+
+		public static void ShowOverwriteConfirmationPopup(){
+			activePopup = PopupKind.OverwriteConfirmation;
 		}
 
 		static bool ProjectNameValidator(string inputString) => inputString.Length <= 20 && !SaveUtils.NameContainsForbiddenChar(inputString);
@@ -247,8 +274,11 @@ namespace DLS.Graphics
 		}
 
 
-		static void RefreshLoadedProjects()
+		public static void RefreshLoadedProjects()
 		{
+
+			Debug.Log(SavePaths.ProjectsPath);
+			Debug.Log("FLAG 3");
 			allProjectDescriptions = Loader.LoadAllProjectDescriptions();
 			allProjectNames = allProjectDescriptions.Select(d => d.ProjectName).ToArray();
 			projectCompatibilities = allProjectDescriptions.Select(d => CanOpenProject(d)).ToArray();
@@ -453,6 +483,37 @@ namespace DLS.Graphics
 				Main.CreateOrLoadProject(name);
 			}
 		}
+		static void DrawOverwriteProjectConfirmationPopup()
+		{
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+
+			UI.StartNewLayer();
+			UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			using (UI.BeginBoundsScope(true))
+			{
+				Draw.ID panelID = UI.ReservePanel();
+				UI.DrawText("Project name already exist. Are you sure you want to overwrite?", theme.FontRegular, theme.FontSizeRegular, UI.Centre, Anchor.Centre, Color.yellow);
+
+				Vector2 buttonRegionTopLeft = UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
+				float buttonRegionWidth = UI.PrevBounds.Width;
+				int buttonIndex = UI.HorizontalButtonGroup(new[] { "CANCEL", "OVERWRITE" }, theme.MainMenuButtonTheme, buttonRegionTopLeft, buttonRegionWidth, DrawSettings.HorizontalButtonSpacing, 0, Anchor.TopLeft);
+				UI.ModifyPanel(panelID, UI.GetCurrentBoundsScope().Centre, UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+
+				if (buttonIndex == 0) // Cancel
+				{
+					activePopup = PopupKind.None;
+
+				}
+				else if (buttonIndex == 1) 
+				{
+					Saver.FinishImport();
+					selectedProjectIndex = -1;
+					RefreshLoadedProjects();
+					activePopup = PopupKind.None;
+				}
+			}
+		}
 
 		static void DrawDeleteProjectConfirmationPopup()
 		{
@@ -541,7 +602,8 @@ namespace DLS.Graphics
 			DeleteConfirmation,
 			NamePopup_RenameProject,
 			NamePopup_DuplicateProject,
-			NamePopup_NewProject
+			NamePopup_NewProject,
+			OverwriteConfirmation,
 		}
 	}
 }

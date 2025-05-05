@@ -105,6 +105,23 @@ namespace DLS.Game
 			return LoadProject(projectName);
 		}
 
+		#if UNITY_ANDROID
+		public static void ImportProject()
+		{
+			NativeFilePicker.PickFile((path) =>
+			{
+				if (string.IsNullOrEmpty(path))
+				{
+					Debug.LogWarning("[ImportProject] No file selected.");
+					return;
+				}
+
+				AndroidIO.ImportProjectFromZip(path);
+			}, new[] { "application/zip", "application/octet-stream" });
+		}
+		#endif
+
+
 		public static void OpenSaveDataFolderInFileBrowser()
 		{
 			try

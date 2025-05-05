@@ -1,6 +1,8 @@
 using System.Collections;
+using DLS.Description;
 using DLS.Game;
 using DLS.Graphics;
+using DLS.SaveSystem;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -149,6 +151,44 @@ public class MobileUIController : MonoBehaviour
 		HidePlacementButtons();
 	}
 	
+
+//	public void OnTempPressOLD()
+	//{
+		//string json = AndroidChipIO.ImportChip();
+		//ChipDescription chip = JsonUtility.FromJson<ChipDescription>(json);
+		//Saver.SaveChip(chip, Project.ActiveProject.description.ProjectName);
+		//Main.ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(chip.Name);
+	//}
+	public void OnTempPress()
+	{
+		AndroidIO.ImportChip((json) =>
+		{
+			if (string.IsNullOrEmpty(json))
+				return;
+
+			ChipDescription chip = null;
+			try
+			{
+				chip = Serializer.DeserializeChipDescription(json); // safer than JsonUtility
+			}
+			catch (System.Exception e)
+			{
+				Debug.LogError($"Failed to deserialize chip: {e.Message}");
+				return;
+			}
+
+			if (chip == null || string.IsNullOrEmpty(chip.Name))
+			{
+				Debug.LogWarning("Invalid chip data or missing name.");
+				return;
+			}
+
+			Debug.Log($"[Import] Chip '{chip.Name}' loaded.");
+			Project.ActiveProject.SaveFromDescription(chip);
+			//Main.ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(chip.Name);
+			//UIDrawer.SetActiveMenu(UIDrawer.MenuType.None); // show dev chip
+		});
+	}
 
 	public void OnCopyToolPress()
 	{
