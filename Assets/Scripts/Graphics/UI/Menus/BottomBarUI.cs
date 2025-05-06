@@ -23,6 +23,9 @@ namespace DLS.Graphics
 		const string shortcutTextCol = "<color=#666666ff>";
 
 		#if UNITY_ANDROID
+		public static int showScrollingButtons = 0;
+		const float scrollButtonWidth = 1.2f;
+
 		static readonly string[] menuButtonNames =
 		{
 			$"  NEW CHIP  ",
@@ -150,11 +153,16 @@ namespace DLS.Graphics
 			}
 
 			UI.DrawPanel(bounds_UISpace, theme.StarredBarCol);
+			float chipButtonsRegionStartX = UI.PrevBounds.Right + buttonSpacing;
+			float chipButtonRegionWidth = UI.Width - chipButtonsRegionStartX;
 
 			// Menu toggle button
 			Vector2 menuButtonPos = new(buttonSpacing, padY);
 			Vector2 menuButtonSize = new(1.5f, barHeight - padY * 2);
 			bool menuButtonEnabled = !inOtherMenu;
+
+			Vector2 scrollButtonSize = new(scrollButtonWidth, buttonHeight);
+			float scrollAmount = 15f; // Adjust as needed for responsiveness
 
 			if (UI.Button("MENU", theme.MenuButtonTheme, menuButtonPos, menuButtonSize, menuButtonEnabled, true, false, Anchor.BottomLeft, ignoreInputs: ignoreInputs))
 			{
@@ -162,6 +170,19 @@ namespace DLS.Graphics
 				toggleMenuFrame = Time.frameCount;
 			}
 
+			if(showScrollingButtons!=2){
+				if(showScrollingButtons == 1) scrollAmount *= -1; //invert
+				Vector2 leftButtonPos = new Vector2(UI.PrevBounds.Right + buttonSpacing, padY);
+				if (UI.Button("←", theme.MenuButtonTheme, leftButtonPos, scrollButtonSize, true, true, false, Anchor.BottomLeft))
+				{
+					scrollX = Mathf.Clamp(scrollX - scrollAmount, Mathf.Min(0, chipButtonRegionWidth - chipBarTotalWidthLastFrame), 0);
+				}
+				Vector2 rightButtonPos = new Vector2(UI.PrevBounds.Right + buttonSpacing, padY);
+				if (UI.Button("→", theme.MenuButtonTheme, rightButtonPos, scrollButtonSize, true, true, false, Anchor.BottomLeft))
+				{
+					scrollX = Mathf.Clamp(scrollX + scrollAmount, Mathf.Min(0, chipButtonRegionWidth - chipBarTotalWidthLastFrame), 0);
+				}
+			}
 
 			// Chips
 			ButtonTheme buttonTheme = theme.ChipButton;
@@ -194,8 +215,8 @@ namespace DLS.Graphics
 				}
 
 				// -- Draw --
-				float chipButtonsRegionStartX = UI.PrevBounds.Right + buttonSpacing;
-				float chipButtonRegionWidth = UI.Width - chipButtonsRegionStartX;
+				chipButtonsRegionStartX = UI.PrevBounds.Right + buttonSpacing;
+				chipButtonRegionWidth = UI.Width - chipButtonsRegionStartX;
 
 				scrollX = Mathf.Clamp(scrollX, Mathf.Min(0, chipButtonRegionWidth - chipBarTotalWidthLastFrame), 0);
 				float buttonPosX = chipButtonsRegionStartX + scrollX;

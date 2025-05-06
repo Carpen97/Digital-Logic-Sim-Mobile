@@ -59,13 +59,11 @@ namespace DLS.Game
 			Screen.SetResolution(width, height, newSettings.fullscreenMode);
 			QualitySettings.vSyncCount = newSettings.VSyncEnabled ? 1 : 0;
 			if(Screen.orientation == ScreenOrientation.LandscapeRight && newSettings.orientationIsLeftLandscape){
-				Debug.Log("Setting Landscape Left");
 				Screen.orientation = ScreenOrientation.LandscapeLeft;
 			}else if (Screen.orientation == ScreenOrientation.LandscapeLeft && !newSettings.orientationIsLeftLandscape){
 				Screen.orientation = ScreenOrientation.LandscapeRight;
-				Debug.Log("Setting Landscape Right");
 			}
-			Debug.Log($"Orientation is {Screen.orientation}");
+			BottomBarUI.showScrollingButtons = newSettings.showScrollingButtons;
 		}
 
 		public static void LoadMainMenu()

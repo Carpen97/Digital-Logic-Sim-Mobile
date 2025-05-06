@@ -24,10 +24,12 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_DisplayResolutionWheel = new("MainMenu_DisplayResolutionWheel");
 		static readonly UIHandle ID_FullscreenWheel = new("MainMenu_FullscreenWheel");
 		static readonly UIHandle ID_Orientation = new("MainMenu_OrientationWheel");
+		static readonly UIHandle ID_ShowScrollButtons = new("MainMenu_ShowScrollButtonsnWheel");
 		static readonly UIHandle ID_ProjectsScrollView = new("MainMenu_ProjectsScrollView");
 
 		static readonly string[] SettingsWheelFullScreenOptions = { "OFF", "MAXIMIZED", "BORDERLESS", "EXCLUSIVE" };
 		static readonly string[] SettingsWheelOrientationOptions = { "LEFT LANDSCAPE", "RIGHT LANDSCAPE"};
+		static readonly string[] SettingsWheelBottomBarScrollingOptions = { "ARROWS","ARROWS (inverted)", "OFF"};
 		static readonly FullScreenMode[] FullScreenModes = { FullScreenMode.Windowed, FullScreenMode.MaximizedWindow, FullScreenMode.FullScreenWindow, FullScreenMode.ExclusiveFullScreen };
 		static readonly string[] SettingsWheelVSyncOptions = { "DISABLED", "ENABLED" };
 
@@ -354,12 +356,12 @@ namespace DLS.Graphics
 			float regionWidth = 30;
 			Vector2 wheelSize = new(16, 2.5f);
 			#if UNITY_ANDROID	
-			regionWidth = 50;
-			wheelSize = new(30, 3.5f);
+			regionWidth = 70;
+			wheelSize = new(40, 3.5f);
 			#endif
 			float labelOriginLeft = UI.Centre.x - regionWidth / 2;
 			float elementOriginRight = UI.Centre.x + regionWidth / 2;
-			Vector2 pos = new(labelOriginLeft, UI.Centre.y + 4);
+			Vector2 pos = new(labelOriginLeft, UI.Centre.y+8);
 			using (UI.BeginBoundsScope(true))
 			{
 				Draw.ID backgroundPanelID = UI.ReservePanel();
@@ -390,6 +392,10 @@ namespace DLS.Graphics
 				UI.DrawText("Orientation", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				int orientation = UI.WheelSelector(ID_Orientation, SettingsWheelOrientationOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				EditedAppSettings.orientationIsLeftLandscape = orientation==0;
+
+				pos += Vector2.down * 4;
+				UI.DrawText("Hotbar scrolling", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				EditedAppSettings.showScrollingButtons = UI.WheelSelector(ID_ShowScrollButtons, SettingsWheelBottomBarScrollingOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				
 				// Background panel
 				UI.ModifyPanel(backgroundPanelID, UI.GetCurrentBoundsScope().Centre, UI.GetCurrentBoundsScope().Size + Vector2.one * 3, ColHelper.MakeCol255(37, 37, 43));
