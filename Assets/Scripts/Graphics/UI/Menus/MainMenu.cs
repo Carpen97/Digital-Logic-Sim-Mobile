@@ -3,6 +3,7 @@ using System.Linq;
 using DLS.Description;
 using DLS.Game;
 using DLS.SaveSystem;
+using DLS.Simulation;
 using Seb.Helpers;
 using Seb.Vis;
 using Seb.Vis.UI;
@@ -100,6 +101,8 @@ namespace DLS.Graphics
 
 		public static void Draw()
 		{
+			Simulator.UpdateInPausedState();
+			
 			if (KeyboardShortcuts.CancelShortcutTriggered && activePopup == PopupKind.None)
 			{
 				BackToMain();

@@ -10,7 +10,7 @@
   "Prefs_Snapping": 2,
   "Prefs_StraightWires": 0,
   "Prefs_SimPaused": false,
-  "Prefs_SimTargetStepsPerSecond": 50000,
+  "Prefs_SimTargetStepsPerSecond": 150,
   "Prefs_SimStepsPerClockTick": 6,
   "AllCustomChipNames":[
     "AND",
@@ -61,7 +61,8 @@
     "RAM-256×8 (async)",
     "RAM-sync",
     "TEST MergeSplit",
-    "#"
+    "#",
+    "BuzzTest"
   ],
   "StarredList":[
     {
@@ -82,6 +83,10 @@
     },
     {
       "Name":"#",
+      "IsCollection":false
+    },
+    {
+      "Name":"BuzzTest",
       "IsCollection":false
     }
   ],
