@@ -79,7 +79,6 @@ public static class AndroidIO
 
 			if (Directory.Exists(finalPath))
 			{
-				Debug.Log("HERE 2");
 				MainMenu.ShowOverwriteConfirmationPopup();
 			}
 			else
@@ -87,7 +86,6 @@ public static class AndroidIO
 				FinishImport();
 			}
 
-			Debug.Log("REFRESHING");
 		}
 		catch (Exception e)
 		{

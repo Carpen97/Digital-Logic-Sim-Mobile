@@ -6,6 +6,7 @@ using DLS.SaveSystem;
 using Seb.Helpers;
 using UnityEngine;
 using System;
+using UnityEditor;
 
 namespace DLS.Game
 {
@@ -33,7 +34,7 @@ namespace DLS.Game
 		Vector2 wireEditPointOld;
 		public int wireEditPointSelectedIndex;
 		public bool isMovingWireEditPoint;
-        private Vector2 touchPosForDuplicationOnMobile;
+        private bool reselectMoveElementMouseStartPos;
 
         public DevChipInstance ActiveDevChip => project.ViewedChip;
 		public bool IsMovingSelection { get; private set; }
@@ -58,6 +59,7 @@ namespace DLS.Game
 		public bool CanInteractWithPinStateDisplay => CanInteract && !IsCreatingWire && Project.ActiveProject.CanEditViewedChip;
 		public bool CanInteractWithPinHandle => CanInteractWithPinStateDisplay;
 
+		bool isDraggingWirePoint;
 
 		public ChipInteractionController(Project project)
 		{
@@ -250,24 +252,14 @@ namespace DLS.Game
 
 			if(Input.touchCount == 1){
 				Touch touch = Input.GetTouch(0);
-				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) ||
-					InteractionState.MouseIsOverUI
-				)
-				{
-					Debug.Log("Touch UI");
-					return;
-				}
-				if(MobileUIController.Instance.isWrenchToolActive){
-					return;
-				}
+				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) || InteractionState.MouseIsOverUI) return;
+				if (MobileUIController.Instance.isWrenchToolActive) return;
+			
 				if(touch.phase == TouchPhase.Began){
 					HandleSingleTap();
 				}else if(touch.phase == TouchPhase.Moved){
 					if (HasControl) UpdatePositionsToMouse();
 				}else if(touch.phase == TouchPhase.Ended){
-					if(SelectedElements.Count>0){
-						touchPosForDuplicationOnMobile = InputHelper.MousePosWorld;
-					}
 					if (IsCreatingSelectionBox)
 					{
 						IsCreatingSelectionBox = false;
@@ -453,8 +445,17 @@ namespace DLS.Game
 
 			Vector2 offset = InputHelper.MousePosWorld - closestElementPos;
 			moveElementMouseStartPos -= offset;
-			Debug.Log($"1 {moveElementMouseStartPos}");
 			#else
+			Vector2 closestElementPos = Vector2.zero;
+			int counter = 0;
+			foreach (IMoveable element in elementsToDuplicate)
+			{
+				Vector2 pos = element is DevPinInstance pin ? pin.HandlePosition : element.Position;
+				closestElementPos+=pos;
+				counter++;
+			}
+			moveElementMouseStartPos  = closestElementPos/counter;
+			reselectMoveElementMouseStartPos = false;
 			#endif
 		}
 
@@ -503,6 +504,17 @@ namespace DLS.Game
 		}
 
 		void HandleSingleTap(){
+			
+			//WorldDrawer.DrawWorld(Project.ActiveProject);
+			if (wireToEdit != null)
+			{
+				if (wireEditPointIndex != -1){
+					isMovingWireEditPoint = true;
+					wireEditPointSelectedIndex = wireEditPointIndex;
+					wireEditPointOld = wireToEdit.GetWirePoint(wireEditPointIndex);
+				}
+			}
+			wireEditPointIndex = -1;
 			if (IsPlacingElementOrCreatingWire)
 			{
 				// Place wire
@@ -522,7 +534,10 @@ namespace DLS.Game
 					}
 				}else{ //IsPlacing Element
 					if(InteractionState.ElementUnderMouse is IMoveable element){
-						moveElementMouseStartPos = TouchInputHelper.Instance.TouchWorldPosition;
+						if(reselectMoveElementMouseStartPos){
+							moveElementMouseStartPos = TouchInputHelper.Instance.TouchWorldPosition;
+						}
+						reselectMoveElementMouseStartPos = true;
 						foreach (IMoveable moveableElement in SelectedElements)
 						{
 							moveableElement.MoveStartPosition = moveableElement.Position;
@@ -537,28 +552,41 @@ namespace DLS.Game
 			else
 			{
 				Vector2 touchPosWorld = TouchInputHelper.TouchPositionWorld();
-				// Mouse down on pin: start placing wire
-				//if (element is PinInstance pin && HasControl) {
+	   			// Tapping on pin
 				if (InteractionState.ElementUnderMouse is PinInstance pin && HasControl){
+
 					WireInstance.ConnectionInfo connectionInfo = new() { pin = pin };
 					StartPlacingWire(connectionInfo);
 					MobileUIController.Instance.ShowPlacementButtons(
 						TryAddWirePoint,
 						CancelPlacingItems
 					);
+				}else if(InteractionState.ElementUnderMouse!= null && InteractionState.ElementUnderMouse.ToString() == "DLS.Game.InteractionState+UnspecifiedInteractableElement")
+				{
+					if(wireToEdit!=null)
+						Main.Update();
 				}
-				// Mouse down on wire
-				//else if (element is WireInstance wire && HasControl)
+				// Tapping on wire
 				else if (InteractionState.ElementUnderMouse is WireInstance wire && HasControl)
 				{
+
+					InteractionState.NotifyElementUnderMouse(wire);
 					// Insert a point on the currently edited wire
 					if (wire == wireToEdit)
 					{
-						if (wireEditCanInsertPoint)
+						(Vector2 insertionPoint, int segmentIndex) = WireLayoutHelper.GetClosestPointOnWire(wire, touchPosWorld);
+						float distFromPointA  = (insertionPoint - wire.GetWirePoint(segmentIndex)).magnitude;
+						float distFromPointB  = (insertionPoint - wire.GetWirePoint(segmentIndex+1)).magnitude;
+						float dstFromExistingPoint = Mathf.Min(distFromPointA,distFromPointB);
+						const float rBG = 0.25f;
+						if (dstFromExistingPoint > rBG)
 						{
-							(Vector2 point, int segmentIndex) = WireLayoutHelper.GetClosestPointOnWire(wireToEdit, InputHelper.MousePosWorld);
-							wireToEdit.InsertPoint(point, segmentIndex);
+							wire.InsertPoint(insertionPoint, segmentIndex);
 							wireEditPointIndex = segmentIndex + 1;
+						}else if (distFromPointA<distFromPointB){
+							wireEditPointIndex = segmentIndex;
+						}else{
+							wireEditPointIndex = segmentIndex+1;
 						}
 					}
 					// Start placing a new wire from this point on the selected wire
@@ -573,35 +601,39 @@ namespace DLS.Game
 					}
 				}
 				// Tapped on selectable element: select it and prepare to start moving current selection
-				//else if (element is IMoveable e)
-				else if (InteractionState.ElementUnderMouse is IMoveable element)
+				else if (InteractionState.ElementUnderMouse is IMoveable element && Project.ActiveProject.CanEditViewedChip)
 				{
 					bool addToSelection = KeyboardShortcuts.MultiModeHeld;
 					Select(element, addToSelection);
 
-					Debug.Log("FLAG 2");
 					StartMovingSelectedItems();
 					MobileUIController.Instance.ShowPlacementButtons(
 						FinishMovingElements,
 						CancelMovingSelectedItems
 					);
-				}
-				// Tapped on free space
-				else if (InteractionState.ElementUnderMouse == null && !IsPlacingElementOrCreatingWire && !IsMovingSelection)
-				{
+				}else if (InteractionState.ElementUnderMouse == null && !IsPlacingElementOrCreatingWire && !IsMovingSelection){
+					// Tapped on free space
 					if(MobileUIController.Instance.isBoxSelectToolActive)
 						IsCreatingSelectionBox = true;
-					else
-						ClearSelection(); 
-					//IsCreatingSelectionBox = true;
+					else if (SelectedElements.Count>0)
+						ClearSelection();
+					wireEditPointIndex = -1;
+					isMovingWireEditPoint = false;
+					//FinishEditingWires();
 				}
-
+				
 				if (wireToEdit != null && wireEditPointIndex != -1)
 				{
 					isMovingWireEditPoint = true;
 					wireEditPointSelectedIndex = wireEditPointIndex;
 					wireEditPointOld = wireToEdit.GetWirePoint(wireEditPointIndex);
 				}
+				
+
+			}
+			if (wireToEdit != null)
+			{
+				DevSceneDrawer.DrawWireEditPoints(wireToEdit);
 			}
 		}
 
@@ -676,7 +708,6 @@ namespace DLS.Game
 				{
 					bool addToSelection = KeyboardShortcuts.MultiModeHeld;
 					Select(element, addToSelection);
-					Debug.Log("FLAG 1");
 					StartMovingSelectedItems();
 				}
 				// Mouse down over nothing: clear selection
@@ -800,8 +831,29 @@ namespace DLS.Game
 
 		public void EnterWireEditMode(WireInstance wire)
 		{
+			#if UNITY_ANDROID
+			if (wireToEdit == wire) ExitWireEditMode();
+			else {
+				wireToEdit = wire;
+				MobileUIController.Instance.ShowPlacementButtons(
+					FinishEditingWires,
+					DeleteCurrentWireToEditPoint
+				);
+				//MobileUIController.Instance.ShowCancelButton(
+					//DeleteCurrentWireToEditPoint
+				//);
+			}
+			#else
 			if (wireToEdit == wire) ExitWireEditMode();
 			else wireToEdit = wire;
+			#endif
+		}
+
+		public void DeleteCurrentWireToEditPoint(){
+			if(wireToEdit!=null && wireEditPointIndex != -1){
+				wireToEdit.DeleteWirePoint(wireEditPointIndex);
+				wireEditPointIndex = -1;
+			}
 		}
 
 		void ExitWireEditMode()
@@ -815,6 +867,14 @@ namespace DLS.Game
 			isMovingWireEditPoint = false;
 			wireEditPointIndex = -1;
 			wireEditPointSelectedIndex = -1;
+		}
+		void FinishEditingWires()
+		{
+			wireToEdit = null;
+			isMovingWireEditPoint = false;
+			wireEditPointIndex = -1;
+			wireEditPointSelectedIndex = -1;
+			MobileUIController.Instance.HidePlacementButtons();
 		}
 
 		void HandleLeftMouseUp()
@@ -866,7 +926,7 @@ namespace DLS.Game
 		public void MoveSelectionAfterDuplication(){
 			if (SelectedElements.Count == 0) return;
 
-			moveElementMouseStartPos = touchPosForDuplicationOnMobile;
+			//moveElementMouseStartPos = touchPosForDuplicationOnMobile;
 			Vector2 offset = new Vector2(-0.5f, -0.5f); // Small right and down offset (tweak as needed)
 			//Vector2 offset = Vector2.zero;
 
@@ -989,10 +1049,16 @@ namespace DLS.Game
 						}
 					}
 				}
-			}
-			else if (isMovingWireEditPoint)
+			} 
+			else if (isMovingWireEditPoint) 
 			{
 				wireToEdit.SetWirePointWithSnapping(mousePos, wireEditPointSelectedIndex, wireEditPointOld);
+			}
+			if (wireToEdit != null && wireEditPointIndex != -1)
+			{
+				isMovingWireEditPoint = true;
+				wireEditPointSelectedIndex = wireEditPointIndex;
+				wireEditPointOld = wireToEdit.GetWirePoint(wireEditPointIndex);
 			}
 		}
 
@@ -1136,7 +1202,6 @@ namespace DLS.Game
 				#if UNITY_ANDROID
 				#else
 					moveElementMouseStartPos = InputHelper.MousePosWorld;
-					Debug.Log($"3 {moveElementMouseStartPos}");
 				#endif
 
 				elementToPlace.MoveStartPosition = position;
@@ -1243,6 +1308,8 @@ namespace DLS.Game
 			}
 
 			IsMovingSelection = false;
+
+			MobileUIController.Instance.HidePlacementButtons();
 		}
 
 		void OnFinishedPlacingItems() => OnFinishedOrCancelledPlacingItems();
@@ -1282,6 +1349,8 @@ namespace DLS.Game
 			}
 
 			OnFinishedOrCancelledPlacingItems();
+
+			MobileUIController.Instance.HidePlacementButtons();
 		}
 
 

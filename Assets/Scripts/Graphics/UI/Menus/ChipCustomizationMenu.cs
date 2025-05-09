@@ -12,12 +12,21 @@ namespace DLS.Graphics
 {
 	public static class ChipCustomizationMenu
 	{
+		#if UNITY_ANDROID
+		static readonly string[] nameDisplayOptions =
+		{
+			"Middle",
+			"Top",
+			"Hidden"
+		};
+		#else
 		static readonly string[] nameDisplayOptions =
 		{
 			"Name: Middle",
 			"Name: Top",
 			"Name: Hidden"
 		};
+		#endif
 
 
 		// ---- State ----
@@ -47,22 +56,25 @@ namespace DLS.Graphics
 			// Don't draw menu when placing display
 			if (CustomizationSceneDrawer.IsPlacingDisplay) return;
 
-			const float width = 20;
+			const float width = 25;
 			const float pad = UILayoutHelper.DefaultSpacing;
 			const float pw = width - pad * 2;
 
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 			UI.DrawPanel(UI.TopLeft, new Vector2(width, UI.Height), theme.MenuPanelCol, Anchor.TopLeft);
 
-			// ---- Cancel/confirm buttons ----
-			int cancelConfirmButtonIndex = MenuHelper.DrawButtonPair("CANCEL", "CONFIRM", UI.TopLeft + Vector2.down * pad, pw, false);
 
 			// ---- Chip name UI ----
-			int nameDisplayMode = UI.WheelSelector(ID_NameDisplayOptions, nameDisplayOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight), theme.OptionsWheel, Anchor.TopLeft);
+			int nameDisplayMode = UI.WheelSelector(ID_NameDisplayOptions, nameDisplayOptions, UI.TopLeft + Vector2.down * pad, new Vector2(pw, DrawSettings.ButtonHeight), theme.OptionsWheel, Anchor.TopLeft);
 			ChipSaveMenu.ActiveCustomizeDescription.NameLocation = (NameDisplayLocation)nameDisplayMode;
 
+
 			// ---- Chip colour UI ----
+			#if UNITY_ANDROID
 			Color newCol = UI.DrawColourPicker(ID_ColourPicker, NextPos(), pw, Anchor.TopLeft);
+			#else
+			Color newCol = UI.DrawColourPicker(ID_ColourPicker, NextPos(), pw, Anchor.TopLeft);
+			#endif
 			InputFieldTheme inputTheme = MenuHelper.Theme.ChipNameInputField;
 			inputTheme.fontSize = MenuHelper.Theme.FontSizeRegular;
 
@@ -78,14 +90,18 @@ namespace DLS.Graphics
 				UpdateChipColFromHexString(hexColInput.text);
 			}
 
+
 			// ---- Displays UI ----
 			Color labelCol = ColHelper.Darken(theme.MenuPanelCol, 0.01f);
 			Vector2 labelPos = NextPos(1);
 			UI.TextWithBackground(labelPos, new Vector2(pw, DrawSettings.ButtonHeight), Anchor.TopLeft, displayLabelString, theme.FontBold, theme.FontSizeRegular, Color.white, labelCol);
 
-			float scrollViewHeight = 20;
+			float scrollViewHeight = 18;
 			float scrollViewSpacing = UILayoutHelper.DefaultSpacing;
 			UI.DrawScrollView(ID_DisplaysScrollView, NextPos(), new Vector2(pw, scrollViewHeight), scrollViewSpacing, Anchor.TopLeft, theme.ScrollTheme, drawDisplayScrollEntry, subChipsWithDisplays.Length);
+
+			// ---- Cancel/confirm buttons ----
+			int cancelConfirmButtonIndex = MenuHelper.DrawButtonPair("CANCEL", "CONFIRM", NextPos(), pw, false);
 
 			Vector2 NextPos(float extraPadding = 0)
 			{

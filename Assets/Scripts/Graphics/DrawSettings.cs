@@ -41,8 +41,13 @@ namespace DLS.Graphics
 		public const float SelectorWheelHeight = 2.8f;
 		public const float ButtonHeight = 2.5f;
 
+		#if UNITY_ANDROID
+		public const float DefaultButtonSpacing = SpacingUnitUI * 1.2f;
+		public const float InfoBarHeight = 5f;
+		#else
 		public const float DefaultButtonSpacing = SpacingUnitUI * 1;
 		public const float InfoBarHeight = 3.5f;
+		#endif
 		public static readonly Vector2 LabelBackgroundPadding = new(0.15f, 0.1f);
 
 		// ---- Themes ----

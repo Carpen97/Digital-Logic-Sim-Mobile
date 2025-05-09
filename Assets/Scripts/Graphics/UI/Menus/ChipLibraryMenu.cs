@@ -32,7 +32,11 @@ namespace DLS.Graphics
 		static readonly string[][] buttonName_starUnstar =
 		{
 			new[] { "ADD TO STARRED" },
+			#if UNITY_ANDROID
+			new[] { "UNSTAR" }
+			#else
 			new[] { "REMOVE FROM STARRED" }
+			#endif
 		};
 
 		static readonly bool[] interactableStates_renameDelete = { true, true };

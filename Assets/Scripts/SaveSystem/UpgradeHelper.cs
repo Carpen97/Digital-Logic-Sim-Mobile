@@ -8,8 +8,8 @@ namespace DLS.SaveSystem
 	{
 		public static void ApplyVersionChanges(ChipDescription[] customChips, ChipDescription[] builtinChips)
 		{
-			Main.Version defaultVersion = new(2, 0, 0);
-			Main.Version version_2_1_4 = new(2, 1, 4);
+			Main.Version defaultVersion = new(2, 0, 0,0);
+			Main.Version version_2_1_4 = new(2, 1, 4,1);
 
 			foreach (ChipDescription chipDesc in customChips)
 			{

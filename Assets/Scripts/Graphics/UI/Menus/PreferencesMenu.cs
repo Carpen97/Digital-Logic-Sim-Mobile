@@ -16,7 +16,7 @@ namespace DLS.Graphics
 		#else
 		const float menuWidth = 55;
 		#endif
-		const float verticalOffset = 22;
+		const float verticalOffset = 23;
 
 		public const int DisplayMode_Always = 0;
 		public const int DisplayMode_OnHover = 1;
@@ -39,6 +39,14 @@ namespace DLS.Graphics
 		{
 			"Off",
 			"On"
+		};
+
+		static readonly string[] WireCurvatureOptions =
+		{
+			"Off",
+			"Small",
+			"Medium",
+			"Large",
 		};
 
 		static readonly string[] SnappingOptions =
@@ -80,6 +88,7 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_MainPinNames = new("PREFS_MainPinNames");
 		static readonly UIHandle ID_ChipPinNames = new("PREFS_ChipPinNames");
 		static readonly UIHandle ID_GridDisplay = new("PREFS_GridDisplay");
+		static readonly UIHandle ID_WireCurvatureDisplay = new("PREFS_WireCurvatureDisplay");
 		static readonly UIHandle ID_Snapping = new("PREFS_Snapping");
 		static readonly UIHandle ID_StraightWires = new("PREFS_StraightWires");
 		static readonly UIHandle ID_SimStatus = new("PREFS_SimStatus");
@@ -88,6 +97,7 @@ namespace DLS.Graphics
 
 		#if UNITY_ANDROID
 		static readonly string showGridLabel = "Show grid";
+		static readonly string wireCurvatureLabel = "Wire curvature";
 		#else
 		static readonly string showGridLabel = "Show grid" + CreateShortcutString("Ctrl+G");
 		#endif
@@ -125,6 +135,7 @@ namespace DLS.Graphics
 				int mainPinNamesMode = DrawNextWheel("Show I/O pin names", PinDisplayOptions, ID_MainPinNames); //-ERROR ORIGANTES HERE
 				int chipPinNamesMode = DrawNextWheel("Show chip pin names", PinDisplayOptions, ID_ChipPinNames);
 				int gridDisplayMode = DrawNextWheel(showGridLabel, GridDisplayOptions, ID_GridDisplay);
+				int wireDisplayMode = DrawNextWheel(wireCurvatureLabel, WireCurvatureOptions, ID_WireCurvatureDisplay);
 
 				DrawHeader("EDITING:");
     			//int snappingMode = Project.ActiveProject.description.Prefs_Snapping;
@@ -168,6 +179,7 @@ namespace DLS.Graphics
 				project.description.Prefs_MainPinNamesDisplayMode = mainPinNamesMode;
 				project.description.Prefs_ChipPinNamesDisplayMode = chipPinNamesMode;
 				project.description.Prefs_GridDisplayMode = gridDisplayMode;
+				project.description.Prefs_WireCurvatureMode = wireDisplayMode;
 				project.description.Prefs_Snapping = snappingMode;
 				project.description.Prefs_StraightWires = straightWireMode;
 				project.description.Prefs_SimTargetStepsPerSecond = targetSimTicksPerSecond;
@@ -237,6 +249,7 @@ namespace DLS.Graphics
 			UI.GetWheelSelectorState(ID_MainPinNames).index = projDesc.Prefs_MainPinNamesDisplayMode;
 			UI.GetWheelSelectorState(ID_ChipPinNames).index = projDesc.Prefs_ChipPinNamesDisplayMode;
 			UI.GetWheelSelectorState(ID_GridDisplay).index = projDesc.Prefs_GridDisplayMode;
+			UI.GetWheelSelectorState(ID_WireCurvatureDisplay).index = projDesc.Prefs_WireCurvatureMode;
 	
 			// 🛠 Clamp snapping and straight wire mode indexes
 			#if UNITY_ANDROID

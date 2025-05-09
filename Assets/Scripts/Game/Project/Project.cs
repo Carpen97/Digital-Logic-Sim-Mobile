@@ -171,7 +171,7 @@ namespace DLS.Game
 		void UpdateViewedChipsString()
 		{
 			string[] viewedChipNames = chipViewStack.Select(c => c.ChipName).SkipLast(1).Reverse().ToArray();
-			viewedChipsString = "Viewing: " + string.Join(" > ", viewedChipNames);
+			viewedChipsString = "\t\tViewing: " + string.Join(" > ", viewedChipNames);
 		}
 
 

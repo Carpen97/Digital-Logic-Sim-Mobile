@@ -748,8 +748,9 @@ namespace DLS.Graphics
 
 
 			// Draw
+			float interactSqrDst;
 			Color col = wire.GetColour(0);
-			float interactSqrDst = WireDrawer.DrawWireStraight(wire.BitWires[0].Points, thickness, col, mousePos);
+			interactSqrDst = WireDrawer.DrawWire(wire.BitWires[0].Points, thickness, col, mousePos);
 
 			// Draw connection point (if connects to wire)
 			if (wire.ConnectedWire != null)
@@ -782,12 +783,12 @@ namespace DLS.Graphics
 			{
 				WireInstance.BitWire bitWire = wire.BitWires[bitIndex];
 				Color col = wire.GetColour(bitIndex);
-				float sqrInteractDst = WireDrawer.DrawWireStraight(bitWire.Points, thickness, col, mousePos);
+				float sqrInteractDst = WireDrawer.DrawWire(bitWire.Points, thickness, col, mousePos);
 				if (canInteract && sqrInteractDst < sqrDstThreshold) InteractionState.NotifyElementUnderMouse(wire);
 			}
 		}
 
-		static void DrawWireEditPoints(WireInstance wire)
+		public static void DrawWireEditPoints(WireInstance wire)
 		{
 			// Wire edit points
 			if (wire == null) return;
@@ -823,6 +824,7 @@ namespace DLS.Graphics
 				}
 			}
 
+			#if !UNITY_ANDROID
 			// If no highlighted point, and mouse over wire, then draw insertion point
 			if (controller.wireEditPointIndex == -1 && InteractionState.ElementUnderMouse == wire && canInteract)
 			{
@@ -835,6 +837,7 @@ namespace DLS.Graphics
 					Draw.Point(insertionPoint, insertionPointDisplayRadius, Color.white);
 				}
 			}
+			#endif
 		}
 
 		static void DrawPin(PinInstance pin)

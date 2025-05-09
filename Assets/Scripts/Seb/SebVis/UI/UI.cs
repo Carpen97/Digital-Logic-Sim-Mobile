@@ -34,6 +34,7 @@ namespace Seb.Vis.UI
 
 
 		#if UNITY_ANDROID
+		public static bool IsInteractingWithColorPicker { get; private set; }
 		static TouchScreenKeyboard keyboard;
 		static string lastSyncedText = "";
 		static bool keyboardWasClosedThisFrame = false;
@@ -74,10 +75,12 @@ namespace Seb.Vis.UI
 
 		public static bool IsMouseOverUIThisFrame => mouseOverUIFrameIndex == Time.frameCount;
 
-		//  --------------------------- UI Scope functions ---------------------------
+        public static bool IsScrolling { get; private set; }
 
-		// Begin drawing full-screen UI
-		public static UIScope CreateUIScope() => CreateUIScope(Vector2.zero, new Vector2(Screen.width, Screen.height), false);
+        //  --------------------------- UI Scope functions ---------------------------
+
+        // Begin drawing full-screen UI
+        public static UIScope CreateUIScope() => CreateUIScope(Vector2.zero, new Vector2(Screen.width, Screen.height), false);
 
 		// Begin drawing UI with fixed aspect ratio. If aspect doesn't match screen aspect, letterboxes can optionally be displayed.
 		public static UIScope CreateFixedAspectUIScope(int aspectX = 16, int aspectY = 9, bool drawLetterbox = true)
@@ -339,6 +342,7 @@ namespace Seb.Vis.UI
 			}
 
 			OnFinishedDrawingUIElement(scrollbarArea.Centre, scrollbarArea.Size);
+			UI.IsScrolling = state.isDragging;
 			return state;
 		}
 
@@ -657,6 +661,7 @@ namespace Seb.Vis.UI
 		public static Color DrawColourPicker(UIHandle id, Vector2 pos, float width, Anchor anchor = Anchor.Centre)
 		{
 			ColourPickerState state = GetColourPickerState(id);
+			IsInteractingWithColorPicker = false;
 			Vector2 centre = CalculateCentre(pos, Vector2.one * width, anchor);
 
 			// Calculate width and spacing of hue bar
@@ -665,7 +670,7 @@ namespace Seb.Vis.UI
 
 			// Calculate size and centre of sat-val square
 			float satValWidth = width - (hueBarWidth + hueBarSpacing);
-			Vector2 satValSize = Vector2.one * satValWidth;
+			Vector2 satValSize = new Vector2(satValWidth, satValWidth);
 			Vector2 satValCentre = CalculateCentre(centre + new Vector2(-width, width) / 2, satValSize, Anchor.TopLeft);
 			Color colRgb = Color.magenta;
 
@@ -743,6 +748,7 @@ namespace Seb.Vis.UI
 			}
 
 			OnFinishedDrawingUIElement(centre, new Vector2(width, satValSize.y));
+			IsInteractingWithColorPicker = state.hueHandleSelected || state.satValHandleSelected;
 			return colRgb;
 		}
 

@@ -29,7 +29,6 @@ namespace DLS.Graphics
 		public static void DrawCustomizationScene()
 		{
 			SubChipInstance chip = ChipSaveMenu.ActiveCustomizeChip;
-
 			HandleKeyboardShortcuts();
 
 			DevSceneDrawer.DrawSubChip(chip);
@@ -78,6 +77,10 @@ namespace DLS.Graphics
 
 			displayInteractState = DisplayInteractState.Placing;
 			displayMoveMouseOffset = Vector2.zero;
+			MobileUIController.Instance.ShowPlacementButtons(
+				confirmPlacement,
+				cancelPlacement
+			);
 		}
 
 		public static void OnCustomizationMenuClosed()
@@ -91,6 +94,12 @@ namespace DLS.Graphics
 
 		static void HandleDisplayScaling()
 		{
+
+			#if UNITY_ANDROID
+			Touch touch = Input.GetTouch(0);
+			if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) ||
+				InteractionState.MouseIsOverUI) return;
+			# endif
 			Draw.StartLayer(Vector2.zero, 1, false);
 
 			Color scaleCol = new(0.4f, 1, 0.2f);
@@ -140,10 +149,18 @@ namespace DLS.Graphics
 					displayInteractState = DisplayInteractState.None;
 				}
 			}
+			MobileUIController.Instance.HidePlacementButtons();
 		}
 
 		static void HandleDisplayMovement()
 		{
+			#if UNITY_ANDROID
+			if(Input.touchCount == 1){
+				Touch touch = Input.GetTouch(0);
+				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) ||
+					InteractionState.MouseIsOverUI) return;
+			}
+			# endif
 			Draw.StartLayer(Vector2.zero, 1, false);
 			Vector2 targetPos = InputHelper.MousePosWorld + displayMoveMouseOffset;
 
@@ -174,6 +191,7 @@ namespace DLS.Graphics
 			}
 			else
 			{
+				#if !UNITY_ANDROID
 				// Confirm placement
 				bool confirmPlacement = InputHelper.IsMouseDownThisFrame(MouseButton.Left);
 				confirmPlacement |= displayInteractState == DisplayInteractState.Moving && InputHelper.IsMouseUpThisFrame(MouseButton.Left);
@@ -184,7 +202,24 @@ namespace DLS.Graphics
 					SelectedDisplay = null;
 					displayInteractState = DisplayInteractState.None;
 				}
+				#endif
 			}
+		}
+
+		static void confirmPlacement(){
+			if(SelectedDisplay != null)
+				ChipSaveMenu.ActiveCustomizeChip.Displays.Add(SelectedDisplay);
+			SelectedDisplay = null;
+			displayInteractState = DisplayInteractState.None;
+			MobileUIController.Instance.HidePlacementButtons();
+		}
+
+		static void cancelPlacement(){
+			if(SelectedDisplay != null)
+				SelectedDisplay.Desc.Position = displayPosInitial;
+			SelectedDisplay = null;
+			displayInteractState = DisplayInteractState.None;
+			MobileUIController.Instance.HidePlacementButtons();
 		}
 
 		static void HandleDeleteDisplayUnderMouse()
@@ -240,6 +275,13 @@ namespace DLS.Graphics
 							displayPosInitial = display.Desc.Position;
 							displayScaleInitial = display.Desc.Scale;
 							mouseDownPos = InputHelper.MousePosWorld;
+
+							if(IsResizingChip) return;
+							MobileUIController.Instance.ShowPlacementButtons(
+								confirmPlacement,
+								cancelPlacement
+							);
+
 							return; // exit now that a display has been selected
 						}
 					}

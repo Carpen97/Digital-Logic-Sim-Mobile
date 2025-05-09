@@ -14,10 +14,10 @@ namespace DLS.Graphics
 		
 		public static void DrawPausedBanner()
 		{
-			UI.DrawPanel(UI.TopLeft, new Vector2(UI.Width, InfoBarHeight), ActiveUITheme.InfoBarCol, Anchor.TopLeft);
+			UI.DrawPanel(UI.TopLeft, new Vector2(UI.Width, InfoBarHeight*2.1f), ActiveUITheme.InfoBarCol, Anchor.TopLeft);
 			Bounds2D panelBounds = UI.PrevBounds;
 
-			UI.DrawText("Simulation Paused <color=#886600ff>(press space to advance one step)", MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular, panelBounds.Centre, Anchor.TextCentre, Color.yellow);
+			UI.DrawText("\t  Simulation Paused <color=#886600ff> \n(Tap here to advance one step)", MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular, panelBounds.Centre, Anchor.TextCentre, Color.yellow);
 
 			if (stepCountPrev != Project.ActiveProject.simPausedSingleStepCounter || string.IsNullOrEmpty(stepString))
 			{

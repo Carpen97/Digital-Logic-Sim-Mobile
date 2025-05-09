@@ -99,6 +99,7 @@ namespace DLS.Graphics
 
 		public static int DrawButtonPair(string nameA, string nameB, Vector2 topLeft, float width, bool addVerticalPadding, bool interactableA = true, bool interactableB = true, bool ignoreInputs = false)
 		{
+
 			if (addVerticalPadding) topLeft += Vector2.down * (DefaultButtonSpacing * 3);
 
 			ButtonGroupNames[0] = nameA;
@@ -106,7 +107,7 @@ namespace DLS.Graphics
 			ButtonGroupInteractableStates[0] = interactableA;
 			ButtonGroupInteractableStates[1] = interactableB;
 
-			int buttonIndex = UI.HorizontalButtonGroup(ButtonGroupNames.AsSpan(0, 2), ButtonGroupInteractableStates.AsSpan(0, 2), Theme.ButtonTheme, topLeft, new Vector2(width, ButtonHeight), DefaultButtonSpacing, 0, Anchor.TopLeft, ignoreInputs: ignoreInputs);
+			int buttonIndex = UI.HorizontalButtonGroup(ButtonGroupNames.AsSpan(0, 2), ButtonGroupInteractableStates.AsSpan(0, 2), Theme.ButtonTheme, topLeft, new Vector2(width, ButtonHeight*1.5f), DefaultButtonSpacing, 0, Anchor.TopLeft, ignoreInputs: ignoreInputs);
 			return buttonIndex;
 		}
 

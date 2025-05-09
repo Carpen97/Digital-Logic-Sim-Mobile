@@ -88,8 +88,9 @@ namespace DLS.Graphics
 		{
 			ButtonTheme theme = DrawSettings.ActiveUITheme.MenuPopupButtonTheme;
 			float menuWidth = Draw.CalculateTextBoundsSize(menuButtonNames[0].AsSpan(), theme.fontSize, theme.font).x + 1;
+
 			Vector2 pos = new(buttonSpacing, barHeight + buttonSpacing);
-			Vector2 size = new(menuWidth, buttonHeight);
+			Vector2 size = new(menuWidth*1.3f, buttonHeight*1.5f);;
 			Draw.ID panelID = UI.ReservePanel();
 
 			using (UI.BeginBoundsScope(true))

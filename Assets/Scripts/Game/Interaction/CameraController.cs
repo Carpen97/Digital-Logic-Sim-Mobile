@@ -74,8 +74,15 @@ namespace DLS.Game
 				}
 
 				#if UNITY_ANDROID
+					if(!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip &&
+   					!DLS.Graphics.CustomizationSceneDrawer.IsPlacingDisplay &&
+   					DLS.Graphics.CustomizationSceneDrawer.SelectedDisplay == null && 
+					!UI.IsInteractingWithColorPicker &&
+					!UI.IsScrolling &&
+					!Project.ActiveProject.controller.isMovingWireEditPoint){
 
-					if(!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip){
+
+					//if(!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip){
 						Vector2 touchScreenPos = TouchInputHelper.Instance.TouchPosition;
 						Vector2 touchWorldPos = camera.ScreenToWorldPoint(touchScreenPos);
 						HandlePanInput(touchScreenPos, touchWorldPos);
@@ -153,7 +160,6 @@ namespace DLS.Game
 				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId))
 				{
 					// Touch started on UI → ignore it
-					Debug.Log("Touch UI");
 					return;
 				}
 

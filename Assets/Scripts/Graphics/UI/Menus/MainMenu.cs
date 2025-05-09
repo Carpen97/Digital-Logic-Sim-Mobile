@@ -52,7 +52,7 @@ namespace DLS.Graphics
 		{
 			FormatButtonString("Back"),
 			FormatButtonString("Delete"),
-			FormatButtonString("Duplicate"),
+			FormatButtonString("Copy"),
 			FormatButtonString("Rename"),
 			FormatButtonString("Open"),
 			FormatButtonString("Import")
@@ -169,8 +169,8 @@ namespace DLS.Graphics
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
 			#if UNITY_ANDROID
-			float buttonWidth = 30;
-			int buttonIndex = UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, UI.Centre + Vector2.up * 6, new Vector2(buttonWidth, 0), false, true, 1);
+			float buttonWidth = 40;
+			int buttonIndex = UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, UI.Centre + Vector2.up * 8, new Vector2(buttonWidth, 0.5f), false, true, 1);
 			#else
 			float buttonWidth = 15;
 			int buttonIndex = UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, UI.Centre + Vector2.up * 6, new Vector2(buttonWidth, 0), false, true, 1);
@@ -283,7 +283,6 @@ namespace DLS.Graphics
 		{
 
 			Debug.Log(SavePaths.ProjectsPath);
-			Debug.Log("FLAG 3");
 			allProjectDescriptions = Loader.LoadAllProjectDescriptions();
 			allProjectNames = allProjectDescriptions.Select(d => d.ProjectName).ToArray();
 			projectCompatibilities = allProjectDescriptions.Select(d => CanOpenProject(d)).ToArray();
@@ -298,6 +297,7 @@ namespace DLS.Graphics
 
 				// In case project was made with a newer version of the sim, check if this version is able to open it
 				bool canOpen = currentVersion.ToInt() >= earliestCompatible.ToInt();
+
 				string failureReason = canOpen ? string.Empty : $"This project requires version {earliestCompatible} or later.";
 				return (canOpen, failureReason);
 			}

@@ -3,6 +3,7 @@ using DLS.Description;
 using DLS.Game;
 using DLS.Graphics;
 using DLS.SaveSystem;
+using Seb.Vis.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,6 +19,7 @@ public class MobileUIController : MonoBehaviour
 	public GameObject wrenchTool;  
 	public GameObject trashCanTool;  
 	public GameObject copyTool;  
+	public GameObject singleStepTool;  
 	public bool isWrenchToolActive;
 	public GameObject boxSelectTool;  
 	public bool isBoxSelectToolActive;
@@ -46,25 +48,39 @@ public class MobileUIController : MonoBehaviour
 			Destroy(gameObject); // Prevent multiple MobileUIControllers
 		}
 	
-		ShowUndoButtons();
 		HidePlacementButtons(); 
+
 	}
 
     void Update()
     {
-		bool inMenu = !(UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup);
-		//if(inMenu || !Project.ActiveProject.CanEditViewedChip){
-		if(inMenu ){
-			HideAll();
-		}else{
+		bool defaultState = UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup;
+		if(defaultState){
 			wrenchTool.SetActive(true);
-			boxSelectTool.SetActive(true);
-			bool temp = Project.ActiveProject.controller.SelectedElements.Count>0 && !Project.ActiveProject.controller.IsPlacingElements;
-			trashCanTool.SetActive(temp);
-			copyTool.SetActive(temp);
-			//if(!isShowingPlacementButtons)
-				//ShowUndoButtons();
-
+			if(Project.ActiveProject.CanEditViewedChip){
+				boxSelectTool.SetActive(true);
+				bool temp = Project.ActiveProject.controller.SelectedElements.Count>0 && !Project.ActiveProject.controller.IsPlacingElements;
+				trashCanTool.SetActive(temp);
+				copyTool.SetActive(temp);
+				if(!isShowingPlacementButtons){
+					redoButton.SetActive(true);
+					undoButton.SetActive(true);
+				}
+				singleStepTool.SetActive(Project.ActiveProject.simPaused);
+			}else{
+				confirmButton.SetActive(false);
+				cancelButton.SetActive(false);
+				undoButton.SetActive(false);
+				redoButton.SetActive(false);
+				boxSelectTool.SetActive(false);
+				trashCanTool.SetActive(false);
+				copyTool.SetActive(false);
+			}
+		}else if(UIDrawer.ActiveMenu is UIDrawer.MenuType.ChipCustomization){
+			wrenchTool.SetActive(false);
+			boxSelectTool.SetActive(false);
+		}else{
+			HideAll();
 		}
     }
 
@@ -81,12 +97,18 @@ public class MobileUIController : MonoBehaviour
 
     public void ShowPlacementButtons(System.Action onConfirm, System.Action onCancel)
 	{
-		Debug.Log($"Setting onConfirm callback {onConfirm}");
-		Debug.Log($"Setting onCancel callback {onCancel}");
 		onConfirmCallback = onConfirm;
 		onCancelCallback = onCancel;
 
 		confirmButton.SetActive(true);
+		cancelButton.SetActive(true);
+		HideUndoButtons();
+		isShowingPlacementButtons = true;
+	}
+    public void ShowCancelButton(System.Action onCancel)
+	{
+		onCancelCallback = onCancel;
+
 		cancelButton.SetActive(true);
 		HideUndoButtons();
 		isShowingPlacementButtons = true;
@@ -96,10 +118,8 @@ public class MobileUIController : MonoBehaviour
 	{
 		confirmButton.SetActive(false);
 		cancelButton.SetActive(false);
-		Debug.Log("HIDING PLACEMENT BUTTONS AND RESETTING CALLBACKS");
 		onConfirmCallback = null;
 		onCancelCallback = null;
-		ShowUndoButtons();
 		isShowingPlacementButtons = false;
 	}
 	
@@ -110,14 +130,12 @@ public class MobileUIController : MonoBehaviour
     public IEnumerator ShowUndoButtonsDelayed()
 	{
 		yield return null;
-		Debug.Log("Showing Undo");
 		undoButton.SetActive(true);
 		redoButton.SetActive(true);
 	}
 
 	public void HideUndoButtons()
 	{
-		Debug.Log("HIDING UNDO");
 		redoButton.SetActive(false);
 		undoButton.SetActive(false);
 	}
@@ -149,16 +167,10 @@ public class MobileUIController : MonoBehaviour
 	{
 		Project.ActiveProject.controller.DeleteSelected();
 		HidePlacementButtons();
+		ShowUndoButtons();
 	}
 	
 
-//	public void OnTempPressOLD()
-	//{
-		//string json = AndroidChipIO.ImportChip();
-		//ChipDescription chip = JsonUtility.FromJson<ChipDescription>(json);
-		//Saver.SaveChip(chip, Project.ActiveProject.description.ProjectName);
-		//Main.ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(chip.Name);
-	//}
 	public void OnTempPress()
 	{
 		AndroidIO.ImportChip((json) =>
@@ -189,6 +201,11 @@ public class MobileUIController : MonoBehaviour
 			//UIDrawer.SetActiveMenu(UIDrawer.MenuType.None); // show dev chip
 		});
 	}
+	public void OnSingleTimeStep()
+	{
+		Debug.Log("SINGLE STEP");
+		Project.ActiveProject.advanceSingleSimStep = true;
+	}
 
 	public void OnCopyToolPress()
 	{
@@ -216,7 +233,6 @@ public class MobileUIController : MonoBehaviour
 	public void OnCancelButtonPressed()
 	{
 		onCancelCallback?.Invoke();
-		HidePlacementButtons();
 	}
 }
 #endif

@@ -16,6 +16,7 @@ namespace DLS.Description
 		public int Prefs_MainPinNamesDisplayMode;
 		public int Prefs_ChipPinNamesDisplayMode;
 		public int Prefs_GridDisplayMode;
+		public int Prefs_WireCurvatureMode;
 		public int Prefs_Snapping;
 		public int Prefs_StraightWires;
 		public bool Prefs_SimPaused;

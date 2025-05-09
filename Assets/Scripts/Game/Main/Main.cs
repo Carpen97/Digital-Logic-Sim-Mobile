@@ -11,9 +11,9 @@ namespace DLS.Game
 {
 	public static class Main
 	{
-		public static readonly Version DLSVersion = new(2, 1, 6);
-		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
-		public const string LastUpdatedString = "5 May 2025";
+		public static readonly Version DLSVersion = new(2, 1, 6, 3);
+		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0, 0);
+		public const string LastUpdatedString = "9 May 2025";
 		public static AppSettings ActiveAppSettings;
 
 		public static Project ActiveProject { get; private set; }
@@ -153,12 +153,21 @@ namespace DLS.Game
 			public readonly int Major;
 			public readonly int Minor;
 			public readonly int Patch;
-
+			public readonly int Mobile;
 			public Version(int major, int minor, int patch)
 			{
 				Major = major;
 				Minor = minor;
 				Patch = patch;
+				Mobile = 0;
+			}
+
+			public Version(int major, int minor, int patch, int mobile)
+			{
+				Major = major;
+				Minor = minor;
+				Patch = patch;
+				Mobile = mobile;
 			}
 
 			public int ToInt() => Major * 100000 + Minor * 1000 + Patch;
@@ -169,7 +178,10 @@ namespace DLS.Game
 				int major = int.Parse(versionParts[0]);
 				int minor = int.Parse(versionParts[1]);
 				int patch = int.Parse(versionParts[2]);
-				return new Version(major, minor, patch);
+				if(versionParts.Length==3)
+					return new Version (major, minor, patch);
+				int mobile = int.Parse(versionParts[3]); //Parse one more number for mobile
+				return new Version(major, minor, patch, mobile);
 			}
 
 			public static bool TryParse(string versionString, out Version version)
@@ -186,7 +198,7 @@ namespace DLS.Game
 				}
 			}
 
-			public override string ToString() => $"{Major}.{Minor}.{Patch}";
+			public override string ToString() => $"{Major}.{Minor}.{Patch}.{Mobile}";
 		}
 	}
 }
