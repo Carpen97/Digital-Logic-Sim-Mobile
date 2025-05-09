@@ -1,11 +1,11 @@
 {
-  "DLSVersion": "2.1.5",
+  "DLSVersion": "2.1.6",
   "Name": "BuzzTest",
   "NameLocation": 0,
   "ChipType": 0,
   "Size": {
-    "x": 1.325,
-    "y": 1.0
+    "x": 2.2,
+    "y": 2.5
   },
   "Colour": {
     "r": 0.214282215,
@@ -49,6 +49,28 @@
       },
       "OutputPinColourInfo":[],
       "InternalData":null
+    },
+    {
+      "Name":"7-SEGMENT",
+      "ID":1577077722,
+      "Label":"",
+      "Position":{
+        "x":-2.24,
+        "y":-1.625
+      },
+      "OutputPinColourInfo":[],
+      "InternalData":null
+    },
+    {
+      "Name":"7-SEGMENT",
+      "ID":2041317750,
+      "Label":"",
+      "Position":{
+        "x":-4.24,
+        "y":-1.9375
+      },
+      "OutputPinColourInfo":[],
+      "InternalData":null
     }
   ],
   "Wires":[
@@ -81,5 +103,14 @@
       "Points":[{"x":0.0,"y":0.0},{"x":0.0,"y":0.0}]
     }
   ],
-  "Displays": null
+  "Displays":[
+    {
+      "SubChipID":2041317750,
+      "Position":{
+        "x":-0.0625,
+        "y":0.6875
+      },
+      "Scale":1.0
+    }
+  ]
 }
