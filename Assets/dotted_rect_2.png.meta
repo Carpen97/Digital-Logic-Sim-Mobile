@@ -472,7 +472,21 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      dotted_rect_2_0: 3076690042183323935
+      dotted_rect_2_1: -7218709034559575154
+      dotted_rect_2_10: 1128157364382543747
+      dotted_rect_2_11: 8634590417000147153
+      dotted_rect_2_12: 3097705652634214290
+      dotted_rect_2_13: -2552465250993316450
+      dotted_rect_2_2: -4397614091644298694
+      dotted_rect_2_3: 7686099194056041996
+      dotted_rect_2_4: 7759899001854538921
+      dotted_rect_2_5: 6328396387959380766
+      dotted_rect_2_6: -2092697373326270765
+      dotted_rect_2_7: -8875505252643411225
+      dotted_rect_2_8: -3946117349024171000
+      dotted_rect_2_9: 3561156845647272156
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
