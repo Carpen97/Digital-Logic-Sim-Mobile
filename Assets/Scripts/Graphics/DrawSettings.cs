@@ -1,4 +1,5 @@
 using System.Linq;
+using DLS.Game;
 using Seb.Vis;
 using Seb.Vis.UI;
 using UnityEngine;
@@ -51,8 +52,13 @@ namespace DLS.Graphics
 		public static readonly Vector2 LabelBackgroundPadding = new(0.15f, 0.1f);
 
 		// ---- Themes ----
-		public static readonly ThemeDLS ActiveTheme = CreateTheme();
-		public static readonly UIThemeDLS ActiveUITheme = CreateUITheme();
+		public static ThemeDLS ActiveTheme = CreateTheme();
+		public static UIThemeDLS ActiveUITheme = CreateUITheme();
+
+		public static void UpdateTheme(){
+			ActiveTheme = CreateTheme();
+			ActiveUITheme = CreateUITheme();
+		}
 
 		// ---- Helper functions ----
 		public static Color GetStateColour(bool isHigh, uint index, bool hover = false)
@@ -122,7 +128,15 @@ namespace DLS.Graphics
 		{
 			FontType fontRegular = FontRegular;
 			FontType fontBold = FontBold;
-			float fontSizeRegular = UIThemeLibrary.FontSizeMedium;
+			float fontSizeRegular;
+			if(Main.ActiveAppSettings.UIScaling == 0)
+				fontSizeRegular = UIThemeLibrary.FontSizeSmall;
+			else if(Main.ActiveAppSettings.UIScaling == 1)
+				fontSizeRegular = UIThemeLibrary.FontSizeMedium;
+			else if(Main.ActiveAppSettings.UIScaling == 2)
+				fontSizeRegular = UIThemeLibrary.FontSizeLarge;
+			else
+				fontSizeRegular = UIThemeLibrary.FontSizeMedium;
 
 			Color inactiveButtonCol = MakeCol255(62);
 			Color inactiveTextol = MakeCol255(125);

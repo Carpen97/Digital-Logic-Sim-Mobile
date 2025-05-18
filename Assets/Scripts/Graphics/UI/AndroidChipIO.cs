@@ -37,6 +37,59 @@ public static class AndroidIO
 			}
 		}, new[] { "application/json", "text/json", "text/plain" });
 	}
+
+public static void ExportProjectToZip(string projectName)
+{
+	try
+	{
+		string projectPath = SavePaths.GetProjectPath(projectName);
+
+		if (!Directory.Exists(projectPath))
+		{
+			Debug.LogError($"[ExportProject] Project folder not found: {projectPath}");
+			return;
+		}
+
+		string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+		string tempZipPath = Path.Combine(Application.temporaryCachePath, $"{projectName}_{timestamp}.zip");
+
+		if (File.Exists(tempZipPath))
+			File.Delete(tempZipPath);
+
+		// --- Zip creation ---
+		ZipFile.CreateFromDirectory(projectPath, tempZipPath, System.IO.Compression.CompressionLevel.Fastest, true);
+
+		// --- Ensure the file is flushed and available ---
+		FileStream stream = File.OpenRead(tempZipPath);
+		stream.Close();
+
+		// Optional: wait a tiny bit in case OS hasn't released it
+		System.Threading.Thread.Sleep(100);
+
+		// --- Start export ---
+		NativeFilePicker.ExportFile(tempZipPath, (bool success) =>
+		{
+			if (success)
+			{
+				Debug.Log($"[ExportProject] Export successful!");
+			}
+			else
+			{
+				Debug.LogWarning("[ExportProject] Export canceled or failed.");
+			}
+
+			// Clean up
+			if (File.Exists(tempZipPath))
+				File.Delete(tempZipPath);
+		});
+	}
+	catch (Exception e)
+	{
+		Debug.LogError($"[ExportProject] Failed: {e.Message}");
+	}
+}
+
+
 	
 	public static void ImportProjectFromZip(string zipFilePath)
 	{

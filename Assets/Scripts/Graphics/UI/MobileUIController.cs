@@ -13,6 +13,7 @@ public class MobileUIController : MonoBehaviour
 	[Header("Placement Buttons")]
 	public GameObject confirmButton; 
 	public GameObject cancelButton; 
+	public GameObject addWirePointButton; 
 
 	public GameObject undoButton; 
 	public GameObject redoButton; 
@@ -29,6 +30,7 @@ public class MobileUIController : MonoBehaviour
 	private Image boxSelectImage;
 
 	private System.Action onConfirmCallback;
+	private System.Action onAddWirePointCallback;
 	private System.Action onCancelCallback;
 
 	public Text text;
@@ -47,8 +49,7 @@ public class MobileUIController : MonoBehaviour
 		{
 			Destroy(gameObject); // Prevent multiple MobileUIControllers
 		}
-	
-		HidePlacementButtons(); 
+
 
 	}
 
@@ -70,6 +71,7 @@ public class MobileUIController : MonoBehaviour
 			}else{
 				confirmButton.SetActive(false);
 				cancelButton.SetActive(false);
+				addWirePointButton.SetActive(false);
 				undoButton.SetActive(false);
 				redoButton.SetActive(false);
 				boxSelectTool.SetActive(false);
@@ -84,6 +86,52 @@ public class MobileUIController : MonoBehaviour
 		}
     }
 
+	public void ApplyTheme(IconThemeSO theme)
+	{
+		// Set normal state sprites
+		wrenchTool.GetComponent<Image>().sprite = theme.wrenchIcon;
+		boxSelectTool.GetComponent<Image>().sprite = theme.boxSelectIcon;
+		trashCanTool.GetComponent<Image>().sprite = theme.trashIcon;
+		undoButton.GetComponent<Image>().sprite = theme.undoIcon;
+		redoButton.GetComponent<Image>().sprite = theme.redoIcon;
+		confirmButton.GetComponent<Image>().sprite = theme.confirmIcon;
+		cancelButton.GetComponent<Image>().sprite = theme.cancelIcon;
+		singleStepTool.GetComponent<Image>().sprite = theme.singleStepIcon;
+		copyTool.GetComponent<Image>().sprite = theme.copyIcon;
+
+		Debug.Log($"Applied Theme: {theme.name}");
+		var buttons = new (GameObject go, Sprite toggled)[]
+		{
+			(wrenchTool, theme.wrenchIconToggled),
+			(boxSelectTool, theme.boxSelectIconToggled),
+			(trashCanTool, theme.trashIconToggled),
+			(undoButton, theme.undoIconToggled),
+			(redoButton, theme.redoIconToggled),
+			(confirmButton, theme.confirmIconToggled),
+			(cancelButton, theme.cancelIconToggled),
+			(singleStepTool, theme.singleStepIconToggled),
+			(copyTool, theme.copyIconToggled),
+		};
+
+		foreach (var (go, toggledSprite) in buttons)
+		{
+			var button = go.GetComponent<Button>();
+			if (button == null) continue;
+			if (toggledSprite != null)
+			{
+				button.transition = Selectable.Transition.SpriteSwap;
+				var spriteState = button.spriteState;
+				spriteState.pressedSprite = toggledSprite;
+				button.spriteState = spriteState;
+			}
+			else
+			{
+				button.transition = Selectable.Transition.ColorTint;
+			}
+		}
+
+	}
+
 	public void HideAll(){
 		confirmButton.SetActive(false);
 		cancelButton.SetActive(false);
@@ -93,6 +141,7 @@ public class MobileUIController : MonoBehaviour
 		boxSelectTool.SetActive(false);
 		trashCanTool.SetActive(false);
 		copyTool.SetActive(false);
+		addWirePointButton.SetActive(false);
 	}
 
     public void ShowPlacementButtons(System.Action onConfirm, System.Action onCancel)
@@ -105,6 +154,18 @@ public class MobileUIController : MonoBehaviour
 		HideUndoButtons();
 		isShowingPlacementButtons = true;
 	}
+
+    public void ShowAddWireButtons(System.Action onAddWirePoint, System.Action onCancel)
+	{
+		onAddWirePointCallback = onAddWirePoint;
+		onCancelCallback = onCancel;
+
+		addWirePointButton.SetActive(true);
+		cancelButton.SetActive(true);
+		HideUndoButtons();
+		isShowingPlacementButtons = true;
+	}
+
     public void ShowCancelButton(System.Action onCancel)
 	{
 		onCancelCallback = onCancel;
@@ -118,8 +179,10 @@ public class MobileUIController : MonoBehaviour
 	{
 		confirmButton.SetActive(false);
 		cancelButton.SetActive(false);
+		addWirePointButton.SetActive(false);
 		onConfirmCallback = null;
 		onCancelCallback = null;
+		onAddWirePointCallback = null;
 		isShowingPlacementButtons = false;
 	}
 	
@@ -228,6 +291,10 @@ public class MobileUIController : MonoBehaviour
 	{
 		Debug.Log("PRESSED CONFIRM");
 		onConfirmCallback?.Invoke();
+	}
+	public void onAddWirePointPressed()
+	{
+		onAddWirePointCallback?.Invoke();
 	}
 
 	public void OnCancelButtonPressed()

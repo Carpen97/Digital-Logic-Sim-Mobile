@@ -11,9 +11,9 @@ namespace DLS.Game
 {
 	public static class Main
 	{
-		public static readonly Version DLSVersion = new(2, 1, 6, 3);
+		public static readonly Version DLSVersion = new(2, 1, 6, 6);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0, 0);
-		public const string LastUpdatedString = "9 May 2025";
+		public const string LastUpdatedString = "14 May 2025";
 		public static AppSettings ActiveAppSettings;
 
 		public static Project ActiveProject { get; private set; }
@@ -55,10 +55,16 @@ namespace DLS.Game
 			// Save new settings
 			ActiveAppSettings = newSettings;
 			Saver.SaveAppSettings(newSettings);
+
+			DrawSettings.UpdateTheme();
 			// Apply settings to app
-			int width = newSettings.fullscreenMode is FullScreenMode.Windowed ? newSettings.ResolutionX : FullScreenResolution.x;
-			int height = newSettings.fullscreenMode is FullScreenMode.Windowed ? newSettings.ResolutionY : FullScreenResolution.y;
+			//int width = newSettings.AutoResolution ? newSettings.ResolutionX : FullScreenResolution.x;
+			//int height = newSettings.AutoResolution ? newSettings.ResolutionY : FullScreenResolution.y;
+
+			int width = newSettings.ResolutionX;
+			int height = newSettings.ResolutionY;
 			Screen.SetResolution(width, height, newSettings.fullscreenMode);
+
 			QualitySettings.vSyncCount = newSettings.VSyncEnabled ? 1 : 0;
 			if(Screen.orientation == ScreenOrientation.LandscapeRight && newSettings.orientationIsLeftLandscape){
 				Screen.orientation = ScreenOrientation.LandscapeLeft;
@@ -119,6 +125,10 @@ namespace DLS.Game
 
 				AndroidIO.ImportProjectFromZip(path);
 			}, new[] { "application/zip", "application/octet-stream" });
+		}
+		public static void ExportProject(string projectName)
+		{
+			AndroidIO.ExportProjectToZip(projectName);
 		}
 		#endif
 

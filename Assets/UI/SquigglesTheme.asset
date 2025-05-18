@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5f632de67c697140b90ce1d9f0b5b02, type: 3}
+  m_Name: SquigglesTheme
+  m_EditorClassIdentifier: 
+  wrenchIcon: {fileID: 3286163911610860551, guid: 84bfadaebf69cd84093f6e660e52c8d9, type: 3}
+  boxSelectIcon: {fileID: 3286163911610860551, guid: fa7c5249a8891e045a41240b4483ac9e, type: 3}
+  trashIcon: {fileID: 3286163911610860551, guid: 62c90d1516695ea43a6e14dd61e2033b, type: 3}
+  undoIcon: {fileID: 3286163911610860551, guid: 121f793d6411e9e438d3330f2f75758e, type: 3}
+  redoIcon: {fileID: 3286163911610860551, guid: a7a622c0a8baf0046b79e06a92261cbc, type: 3}
+  confirmIcon: {fileID: 3286163911610860551, guid: 023dd969a4920934f968b66a5a993f55, type: 3}
+  cancelIcon: {fileID: 3286163911610860551, guid: 04350634e0d39b74e8b9624b4ea00fb7, type: 3}
+  singleStepIcon: {fileID: 9141346441460425236, guid: f40561fae8a2cee4a8d22a2607ce3024, type: 3}
+  copyIcon: {fileID: 3286163911610860551, guid: 0ec44296730710a42adf65381af38c6e, type: 3}
+  wrenchIconToggled: {fileID: 3286163911610860551, guid: 5ca2a42925924c247a3795078c42815e, type: 3}
+  boxSelectIconToggled: {fileID: 3286163911610860551, guid: 35286d121551ffd4a9fbd32b16a4c841, type: 3}
+  trashIconToggled: {fileID: 3286163911610860551, guid: 0264be7583616da4fb0ad38d40e6619f, type: 3}
+  undoIconToggled: {fileID: 3286163911610860551, guid: 7d8da3791be08bc46b7e119932885a98, type: 3}
+  redoIconToggled: {fileID: 3286163911610860551, guid: d4282e7ba8274964e8a4abd412950fb0, type: 3}
+  confirmIconToggled: {fileID: 3286163911610860551, guid: 0721c9abcfb594f4b866cccab587a269, type: 3}
+  cancelIconToggled: {fileID: 3286163911610860551, guid: a543fd71609f9d14ca9773e314236054, type: 3}
+  singleStepIconToggled: {fileID: 9141346441460425236, guid: f40561fae8a2cee4a8d22a2607ce3024, type: 3}
+  copyIconToggled: {fileID: 3286163911610860551, guid: 9def3c47273d971438d979006137c0c5, type: 3}

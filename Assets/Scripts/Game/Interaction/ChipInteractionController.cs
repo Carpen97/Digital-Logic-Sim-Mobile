@@ -557,7 +557,7 @@ namespace DLS.Game
 
 					WireInstance.ConnectionInfo connectionInfo = new() { pin = pin };
 					StartPlacingWire(connectionInfo);
-					MobileUIController.Instance.ShowPlacementButtons(
+					MobileUIController.Instance.ShowAddWireButtons(
 						TryAddWirePoint,
 						CancelPlacingItems
 					);
@@ -594,7 +594,7 @@ namespace DLS.Game
 					{
 						WireInstance.ConnectionInfo connectionInfo = CreateWireToWireConnectionInfo(wire, wire.SourcePin);
 						StartPlacingWire(connectionInfo);
-						MobileUIController.Instance.ShowPlacementButtons(
+						MobileUIController.Instance.ShowAddWireButtons(
 							TryAddWirePoint,
 							CancelPlacingItems
 						);
@@ -639,7 +639,7 @@ namespace DLS.Game
 
 		void TryAddWirePoint(){
 			WireToPlace.AddWirePoint(WireToPlace.GetWirePoint(WireToPlace.WirePointCount-1));
-			MobileUIController.Instance.ShowPlacementButtons(
+			MobileUIController.Instance.ShowAddWireButtons(
 				TryAddWirePoint,
 				CancelPlacingItems
 			);

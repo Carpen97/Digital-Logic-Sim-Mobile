@@ -7,9 +7,11 @@ namespace DLS.Description
 		public int ResolutionX;
 		public int ResolutionY;
 		public FullScreenMode fullscreenMode;
+		public bool AutoResolution;
 		public bool orientationIsLeftLandscape;
 		public bool VSyncEnabled;
         public int showScrollingButtons;
+        public int UIScaling;
 
         public static AppSettings Default() =>
 			new()
@@ -19,7 +21,9 @@ namespace DLS.Description
 				fullscreenMode = FullScreenMode.Windowed,
 				orientationIsLeftLandscape = false,
 				VSyncEnabled = true,
-				showScrollingButtons = 0
+				showScrollingButtons = 0,
+				UIScaling = 1,
+				AutoResolution = true
 			};
 	}
 }

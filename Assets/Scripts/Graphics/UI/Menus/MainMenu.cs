@@ -23,15 +23,24 @@ namespace DLS.Graphics
 
 		static readonly UIHandle ID_ProjectNameInput = new("MainMenu_ProjectNameInputField");
 		static readonly UIHandle ID_DisplayResolutionWheel = new("MainMenu_DisplayResolutionWheel");
+		static readonly UIHandle ID_DisplayWidthWheel = new("MainMenu_DisplayWidthWheel");
+		static readonly UIHandle ID_DisplayHeightWheel = new("MainMenu_DisplayHeightWheel");
 		static readonly UIHandle ID_FullscreenWheel = new("MainMenu_FullscreenWheel");
 		static readonly UIHandle ID_Orientation = new("MainMenu_OrientationWheel");
 		static readonly UIHandle ID_ShowScrollButtons = new("MainMenu_ShowScrollButtonsnWheel");
+		static readonly UIHandle ID_UIScaling = new("MainMenu_UIScalingWheel");
 		static readonly UIHandle ID_ProjectsScrollView = new("MainMenu_ProjectsScrollView");
 
-		static readonly string[] SettingsWheelFullScreenOptions = { "OFF", "MAXIMIZED", "BORDERLESS", "EXCLUSIVE" };
+		#if UNITY_ANDROID
+		static readonly string[] SettingsWheelFullScreenOptions = { "AUTO","WINDOWED", "MAXIMIZED", "BORDERLESS", "EXCLUSIVE" };
+		static readonly FullScreenMode[] FullScreenModes = { FullScreenMode.Windowed, FullScreenMode.MaximizedWindow, FullScreenMode.FullScreenWindow, FullScreenMode.ExclusiveFullScreen };
+		#else
+		static readonly string[] SettingsWheelFullScreenOptions = { "WINDOWED", "MAXIMIZED", "BORDERLESS", "EXCLUSIVE" };
+		static readonly FullScreenMode[] FullScreenModes = { FullScreenMode.Windowed, FullScreenMode.MaximizedWindow, FullScreenMode.FullScreenWindow, FullScreenMode.ExclusiveFullScreen };
+		#endif
 		static readonly string[] SettingsWheelOrientationOptions = { "LEFT LANDSCAPE", "RIGHT LANDSCAPE"};
 		static readonly string[] SettingsWheelBottomBarScrollingOptions = { "ARROWS","ARROWS (inverted)", "OFF"};
-		static readonly FullScreenMode[] FullScreenModes = { FullScreenMode.Windowed, FullScreenMode.MaximizedWindow, FullScreenMode.FullScreenWindow, FullScreenMode.ExclusiveFullScreen };
+		static readonly string[] SettingsWheelUIScalingOptions = { "SMALL","MEDIUM", "LARGE"};
 		static readonly string[] SettingsWheelVSyncOptions = { "DISABLED", "ENABLED" };
 
 		static readonly Func<string, bool> projectNameValidator = ProjectNameValidator;
@@ -55,7 +64,8 @@ namespace DLS.Graphics
 			FormatButtonString("Copy"),
 			FormatButtonString("Rename"),
 			FormatButtonString("Open"),
-			FormatButtonString("Import")
+			FormatButtonString("Import"),
+			FormatButtonString("Export")
 		};
 		#else 
 		static readonly string[] openProjectButtonNames =
@@ -73,11 +83,53 @@ namespace DLS.Graphics
 			new(960, 540),
 			new(1280, 720),
 			new(1920, 1080),
+			new(2280, 1080),
+			new(2560, 1080),
+			new(1920, 1440),
+			new(1440, 1920),
 			new(2560, 1440)
 		};
 
+		static readonly int[] WidthOptions =
+		{
+			800,
+			854,
+			960,
+			1024,
+			1280,
+			1440,
+			1600,
+			1920,
+			2048,
+			2280,
+			2340,
+			2400,
+			2560,
+			3200
+		};
+
+
+		static readonly int[] HeightOptions =
+		{
+			480,
+			540,
+			600,
+			720,
+			1080,
+			1200,
+			1440,
+			1536,
+			1600
+		};
+
+
 		static readonly string[] ResolutionNames = Resolutions.Select(r => ResolutionToString(r)).ToArray();
+		static readonly string[] WidthNames = WidthOptions.Select(w => $"{w}").ToArray();
+		static readonly string[] HeightNames = HeightOptions.Select(h => $"{h}").ToArray();
 		static readonly string[] FullScreenResName = Resolutions.Select(r => ResolutionToString(Main.FullScreenResolution)).ToArray();
+
+		static readonly string[] WidthName = WidthOptions.Select(w => $"{Main.FullScreenResolution.x}").ToArray();
+		static readonly string[] HeightName = HeightOptions.Select(h => $"{Main.FullScreenResolution.y}").ToArray();
 		static readonly string[] settingsButtonGroupNames = { "EXIT", "APPLY" };
 		static readonly bool[] settingsButtonGroupStates = new bool[settingsButtonGroupNames.Length];
 
@@ -91,7 +143,6 @@ namespace DLS.Graphics
 		#if UNITY_ANDROID
 		static readonly string authorString = "Created by: Sebastian Lague\nMobile version by: David Carpenfelt";
 		#else
-
 		static readonly string authorString = "Created by: Sebastian Lague"
 		#endif
 		static readonly string versionString = $"Version: {Main.DLSVersion} ({Main.LastUpdatedString})";
@@ -211,6 +262,7 @@ namespace DLS.Graphics
 			const int renameButtonIndex = 3;
 			const int openButtonIndex = 4;
 			const int importButtonIndex = 5;
+			const int exportButtonIndex = 6;
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
 			Vector2 pos = UI.Centre + new Vector2(0, -1);
@@ -229,7 +281,12 @@ namespace DLS.Graphics
 
 			for (int i = 0; i < openProjectButtonStates.Length; i++)
 			{
-				bool buttonEnabled = activePopup == PopupKind.None && (compatibleProject || i == backButtonIndex  || i == importButtonIndex || (i == deleteButtonIndex && projectSelected));
+				bool buttonEnabled = activePopup == PopupKind.None &&
+				(compatibleProject
+	 			|| i == backButtonIndex
+	 			|| i == importButtonIndex
+	 			|| (i == deleteButtonIndex && projectSelected)
+	 			|| (i == exportButtonIndex && projectSelected)); 
 				openProjectButtonStates[i] = buttonEnabled;
 			}
 
@@ -249,7 +306,15 @@ namespace DLS.Graphics
 			else if (buttonIndex == renameButtonIndex) activePopup = PopupKind.NamePopup_RenameProject;
 			else if (buttonIndex == openButtonIndex) Main.CreateOrLoadProject(SelectedProjectName, string.Empty);
 			else if (buttonIndex == importButtonIndex) Main.ImportProject();
+			else if (buttonIndex == exportButtonIndex) Main.ExportProject(SelectedProjectName); 
 		}
+		
+		#if UNITY_ANDROID
+		public static void ExportProject(string projectName)
+		{
+			AndroidIO.ExportProjectToZip(projectName);
+		}
+		#endif
 
 		public static void ShowOverwriteConfirmationPopup(){
 			activePopup = PopupKind.OverwriteConfirmation;
@@ -319,17 +384,17 @@ namespace DLS.Graphics
 		static void OnSettingsMenuOpened()
 		{
 			// Automatically select whichever resolution option is closest to current window size
-			WheelSelectorState resolutionWheelState = UI.GetWheelSelectorState(ID_DisplayResolutionWheel);
-			int closestMatchError = int.MaxValue;
-			for (int i = 0; i < Resolutions.Length; i++)
-			{
-				int matchError = Mathf.Min(Mathf.Abs(Screen.width - Resolutions[i].x), Mathf.Abs(Screen.height - Resolutions[i].y));
-				if (matchError < closestMatchError)
-				{
-					closestMatchError = matchError;
-					resolutionWheelState.index = i;
-				}
-			}
+//			WheelSelectorState resolutionWheelState = UI.GetWheelSelectorState(ID_DisplayResolutionWheel);
+			//int closestMatchError = int.MaxValue;
+			//for (int i = 0; i < Resolutions.Length; i++)
+			//{
+				//int matchError = Mathf.Min(Mathf.Abs(Screen.width - Resolutions[i].x), Mathf.Abs(Screen.height - Resolutions[i].y));
+				//if (matchError < closestMatchError)
+				//{
+					//closestMatchError = matchError;
+					//resolutionWheelState.index = i;
+				//}
+			//}
 
 			// Automatically set curr fullscreen mode
 			WheelSelectorState fullscreenWheelState = UI.GetWheelSelectorState(ID_FullscreenWheel);
@@ -350,6 +415,8 @@ namespace DLS.Graphics
 				orientationWheelState.index= 1;
 			}
 
+			WheelSelectorState UIScalingWheelState = UI.GetWheelSelectorState(ID_UIScaling);
+			UIScalingWheelState.index = EditedAppSettings.UIScaling;
 		}
 
 		static void DrawSettingsScreen()
@@ -364,26 +431,46 @@ namespace DLS.Graphics
 			#endif
 			float labelOriginLeft = UI.Centre.x - regionWidth / 2;
 			float elementOriginRight = UI.Centre.x + regionWidth / 2;
-			Vector2 pos = new(labelOriginLeft, UI.Centre.y+8);
+			Vector2 pos = new(labelOriginLeft, UI.Centre.y+10);
 			using (UI.BeginBoundsScope(true))
 			{
 				Draw.ID backgroundPanelID = UI.ReservePanel();
 
 				// -- Resolution --
-				bool resEnabled = EditedAppSettings.fullscreenMode == FullScreenMode.Windowed;
-				UI.DrawText("Resolution", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
-				string[] resNames = resEnabled ? ResolutionNames : FullScreenResName;
-				int resIndex = UI.WheelSelector(ID_DisplayResolutionWheel, resNames, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
-				EditedAppSettings.ResolutionX = Resolutions[resIndex].x;
-				EditedAppSettings.ResolutionY = Resolutions[resIndex].y;
+				bool resEnabled = !EditedAppSettings.AutoResolution; //EditedAppSettings.fullscreenMode == FullScreenMode.Windowed;
+				//UI.DrawText("Resolution", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				//string[] resNames = resEnabled ? ResolutionNames : FullScreenResName;
+				//int resIndex = UI.WheelSelector(ID_DisplayResolutionWheel, resNames, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
+				//EditedAppSettings.ResolutionX = Resolutions[resIndex].x;
+				//EditedAppSettings.ResolutionY = Resolutions[resIndex].y;
+
+				//bool resEnabled = EditedAppSettings.fullscreenMode == FullScreenMode.Windowed;
+
 
 				//#if !UNITY_ANDROID
 				// -- Full screen --
-				pos += Vector2.down * 4;
 				UI.DrawText("Fullscreen", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				int fullScreenSettingIndex = UI.WheelSelector(ID_FullscreenWheel, SettingsWheelFullScreenOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
-				EditedAppSettings.fullscreenMode = FullScreenModes[fullScreenSettingIndex];
+				if (fullScreenSettingIndex == 0){
+					EditedAppSettings.AutoResolution = true;
+					EditedAppSettings.fullscreenMode = FullScreenModes[1];
+				} else {
+					EditedAppSettings.AutoResolution = false;
+					EditedAppSettings.fullscreenMode = FullScreenModes[fullScreenSettingIndex-1];
+				}
 				//#endif
+
+				pos += Vector2.down * 4;
+				UI.DrawText("Width", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				string[] widthOptions = resEnabled ? WidthNames : WidthName;
+				int widthIndex = UI.WheelSelector(ID_DisplayWidthWheel, widthOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
+				EditedAppSettings.ResolutionX = WidthOptions[widthIndex];
+
+				pos += Vector2.down * 4;
+				UI.DrawText("Height", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				string[] heightOptions = resEnabled ? HeightNames : HeightName;
+				int heightIndex = UI.WheelSelector(ID_DisplayHeightWheel, heightOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
+				EditedAppSettings.ResolutionY = HeightOptions[heightIndex];
 
 				// -- Vsync --
 				pos += Vector2.down * 4;
@@ -399,6 +486,10 @@ namespace DLS.Graphics
 				pos += Vector2.down * 4;
 				UI.DrawText("Hotbar scrolling", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				EditedAppSettings.showScrollingButtons = UI.WheelSelector(ID_ShowScrollButtons, SettingsWheelBottomBarScrollingOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
+				
+				pos += Vector2.down * 4;
+				UI.DrawText("UI Scaling", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				EditedAppSettings.UIScaling = UI.WheelSelector(ID_UIScaling, SettingsWheelUIScalingOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				
 				// Background panel
 				UI.ModifyPanel(backgroundPanelID, UI.GetCurrentBoundsScope().Centre, UI.GetCurrentBoundsScope().Size + Vector2.one * 3, ColHelper.MakeCol255(37, 37, 43));
@@ -417,6 +508,8 @@ namespace DLS.Graphics
 			else if (buttonIndex == 1)
 			{
 				Main.SaveAndApplyAppSettings(EditedAppSettings);
+				//DrawSettingsScreen();
+				//UIDrawer.Draw();
 			}
 		}
 
@@ -563,14 +656,26 @@ namespace DLS.Graphics
 			"This mobile version was ported and adapted by David Carpenfelt to make it accessible on Android devices.\n\n" +
 			"If you need inspiration for how to play the game, check out Sebastian's YouTube playlist:\n";
 
-			UI.DrawText(about_text, theme.font, theme.fontSize*0.6f, UI.Centre, Anchor.Centre, Color.white);
-			if (UI.Button("Link to YouTube", theme, UI.CentreBottom + Vector2.up * 18, Vector2.zero, true, true, true))
+			UI.DrawText(about_text, theme.font, theme.fontSize*0.6f, UI.Centre + Vector2.up * 10, Anchor.Centre, Color.white);
+			if (UI.Button("Link to YouTube", theme, UI.Centre + Vector2.up * 2, Vector2.zero, true, true, true))
 			{
 				BackToMain();
 				Application.OpenURL("https://www.youtube.com/watch?v=QZwneRb-zqA&list=PLFt_AvWsXl0dPhqVsKt1Ni_46ARyiCGSq");
+			}
+
+			string feedback_text = 
+			"If you'd like to give feedback please visit this discord thread\n";
+
+			UI.DrawText(feedback_text, theme.font, theme.fontSize*0.6f, UI.CentreBottom + Vector2.up * 24, Anchor.Centre, Color.white);
+			if (UI.Button("Link to Discord", theme, UI.CentreBottom + Vector2.up * 18, Vector2.zero, true, true, true))
+			{
+				BackToMain();
+				Application.OpenURL("https://discord.com/channels/1361307968276136007/1366859789711315106");
 
 			}
-			if (UI.Button("Back", theme, UI.CentreBottom + Vector2.up * 12, Vector2.zero, true, true, true))
+
+https://discord.com/channels/1361307968276136007/1366859789711315106
+			if (UI.Button("Back", theme, UI.CentreBottom + Vector2.up * 10, Vector2.zero, true, true, true))
 			{
 				BackToMain();
 			}

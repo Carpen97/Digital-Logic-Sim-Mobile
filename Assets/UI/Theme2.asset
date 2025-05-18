@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5f632de67c697140b90ce1d9f0b5b02, type: 3}
+  m_Name: Theme2
+  m_EditorClassIdentifier: 
+  wrenchIcon: {fileID: -3829704427384931014, guid: 63fcc174876d9ca4b8a748abfb36e3e3, type: 3}
+  boxSelectIcon: {fileID: 21300000, guid: 642102cf09cfd7e43bd2cf8bd2e72413, type: 3}
+  trashIcon: {fileID: 2731001722924673131, guid: 62dc6d067c2bdd24bb02e698336c8825, type: 3}
+  undoIcon: {fileID: -6062914999863570022, guid: 8c88fb6586900404da025b48ea9bd942, type: 3}
+  redoIcon: {fileID: 5453033847968541512, guid: 2207697051949db4f92f7c21c2806c91, type: 3}
+  confirmIcon: {fileID: 5545118057803231360, guid: c82f5112644ea1d45a75adbc1aa9e87b, type: 3}
+  cancelIcon: {fileID: 9055211082839658301, guid: 6b8dbcc7971a5524cbc9270705580047, type: 3}
+  singleStepIcon: {fileID: 9141346441460425236, guid: f40561fae8a2cee4a8d22a2607ce3024, type: 3}
+  copyIcon: {fileID: 6588479138510667315, guid: 08d9fa0c7da2459408b724b46763ee44, type: 3}
