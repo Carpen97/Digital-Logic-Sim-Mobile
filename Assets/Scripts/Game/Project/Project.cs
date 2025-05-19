@@ -296,6 +296,14 @@ namespace DLS.Game
 			simChip.UpdateInternalState(romChip.InternalData);
 		}
 
+		public void NotifyRomContentsEditedRuntime(SimChip simChip)
+		{
+			bool foundChip = ViewedChip.TryGetSubChipByID(simChip.ID, out SubChipInstance instance);
+			if (foundChip) {
+				instance.UpdateInternalData(simChip.InternalState);
+			}
+		}
+
 		public void NotifyLEDColourChanged(SubChipInstance ledChip, uint colIndex)
 		{
 			SimChip simChip = rootSimChip.GetSubChipFromID(ledChip.ID);

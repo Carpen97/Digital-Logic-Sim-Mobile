@@ -493,13 +493,36 @@ namespace DLS.Simulation
 				case ChipType.Rom_256x16:
 				{
 					const int ByteMask = 0b11111111;
-					uint address = PinState.GetBitStates(chip.InputPins[0].State);
+					uint address = PinState.GetBitStates(chip.InputPins[3].State);
 					uint data = chip.InternalState[address];
 					chip.OutputPins[0].State = (ushort)((data >> 8) & ByteMask);
 					chip.OutputPins[1].State = (ushort)(data & ByteMask);
 					break;
 				}
-				case ChipType.Buzzer:
+
+                case ChipType.EEPROM_256x16:
+                {
+                        const int ByteMask = 0b11111111;
+
+						uint address = PinState.GetBitStates(chip.InputPins[0].State);
+                        bool isWriting = PinState.FirstBitHigh(chip.InputPins[3].State);
+
+						if (isWriting)
+						{
+							uint writeData = (ushort)(((PinState.GetBitStates(chip.InputPins[1].State) << 8) & (ByteMask<<8)) | (PinState.GetBitStates(chip.InputPins[2].State) & ByteMask));
+
+							chip.InternalState[address] = writeData;
+
+							Project.ActiveProject.NotifyRomContentsEditedRuntime(chip);
+							
+						}
+                        uint data = chip.InternalState[address];
+                        chip.OutputPins[0].State = (ushort)((data >> 8) & ByteMask);
+                        chip.OutputPins[1].State = (ushort)(data & ByteMask);
+                        break;
+                }
+
+                case ChipType.Buzzer:
 				{
 					int freqIndex = PinState.GetBitStates(chip.InputPins[0].State);
 					int volumeIndex = PinState.GetBitStates(chip.InputPins[1].State);
