@@ -378,6 +378,12 @@ namespace DLS.Game
 			}
 		}
 
+		public void UpdateInternalData(uint[] data)
+		{
+			if (ChipType != ChipType.EEPROM_256x16) throw new Exception("Can only update internal data of EEPROM, not " + ChipTypeHelper.GetName(ChipType));
+			Array.Copy(data, InternalData, data.Length);
+		}
+
 		void LoadOutputPinColours(OutputPinColourInfo[] cols)
 		{
 			if (cols == null) return;
