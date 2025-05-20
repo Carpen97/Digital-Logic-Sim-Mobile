@@ -506,8 +506,11 @@ namespace DLS.Simulation
 
 						uint address = PinState.GetBitStates(chip.InputPins[0].State);
                         bool isWriting = PinState.FirstBitHigh(chip.InputPins[3].State);
+                        bool clockHigh = PinState.FirstBitHigh(chip.InputPins[4].State);
+                        bool isRisingEdge = clockHigh && chip.InternalState[^1] == 0;
+                        chip.InternalState[^1] = clockHigh ? 1u : 0;
 
-						if (isWriting)
+                        if (isWriting && isRisingEdge)
 						{
 							uint writeData = (ushort)(((PinState.GetBitStates(chip.InputPins[1].State) << 8) & (ByteMask<<8)) | (PinState.GetBitStates(chip.InputPins[2].State) & ByteMask));
 

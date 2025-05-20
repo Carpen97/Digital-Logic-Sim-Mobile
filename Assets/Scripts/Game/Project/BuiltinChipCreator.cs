@@ -128,12 +128,12 @@ namespace DLS.Game
 				CreatePinDescription("WRITE B", 1, PinBitCount.Bit8),
                 CreatePinDescription("WRITE A", 2, PinBitCount.Bit8),
                 CreatePinDescription("WRITE", 3, PinBitCount.Bit1),
-
+				CreatePinDescription("CLOCK", 4, PinBitCount.Bit1)
             };
             PinDescription[] outputPins =
             {
-                CreatePinDescription("OUT B", 4, PinBitCount.Bit8),
-                CreatePinDescription("OUT A", 5, PinBitCount.Bit8)
+                CreatePinDescription("OUT B", 5, PinBitCount.Bit8),
+                CreatePinDescription("OUT A", 6, PinBitCount.Bit8)
             };
 
             Color col = new(0.25f, 0.35f, 0.5f);
