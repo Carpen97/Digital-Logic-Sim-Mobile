@@ -441,6 +441,11 @@ namespace DLS.Graphics
 				bounds = DrawDisplay_LED(posWorld, scaleWorld, col);
 			}
 
+			else if (ChipTypeHelper.IsClickableDisplayType(display.DisplayType) && display is ClickableDisplayInstance clickableDisplay)
+			{
+				bounds = DrawClickableDisplay(clickableDisplay, posParent, parentScale, rootChip, sim);
+			}
+
 			display.LastDrawBounds = bounds;
 			return bounds;
 		}
@@ -581,6 +586,22 @@ namespace DLS.Graphics
 			
 			return Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
 		}
+
+		public static Bounds2D DrawClickableDisplay(ClickableDisplayInstance clickableDisplay, Vector2 posParent, float parentScale, SubChipInstance rootChip, SimChip sim = null)
+		{
+            Bounds2D bounds = Bounds2D.CreateEmpty();
+            Vector2 posLocal = clickableDisplay.Desc.Position;
+            Vector2 posWorld = posParent + posLocal * parentScale;
+			clickableDisplay.Position = posWorld;
+
+			// Calls to draw functions for each clickable display -- must include isSelected == false and NotifyElementUnderMouse(clickableDisplay) in the mouse detection to work.
+
+
+
+            clickableDisplay.InteractionBoundingBox = bounds;
+			clickableDisplay.LastDrawBounds = bounds;
+			return bounds;
+        }
 
 		public static void DrawDevPin(DevPinInstance devPin)
 		{
