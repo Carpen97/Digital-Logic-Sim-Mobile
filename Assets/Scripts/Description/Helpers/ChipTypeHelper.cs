@@ -109,5 +109,11 @@ namespace DLS.Description
 				_ => (false, false, PinBitCount.Bit1)
 			};
 		}
+
+		public static bool IsClickableDisplayType(ChipType type) {
+			// Return true for any chiptype that is a clickable display 
+
+			return false;
+		}
 	}
 }
