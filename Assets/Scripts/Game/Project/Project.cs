@@ -311,6 +311,13 @@ namespace DLS.Game
 			ledChip.InternalData[0] = colIndex;
 		}
 
+		public void NotifyButtonColourChanged(SubChipInstance buttonChip, uint colIndex)
+		{
+            SimChip simChip = rootSimChip.GetSubChipFromID(buttonChip.ID);
+            simChip.InternalState[0] = colIndex;
+            buttonChip.InternalData[0] = colIndex;
+        }
+
 		public void DeleteChip(string chipToDeleteName)
 		{
 			// If the current chip only contains the deleted chip directly as a subchip, it will be removed from the sim and everything is fine.

@@ -441,9 +441,9 @@ namespace DLS.Graphics
 				bounds = DrawDisplay_LED(posWorld, scaleWorld, col);
 			}
 
-			else if (ChipTypeHelper.IsClickableDisplayType(display.DisplayType) && display is ClickableDisplayInstance clickableDisplay)
+			else if (ChipTypeHelper.IsClickableDisplayType(display.DisplayType))
 			{
-				bounds = DrawClickableDisplay(clickableDisplay, posParent, parentScale, rootChip, sim);
+				bounds = DrawClickableDisplay(display, posParent, parentScale, rootChip, sim);
 			}
 
 			display.LastDrawBounds = bounds;
@@ -587,23 +587,60 @@ namespace DLS.Graphics
 			return Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
 		}
 
-		public static Bounds2D DrawClickableDisplay(ClickableDisplayInstance clickableDisplay, Vector2 posParent, float parentScale, SubChipInstance rootChip, SimChip sim = null)
+		public static Bounds2D DrawClickableDisplay(DisplayInstance display, Vector2 posParent, float parentScale, SubChipInstance rootChip, SimChip sim = null)
 		{
             Bounds2D bounds = Bounds2D.CreateEmpty();
-            Vector2 posLocal = clickableDisplay.Desc.Position;
+            Vector2 posLocal = display.Desc.Position;	
             Vector2 posWorld = posParent + posLocal * parentScale;
-			clickableDisplay.Position = posWorld;
+            float scaleWorld = display.Desc.Scale * parentScale;
 
-			// Calls to draw functions for each clickable display -- must include isSelected == false and NotifyElementUnderMouse(clickableDisplay) in the mouse detection to work.
+			bool inBounds = false;
+			bool clicked = false;
+
+			// Calls to draw functions for each clickable display -- must include isSelected == false in the mouse detection to work.
+			if (display.DisplayType == ChipType.Button)
+			{
+				(bounds, inBounds, clicked) = DrawInteractable_Button(posWorld, scaleWorld, sim);
+			}
 
 
+			if (inBounds)
+			{
+				InteractionState.NotifyElementUnderMouse(display);
+			}
 
-            clickableDisplay.InteractionBoundingBox = bounds;
-			clickableDisplay.LastDrawBounds = bounds;
+			rootChip.IsSelected = clicked ? false : rootChip.IsSelected;
+
+			display.LastDrawBounds = bounds;
 			return bounds;
         }
 
-		public static void DrawDevPin(DevPinInstance devPin)
+        public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Button(Vector2 centre, float scale, SimChip chipSource)
+        {
+            Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
+			bool inBounds = false;
+            bool pressed = false;
+
+            const float buttonSize = 0.875f;
+            Color col = ActiveTheme.StateDisconnectedCol;
+
+            if (chipSource != null)
+            {
+				inBounds = bounds.PointInBounds(InputHelper.MousePosWorld);
+                pressed = inBounds && InputHelper.IsMouseHeld(MouseButton.Left) && controller.CanInteractWithButton;
+                uint displayColIndex = chipSource.InternalState[0];
+                col = GetStateColour(pressed, displayColIndex);
+                chipSource.OutputPins[0].State = (uint)(pressed ? 1 : 0);
+            }
+
+            Vector2 buttonDrawSize = Vector2.one * (scale * buttonSize);
+            Draw.Squircle(centre, Vector2.one * scale, 0.15f * scale, ActiveTheme.DevPinHandle);
+            Draw.Squircle(centre, buttonDrawSize, 0.15f * scale * buttonSize, col);
+
+            return (bounds, inBounds, pressed);
+        }
+
+        public static void DrawDevPin(DevPinInstance devPin)
 		{
 			if (devPin.BitCount == PinBitCount.Bit1)
 			{
