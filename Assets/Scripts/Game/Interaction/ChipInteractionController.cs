@@ -448,7 +448,7 @@ namespace DLS.Game
 			SelectionBoxStartPos = InputHelper.MousePosWorld;
 			straightLineMoveState = StraightLineMoveState.None;
 
-			if (InteractionState.ElementUnderMouse == null || InteractionState.ElementUnderMouse is IClickable) ExitWireEditMode();
+			if (InteractionState.ElementUnderMouse == null) ExitWireEditMode();
 
 			if (InteractionState.MouseIsOverUI) return;
 
