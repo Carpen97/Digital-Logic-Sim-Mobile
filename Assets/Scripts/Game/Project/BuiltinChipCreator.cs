@@ -22,6 +22,8 @@ namespace DLS.Game
 				CreateInputOrOutputPin(ChipType.In_8Bit),
 				CreateInputOrOutputPin(ChipType.Out_8Bit),
 				CreateInputKeyChip(),
+				CreateInputButtonChip(),
+				
 				// ---- Basic Chips ----
 				CreateNand(),
 				CreateTristateBuffer(),
@@ -152,8 +154,28 @@ namespace DLS.Game
 			return CreateBuiltinChipDescription(ChipType.Key, size, col, null, outputPins, null, NameDisplayLocation.Hidden);
 		}
 
+        static ChipDescription CreateInputButtonChip()
+        {
+            Color col = new(0.1f, 0.1f, 0.1f);
+            Vector2 size = new Vector2(GridSize, GridSize) * 3;
+			float displayWidth = size.x - GridSize *0.5f;
 
-		static ChipDescription CreateTristateBuffer()
+            PinDescription[] outputPins = { CreatePinDescription("OUT", 0) };
+			DisplayDescription[] displays =
+			{
+				new()
+				{
+					Position = Vector2.zero,
+					Scale = displayWidth,
+					SubChipID = -1
+				}
+			};
+
+            return CreateBuiltinChipDescription(ChipType.Button, size, col, null, outputPins, displays, NameDisplayLocation.Hidden);
+        }
+
+
+        static ChipDescription CreateTristateBuffer()
 		{
 			Color col = new(0.1f, 0.1f, 0.1f);
 			Vector2 size = new(CalculateGridSnappedWidth(1.5f), GridSize * 5);

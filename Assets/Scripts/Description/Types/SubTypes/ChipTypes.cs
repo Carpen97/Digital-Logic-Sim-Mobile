@@ -39,6 +39,8 @@ namespace DLS.Description
 
 		Key,
 
+		Button,
+
 		// ---- Buses ----
 		Bus_1Bit,
 		BusTerminus_1Bit,

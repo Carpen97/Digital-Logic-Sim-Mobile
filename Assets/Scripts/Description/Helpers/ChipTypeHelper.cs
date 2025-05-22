@@ -44,6 +44,8 @@ namespace DLS.Description
 			{ ChipType.Out_4Bit, "OUT-4" },
 			{ ChipType.Out_8Bit, "OUT-8" },
 			{ ChipType.Key, "KEY" },
+            { ChipType.Button, "BUTTON" },
+
 			// ---- Buses ----
 			{ ChipType.Bus_1Bit, "BUS-1" },
 			{ ChipType.Bus_4Bit, "BUS-4" },
@@ -108,6 +110,12 @@ namespace DLS.Description
 				ChipType.Out_8Bit => (false, true, PinBitCount.Bit8),
 				_ => (false, false, PinBitCount.Bit1)
 			};
+		}
+
+		public static bool IsClickableDisplayType(ChipType type) {
+			// Return true for any chiptype that is a clickable display 
+
+			return type == ChipType.Button;
 		}
 	}
 }
