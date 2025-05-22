@@ -178,8 +178,8 @@ namespace DLS.Game
         static ChipDescription CreateInputToggleChip()
         {
             Color col = new(70, 130, 180);
-            Vector2 size = new Vector2(1.5f, 3f) * GridSize;
-            float displayWidth = size.x - GridSize * 0.5f;
+            Vector2 size = new Vector2(1f, 2f) * GridSize;
+            float displayWidth = size.x;
 
             PinDescription[] outputPins = { CreatePinDescription("OUT", 0) };
             DisplayDescription[] displays =

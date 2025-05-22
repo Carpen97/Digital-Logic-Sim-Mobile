@@ -647,46 +647,54 @@ namespace DLS.Graphics
 
         public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Toggle(Vector2 centre, float scale, SimChip chipSource)
         {
-			Vector2 ratio = new Vector2(1f, 2.5f);
-			const float switchHorizontalDrawRatio = 0.875f;
-            Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre, ratio * scale);
+
+            Vector2 ratio = new Vector2(1f, 2f);
+            Bounds2D wholeBounds = Bounds2D.CreateFromCentreAndSize(centre, ratio * scale);
+
+            const float switchHorizontalDrawRatio = 0.875f;
 
             bool inBounds = false;
             bool gettingClicked = false;
 
-			int switchHeadPos = 1;
+            int currentSwitchHeadPos = 1;
+            int nextSwitchHeadPos = 1;
+
+
+            const float toggleSize = 1f;
+            Color col = ActiveTheme.StateDisconnectedCol;
+
+            Vector2 toggleDrawSize = ratio * (scale * toggleSize);
+            Vector2 switchDrawSize = switchHorizontalDrawRatio * scale * toggleSize * Vector2.one;
+            Vector2 innerSwitchDrawSize = switchDrawSize * 0.775f;
+
+            float verticalOffset = (toggleDrawSize.y / 2 - (switchDrawSize.y / switchHorizontalDrawRatio) / 2);
+
 
             if (chipSource != null)
             {
+                bool currentState = (chipSource.InternalState[0] & 1) == 1 ? true : false;
+                Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre + Vector2.up * verticalOffset, switchDrawSize);
                 inBounds = bounds.PointInBounds(InputHelper.MousePosWorld);
                 gettingClicked = inBounds && InputHelper.IsMouseDownThisFrame(MouseButton.Left) && controller.CanInteractWithButton;
-                bool currentState = (chipSource.InternalState[0] & 1) == 1 ? true : false;
 				bool nextState = gettingClicked ? !currentState : currentState;
                 chipSource.OutputPins[0].State = (uint)(nextState ? 1 : 0);
 
-				switchHeadPos = nextState ? -1 : 1;
+				currentSwitchHeadPos = currentState ? -1 : 1;
+				nextSwitchHeadPos = nextState ? -1 : 1;
 
 				if (currentState != nextState) {
 					chipSource.InternalState[0] = (uint)(nextState ? 1 : 0);
 					Project.ActiveProject.NotifyToggleStateChanged(chipSource);
 				}
             }
-
-            const float toggleSize = 1f;
-            Color col = ActiveTheme.StateDisconnectedCol;
-
-            Vector2 toggleDrawSize = ratio * (scale * toggleSize);
-			Vector2 switchDrawSize = switchHorizontalDrawRatio * scale * toggleSize * Vector2.one;
-			Vector2 innerSwitchDrawSize = switchDrawSize * 0.775f;
-
-			float verticalOffset = (toggleDrawSize.y / 2 - (switchDrawSize.y/switchHorizontalDrawRatio) / 2 ) * switchHeadPos ;
-
+            verticalOffset *= nextSwitchHeadPos;
 
 			Draw.Quad(centre, toggleDrawSize, col);
 			Draw.Quad(centre + Vector2.up * verticalOffset, switchDrawSize, ActiveTheme.BackgroundCol);
 			Draw.Quad(centre + Vector2.up * verticalOffset, innerSwitchDrawSize, ActiveTheme.DevPinHandleHighlighted);
 
-            return (bounds, inBounds, gettingClicked);
+
+            return (wholeBounds, inBounds, gettingClicked);
         }
 
 
