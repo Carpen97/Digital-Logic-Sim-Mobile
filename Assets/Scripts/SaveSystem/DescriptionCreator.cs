@@ -89,7 +89,8 @@ namespace DLS.SaveSystem
 				ChipType.Key => new uint[] { 'K' }, // Key binding
 				ChipType.Pulse => new uint[] { 50, 0, 0 }, // Pulse width, ticks remaining, input state old
 				ChipType.DisplayLED => new uint[] { 0 }, // LED colour
-				ChipType.Button => new uint[] {0}, // Button colour
+				ChipType.Button => new uint[] { 0 }, // Button colour
+				ChipType.Toggle => new uint[] { 0 }, // Toggle State 
 				_ => ChipTypeHelper.IsBusType(type) ? new uint[2] : null
 			};
 		}

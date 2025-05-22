@@ -318,7 +318,17 @@ namespace DLS.Game
             buttonChip.InternalData[0] = colIndex;
         }
 
-		public void DeleteChip(string chipToDeleteName)
+		public void NotifyToggleStateChanged(SimChip simChip)
+		{
+            bool foundChip = ViewedChip.TryGetSubChipByID(simChip.ID, out SubChipInstance instance);
+            if (foundChip)
+            {
+                instance.UpdateInternalData(simChip.InternalState);
+            }
+        }
+
+
+        public void DeleteChip(string chipToDeleteName)
 		{
 			// If the current chip only contains the deleted chip directly as a subchip, it will be removed from the sim and everything is fine.
 			// However, if it is contained indirectly somewhere within one of the chip's subchips (or their subchips, etc), then it's a bit tricky (and

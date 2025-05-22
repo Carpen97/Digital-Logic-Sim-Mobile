@@ -45,6 +45,7 @@ namespace DLS.Description
 			{ ChipType.Out_8Bit, "OUT-8" },
 			{ ChipType.Key, "KEY" },
             { ChipType.Button, "BUTTON" },
+			{ ChipType.Toggle, "DIPSWITCH" },
 
 			// ---- Buses ----
 			{ ChipType.Bus_1Bit, "BUS-1" },
@@ -115,7 +116,11 @@ namespace DLS.Description
 		public static bool IsClickableDisplayType(ChipType type) {
 			// Return true for any chiptype that is a clickable display 
 
-			return type == ChipType.Button;
+			return type == ChipType.Button || type == ChipType.Toggle;
+		}
+
+		public static bool IsInternalDataModifiable(ChipType type) {
+			return type == ChipType.EEPROM_256x16 || type == ChipType.Toggle;
 		}
 	}
 }
