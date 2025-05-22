@@ -40,6 +40,7 @@ namespace DLS.Description
 		Key,
 
 		Button,
+		Toggle,
 
 		// ---- Buses ----
 		Bus_1Bit,

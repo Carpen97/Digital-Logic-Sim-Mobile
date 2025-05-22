@@ -23,6 +23,7 @@ namespace DLS.Game
 				CreateInputOrOutputPin(ChipType.Out_8Bit),
 				CreateInputKeyChip(),
 				CreateInputButtonChip(),
+				CreateInputToggleChip(),
 				
 				// ---- Basic Chips ----
 				CreateNand(),
@@ -172,6 +173,26 @@ namespace DLS.Game
 			};
 
             return CreateBuiltinChipDescription(ChipType.Button, size, col, null, outputPins, displays, NameDisplayLocation.Hidden);
+        }
+
+        static ChipDescription CreateInputToggleChip()
+        {
+            Color col = new(70, 130, 180);
+            Vector2 size = new Vector2(1.5f, 3f) * GridSize;
+            float displayWidth = size.x - GridSize * 0.5f;
+
+            PinDescription[] outputPins = { CreatePinDescription("OUT", 0) };
+            DisplayDescription[] displays =
+            {
+                new()
+                {
+                    Position = Vector2.zero,
+                    Scale = displayWidth,
+                    SubChipID = -1
+                }
+            };
+
+            return CreateBuiltinChipDescription(ChipType.Toggle, size, col, null, outputPins, displays, NameDisplayLocation.Hidden);
         }
 
 
