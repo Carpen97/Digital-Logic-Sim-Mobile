@@ -671,14 +671,15 @@ namespace DLS.Graphics
 
             if (chipSource != null)
             {
-                bool currentState = (chipSource.InternalState[0] & 1) == 1 ? true : false;
-                Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre + Vector2.up * verticalOffset, switchDrawSize);
+				bool currentState = (chipSource.InternalState[0] & 1) == 1 ? true : false;
+				currentSwitchHeadPos = currentState ? -1 : 1;
+                Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre + Vector2.up * verticalOffset * currentSwitchHeadPos, switchDrawSize);
                 inBounds = bounds.PointInBounds(InputHelper.MousePosWorld);
                 gettingClicked = inBounds && InputHelper.IsMouseDownThisFrame(MouseButton.Left) && controller.CanInteractWithButton;
 				bool nextState = gettingClicked ? !currentState : currentState;
                 chipSource.OutputPins[0].State = (uint)(nextState ? 1 : 0);
 
-				currentSwitchHeadPos = currentState ? -1 : 1;
+
 				nextSwitchHeadPos = nextState ? -1 : 1;
 
 				if (currentState != nextState) {
