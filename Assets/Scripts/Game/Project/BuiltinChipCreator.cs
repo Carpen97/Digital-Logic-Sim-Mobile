@@ -89,14 +89,16 @@ namespace DLS.Game
 
 			PinDescription[] outputPins =
 			{
-				CreatePinDescription("CLOCK_B", 5, PinBitCount.Bit8),
-				CreatePinDescription("CLOCK_A", 4, PinBitCount.Bit8),
-				CreatePinDescription("SPS_B", 3, PinBitCount.Bit8),
-				CreatePinDescription("SPS_A", 2, PinBitCount.Bit8),
-				CreatePinDescription("CLOCK_CARRY", 1, PinBitCount.Bit1),
-				CreatePinDescription("SPS_CARRY", 0, PinBitCount.Bit1),
+				CreatePinDescription("SPC_B", 7, PinBitCount.Bit8),
+				CreatePinDescription("SPC_A", 6, PinBitCount.Bit8),
+				CreatePinDescription("SPS_B", 5, PinBitCount.Bit8),
+				CreatePinDescription("SPS_A", 4, PinBitCount.Bit8),
+				CreatePinDescription("CLOCK_B", 3, PinBitCount.Bit8),
+				CreatePinDescription("CLOCK_A", 2, PinBitCount.Bit8),
+				CreatePinDescription("CLOCK_OVERFLOW", 1, PinBitCount.Bit1),
+				CreatePinDescription("SPS_OVERFLOW", 0, PinBitCount.Bit1),
 			};
-
+			
 			float height = SubChipInstance.MinChipHeightForPins(outputPins, null);
 			Vector2 size = new(CalculateGridSnappedWidth(GridSize * 9), height);
 
