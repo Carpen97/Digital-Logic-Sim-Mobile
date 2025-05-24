@@ -51,7 +51,9 @@ namespace DLS.Game
 				CreateBus(PinBitCount.Bit8),
 				CreateBusTerminus(PinBitCount.Bit8),
 				// ---- Audio ----
-				CreateBuzzer()
+				CreateBuzzer(),
+				// ---- Clock ----
+				CreateSPSChip(),
 			};
 		}
 
@@ -80,6 +82,25 @@ namespace DLS.Game
 			Vector2 size = new(CalculateGridSnappedWidth(GridSize * 9), height);
 
 			return CreateBuiltinChipDescription(ChipType.Buzzer, size, col, inputPins, null, null);
+		}
+		static ChipDescription CreateSPSChip()
+		{
+			Color col = new(0.4f, 0.3f, 0.3f);
+
+			PinDescription[] outputPins =
+			{
+				CreatePinDescription("CLOCK_B", 5, PinBitCount.Bit8),
+				CreatePinDescription("CLOCK_A", 4, PinBitCount.Bit8),
+				CreatePinDescription("SPS_B", 3, PinBitCount.Bit8),
+				CreatePinDescription("SPS_A", 2, PinBitCount.Bit8),
+				CreatePinDescription("CLOCK_CARRY", 1, PinBitCount.Bit1),
+				CreatePinDescription("SPS_CARRY", 0, PinBitCount.Bit1),
+			};
+
+			float height = SubChipInstance.MinChipHeightForPins(outputPins, null);
+			Vector2 size = new(CalculateGridSnappedWidth(GridSize * 9), height);
+
+			return CreateBuiltinChipDescription(ChipType.SPS, size, col, null, outputPins);
 		}
 
 		static ChipDescription dev_CreateRAM_8()
