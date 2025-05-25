@@ -42,8 +42,10 @@ namespace DLS.Description
 		Button,
 		Toggle,
 
-		// ---- Buses ----
-		Bus_1Bit,
+		Constant_8Bit,
+
+        // ---- Buses ----
+        Bus_1Bit,
 		BusTerminus_1Bit,
 		Bus_4Bit,
 		BusTerminus_4Bit,

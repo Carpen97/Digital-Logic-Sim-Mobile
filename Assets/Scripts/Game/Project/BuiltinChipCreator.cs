@@ -34,6 +34,8 @@ namespace DLS.Game
 				CreateTristateBuffer(),
 				CreateClock(),
 				CreatePulse(),
+				CreateConstant_8(),
+
 				// ---- Memory ----
 				dev_CreateRAM_8(),
 				CreateROM_8(),
@@ -148,6 +150,20 @@ namespace DLS.Game
 
             return CreateBuiltinChipDescription(ChipType.EEPROM_256x16, size, col, inputPins, outputPins);
         }
+
+		static ChipDescription CreateConstant_8()
+		{
+			PinDescription[] outputPins =
+			{
+				CreatePinDescription("VALUE OUT", 0, PinBitCount.Bit8),
+			};
+
+			Color col = new(0.1f, 0.1f, 0.1f);
+			Vector2 size = Vector2.one * GridSize * 6;
+
+			return CreateBuiltinChipDescription(ChipType.Constant_8Bit, size, col, null, outputPins);
+        }
+
 
         static ChipDescription CreateInputKeyChip()
 		{

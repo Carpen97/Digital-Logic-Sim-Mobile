@@ -14,6 +14,7 @@ namespace DLS.Description
 			{ ChipType.Clock, "CLOCK" },
 			{ ChipType.Pulse, "PULSE" },
 			{ ChipType.TriStateBuffer, "3-STATE BUFFER" },
+			{ ChipType.Constant_8Bit, "CONST" },
 			// ---- Memory ----
 			{ ChipType.dev_Ram_8Bit, "RAM-8" },
 			{ ChipType.Rom_256x16, $"ROM 256{mulSymbol}16" },

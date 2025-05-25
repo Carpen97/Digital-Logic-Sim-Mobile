@@ -532,6 +532,13 @@ namespace DLS.Simulation
 					audioState.RegisterNote(freqIndex, (uint)volumeIndex);
 					break;
 				}
+
+				case ChipType.Constant_8Bit:
+				{
+					const uint bytemask = 0b11111111;
+                    chip.OutputPins[0].State = (ushort)(chip.InternalState[0] & bytemask);
+					break;
+				}
 				// ---- Bus types ----
 				default:
 				{

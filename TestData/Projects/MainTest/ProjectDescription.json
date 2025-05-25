@@ -66,7 +66,8 @@
     "EEPROM_test",
     "BUTTON_test",
     "BUTTON_test2",
-    "4sw"
+    "4sw",
+    "ConstTest"
   ],
   "StarredList":[
     {
@@ -116,6 +117,10 @@
     {
       "Name":"4sw",
       "IsCollection":false
+    },
+    {
+      "Name":"ConstTest",
+      "IsCollection":false
     }
   ],
   "ChipCollections":[
@@ -155,7 +160,7 @@
       "Name":"KEEP"
     },
     {
-      "Chips":["WIP2","RAM-sync"],
+      "Chips":["WIP2","RAM-sync","CONST"],
       "IsToggledOpen":true,
       "Name":"TEST"
     },
