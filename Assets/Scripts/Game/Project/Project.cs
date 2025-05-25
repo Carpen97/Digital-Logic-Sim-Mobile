@@ -326,7 +326,16 @@ namespace DLS.Game
                 instance.UpdateInternalData(simChip.InternalState);
             }
         }
+		
+		public void NotifyConstantEdited(SubChipInstance constantChip, ushort value)
+		{
+            SimChip simChip = rootSimChip.
+				GetSubChipFromID
+				(constantChip.ID);
+			constantChip.InternalData[0] = value;
+            simChip.UpdateInternalState(constantChip.InternalData);
 
+        }
 
         public void DeleteChip(string chipToDeleteName)
 		{

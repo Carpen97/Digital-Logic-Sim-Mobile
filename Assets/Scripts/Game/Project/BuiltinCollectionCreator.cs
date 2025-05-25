@@ -23,8 +23,9 @@ namespace DLS.Game
 					ChipType.Clock,
 					ChipType.Pulse,
 					ChipType.Key,
-					ChipType.TriStateBuffer
-				),
+					ChipType.TriStateBuffer,
+					ChipType.Constant_8Bit
+                ),
 				CreateChipCollection("IN/OUT",
 					ChipType.In_1Bit,
 					ChipType.In_4Bit,
