@@ -29,6 +29,7 @@ namespace DLS.Game
 		public readonly PinInstance[] OutputPins;
 		public string activationKeyString; // input char for the 'key chip' type (stored as string to avoid allocating when drawing)
 		public string Label;
+		private bool HasCustomLayout;
 
 		public SubChipInstance(ChipDescription description, SubChipDescription subChipDesc)
 		{
@@ -42,8 +43,14 @@ namespace DLS.Game
 			MultiLineName = CreateMultiLineName(description.Name);
 			MinSize = CalculateMinChipSize(description.InputPins, description.OutputPins, description.Name);
 
+			HasCustomLayout = description.HasCustomLayout;
+
 			InputPins = CreatePinInstances(description.InputPins, true);
 			OutputPins = CreatePinInstances(description.OutputPins, false);
+			if (HasCustomLayout)
+			{
+				LoadCustomLayout(description);
+			}
 			AllPins = InputPins.Concat(OutputPins).ToArray();
 			LoadOutputPinColours(subChipDesc.OutputPinColourInfo);
 
@@ -85,9 +92,12 @@ namespace DLS.Game
 					PinAddress address = new(subChipDesc.ID, desc.ID);
 					pins[i] = new PinInstance(desc, address, this, !isInputPin);
 				}
+				if (!HasCustomLayout)
+				{
+					// If no custom layout, then calculate the default layout
 
-				CalculatePinLayout(pins);
-
+					CalculatePinLayout(pins);
+				}
 				return pins;
 			}
 		}
@@ -136,10 +146,13 @@ namespace DLS.Game
 
 		public void UpdatePinLayout()
 		{
-			CalculatePinLayout(InputPins);
-			CalculatePinLayout(OutputPins);
+			if (!HasCustomLayout)
+			{
+				CalculatePinLayout(InputPins);
+				CalculatePinLayout(OutputPins);
+			}
 		}
-
+	
 		void CalculatePinLayout(PinInstance[] pins)
 		{
 			// If only one pin, it should be placed in the centre
@@ -176,6 +189,19 @@ namespace DLS.Game
 				}
 			}
 		}
+
+		void CustomLayout(PinInstance[] pins)
+		{
+			foreach (PinInstance pin in pins)
+			{
+				float pinHeight = pin.bitCount == PinBitCount.Bit1 ? DrawSettings.PinRadius * 2 : PinHeightFromBitCount(pin.bitCount);
+				float halfPinHeight = pinHeight / 2;
+				float maxY = Size.y / 2 - halfPinHeight;
+				float minY = -Size.y / 2 + halfPinHeight;
+				pin.LocalPosY = Mathf.Clamp(pin.LocalPosY, minY, maxY);
+			}
+		}
+		public void SetCustomLayout(bool SetCustom) => this.HasCustomLayout = SetCustom;
 
 		// Min chip height based on input and output pins
 		public static float MinChipHeightForPins(PinDescription[] inputs, PinDescription[] outputs) => Mathf.Max(MinChipHeightForPins(inputs), MinChipHeightForPins(outputs));
@@ -393,5 +419,25 @@ namespace DLS.Game
 				}
 			}
 		}
-	}
+		void LoadCustomLayout(ChipDescription chipDesc)
+		{
+            void ApplyLayout(PinInstance pin, PinDescription[] descriptions)
+            {
+                var desc = Array.Find(descriptions, d => d.ID == pin.ID);
+                if (desc.ID != 0) // found a matching description
+                {
+                    pin.face = desc.face;
+
+                    pin.LocalPosY = desc.LocalOffset;
+                
+                }
+            }
+
+            foreach (var pin in InputPins)
+                ApplyLayout(pin, chipDesc.InputPins);
+
+            foreach (var pin in OutputPins)
+                ApplyLayout(pin, chipDesc.OutputPins);
+        }
+    }
 }
