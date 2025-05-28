@@ -337,11 +337,12 @@ namespace DLS.Graphics
 					// Snap chip width to grid lines if in snap mode
 					if (Project.ActiveProject.ShouldSnapToGrid && dir.x != 0) desiredSize.x = GridHelper.SnapToGridForceEven(desiredSize.x) - DrawSettings.ChipOutlineWidth;
 
+					chip.updateMinSize();
 					Vector2 sizeNew = Vector2.Max(desiredSize, chip.MinSize);
 
 					if (sizeNew != chip.Size)
 					{
-						chip.Description.Size = Vector2.Max(desiredSize, chip.MinSize);
+                        chip.Description.Size = Vector2.Max(desiredSize, chip.MinSize);
 						ChipSaveMenu.ActiveCustomizeChip.UpdatePinLayout();
 					}
 				}

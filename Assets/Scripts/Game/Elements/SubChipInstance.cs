@@ -23,7 +23,7 @@ namespace DLS.Game
 
 		public readonly uint[] InternalData;
 		public readonly bool IsBus;
-		public readonly Vector2 MinSize;
+		public Vector2 MinSize;
 
 		public readonly string MultiLineName;
 		public readonly PinInstance[] OutputPins;
@@ -151,6 +151,13 @@ namespace DLS.Game
 				CalculatePinLayout(InputPins);
 				CalculatePinLayout(OutputPins);
 			}
+			else
+			{
+                PinInstance[] combinedPins = InputPins.Concat(OutputPins).ToArray();
+				//ReCalcMinSizes(combinedPins);
+                CustomLayout(combinedPins);
+				
+            }
 		}
 	
 		void CalculatePinLayout(PinInstance[] pins)
@@ -190,15 +197,22 @@ namespace DLS.Game
 			}
 		}
 
-		void CustomLayout(PinInstance[] pins)
+		void CustomLayout(PinInstance[] Pins)
 		{
-			foreach (PinInstance pin in pins)
+			foreach (PinInstance pin in Pins)
 			{
-				float pinHeight = pin.bitCount == PinBitCount.Bit1 ? DrawSettings.PinRadius * 2 : PinHeightFromBitCount(pin.bitCount);
-				float halfPinHeight = pinHeight / 2;
-				float maxY = Size.y / 2 - halfPinHeight;
-				float minY = -Size.y / 2 + halfPinHeight;
-				pin.LocalPosY = Mathf.Clamp(pin.LocalPosY, minY, maxY);
+                float pinHeight = pin.bitCount == PinBitCount.Bit1 ? DrawSettings.PinRadius * 2 : PinHeightFromBitCount(pin.bitCount);
+                float halfPinHeight = pinHeight / 2;
+
+                if (pin.face == 0 || pin.face == 2) // Top or bottom face
+				{
+                    pin.LocalPosY = Mathf.Clamp(pin.LocalPosY, -Size.x / 2 + halfPinHeight, Size.x / 2 - halfPinHeight);
+                }
+                else if(pin.face == 1 || pin.face == 3) // Right or left face
+				{
+                    pin.LocalPosY = Mathf.Clamp(pin.LocalPosY, -Size.y / 2 + halfPinHeight, Size.y / 2 - halfPinHeight);
+                }
+								
 			}
 		}
 		public void SetCustomLayout(bool SetCustom) => this.HasCustomLayout = SetCustom;
@@ -212,8 +226,62 @@ namespace DLS.Game
 			return CalculateDefaultPinLayout(pins.Select(p => p.BitCount).ToArray()).chipHeight;
 		}
 
-		// Calculate minimal height of chip to fit the given pins, and calculate their y positions (in grid space)
-		public static (float chipHeight, float[] pinGridY) CalculateDefaultPinLayout(PinBitCount[] pins)
+
+		//updates min size of chip based on which pins are on which faces, needed for custom layouts
+		public void updateMinSize()
+		{
+            PinInstance[] pins = InputPins.Concat(OutputPins).ToArray();
+            if (pins == null || pins.Length == 0) return;
+            float Min0 = 0f;
+            float Min1 = 0f;
+			float Min2 = 0f;
+			float Min3 = 0f;
+            foreach (PinInstance pin in pins)
+            {
+				
+                int pinGridHeight = pin.bitCount switch
+                {
+                    PinBitCount.Bit1 => 2,
+                    PinBitCount.Bit4 => 3,
+                    _ => 4
+                };
+                if (pin.face == 0)
+                {
+                    Min0 += pinGridHeight;
+                }
+                else if (pin.face == 1)
+                {
+                    Min1 += pinGridHeight;
+                }
+                else if (pin.face == 2)
+                {
+                    Min2 += pinGridHeight;
+                }
+				else
+				{
+                    Min3 += pinGridHeight;
+                }
+            }
+			
+            float MinY = Mathf.Max(Min1, Min3);
+            float MinX = Mathf.Max(Min0, Min2);
+			
+			MinX = Mathf.Abs(MinX) * DrawSettings.GridSize;
+            MinY = Mathf.Abs(MinY) * DrawSettings.GridSize;
+            
+            string multiLineName = CreateMultiLineName(Description.Name);
+            bool hasMultiLineName = multiLineName != Description.Name;
+            float minNameHeight = DrawSettings.GridSize * (hasMultiLineName ? 4 : 3);
+
+            Vector2 nameDrawBoundsSize = DevSceneDrawer.CalculateChipNameBounds(multiLineName);
+
+            float sizeX = Mathf.Max(nameDrawBoundsSize.x + DrawSettings.GridSize, MinX);
+            float sizeY = Mathf.Max(minNameHeight, MinY);
+            MinSize = new Vector2(sizeX, sizeY);
+        }
+
+        // Calculate minimal height of chip to fit the given pins, and calculate their y positions (in grid space)
+        public static (float chipHeight, float[] pinGridY) CalculateDefaultPinLayout(PinBitCount[] pins)
 		{
 			int gridY = 0; // top
 			float[] pinGridYVals = new float[pins.Length];
