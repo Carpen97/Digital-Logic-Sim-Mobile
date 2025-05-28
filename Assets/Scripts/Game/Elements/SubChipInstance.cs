@@ -154,13 +154,12 @@ namespace DLS.Game
 			else
 			{
                 PinInstance[] combinedPins = InputPins.Concat(OutputPins).ToArray();
-				//ReCalcMinSizes(combinedPins);
                 CustomLayout(combinedPins);
-				
+
             }
-		}
-	
-		void CalculatePinLayout(PinInstance[] pins)
+        }
+
+        void CalculatePinLayout(PinInstance[] pins)
 		{
 			// If only one pin, it should be placed in the centre
 			if (pins.Length == 1)
@@ -197,25 +196,65 @@ namespace DLS.Game
 			}
 		}
 
-		void CustomLayout(PinInstance[] Pins)
-		{
-			foreach (PinInstance pin in Pins)
-			{
-                float pinHeight = pin.bitCount == PinBitCount.Bit1 ? DrawSettings.PinRadius * 2 : PinHeightFromBitCount(pin.bitCount);
-                float halfPinHeight = pinHeight / 2;
+        void CustomLayout(PinInstance[] pins)
+        {
+            if (pins == null || pins.Length == 0) return;
 
-                if (pin.face == 0 || pin.face == 2) // Top or bottom face
-				{
-                    pin.LocalPosY = Mathf.Clamp(pin.LocalPosY, -Size.x / 2 + halfPinHeight, Size.x / 2 - halfPinHeight);
+            foreach (int face in new[] { 0, 1, 2, 3 })
+            {
+                var facePins = pins.Where(p => p.face == face).ToList();
+                if (facePins.Count == 0) continue;
+
+                bool isHorizontal = face == 0 || face == 2;
+                float chipSpan = isHorizontal ? Size.x : Size.y;
+
+                float GetHalfHeight(PinInstance pin) => PinHeightFromBitCount(pin.bitCount) / 2f;
+                float GetRequiredSpacing(PinInstance a, PinInstance b)
+                    => GetHalfHeight(a) + GetHalfHeight(b) + DrawSettings.GridSize;
+                float GetMinBound(PinInstance pin) => -chipSpan / 2f + GetHalfHeight(pin);
+                float GetMaxBound(PinInstance pin) => chipSpan / 2f - GetHalfHeight(pin);
+
+                void Clamp(PinInstance pin)
+                    => pin.LocalPosY = Mathf.Clamp(pin.LocalPosY, GetMinBound(pin), GetMaxBound(pin));
+
+                foreach (var pin in facePins)
+                    Clamp(pin);
+
+                // Sweeps negative to positive (left to right / bottom to top)
+                var sweepLowToHigh = facePins.OrderBy(p => p.LocalPosY).ToList();
+                for (int i = 1; i < sweepLowToHigh.Count; i++)
+                {
+                    var prev = sweepLowToHigh[i - 1];
+                    var curr = sweepLowToHigh[i];
+
+                    float spacing = GetRequiredSpacing(prev, curr);
+                    float delta = curr.LocalPosY - prev.LocalPosY;
+
+                    if (delta < spacing)
+                    {
+                        curr.LocalPosY = prev.LocalPosY + spacing;
+                        Clamp(curr);
+                    }
                 }
-                else if(pin.face == 1 || pin.face == 3) // Right or left face
-				{
-                    pin.LocalPosY = Mathf.Clamp(pin.LocalPosY, -Size.y / 2 + halfPinHeight, Size.y / 2 - halfPinHeight);
+                // now sweep positive to negative (right to left / top to bottom) to ensure both ends are within chip
+                var sweepHighToLow = facePins.OrderByDescending(p => p.LocalPosY).ToList();
+                for (int i = 1; i < sweepHighToLow.Count; i++)
+                {
+                    var prev = sweepHighToLow[i - 1];
+                    var curr = sweepHighToLow[i];
+
+                    float spacing = GetRequiredSpacing(prev, curr);
+                    float delta = prev.LocalPosY - curr.LocalPosY;
+
+                    if (delta < spacing)
+                    {
+                        curr.LocalPosY = prev.LocalPosY - spacing;
+                        Clamp(curr);
+                    }
                 }
-								
-			}
-		}
-		public void SetCustomLayout(bool SetCustom) => this.HasCustomLayout = SetCustom;
+            }
+        }
+        public void SetCustomLayout(bool SetCustom) => this.HasCustomLayout = SetCustom;
 
 		// Min chip height based on input and output pins
 		public static float MinChipHeightForPins(PinDescription[] inputs, PinDescription[] outputs) => Mathf.Max(MinChipHeightForPins(inputs), MinChipHeightForPins(outputs));
