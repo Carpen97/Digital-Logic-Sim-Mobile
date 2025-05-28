@@ -959,12 +959,12 @@ namespace DLS.Graphics
 
 						if (!pin.IsSourcePin)
 						{
-							wedgeSpan = 100f;
+							wedgeSpan = 100f; //edit angle of input
 							angle = Mathf.Atan2(-dir.y, -dir.x) * Mathf.Rad2Deg;
 						}
 						else
 						{
-							wedgeSpan = 150f;
+							wedgeSpan = 150f; //edits angle of output
 							angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
 						}
 						float angleStart = angle - wedgeSpan / 2f;

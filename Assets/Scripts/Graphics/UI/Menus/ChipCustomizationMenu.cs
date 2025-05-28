@@ -358,7 +358,7 @@ namespace DLS.Graphics
             }
         }
 
-        static bool DoesPinOverlap(PinInstance pin, out PinInstance overlappedPin)
+        public static bool DoesPinOverlap(PinInstance pin, out PinInstance overlappedPin)
         {
             overlappedPin = null;
             if (!(pin.parent is SubChipInstance chip)) return false;
