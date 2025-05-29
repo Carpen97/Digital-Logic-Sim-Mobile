@@ -228,7 +228,7 @@ namespace DLS.Graphics
             for (int i = 0; i < ChipSaveMenu.ActiveCustomizeChip.Description.OutputPins.Length; i++)
             {
                 ChipSaveMenu.ActiveCustomizeChip.Description.OutputPins[i].LocalOffset = ChipSaveMenu.ActiveCustomizeChip.OutputPins[i].LocalPosY;
-                ChipSaveMenu.ActiveCustomizeChip.Description.InputPins[i].face = ChipSaveMenu.ActiveCustomizeChip.InputPins[i].face;
+                ChipSaveMenu.ActiveCustomizeChip.Description.OutputPins[i].face = ChipSaveMenu.ActiveCustomizeChip.OutputPins[i].face;
                 
             }
         }
