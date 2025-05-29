@@ -95,8 +95,18 @@ namespace DLS.Graphics
                     pin.face = 1;
                     pin.LocalPosY = 0;
                     //Reset layout
-                    ChipSaveMenu.ActiveCustomizeChip.UpdatePinLayout();
+                    
                 }
+                ChipSaveMenu.ActiveCustomizeChip.updateMinSize();
+                if (ChipSaveMenu.ActiveCustomizeChip.MinSize.x > ChipSaveMenu.ActiveCustomizeChip.Description.Size.x)
+                {
+                    ChipSaveMenu.ActiveCustomizeChip.Description.Size.x = ChipSaveMenu.ActiveCustomizeChip.MinSize.x;
+                }
+                if (ChipSaveMenu.ActiveCustomizeChip.MinSize.y > ChipSaveMenu.ActiveCustomizeChip.Description.Size.y)
+                {
+                    ChipSaveMenu.ActiveCustomizeChip.Description.Size.y = ChipSaveMenu.ActiveCustomizeChip.MinSize.y;
+                }
+                ChipSaveMenu.ActiveCustomizeChip.UpdatePinLayout();
             }
             else if (layoutMode == 1 && !isCustomLayout)
             {
@@ -195,11 +205,9 @@ namespace DLS.Graphics
 			// Init name display mode
 			WheelSelectorState nameDisplayWheelState = UI.GetWheelSelectorState(ID_NameDisplayOptions);
 			nameDisplayWheelState.index = (int)ChipSaveMenu.ActiveCustomizeDescription.NameLocation;
+
             // Init layout mode by checking if any pins have custom positions
-            DevChipInstance chip = Project.ActiveProject.ViewedChip;
-            isCustomLayout = chip.HasCustomLayout;
-            
-            //TODO: Add in Load for custom layout of pins     
+            isCustomLayout = Project.ActiveProject.ViewedChip.HasCustomLayout;
 
             WheelSelectorState layoutWheelState = UI.GetWheelSelectorState(ID_LayoutOptions);
             layoutWheelState.index = isCustomLayout ? 1 : 0;
@@ -303,29 +311,26 @@ namespace DLS.Graphics
 
                     selectedPin.face = closestFace;
 
-                    float pinHeight = selectedPin.bitCount == PinBitCount.Bit1
-                        ? DrawSettings.PinRadius * 2
-                        : SubChipInstance.PinHeightFromBitCount(selectedPin.bitCount);
+                    float pinHeight = SubChipInstance.PinHeightFromBitCount(selectedPin.bitCount);
 
                     float maxOffset;
                     float offsetAlongFace;
 
                     if (closestFace == 0 || closestFace == 2)
                     {
-                        // Horizontal face -> move along X
+                        // Horizontal face - move along X axis
                         maxOffset = chipHalfSize.x - pinHeight / 2f;
                         offsetAlongFace = Mathf.Clamp(localMouse.x, -maxOffset, maxOffset);
                     }
                     else
                     {
-                        // Vertical face -> move along Y
+                        // Vertical face - move along Y axis
                         maxOffset = chipHalfSize.y - pinHeight / 2f;
                         offsetAlongFace = Mathf.Clamp(localMouse.y, -maxOffset, maxOffset);
                     }
 
                     selectedPin.LocalPosY = offsetAlongFace;
 
-                    // Check for overlap
                     PinInstance overlappedPin;
                     isPinPositionValid = !DoesPinOverlap(selectedPin, out overlappedPin);
 
@@ -378,13 +383,9 @@ namespace DLS.Graphics
                 float distanceAlongFace = Mathf.Abs(pin.LocalPosY - otherPin.LocalPosY);
 
                 // Calculate minimum required spacing based on pin sizes
-                float pinHeight = pin.bitCount == PinBitCount.Bit1
-                    ? DrawSettings.PinRadius * 2
-                    : SubChipInstance.PinHeightFromBitCount(pin.bitCount);
+                float pinHeight =  SubChipInstance.PinHeightFromBitCount(pin.bitCount);
 
-                float otherPinHeight = otherPin.bitCount == PinBitCount.Bit1
-                    ? DrawSettings.PinRadius * 2
-                    : SubChipInstance.PinHeightFromBitCount(otherPin.bitCount);
+                float otherPinHeight = SubChipInstance.PinHeightFromBitCount(otherPin.bitCount);
 
                 // Required space is half each pin's height plus some buffer
                 float requiredSpacing = (pinHeight + otherPinHeight) / 2f + minPinSpacing;

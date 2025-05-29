@@ -964,7 +964,7 @@ namespace DLS.Graphics
 				DrawMultiBitPin(pin);
 			}
 
-			//makes pins red if too close
+            //makes pins red if too close
             if (ChipCustomizationMenu.isDraggingPin && ChipCustomizationMenu.selectedPin == pin && !ChipCustomizationMenu.isPinPositionValid)
             {
                 Vector2 pinPos = pin.GetWorldPos();
@@ -976,13 +976,17 @@ namespace DLS.Graphics
                 {
                     float pinWidth = PinRadius * 2 * 0.95f;
                     float pinHeight = SubChipInstance.PinHeightFromBitCount(pin.bitCount);
-                    Vector2 pinSize = new(pinWidth, pinHeight);
+
+                    Vector2 pinSize = (pin.face == 0 || pin.face == 2)
+                        ? new Vector2(pinHeight, pinWidth)  // horizontal pin
+                        : new Vector2(pinWidth, pinHeight); // vertical pin
+
                     Draw.Quad(pinPos, pinSize * 1.2f, Color.red);
                 }
             }
         }
 
-		static void DrawSingleBitPin(PinInstance pin)
+        static void DrawSingleBitPin(PinInstance pin)
 		{
 			Vector2 pinPos = pin.GetWorldPos();
 			Vector2 pinSelectionBoundsPos = pinPos + pin.ForwardDir * 0.02f;

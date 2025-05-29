@@ -29,7 +29,7 @@ namespace DLS.Game
 		public readonly PinInstance[] OutputPins;
 		public string activationKeyString; // input char for the 'key chip' type (stored as string to avoid allocating when drawing)
 		public string Label;
-		private bool HasCustomLayout;
+		public bool HasCustomLayout;
 
 		public SubChipInstance(ChipDescription description, SubChipDescription subChipDesc)
 		{
