@@ -13,6 +13,7 @@ namespace DLS.Description
 		// ---- Memory ----
 		dev_Ram_8Bit,
 		Rom_256x16,
+		EEPROM_256x16,
 
 		// ---- Displays ----
 		SevenSegmentDisplay,
@@ -38,8 +39,13 @@ namespace DLS.Description
 
 		Key,
 
-		// ---- Buses ----
-		Bus_1Bit,
+		Button,
+		Toggle,
+
+		Constant_8Bit,
+
+        // ---- Buses ----
+        Bus_1Bit,
 		BusTerminus_1Bit,
 		Bus_4Bit,
 		BusTerminus_4Bit,
