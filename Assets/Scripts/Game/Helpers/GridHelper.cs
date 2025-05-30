@@ -52,5 +52,30 @@ namespace DLS.Game
 
 			return prev + offset;
 		}
+
+		public static Vector2Int GetStateGridDimension(uint bitcount)
+		{
+			int h = 1;
+			int w = (int)bitcount;
+
+			int bestH = h;
+			int bestW = w;
+
+			while (2 * h <= bitcount)
+			{
+				h++;
+				while (h * w > bitcount)
+				{
+					w--;
+				}
+				if (w * h == bitcount && w + h < bestH + bestW)
+				{
+					bestW = w;
+					bestH = h;
+				}
+			}
+
+			return new Vector2Int(bestW, bestH);
+		}
 	}
 }

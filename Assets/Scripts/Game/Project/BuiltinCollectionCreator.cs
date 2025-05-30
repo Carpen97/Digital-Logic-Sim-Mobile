@@ -27,12 +27,6 @@ namespace DLS.Game
 					ChipType.Constant_8Bit
                 ),
 				CreateChipCollection("IN/OUT",
-					ChipType.In_1Bit,
-					ChipType.In_4Bit,
-					ChipType.In_8Bit,
-					ChipType.Out_1Bit,
-					ChipType.Out_4Bit,
-					ChipType.Out_8Bit,
 					ChipType.Button
 				),
 				CreateChipCollection("MERGE/SPLIT",

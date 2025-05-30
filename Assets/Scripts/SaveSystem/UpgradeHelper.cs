@@ -26,6 +26,19 @@ namespace DLS.SaveSystem
 			}
 		}
 
+		public static void ApplyVersionChangesToProject(ProjectDescription projectDescription)
+		{
+			Main.Version defaultModdedVersion = new(1, 0, 0);
+			Main.Version moddedVersion_1_1_0 = new(1, 1, 0); // Custom IN and OUTS version
+
+			bool canParseModdedVersion = Main.Version.TryParse(projectDescription.DLSVersion_LastSaved, out Main.Version projectVersion);
+
+
+			if (!canParseModdedVersion || projectVersion.ToInt() <= moddedVersion_1_1_0.ToInt())
+			{
+				projectDescription.pinBitCounts = new PinBitCount[]{1,4,8};
+			}
+		}
 
 		static void UpdateChipPre_2_1_5(ChipDescription chipDesc)
 		{

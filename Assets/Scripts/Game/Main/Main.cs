@@ -13,6 +13,7 @@ namespace DLS.Game
 	{
 		public static readonly Version DLSVersion = new(2, 1, 6);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
+		public static readonly Version DLSVersion_ModdedID = new(1, 1, 0);
 		public const string LastUpdatedString = "5 May 2025";
 		public static AppSettings ActiveAppSettings;
 
@@ -88,7 +89,8 @@ namespace DLS.Game
 				Prefs_SimPaused = false,
 				AllCustomChipNames = Array.Empty<string>(),
 				StarredList = BuiltinCollectionCreator.GetDefaultStarredList().ToList(),
-				ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections())
+				ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections()),
+				pinBitCounts = new PinBitCount[]{ 1, 4, 8 }
 			};
 
 			Saver.SaveProjectDescription(initialDescription);

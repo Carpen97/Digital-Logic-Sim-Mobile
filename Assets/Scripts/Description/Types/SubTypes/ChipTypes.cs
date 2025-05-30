@@ -30,14 +30,10 @@ namespace DLS.Description
 		Split_8To1Bit,
 
 		// ---- In / Out Pins ----
-		In_1Bit,
-		In_4Bit,
-		In_8Bit,
-		Out_1Bit,
-		Out_4Bit,
-		Out_8Bit,
+		In_Pin,
+		Out_Pin,
 
-		Key,
+        Key,
 
 		Button,
 		Toggle,

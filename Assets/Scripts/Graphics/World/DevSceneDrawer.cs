@@ -700,7 +700,7 @@ namespace DLS.Graphics
 
         public static void DrawDevPin(DevPinInstance devPin)
 		{
-			if (devPin.BitCount == PinBitCount.Bit1)
+			if (devPin.BitCount == (uint)1)
 			{
 				Draw1BitDevPin(devPin);
 			}

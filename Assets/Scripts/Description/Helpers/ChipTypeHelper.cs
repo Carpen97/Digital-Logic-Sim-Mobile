@@ -38,12 +38,6 @@ namespace DLS.Description
 			// ---- Not really chips (but convenient to treat them as such anyway) ----
 
 			// ---- Inputs/Outputs ----
-			{ ChipType.In_1Bit, "IN-1" },
-			{ ChipType.In_4Bit, "IN-4" },
-			{ ChipType.In_8Bit, "IN-8" },
-			{ ChipType.Out_1Bit, "OUT-1" },
-			{ ChipType.Out_4Bit, "OUT-4" },
-			{ ChipType.Out_8Bit, "OUT-8" },
 			{ ChipType.Key, "KEY" },
             { ChipType.Button, "BUTTON" },
 			{ ChipType.Toggle, "DIPSWITCH" },
@@ -78,39 +72,13 @@ namespace DLS.Description
 			};
 		}
 
-		public static ChipType GetPinType(bool isInput, PinBitCount numBits)
+		public static (bool isInput, bool isOutput, PinBitCount numBits) IsInputOrOutputPin(ChipDescription chip)
 		{
-			if (isInput)
+			return chip.ChipType switch
 			{
-				return numBits switch
-				{
-					PinBitCount.Bit1 => ChipType.In_1Bit,
-					PinBitCount.Bit4 => ChipType.In_4Bit,
-					PinBitCount.Bit8 => ChipType.In_8Bit,
-					_ => throw new Exception("No input pin type found for bitcount: " + numBits)
-				};
-			}
-
-			return numBits switch
-			{
-				PinBitCount.Bit1 => ChipType.Out_1Bit,
-				PinBitCount.Bit4 => ChipType.Out_4Bit,
-				PinBitCount.Bit8 => ChipType.Out_8Bit,
-				_ => throw new Exception("No output pin type found for bitcount: " + numBits)
-			};
-		}
-
-		public static (bool isInput, bool isOutput, PinBitCount numBits) IsInputOrOutputPin(ChipType type)
-		{
-			return type switch
-			{
-				ChipType.In_1Bit => (true, false, PinBitCount.Bit1),
-				ChipType.Out_1Bit => (false, true, PinBitCount.Bit1),
-				ChipType.In_4Bit => (true, false, PinBitCount.Bit4),
-				ChipType.Out_4Bit => (false, true, PinBitCount.Bit4),
-				ChipType.In_8Bit => (true, false, PinBitCount.Bit8),
-				ChipType.Out_8Bit => (false, true, PinBitCount.Bit8),
-				_ => (false, false, PinBitCount.Bit1)
+				ChipType.In_Pin => (true, false, chip.OutputPins[0].BitCount),
+                ChipType.Out_Pin => (false, true, chip.InputPins[0].BitCount),
+                _ => (false, false, new PinBitCount { BitCount = 1 })
 			};
 		}
 
@@ -124,4 +92,4 @@ namespace DLS.Description
 			return type == ChipType.EEPROM_256x16 || type == ChipType.Toggle;
 		}
 	}
-}
+} 

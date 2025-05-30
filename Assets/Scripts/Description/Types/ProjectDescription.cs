@@ -9,6 +9,7 @@ namespace DLS.Description
 		public string ProjectName;
 		public string DLSVersion_LastSaved;
 		public string DLSVersion_EarliestCompatible;
+		public string DLSVersion_LastSavedModdedVersion;
 		public DateTime CreationTime;
 		public DateTime LastSaveTime;
 
@@ -28,8 +29,12 @@ namespace DLS.Description
 		public List<StarredItem> StarredList;
 		public List<ChipCollection> ChipCollections;
 
-		// ---- Helper functions ----
-		public bool IsStarred(string chipName, bool isCollection)
+		// List of all player-created I/O (in order of creation -- oldest first)
+		public PinBitCount[] pinBitCounts;
+
+
+        // ---- Helper functions ----
+        public bool IsStarred(string chipName, bool isCollection)
 		{
 			foreach (StarredItem item in StarredList)
 			{

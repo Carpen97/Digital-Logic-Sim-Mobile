@@ -889,7 +889,7 @@ namespace DLS.Game
 			}
 
 			ChipType chipType;
-			if (elementToPlace is DevPinInstance devPin) chipType = ChipTypeHelper.GetPinType(devPin.IsInputPin, devPin.BitCount);
+			if (elementToPlace is DevPinInstance devPinInstance) chipType = devPinInstance.IsInputPin ? ChipType.In_Pin : ChipType.Out_Pin;
 			else chipType = ((SubChipInstance)elementToPlace).ChipType;
 
 			// Place bus terminus to right of bus origin
@@ -945,11 +945,11 @@ namespace DLS.Game
 			int instanceID = IDGenerator.GenerateNewElementID(ActiveDevChip);
 
 			// Input/output dev pins are represented as chips for convenience
-			(bool isInput, bool isOutput, PinBitCount numBits) ioPinInfo = ChipTypeHelper.IsInputOrOutputPin(chipDescription.ChipType);
+			(bool isInput, bool isOutput, PinBitCount numBits) ioPinInfo = ChipTypeHelper.IsInputOrOutputPin(chipDescription);
 
 			if (ioPinInfo.isInput || ioPinInfo.isOutput) // Dev pin
 			{
-				PinDescription pinDesc = ioPinInfo.isInput ? chipDescription.InputPins[0] : chipDescription.OutputPins[0];
+				PinDescription pinDesc = ioPinInfo.isInput ? chipDescription.OutputPins[0] : chipDescription.InputPins[0];
 				pinDesc.ID = instanceID;
 				elementToPlace = new DevPinInstance(pinDesc, ioPinInfo.isInput);
 			}

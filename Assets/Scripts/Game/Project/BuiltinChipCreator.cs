@@ -18,14 +18,7 @@ namespace DLS.Game
 
 			return new[]
 			{
-				// ---- I/O Pins ----
-				CreateInputOrOutputPin(ChipType.In_1Bit),
-				CreateInputOrOutputPin(ChipType.Out_1Bit),
-				CreateInputOrOutputPin(ChipType.In_4Bit),
-				CreateInputOrOutputPin(ChipType.Out_4Bit),
-				CreateInputOrOutputPin(ChipType.In_8Bit),
-				CreateInputOrOutputPin(ChipType.Out_8Bit),
-				CreateInputKeyChip(),
+                CreateInputKeyChip(),
 				CreateInputButtonChip(),
 				CreateInputToggleChip(),
 				
@@ -42,25 +35,25 @@ namespace DLS.Game
 				CreateEEPROM_8(),
 
 				// ---- Merge / Split ----
-				CreateBitConversionChip(ChipType.Split_4To1Bit, PinBitCount.Bit4, PinBitCount.Bit1, 1, 4),
-				CreateBitConversionChip(ChipType.Split_8To4Bit, PinBitCount.Bit8, PinBitCount.Bit4, 1, 2),
-				CreateBitConversionChip(ChipType.Split_8To1Bit, PinBitCount.Bit8, PinBitCount.Bit1, 1, 8),
+				CreateBitConversionChip(ChipType.Split_4To1Bit, (PinBitCount)PinBitCount.Bit4, (PinBitCount) PinBitCount.Bit1, 1, 4),
+				CreateBitConversionChip(ChipType.Split_8To4Bit, (PinBitCount) PinBitCount.Bit8, (PinBitCount) PinBitCount.Bit4, 1, 2),
+				CreateBitConversionChip(ChipType.Split_8To1Bit, (PinBitCount) PinBitCount.Bit8, (PinBitCount) PinBitCount.Bit1, 1, 8),
 
-				CreateBitConversionChip(ChipType.Merge_1To8Bit, PinBitCount.Bit1, PinBitCount.Bit8, 8, 1),
-				CreateBitConversionChip(ChipType.Merge_1To4Bit, PinBitCount.Bit1, PinBitCount.Bit4, 4, 1),
-				CreateBitConversionChip(ChipType.Merge_4To8Bit, PinBitCount.Bit4, PinBitCount.Bit8, 2, 1),
+				CreateBitConversionChip(ChipType.Merge_1To8Bit, (PinBitCount) PinBitCount.Bit1, (PinBitCount) PinBitCount.Bit8, 8, 1),
+				CreateBitConversionChip(ChipType.Merge_1To4Bit, (PinBitCount) PinBitCount.Bit1, (PinBitCount) PinBitCount.Bit4, 4, 1),
+				CreateBitConversionChip(ChipType.Merge_4To8Bit, (PinBitCount) PinBitCount.Bit4, (PinBitCount) PinBitCount.Bit8, 2, 1),
 				// ---- Displays ----
 				CreateDisplay7Seg(),
 				CreateDisplayRGB(),
 				CreateDisplayDot(),
 				CreateDisplayLED(),
 				// ---- Bus ----
-				CreateBus(PinBitCount.Bit1),
-				CreateBusTerminus(PinBitCount.Bit1),
-				CreateBus(PinBitCount.Bit4),
-				CreateBusTerminus(PinBitCount.Bit4),
-				CreateBus(PinBitCount.Bit8),
-				CreateBusTerminus(PinBitCount.Bit8),
+				CreateBus((PinBitCount) PinBitCount.Bit1),
+				CreateBusTerminus((PinBitCount) PinBitCount.Bit1),
+				CreateBus((PinBitCount) PinBitCount.Bit4),
+				CreateBusTerminus((PinBitCount) PinBitCount.Bit4),
+				CreateBus((PinBitCount) PinBitCount.Bit8),
+				CreateBusTerminus((PinBitCount) PinBitCount.Bit8),
 				// ---- Audio ----
 				CreateBuzzer()
 			};
@@ -386,22 +379,9 @@ namespace DLS.Game
 			return CreateBuiltinChipDescription(ChipType.DisplayDot, size, col, inputPins, outputPins, displays, NameDisplayLocation.Hidden);
 		}
 
-		// (Not a chip, but convenient to treat it as one)
-		public static ChipDescription CreateInputOrOutputPin(ChipType type)
-		{
-			(bool isInput, bool isOutput, PinBitCount numBits) = ChipTypeHelper.IsInputOrOutputPin(type);
-			string name = isInput ? "IN" : "OUT";
-			PinDescription[] pin = { CreatePinDescription(name, 0, numBits) };
-
-			PinDescription[] inputs = isInput ? pin : null;
-			PinDescription[] outputs = isOutput ? pin : null;
-
-			return CreateBuiltinChipDescription(type, Vector2.zero, Color.clear, inputs, outputs);
-		}
-
 		static Vector2 BusChipSize(PinBitCount bitCount)
 		{
-			return bitCount switch
+			return bitCount.BitCount switch
 			{
 				PinBitCount.Bit1 => new Vector2(GridSize * 2, GridSize * 2),
 				PinBitCount.Bit4 => new Vector2(GridSize * 2, GridSize * 3),
@@ -412,7 +392,7 @@ namespace DLS.Game
 
 		static ChipDescription CreateBus(PinBitCount bitCount)
 		{
-			ChipType type = bitCount switch
+			ChipType type = bitCount.BitCount switch
 			{
 				PinBitCount.Bit1 => ChipType.Bus_1Bit,
 				PinBitCount.Bit4 => ChipType.Bus_4Bit,
@@ -461,7 +441,7 @@ namespace DLS.Game
 
 		static ChipDescription CreateBusTerminus(PinBitCount bitCount)
 		{
-			ChipType type = bitCount switch
+			ChipType type = bitCount.BitCount switch
 			{
 				PinBitCount.Bit1 => ChipType.BusTerminus_1Bit,
 				PinBitCount.Bit4 => ChipType.BusTerminus_4Bit,
@@ -496,12 +476,12 @@ namespace DLS.Game
 			};
 		}
 
-		static PinDescription CreatePinDescription(string name, int id, PinBitCount bitCount = PinBitCount.Bit1) =>
+		static PinDescription CreatePinDescription(string name, int id, ushort bitcount = 1) =>
 			new(
 				name,
 				id,
 				Vector2.zero,
-				bitCount,
+				new(bitcount),
 				PinColour.Red,
 				PinValueDisplayMode.Off
 			);

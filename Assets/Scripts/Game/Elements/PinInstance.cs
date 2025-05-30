@@ -10,7 +10,7 @@ namespace DLS.Game
 	{
 		public readonly PinAddress Address;
 
-		public readonly PinBitCount bitCount;
+		public PinBitCount bitCount;
 		public readonly bool IsBusPin;
 		public readonly bool IsSourcePin;
 
@@ -76,6 +76,12 @@ namespace DLS.Game
 			if (state == PinState.LogicDisconnected) return DrawSettings.ActiveTheme.StateDisconnectedCol;
 			return DrawSettings.GetStateColour(state == PinState.LogicHigh, (uint)Colour, hover);
 			
+		}
+
+		public void ChangeBitCount(int NewBitCount)
+		{ 
+			bitCount.BitCount = (ushort)NewBitCount;
+			Color col = new Color(0x22, 0x22, 0x22);
 		}
 	}
 }

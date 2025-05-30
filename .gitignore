@@ -71,3 +71,13 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /.idea
 /.vsconfig
+TestData/Projects/testea/ProjectDescription.json
+TestData/Projects/sq/ProjectDescription.json
+TestData/Projects/sq/Chips/rzqr.json
+TestData/Projects/sq/Chips/qdzadzada.json
+TestData/Projects/sq/Chips/q.json
+TestData/Projects/MainTest/ProjectDescription.json
+TestData/Deleted Projects/testPins/ProjectDescription.json
+TestData/Deleted Projects/pintest/ProjectDescription.json
+TestData/Deleted Projects/Pinners/ProjectDescription.json
+TestData/Deleted Projects/aaa/ProjectDescription.json
