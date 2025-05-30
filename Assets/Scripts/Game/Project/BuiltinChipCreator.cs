@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DLS.Description;
 using UnityEngine;
 using static DLS.Graphics.DrawSettings;
@@ -18,7 +19,7 @@ namespace DLS.Game
 
 			return new[]
 			{
-                CreateInputKeyChip(),
+				CreateInputKeyChip(),
 				CreateInputButtonChip(),
 				CreateInputToggleChip(),
 				
@@ -56,10 +57,34 @@ namespace DLS.Game
 				CreateBusTerminus((PinBitCount) PinBitCount.Bit8),
 				// ---- Audio ----
 				CreateBuzzer()
-			};
+			}
+			.Concat(CreateInOutPins(description.pinBitCounts))
+			.ToArray();
 		}
 
-		static ChipDescription CreateNand()
+		static ChipDescription[] CreateInOutPins(PinBitCount[] pinBitCountsToLoad)
+		{
+			ChipDescription[] DevPinDescriptions = new ChipDescription[pinBitCountsToLoad.Length * 2];
+
+            for (int i = 0; i < pinBitCountsToLoad.Length; i++)
+            {
+                PinBitCount pinBitCount = pinBitCountsToLoad[i];
+				PinDescription[] outPin = new[] { CreatePinDescription("OUT", 0, pinBitCount) };
+                PinDescription[] inPin = new[] { CreatePinDescription("IN", 0, pinBitCount)};
+
+				ChipDescription InChip = CreateBuiltinChipDescription(ChipType.In_Pin, Vector2.zero, Color.clear, null, outPin, null,
+					NameDisplayLocation.Hidden, name: ChipTypeHelper.GetDevPinName(true, pinBitCount));
+                ChipDescription OutChip = CreateBuiltinChipDescription(ChipType.In_Pin, Vector2.zero, Color.clear, inPin, null, null,
+					NameDisplayLocation.Hidden, name: ChipTypeHelper.GetDevPinName(false, pinBitCount));
+
+                DevPinDescriptions[i * 2] = InChip;
+                DevPinDescriptions[i * 2 + 1] = OutChip;
+            }
+
+			return DevPinDescriptions;
+        }
+
+        static ChipDescription CreateNand()
 		{
 			Color col = GetColor(new(0.73f, 0.26f, 0.26f));
 			Vector2 size = new(CalculateGridSnappedWidth(GridSize * 8), GridSize * 4);
@@ -456,9 +481,10 @@ namespace DLS.Game
 		}
 
 
-		static ChipDescription CreateBuiltinChipDescription(ChipType type, Vector2 size, Color col, PinDescription[] inputs, PinDescription[] outputs, DisplayDescription[] displays = null, NameDisplayLocation nameLoc = NameDisplayLocation.Centre)
+		static ChipDescription CreateBuiltinChipDescription(ChipType type, Vector2 size, Color col, PinDescription[] inputs, PinDescription[] outputs, DisplayDescription[] displays = null, NameDisplayLocation nameLoc = NameDisplayLocation.Centre, string name = "")
 		{
-			string name = ChipTypeHelper.GetName(type);
+			if (!ChipTypeHelper.IsDevPin(type)){name = ChipTypeHelper.GetName(type); }
+			
 			ValidatePinIDs(inputs, outputs, name);
 
 			return new ChipDescription

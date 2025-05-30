@@ -51,6 +51,7 @@ namespace DLS.Description
 			{ ChipType.BusTerminus_8Bit, "BUS-TERMINUS-8" }
 		};
 
+
 		public static string GetName(ChipType type) => Names[type];
 
 		public static bool IsBusType(ChipType type) => IsBusOriginType(type) || IsBusTerminusType(type);
@@ -82,6 +83,15 @@ namespace DLS.Description
 			};
 		}
 
+		public static string GetDevPinName(bool isInput, PinBitCount numBits)
+		{
+			return (isInput ? "IN-" : "OUT-") + numBits.BitCount.ToString();
+		}
+
+		public static bool IsDevPin(ChipType chipType)
+		{
+			return chipType == ChipType.In_Pin || chipType == ChipType.Out_Pin;
+		}
 		public static bool IsClickableDisplayType(ChipType type) {
 			// Return true for any chiptype that is a clickable display 
 
