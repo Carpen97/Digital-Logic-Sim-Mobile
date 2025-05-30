@@ -34,13 +34,10 @@ namespace DLS.SaveSystem
 			bool canParseModdedVersion = Main.Version.TryParse(projectDescription.DLSVersion_LastSavedModdedVersion, out Main.Version projectVersion);
 
 
-            if (!canParseModdedVersion || projectVersion.ToInt() <= moddedVersion_1_1_0.ToInt())
+            if ((!canParseModdedVersion) || projectVersion.ToInt() < moddedVersion_1_1_0.ToInt())
 			{
-                Debug.Log("a");
                 projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
 				projectDescription.pinBitCounts = new PinBitCount[]{1,4,8};
-                Debug.Log(projectDescription.pinBitCounts);
-
             }
         }
 

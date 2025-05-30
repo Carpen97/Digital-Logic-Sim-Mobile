@@ -29,7 +29,7 @@ namespace DLS.Description
 		public List<StarredItem> StarredList;
 		public List<ChipCollection> ChipCollections;
 
-		// List of all player-created I/O (in order of creation -- oldest first)
+		// List of all I/O (in order of creation -- oldest first)
 		public PinBitCount[] pinBitCounts;
 
 

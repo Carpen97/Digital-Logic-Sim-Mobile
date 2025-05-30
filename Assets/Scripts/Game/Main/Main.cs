@@ -65,7 +65,7 @@ namespace DLS.Game
 
 		public static void CreateOrLoadProject(string projectName, string startupChipName = "")
 		{
-			if (Loader.ProjectExists(projectName)) ActiveProject = LoadProject(projectName);
+			if (Loader.ProjectExists(projectName)) { ActiveProject = LoadProject(projectName); Saver.SaveProjectDescription(ActiveProject.description); }
 			else ActiveProject = CreateProject(projectName);
 
 			ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(startupChipName);
@@ -80,6 +80,7 @@ namespace DLS.Game
 			{
 				ProjectName = projectName,
 				DLSVersion_LastSaved = DLSVersion.ToString(),
+				DLSVersion_LastSavedModdedVersion = DLSVersion_ModdedID.ToString(),
 				DLSVersion_EarliestCompatible = DLSVersion_EarliestCompatible.ToString(),
 				CreationTime = DateTime.Now,
 				Prefs_ChipPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
