@@ -23,15 +23,17 @@ namespace DLS.Game
 					ChipType.Clock,
 					ChipType.Pulse,
 					ChipType.Key,
-					ChipType.TriStateBuffer
-				),
+					ChipType.TriStateBuffer,
+					ChipType.Constant_8Bit
+                ),
 				CreateChipCollection("IN/OUT",
 					ChipType.In_1Bit,
 					ChipType.In_4Bit,
 					ChipType.In_8Bit,
 					ChipType.Out_1Bit,
 					ChipType.Out_4Bit,
-					ChipType.Out_8Bit
+					ChipType.Out_8Bit,
+					ChipType.Button
 				),
 				CreateChipCollection("MERGE/SPLIT",
 					ChipType.Merge_1To4Bit,
@@ -53,7 +55,8 @@ namespace DLS.Game
 					ChipType.DisplayLED
 				),
 				CreateChipCollection("MEMORY",
-					ChipType.Rom_256x16
+					ChipType.Rom_256x16,
+					ChipType.EEPROM_256x16
 				)
 			};
 		}
