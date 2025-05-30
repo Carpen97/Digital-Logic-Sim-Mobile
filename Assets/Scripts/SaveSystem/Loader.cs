@@ -54,7 +54,7 @@ namespace DLS.SaveSystem
 				collection.UpdateDisplayStrings();
 			}
 
-			UpgradeHelper.ApplyVersionChangesToProject(desc); // Apply changes necessary to ProjectDesc file for modded game.
+			UpgradeHelper.ApplyVersionChangesToProject(ref desc); // Apply changes necessary to ProjectDesc file for modded game.
 			return desc;
 		}
 
