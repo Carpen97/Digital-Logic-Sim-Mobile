@@ -513,16 +513,13 @@ namespace DLS.Simulation
 					double tps = Project.ActiveProject.simAvgTicksPerSec;
 					ushort sps = (ushort)tps;
 					ushort spc = (ushort)stepsPerClockTransition;
-					ushort srpc /* stands for steps ran per clock */ = (ushort)(sps / spc);
 
-					PinState.Set(ref chip.OutputPins[7].State, tps >= 65536 ? PinState.LogicHigh : PinState.LogicLow);
-					PinState.Set(ref chip.OutputPins[6].State, stepsPerClockTransition > 65535 ? PinState.LogicHigh : PinState.LogicLow);
-					chip.OutputPins[5].State = (ushort)((sps >> 8) & ByteMask);
-					chip.OutputPins[4].State = (ushort)(sps & ByteMask);
-					chip.OutputPins[3].State = (ushort)((spc >> 8) & ByteMask);
-					chip.OutputPins[2].State = (ushort)(spc & ByteMask);
-					chip.OutputPins[0].State = (ushort)((srpc >> 8) & ByteMask);
-					chip.OutputPins[1].State = (ushort)(srpc & ByteMask);
+					PinState.Set(ref chip.OutputPins[5].State, tps >= 65536 ? PinState.LogicHigh : PinState.LogicLow);
+					PinState.Set(ref chip.OutputPins[4].State, stepsPerClockTransition > 65535 ? PinState.LogicHigh : PinState.LogicLow);
+					chip.OutputPins[3].State = (ushort)(sps & ByteMask);
+					chip.OutputPins[2].State = (ushort)((sps >> 8) & ByteMask);
+					chip.OutputPins[1].State = (ushort)(spc & ByteMask);
+					chip.OutputPins[0].State = (ushort)((spc >> 8) & ByteMask);
 					break;
 				}
 				// ---- Bus types ----
