@@ -10,7 +10,7 @@
   "Prefs_Snapping": 0,
   "Prefs_StraightWires": 0,
   "Prefs_SimPaused": false,
-  "Prefs_SimTargetStepsPerSecond": 150,
+  "Prefs_SimTargetStepsPerSecond": 100,
   "Prefs_SimStepsPerClockTick": 6,
   "AllCustomChipNames":[
     "AND",
@@ -63,7 +63,12 @@
     "TEST MergeSplit",
     "#",
     "BuzzTest",
-    "SPSTest"
+    "SPSTest",
+    "EEPROM_test",
+    "BUTTON_test",
+    "BUTTON_test2",
+    "4sw",
+    "ConstTest"
   ],
   "StarredList":[
     {
@@ -100,6 +105,25 @@
     },
     {
       "Name":"SPSTest",
+    },
+    {
+      "Name":"EEPROM_test",
+      "IsCollection":false
+    },
+    {
+      "Name":"BUTTON_test",
+      "IsCollection":false
+    },
+    {
+      "Name":"BUTTON_test2",
+      "IsCollection":false
+    },
+    {
+      "Name":"4sw",
+      "IsCollection":false
+    },
+    {
+      "Name":"ConstTest",
       "IsCollection":false
     }
   ],
@@ -126,12 +150,12 @@
     },
     {
       "Chips":["BUS-1","BUS-4","BUS-8"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"BUS"
     },
     {
       "Chips":["REGISTER-4","REG-8"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"MEMORY"
     },
     {
@@ -140,12 +164,12 @@
       "Name":"KEEP"
     },
     {
-      "Chips":["WIP2","RAM-sync"],
-      "IsToggledOpen":false,
+      "Chips":["WIP2","RAM-sync","CONST"],
+      "IsToggledOpen":true,
       "Name":"TEST"
     },
     {
-      "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest"],
+      "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8"],
       "IsToggledOpen":true,
       "Name":"OTHER"
     }
