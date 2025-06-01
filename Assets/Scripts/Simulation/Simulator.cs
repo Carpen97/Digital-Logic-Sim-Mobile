@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using UnityEngine;
 using DLS.Description;
 using DLS.Game;
 using Random = System.Random;
@@ -532,6 +533,21 @@ namespace DLS.Simulation
 					audioState.RegisterNote(freqIndex, (uint)volumeIndex);
 					break;
 				}
+				case ChipType.SPS:
+				{
+					const int ByteMask = 0b11111111;
+					double tps = Project.ActiveProject.simAvgTicksPerSec;
+					ushort sps = (ushort)tps;
+					ushort spc = (ushort)stepsPerClockTransition;
+
+					PinState.Set(ref chip.OutputPins[5].State, tps >= 65536 ? PinState.LogicHigh : PinState.LogicLow);
+					PinState.Set(ref chip.OutputPins[4].State, stepsPerClockTransition > 65535 ? PinState.LogicHigh : PinState.LogicLow);
+					chip.OutputPins[3].State = (ushort)(sps & ByteMask);
+					chip.OutputPins[2].State = (ushort)((sps >> 8) & ByteMask);
+					chip.OutputPins[1].State = (ushort)(spc & ByteMask);
+					chip.OutputPins[0].State = (ushort)((spc >> 8) & ByteMask);
+          break;
+        }
           
 				case ChipType.RTC:
 				{

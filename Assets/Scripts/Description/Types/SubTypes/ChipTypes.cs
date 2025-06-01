@@ -58,5 +58,7 @@ namespace DLS.Description
 		// ---- Time ----
 		RTC,
 
+		// ---- Clock ----
+		SPS,
 	}
 }

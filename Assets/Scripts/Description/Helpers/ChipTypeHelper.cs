@@ -36,6 +36,7 @@ namespace DLS.Description
 
 			{ ChipType.Buzzer, "BUZZER" },
 
+			{ ChipType.SPS, "SPS" },
 			{ ChipType.RTC, "RTC" },
 
 			// ---- Not really chips (but convenient to treat them as such anyway) ----
