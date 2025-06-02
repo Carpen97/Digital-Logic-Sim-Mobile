@@ -35,6 +35,7 @@ namespace DLS.Game
 				CreateClock(),
 				CreatePulse(),
 				CreateConstant_8(),
+				CreateDetector(),
 
 				// ---- Memory ----
 				dev_CreateRAM_8(),
@@ -203,6 +204,26 @@ namespace DLS.Game
 			Vector2 size = Vector2.one * GridSize * 6;
 
 			return CreateBuiltinChipDescription(ChipType.Constant_8Bit, size, col, null, outputPins);
+        }
+
+        static ChipDescription CreateDetector()
+        {
+			PinDescription[] inputPins =
+			{
+				CreatePinDescription("IN", 0, PinBitCount.Bit1),
+			};
+
+            PinDescription[] outputPins =
+            {
+                CreatePinDescription("0", 1, PinBitCount.Bit1),
+                CreatePinDescription("1", 2, PinBitCount.Bit1),
+                CreatePinDescription("Z", 3, PinBitCount.Bit1),
+            };
+
+            Color col = new(0.1f, 0.1f, 0.3f);
+            Vector2 size = new(GridSize * 12, SubChipInstance.MinChipHeightForPins(inputPins, outputPins));
+
+            return CreateBuiltinChipDescription(ChipType.Detector, size, col, inputPins, outputPins);
         }
 
 

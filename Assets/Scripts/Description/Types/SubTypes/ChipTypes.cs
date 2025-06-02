@@ -9,6 +9,7 @@ namespace DLS.Description
 		TriStateBuffer,
 		Clock,
 		Pulse,
+		Detector,
 
 		// ---- Memory ----
 		dev_Ram_8Bit,
