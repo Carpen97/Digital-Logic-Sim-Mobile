@@ -17,6 +17,7 @@ namespace DLS.Graphics
 			MainMenu,
 			RebindKeyChip,
 			RomEdit,
+			ChipStats,
 			PulseEdit,
 			UnsavedChanges,
 			Search,
@@ -37,6 +38,8 @@ namespace DLS.Graphics
 				{
 					DrawAppMenus();
 				}
+				else if (ActiveMenu is MenuType.ChipStats)
+					DrawChipMenus(Project.ActiveProject, ChipLibraryMenu.selectedChipName);
 				else
 				{
 					DrawProjectMenus(Project.ActiveProject);
@@ -74,6 +77,17 @@ namespace DLS.Graphics
 				if (showSimPausedBanner) SimPausedUI.DrawPausedBanner();
 				if (project.chipViewStack.Count > 1) ViewedChipsBar.DrawViewedChipsBanner(project, showSimPausedBanner);
 			}
+
+			ContextMenu.Update();
+		}
+
+		static void DrawChipMenus(Project project, string chipName)
+		{
+			MenuType menuToDraw = ActiveMenu; // cache state in case it changes while drawing/updating the menus
+
+			if (menuToDraw != MenuType.ChipCustomization) BottomBarUI.DrawUI(project);
+
+			if (menuToDraw == MenuType.ChipStats) ChipStatsMenu.DrawMenu(chipName); 
 
 			ContextMenu.Update();
 		}

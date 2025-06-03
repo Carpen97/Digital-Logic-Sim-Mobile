@@ -13,6 +13,7 @@ namespace DLS.Graphics
 {
 	public static class ChipLibraryMenu
 	{
+		public static string selectedChipName {get; private set;}
 		const string defaultOtherChipsCollectionName = "OTHER";
 
 		const int deleteMessageMaxCharsPerLine = 25;
@@ -231,7 +232,7 @@ namespace DLS.Graphics
 					{
 						// ---- Draw ----
 						ChipCollection collection = collections[selectedCollectionIndex];
-						string selectedChipName = collection.Chips[selectedChipInCollectionIndex];
+						selectedChipName = collection.Chips[selectedChipInCollectionIndex];
 						bool canStepUpInCollection = selectedChipInCollectionIndex > 0;
 						bool canStepDownInCollection = selectedChipInCollectionIndex < collection.Chips.Count - 1;
 						bool canJumpUpACollection = selectedCollectionIndex > 0;
@@ -250,6 +251,7 @@ namespace DLS.Graphics
 						int buttonIndex_moveStep = DrawHorizontalButtonGroup(buttonNames_moveSingleStep, interactableStates_move, ref topLeft, panelContentBounds.Width);
 						int buttonIndex_moveJump = DrawHorizontalButtonGroup(buttonNames_jump, interactableStates_move, ref topLeft, panelContentBounds.Width);
 						ChipActionButtons(selectedChipName, ref topLeft, panelContentBounds.Width);
+						bool stats = DrawHorizontalButtonGroup(new[]{"STATS"}, null, ref topLeft, panelContentBounds.Width) == 0;
 
 						bool moveSingleStepDown = buttonIndex_moveStep == 1;
 						bool moveJumpDown = buttonIndex_moveJump == 1;
@@ -261,6 +263,9 @@ namespace DLS.Graphics
 						{
 							project.SetStarred(selectedChipName, !isStarred, false);
 						}
+
+						if (stats)
+							UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipStats);
 
 						if (moveSingleStepDown || moveJumpDown) // Move chip down
 						{

@@ -1,9 +1,9 @@
 {
   "ProjectName": "MainTest",
-  "DLSVersion_LastSaved": "2.1.5",
+  "DLSVersion_LastSaved": "2.1.6",
   "DLSVersion_EarliestCompatible": "2.0.0",
-  "CreationTime": "2025-03-14T18:23:30.404+01:00",
-  "LastSaveTime": "2025-05-04T09:15:41.061+02:00",
+  "CreationTime": "2025-03-15T00:23:30.404+07:00",
+  "LastSaveTime": "2025-06-03T17:04:29.880+07:00",
   "Prefs_MainPinNamesDisplayMode": 2,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 1,
@@ -14,7 +14,6 @@
   "Prefs_SimStepsPerClockTick": 6,
   "AllCustomChipNames":[
     "AND",
-    "D-LATCH",
     "NOT",
     "OR",
     "NOR",
@@ -62,7 +61,9 @@
     "RAM-sync",
     "TEST MergeSplit",
     "#",
-    "BuzzTest"
+    "BuzzTest",
+    "#AA",
+    "StatsTest"
   ],
   "StarredList":[
     {
@@ -96,17 +97,25 @@
     {
       "Name":"BuzzTest",
       "IsCollection":false
+    },
+    {
+      "Name":"#AA",
+      "IsCollection":false
+    },
+    {
+      "Name":"StatsTest",
+      "IsCollection":false
     }
   ],
   "ChipCollections":[
     {
       "Chips":["NAND","AND","NOT","NOR","XOR","OR","KEY","CLOCK","3-STATE BUFFER"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"BASICS"
     },
     {
       "Chips":["IN-1","IN-4","IN-8","OUT-1","OUT-4","OUT-8"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"IN/OUT"
     },
     {
@@ -116,7 +125,7 @@
     },
     {
       "Chips":["7-SEGMENT","DECIMAL-4","DECIMAL-8","DOT DISPLAY","RGB DISPLAY","LED"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"DISPLAY"
     },
     {
@@ -126,12 +135,12 @@
     },
     {
       "Chips":["REGISTER-4","REG-8"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"MEMORY"
     },
     {
-      "Chips":["D-LATCH","FLIP-FLOP","OR-8","MEM-1","NOT-8","AND(8,1)","MUX-8","PC","BUF-8","ALU-8","DECODE-3","AND-3","CONTROL UNIT","TOGGLE","FLAGS","DISP-7","demo","7-SEGMENT DRIVER","DABBLE","LSB","LSHIFT-8","DOUBLE DABBLE","ALU","BUS BUFFER","MEM-256","REGISTER-8","XNOR","EQUALS-8","ADDER-4","DECODER-2","ADDER-8","ADDER","MEM-16","REGISTER-1","AND-8","RAM-256×8 (async)","ROM 256×16"],
-      "IsToggledOpen":false,
+      "Chips":["FLIP-FLOP","OR-8","MEM-1","NOT-8","AND(8,1)","MUX-8","PC","BUF-8","ALU-8","DECODE-3","AND-3","CONTROL UNIT","TOGGLE","FLAGS","DISP-7","demo","7-SEGMENT DRIVER","DABBLE","LSB","LSHIFT-8","DOUBLE DABBLE","ALU","BUS BUFFER","MEM-256","REGISTER-8","XNOR","EQUALS-8","ADDER-4","DECODER-2","ADDER-8","ADDER","MEM-16","REGISTER-1","AND-8","RAM-256×8 (async)","ROM 256×16"],
+      "IsToggledOpen":true,
       "Name":"KEEP"
     },
     {
@@ -140,7 +149,7 @@
       "Name":"TEST"
     },
     {
-      "Chips":["PULSE","TEST MergeSplit"],
+      "Chips":["PULSE","TEST MergeSplit","BUZZER","#","BuzzTest","dev.RAM-8","#AA","StatsTest"],
       "IsToggledOpen":true,
       "Name":"OTHER"
     }
