@@ -19,13 +19,6 @@ namespace DLS.Description
 			{ ChipType.dev_Ram_8Bit, "RAM-8" },
 			{ ChipType.Rom_256x16, $"ROM 256{mulSymbol}16" },
             { ChipType.EEPROM_256x16, $"EEPROM 256{mulSymbol}16" },
-			// ---- Split / Merge ----
-			{ ChipType.Split_4To1Bit, "4-1BIT" },
-			{ ChipType.Split_8To1Bit, "8-1BIT" },
-			{ ChipType.Split_8To4Bit, "8-4BIT" },
-			{ ChipType.Merge_4To8Bit, "4-8BIT" },
-			{ ChipType.Merge_1To8Bit, "1-8BIT" },
-			{ ChipType.Merge_1To4Bit, "1-4BIT" },
 
 			// ---- Displays -----
 			{ ChipType.DisplayRGB, "RGB DISPLAY" },

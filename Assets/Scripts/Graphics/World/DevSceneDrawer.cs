@@ -267,7 +267,7 @@ namespace DLS.Graphics
 			if (isKeyChip)
 			{
 				// Key changes colour when pressed down
-				if (PinState.FirstBitHigh(subchip.OutputPins[0].State)) chipCol = Color.white;
+				if (subchip.OutputPins[0].State.SmallHigh()) chipCol = Color.white;
 			}
 
 			Color outlineCol = GetChipOutlineCol(chipCol);
@@ -634,7 +634,7 @@ namespace DLS.Graphics
                 pressed = inBounds && InputHelper.IsMouseHeld(MouseButton.Left) && controller.CanInteractWithButton;
                 uint displayColIndex = chipSource.InternalState[0];
                 col = GetStateColour(pressed, displayColIndex);
-                chipSource.OutputPins[0].State = (uint)(pressed ? 1 : 0);
+				chipSource.OutputPins[0].State.SmallSet(pressed ? Constants.LOGIC_HIGH : Constants.LOGIC_LOW);
             }
 
             Vector2 buttonDrawSize = Vector2.one * (scale * buttonSize);
@@ -677,7 +677,7 @@ namespace DLS.Graphics
                 inBounds = bounds.PointInBounds(InputHelper.MousePosWorld);
                 gettingClicked = inBounds && InputHelper.IsMouseDownThisFrame(MouseButton.Left) && controller.CanInteractWithButton;
 				bool nextState = gettingClicked ? !currentState : currentState;
-                chipSource.OutputPins[0].State = (uint)(nextState ? 1 : 0);
+				chipSource.OutputPins[0].State.SmallSet(nextState ? Constants.LOGIC_HIGH : Constants.LOGIC_LOW);
 
 
 				nextSwitchHeadPos = nextState ? -1 : 1;
@@ -1065,7 +1065,7 @@ namespace DLS.Graphics
 			if (wire.IsBusWire) return int.MaxValue - 2;
 
 			// Draw wires carrying high signal above those carrying low signal (for single bit wires)
-			bool wireIsHigh = wire.bitCount == PinBitCount.Bit1 && PinState.FirstBitHigh(wire.SourcePin.State);
+			bool wireIsHigh = wire.bitCount == PinBitCount.Bit1 && wire.SourcePin.State.SmallHigh();
 			int drawPriority_signalHigh = wireIsHigh ? 1000 : 0;
 
 			// Draw multi-bit wires above single bit wires

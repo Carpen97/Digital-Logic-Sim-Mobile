@@ -79,7 +79,7 @@ namespace DLS.Game
 
 		public int GetStateDecimalDisplayValue()
 		{
-			uint rawValue = PinState.GetBitStates(Pin.State);
+			uint rawValue = Pin.State.GetValue();
 			int displayValue = (int)rawValue;
 
 			if (pinValueDisplayMode == PinValueDisplayMode.SignedDecimal)
@@ -110,7 +110,9 @@ namespace DLS.Game
 
 		public void ToggleState(int bitIndex)
 		{
-			PinState.Toggle(ref Pin.PlayerInputState, bitIndex);
+			Pin.PlayerInputState.ToggleBit(bitIndex);
+			Debug.Log("PlayerInputState at Toggle : " + Pin.PlayerInputState.GetValue());
+			Debug.Log("DevPinId at Toggle : " + ID);
 		}
 
 		public bool PointIsInInteractionBounds(Vector2 point) => PointIsInHandleBounds(point) || PointIsInStateIndicatorBounds(point);

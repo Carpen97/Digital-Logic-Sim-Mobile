@@ -22,12 +22,8 @@ namespace DLS.Description
 		DisplayLED,
 
 		// ---- Merge / Split ----
-		Merge_1To4Bit,
-		Merge_1To8Bit,
-		Merge_4To8Bit,
-		Split_4To1Bit,
-		Split_8To4Bit,
-		Split_8To1Bit,
+		Merge_Pin,
+		Split_Pin,
 
 		// ---- In / Out Pins ----
 		In_Pin,

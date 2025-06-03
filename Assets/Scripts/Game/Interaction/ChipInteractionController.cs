@@ -951,7 +951,8 @@ namespace DLS.Game
 			{
 				PinDescription pinDesc = ioPinInfo.isInput ? chipDescription.OutputPins[0] : chipDescription.InputPins[0];
 				pinDesc.ID = instanceID;
-				elementToPlace = new DevPinInstance(pinDesc, ioPinInfo.isInput);
+                elementToPlace = new DevPinInstance(pinDesc, ioPinInfo.isInput);
+				
 			}
 
 			else // SubChip

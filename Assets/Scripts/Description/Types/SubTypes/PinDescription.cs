@@ -38,7 +38,7 @@ namespace DLS.Description
 		}
 		public readonly BitArray GetEmptyBitArray()
 		{
-			return new BitArray(BitCount);
+			return new BitArray(BitCount<<1);
 		}
 
         public override bool Equals(System.Object @object)

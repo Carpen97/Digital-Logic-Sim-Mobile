@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using DLS.Description;
 using DLS.Graphics;
 using DLS.Simulation;
@@ -16,8 +17,8 @@ namespace DLS.Game
 
 		// Pin may be attached to a chip or a devPin as its parent
 		public readonly IMoveable parent;
-		public uint State; // sim state
-		public uint PlayerInputState; // dev input pins only
+		public PinStateValue State; // sim state
+		public PinStateValue PlayerInputState;
 		public PinColour Colour;
 		bool faceRight;
 		public float LocalPosY;
@@ -35,7 +36,14 @@ namespace DLS.Game
 
 			IsBusPin = parent is SubChipInstance subchip && subchip.IsBus;
 			faceRight = isSourcePin;
-			PinState.SetAllDisconnected(ref State);
+
+			Debug.Log(desc.BitCount.BitCount);
+			State.MakeFromPinBitCount(bitCount);
+			PlayerInputState.MakeFromPinBitCount(bitCount);
+            Debug.Log(State.size);
+            Debug.Log("AfterDisconnect :" + State.size);
+
+			Debug.Log("Maybe this ?");
 		}
 
 		public Vector2 ForwardDir => faceRight ? Vector2.right : Vector2.left;
@@ -70,18 +78,16 @@ namespace DLS.Game
 
 		public Color GetStateCol(int bitIndex, bool hover = false, bool canUsePlayerState = true)
 		{
-			uint pinState = (IsSourcePin && canUsePlayerState) ? PlayerInputState : State; // dev input pin uses player state (so it updates even when sim is paused)
-			uint state = PinState.GetBitTristatedValue(pinState, bitIndex);
-
-			if (state == PinState.LogicDisconnected) return DrawSettings.ActiveTheme.StateDisconnectedCol;
-			return DrawSettings.GetStateColour(state == PinState.LogicHigh, (uint)Colour, hover);
+			PinStateValue pinState = (IsSourcePin && canUsePlayerState) ? PlayerInputState : State; // dev input pin uses player state (so it updates even when sim is paused)
+			uint state = pinState.GetTristatedValue(bitIndex);
+			if (state == BitArrayHelper.LogicDisconnected) return DrawSettings.ActiveTheme.StateDisconnectedCol;
+			return DrawSettings.GetStateColour(state == BitArrayHelper.LogicHigh, (uint)Colour, hover);
 			
 		}
 
 		public void ChangeBitCount(int NewBitCount)
 		{ 
 			bitCount.BitCount = (ushort)NewBitCount;
-			Color col = new Color(0x22, 0x22, 0x22);
 		}
 	}
 }

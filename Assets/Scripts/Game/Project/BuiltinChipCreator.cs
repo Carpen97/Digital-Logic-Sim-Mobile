@@ -36,13 +36,7 @@ namespace DLS.Game
 				CreateEEPROM_8(),
 
 				// ---- Merge / Split ----
-				CreateBitConversionChip(ChipType.Split_4To1Bit, (PinBitCount)PinBitCount.Bit4, (PinBitCount) PinBitCount.Bit1, 1, 4),
-				CreateBitConversionChip(ChipType.Split_8To4Bit, (PinBitCount) PinBitCount.Bit8, (PinBitCount) PinBitCount.Bit4, 1, 2),
-				CreateBitConversionChip(ChipType.Split_8To1Bit, (PinBitCount) PinBitCount.Bit8, (PinBitCount) PinBitCount.Bit1, 1, 8),
 
-				CreateBitConversionChip(ChipType.Merge_1To8Bit, (PinBitCount) PinBitCount.Bit1, (PinBitCount) PinBitCount.Bit8, 8, 1),
-				CreateBitConversionChip(ChipType.Merge_1To4Bit, (PinBitCount) PinBitCount.Bit1, (PinBitCount) PinBitCount.Bit4, 4, 1),
-				CreateBitConversionChip(ChipType.Merge_4To8Bit, (PinBitCount) PinBitCount.Bit4, (PinBitCount) PinBitCount.Bit8, 2, 1),
 				// ---- Displays ----
 				CreateDisplay7Seg(),
 				CreateDisplayRGB(),
@@ -74,7 +68,7 @@ namespace DLS.Game
 
 				ChipDescription InChip = CreateBuiltinChipDescription(ChipType.In_Pin, Vector2.zero, Color.clear, null, outPin, null,
 					NameDisplayLocation.Hidden, name: ChipTypeHelper.GetDevPinName(true, pinBitCount));
-                ChipDescription OutChip = CreateBuiltinChipDescription(ChipType.In_Pin, Vector2.zero, Color.clear, inPin, null, null,
+                ChipDescription OutChip = CreateBuiltinChipDescription(ChipType.Out_Pin, Vector2.zero, Color.clear, inPin, null, null,
 					NameDisplayLocation.Hidden, name: ChipTypeHelper.GetDevPinName(false, pinBitCount));
 
                 DevPinDescriptions[i * 2] = InChip;
