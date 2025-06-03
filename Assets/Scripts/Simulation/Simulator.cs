@@ -567,32 +567,8 @@ namespace DLS.Simulation
 				}
 				case ChipType.Detector:
 				{
-					uint state = ((chip.InputPins[0].State >> 16) & 0x01) << 1 | (chip.InputPins[0].State & 0x01);
-
-					switch (state)
-					{
-						case 0b00: // LogicLow
-						{
-							chip.OutputPins[0].State = 0x0001; // 0 = true
-							chip.OutputPins[1].State = 0x0000; // 1 = false
-							chip.OutputPins[2].State = 0x0000; // Z = false
-							break;
-						}
-						case 0b01: // LogicHigh
-						{
-							chip.OutputPins[0].State = 0x0000; // 0 = false
-							chip.OutputPins[1].State = 0x0001; // 1 = true
-							chip.OutputPins[2].State = 0x0000; // Z = false
-							break;
-						}
-						case 0b10 or 0b11: // Tristate / High Z
-						{
-							chip.OutputPins[0].State = 0x0000; // 0 = false
-							chip.OutputPins[1].State = 0x0000; // 1 = false
-							chip.OutputPins[2].State = 0x0001; // Z = true
-							break;
-						}
-					}
+					uint state = PinState.GetBitTristatedValue(chip.InputPin[0].State)
+					chip.OutputPins[state] = 1
 					break;
 				}
 				// ---- Bus types ----
