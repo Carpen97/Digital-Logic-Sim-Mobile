@@ -13,7 +13,6 @@ namespace DLS.Graphics
 {
 	public static class ChipLibraryMenu
 	{
-		public static string selectedChipName {get; private set;}
 		const string defaultOtherChipsCollectionName = "OTHER";
 
 		const int deleteMessageMaxCharsPerLine = 25;
@@ -232,7 +231,7 @@ namespace DLS.Graphics
 					{
 						// ---- Draw ----
 						ChipCollection collection = collections[selectedCollectionIndex];
-						selectedChipName = collection.Chips[selectedChipInCollectionIndex];
+						string selectedChipName = collection.Chips[selectedChipInCollectionIndex];
 						bool canStepUpInCollection = selectedChipInCollectionIndex > 0;
 						bool canStepDownInCollection = selectedChipInCollectionIndex < collection.Chips.Count - 1;
 						bool canJumpUpACollection = selectedCollectionIndex > 0;
@@ -264,8 +263,10 @@ namespace DLS.Graphics
 							project.SetStarred(selectedChipName, !isStarred, false);
 						}
 
-						if (stats)
+						if (stats) {
+							ChipStatsMenu.SetChip(selectedChipName);
 							UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipStats);
+						}
 
 						if (moveSingleStepDown || moveJumpDown) // Move chip down
 						{
@@ -303,6 +304,7 @@ namespace DLS.Graphics
 					{
 						// ---- Draw ----
 						ChipCollection collection = collections[selectedCollectionIndex];
+						string selectedCollectionName = collection.Name;
 						ButtonTheme colSource = GetButtonTheme(true, true);
 						DrawHeader(collection.Name, colSource.buttonCols.normal, colSource.textCols.normal, ref topLeft, panelContentBounds.Width);
 
@@ -318,6 +320,12 @@ namespace DLS.Graphics
 						interactableStates_renameDelete[1] = canRenameOrDelete;
 						int buttonIndexEditCollection = DrawHorizontalButtonGroup(buttonNames_collectionRenameOrDelete, interactableStates_renameDelete, ref topLeft, panelContentBounds.Width);
 
+						bool stats = DrawHorizontalButtonGroup(new[]{"STATS"}, null, ref topLeft, panelContentBounds.Width) == 0;
+
+						if (stats) {	
+							CollectionStatsMenu.SetCollection(selectedCollectionName);
+							UIDrawer.SetActiveMenu(UIDrawer.MenuType.CollectionStats);
+						}
 						// ---- Handle button inputs ----
 						if (toggleStarred)
 						{

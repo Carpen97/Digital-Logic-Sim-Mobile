@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using DLS.Game;
 using Seb.Vis.UI;
 
@@ -18,6 +19,7 @@ namespace DLS.Graphics
 			RebindKeyChip,
 			RomEdit,
 			ChipStats,
+			CollectionStats,
 			PulseEdit,
 			UnsavedChanges,
 			Search,
@@ -38,8 +40,6 @@ namespace DLS.Graphics
 				{
 					DrawAppMenus();
 				}
-				else if (ActiveMenu is MenuType.ChipStats)
-					DrawChipMenus(Project.ActiveProject, ChipLibraryMenu.selectedChipName);
 				else
 				{
 					DrawProjectMenus(Project.ActiveProject);
@@ -67,6 +67,8 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.PinRename) PinEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.RebindKeyChip) RebindKeyChipMenu.DrawMenu();
 			else if (menuToDraw == MenuType.RomEdit) RomEditMenu.DrawMenu();
+			else if (menuToDraw == MenuType.ChipStats) ChipStatsMenu.DrawMenu(); 
+			else if (menuToDraw == MenuType.CollectionStats) CollectionStatsMenu.DrawMenu();
 			else if (menuToDraw == MenuType.UnsavedChanges) UnsavedChangesPopup.DrawMenu();
 			else if (menuToDraw == MenuType.Search) SearchPopup.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLabelPopup) ChipLabelMenu.DrawMenu();
@@ -77,17 +79,6 @@ namespace DLS.Graphics
 				if (showSimPausedBanner) SimPausedUI.DrawPausedBanner();
 				if (project.chipViewStack.Count > 1) ViewedChipsBar.DrawViewedChipsBanner(project, showSimPausedBanner);
 			}
-
-			ContextMenu.Update();
-		}
-
-		static void DrawChipMenus(Project project, string chipName)
-		{
-			MenuType menuToDraw = ActiveMenu; // cache state in case it changes while drawing/updating the menus
-
-			if (menuToDraw != MenuType.ChipCustomization) BottomBarUI.DrawUI(project);
-
-			if (menuToDraw == MenuType.ChipStats) ChipStatsMenu.DrawMenu(chipName); 
 
 			ContextMenu.Update();
 		}

@@ -1,5 +1,4 @@
-using System.Runtime.CompilerServices;
-using DLS.Description;
+using System.Linq;
 using DLS.Game;
 using Seb.Types;
 using Seb.Vis;
@@ -8,7 +7,7 @@ using UnityEngine;
 
 namespace DLS.Graphics
 {
-	public static class ChipStatsMenu
+	public static class CollectionStatsMenu
 	{
 		const float entrySpacing = 0.5f;
 		const float menuWidth = 55;
@@ -17,13 +16,12 @@ namespace DLS.Graphics
 		static readonly Vector2 entrySize = new(menuWidth, DrawSettings.SelectorWheelHeight);
 		public static readonly Vector2 settingFieldSize = new(entrySize.x / 3, entrySize.y);
 
-		static string chip;
+		static string collection;
 
 		// ---- Stats ----
-		static readonly string usesLabel = "Uses";
+		static readonly string numOfChipsLabel = "Number of chips";
 
-
-		public static void SetChip(string chip) => ChipStatsMenu.chip = chip;
+		public static void SetCollection(string collection) => CollectionStatsMenu.collection = collection;
 		public static void DrawMenu()
 		{
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
@@ -40,9 +38,9 @@ namespace DLS.Graphics
 			using (UI.BeginBoundsScope(true))
 			{
 				// Draw stats
-				Vector2 usesLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, usesLabel, labelCol * 0.75f, true);
-				UI.DrawPanel(usesLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(GetChipUses().ToString(), theme.FontBold, theme.FontSizeRegular, usesLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				Vector2 numOfChipsLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, numOfChipsLabel, labelCol * 0.75f, true);
+				UI.DrawPanel(numOfChipsLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+				UI.DrawText(GetCollectionChipsLength().ToString(), theme.FontBold, theme.FontSizeRegular, numOfChipsLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 
 				// Draw close
 				Vector2 buttonTopLeft = new(labelPosCurr.x, UI.PrevBounds.Bottom);
@@ -77,14 +75,7 @@ namespace DLS.Graphics
 			}
 		}
 
-		private static uint GetChipUses() {
-			uint uses = 0;
-			foreach (ChipDescription chip in Project.ActiveProject.chipLibrary.allChips)
-				if (chip.Name != ChipStatsMenu.chip)
-					foreach (SubChipDescription subChip in chip.SubChips)
-						if (subChip.Name == ChipStatsMenu.chip) uses++;
-
-			return uses;
-		}
+		private static int GetCollectionChipsLength() => 
+			Project.ActiveProject.description.ChipCollections.First(e => e.Name == collection).Chips.Count;
 	}
 }
