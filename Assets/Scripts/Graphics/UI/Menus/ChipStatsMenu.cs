@@ -1,5 +1,3 @@
-using System.Linq;
-using System.Runtime.CompilerServices;
 using DLS.Description;
 using DLS.Game;
 using Seb.Types;
@@ -22,6 +20,8 @@ namespace DLS.Graphics
 
 		// ---- Stats ----
 		static readonly string usesLabel = "Uses";
+
+		static readonly string usedByLabel = "Used by";
 
 		static readonly string numOfChipsInChipLabel = "Number of chips in this chip";
 
@@ -50,17 +50,22 @@ namespace DLS.Graphics
 				Vector2 usesLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, usesLabel, labelCol * 0.75f, true);
 				UI.DrawPanel(usesLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
 				UI.DrawText(GetChipUses().ToString(), theme.FontBold, theme.FontSizeRegular, usesLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				AddSpacing();
+
+				Vector2 usedByLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, usedByLabel, labelCol * 0.75f, true);
+				UI.DrawPanel(usedByLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+				UI.DrawText(GetChipUsedBy().ToString(), theme.FontBold, theme.FontSizeRegular, usedByLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				AddSpacing();
 				
 				if (!isChipBuiltIn) {
-					AddSpacing();
 					Vector2 numOfChipsInChipLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, numOfChipsInChipLabel, labelCol * 0.75f, true);
 					UI.DrawPanel(numOfChipsInChipLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
 					UI.DrawText(GetNumOfChipsInChip().ToString(), theme.FontBold, theme.FontSizeRegular, numOfChipsInChipLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				}
 
 				// Draw close
-				Vector2 buttonTopLeft = new(labelPosCurr.x, UI.PrevBounds.Bottom);
-				bool result = UI.Button("CLOSE", MenuHelper.Theme.ButtonTheme, buttonTopLeft);
+				Vector2 buttonTopLeft = new(labelPosCurr.x * 2.223f, UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));
+				bool result = UI.Button("CLOSE", MenuHelper.Theme.ButtonTheme, buttonTopLeft, new Vector2(menuWidth / 1.115f, 0));
 
 				// Draw menu background
 				Bounds2D menuBounds = UI.GetCurrentBoundsScope();
@@ -102,5 +107,8 @@ namespace DLS.Graphics
 		}
 		private static int GetNumOfChipsInChip() =>
 			Project.ActiveProject.chipLibrary.GetChipDescription(chip).SubChips.Length;
+
+		private static int GetChipUsedBy() =>
+			Project.ActiveProject.chipLibrary.GetDirectParentChips(chip).Length;
 	}
 }
