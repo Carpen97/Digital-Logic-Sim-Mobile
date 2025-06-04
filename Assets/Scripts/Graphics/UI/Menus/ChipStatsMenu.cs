@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using DLS.Description;
 using DLS.Game;
 using Seb.Types;
@@ -20,6 +22,8 @@ namespace DLS.Graphics
 
 		// ---- Stats ----
 		static readonly string usesLabel = "Uses";
+
+		static readonly string totalUsesLabel = "Total uses";
 
 		static readonly string usedByLabel = "Used by";
 
@@ -57,7 +61,12 @@ namespace DLS.Graphics
 				UI.DrawText(GetChipUsedBy().ToString(), theme.FontBold, theme.FontSizeRegular, usedByLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				AddSpacing();
 				
+				Vector2 totalUsesLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, totalUsesLabel, labelCol * 0.75f, true);
+				UI.DrawPanel(totalUsesLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+				UI.DrawText(GetChipUsesTotal().ToString(), theme.FontBold, theme.FontSizeRegular, totalUsesLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				
 				if (!isChipBuiltIn) {
+					AddSpacing();
 					Vector2 numOfChipsInChipLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, numOfChipsInChipLabel, labelCol * 0.75f, true);
 					UI.DrawPanel(numOfChipsInChipLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
 					UI.DrawText(GetNumOfChipsInChip().ToString(), theme.FontBold, theme.FontSizeRegular, numOfChipsInChipLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
@@ -104,6 +113,18 @@ namespace DLS.Graphics
 						if (subChip.Name == ChipStatsMenu.chip) uses++;
 
 			return uses;
+		}
+		private static int GetChipUsesTotal() {
+			Dictionary<ChipDescription, int> usesByChip = new();
+			foreach (ChipDescription chip in Project.ActiveProject.chipLibrary.allChips)
+			{
+				usesByChip.Add(chip, 0);
+				foreach (SubChipDescription subChip in chip.SubChips)
+					if (subChip.Name == ChipStatsMenu.chip) usesByChip[chip]++;
+					else if (usesByChip.Any(e => e.Key.Name == subChip.Name)) usesByChip[chip] += usesByChip.First(e => e.Key.Name == subChip.Name).Value;
+			}
+
+			return usesByChip.Values.ToArray().Sum();
 		}
 		private static int GetNumOfChipsInChip() =>
 			Project.ActiveProject.chipLibrary.GetChipDescription(chip).SubChips.Length;

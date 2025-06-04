@@ -23,7 +23,7 @@ namespace DLS.Description
 		public int Prefs_SimStepsPerClockTick;
 
 		// Stats
-		public uint StepsRanSinceCreated;
+		public ulong StepsRanSinceCreated;
 		public CustomStopwatch /* We should ask Stack Overflow why we cannot access this class from outside its namespace */ TimeSpentSinceCreated;
 
 		// List of all player-created chips (in order of creation -- oldest first)

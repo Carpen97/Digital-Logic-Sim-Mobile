@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using DLS.Description;
 using DLS.Game;
 using Seb.Types;
@@ -26,6 +28,7 @@ namespace DLS.Graphics
 		static readonly string createdOnLabel = "Created on";
 		static readonly string chipsLabel = "Chips";
 		static readonly string chipsUsedLabel = "Chips used";
+		static readonly string chipsUsedTotalLabel = "Total chips used";
 
 		public static void DrawMenu()
 		{
@@ -66,6 +69,11 @@ namespace DLS.Graphics
 				Vector2 chipsUsedLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, chipsUsedLabel, labelCol * 0.75f, true);
 				UI.DrawPanel(chipsUsedLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
 				UI.DrawText(GetChipsUsed().ToString(), theme.FontBold, theme.FontSizeRegular, chipsUsedLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				AddSpacing();
+
+				Vector2 chipsUsedTotalLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, chipsUsedTotalLabel, labelCol * 0.75f, true);
+				UI.DrawPanel(chipsUsedTotalLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+				UI.DrawText(GetTotalChipsUsed().ToString(), theme.FontBold, theme.FontSizeRegular, chipsUsedTotalLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 
 				// Draw close
 				Vector2 buttonTopLeft = new(labelPosCurr.x * 2.223f, UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));
@@ -98,6 +106,22 @@ namespace DLS.Graphics
 			{
 				labelPosCurr.y -= headerSpacing;
 			}
+		}
+		static int GetTotalChipsUsed() {
+			int uses = 0;
+			foreach (ChipDescription chip in Project.ActiveProject.chipLibrary.allChips) {
+				Dictionary<ChipDescription, int> usesByChip = new();
+				foreach (ChipDescription chipchip in Project.ActiveProject.chipLibrary.allChips)
+				{
+					usesByChip.Add(chipchip, 0);
+					foreach (SubChipDescription subChip in chipchip.SubChips)
+						if (subChip.Name == chip.Name) usesByChip[chipchip]++;
+						else if (usesByChip.Any(e => e.Key.Name == subChip.Name)) usesByChip[chipchip] += usesByChip.First(e => e.Key.Name == subChip.Name).Value;
+				}
+
+				uses += usesByChip.Values.ToArray().Sum();
+			}
+			return uses;
 		}
 		static uint GetChipsUsed() {
 			uint uses = 0;
