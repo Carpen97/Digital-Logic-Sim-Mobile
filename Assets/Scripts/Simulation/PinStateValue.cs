@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using DLS.Description;
 using Seb.Helpers;
 using UnityEngine;
+using static UnityEngine.Random;
 
 namespace DLS.Simulation
 {
@@ -13,12 +14,7 @@ namespace DLS.Simulation
         public const uint LOGIC_HIGH = 1;
         public const uint LOGIC_DISCONNECTED = 2;
 
-
-        public uint singleBit; // ONLY USE FOR 1 BIT
-
-        public BitVector32 a; // If bitcount <= 16 : use only this -- FASTEST 
-        public static BitVector32.Section valueSection = BitVector32.CreateSection(short.MaxValue); // Only in use on less than 16
-        public static BitVector32.Section tristateSection = BitVector32.CreateSection(short.MaxValue, valueSection); // this too
+        public uint a; // If bitcount <= 16 : use only this -- FASTEST 
 
         public BitVector32 b; // If 16 < bitcount <=32 : use this too -- medium
         public BitArray BigValues; // If bitcount >= 32 use this INSTEAD  -- SLOWEST
@@ -29,18 +25,13 @@ namespace DLS.Simulation
         public void MakeFromPinBitCount(PinBitCount pinBitCount)
         {
             size = pinBitCount.BitCount;
-            if (size <= 1)
+            if (size <= 16)
             {
-                singleBit = 0;
+                a = 0;
             }
-            else if (size <= 16)
-            {
-                a = new BitVector32(0);
-            }
-
             else if (size <= 32)
             {
-                a = new BitVector32(0);
+                a = 0;
                 b = new BitVector32(0);
             }
             else
@@ -55,30 +46,43 @@ namespace DLS.Simulation
         {
             CopyFrom(source);
         }
+
+        public void MakeFromValueAndFlags(PinBitCount pinBitCount, uint values, uint flags)
+        {
+            size = pinBitCount.BitCount;
+
+            if (size <= 16)
+            {
+                SetShortTristateAndValue((ushort)value, (ushort)flags);
+            }
+            else if (size <= 32) {
+                SetMedium(values, flags);
+            }
+            else { throw new Exception("ArgumentsException : PinBitCount should be smaller or equal to 32 bits for this operation."); }
+        }
         
         public bool SmallHigh()
         {
-            return (singleBit & 1) == 1;
+            return (a & 1) == 1;
         }
         
         public void SetAllDisconnected()
         {
             if(size == 1)
             {
-                singleBit = 2;
+                a = 2;
                 return;
             }
 
             if(size <= 16)
             {
-                a[valueSection] = 0;
-                a[tristateSection] = -1;
+                a = 0xFFFF0000;
                 return;
             }
 
             if(size <= 32)
             {
-                a = new BitVector32(0);
+                a = 0;
                 b = new BitVector32(-1);
                 return;
             }
@@ -89,70 +93,74 @@ namespace DLS.Simulation
 
         public void SmallSet(uint value)
         {
-            singleBit = value;
+            a = value;
         }
 
         public void SmallToggle()
         {
-            singleBit ^= 1;
+            a ^= 1;
         }
 
         public bool FirstBitHigh()
         {
-            if (size <= 32) { return (a.Data & 1) == 1; }
+            if (size <= 32) { return (a & 1) == 1; }
             else return BigValues.Get(0);
         }
         public void ToggleBit(int index)
         {
             UnityEngine.Debug.Log("Index: " + index);
             if (size == 1) { SmallToggle(); }
-            else if (size <= 16) { a[valueSection] = (a[valueSection]) ^ (1 << index); }
-            else if (size <= 32) { a = new BitVector32(a.Data ^ (1 << index)); }
-            else if (size >32) BigValues.Set(index, !BigValues.Get(index));
+            else if (size <= 32) { a ^= (uint)(1 << index); }
+            else if (size > 32) BigValues.Set(index, !BigValues.Get(index));
         }
 
         public void SetFirstBit(bool firstBit)
         {
             if (size == 1) { SmallSet((uint)(firstBit ? 1 : 0)); }
             else if (size <= 32) {
-                a[valueSection] = firstBit ? a[valueSection] | 1 : a[valueSection] ^ 1;
+                a = firstBit ? a | 1 : a ^ 1;
             }
             else BigValues.Set(0, firstBit);
         }
 
         public void SetShortValue(ushort value)
         {
-            a[valueSection] = value;
+            a = value | (a & 0xFFFF0000);
+        }
+
+        public void SetShortTristateAndValue(ushort tristate, ushort value)
+        {
+            a = (uint)(value | tristate << 16);
         }
 
         public void SetMediumValue(uint value)
         {
-            a = new BitVector32((int)value);
+            a = value;
         }
         
         public void SetShort(uint valueAndFlags)
         {
-            a = new BitVector32((int)valueAndFlags);
+            a = valueAndFlags;
         }
 
         public void SetMedium(uint value, uint tristateFlags)
         {
-            a = new BitVector32((int)value);
+            a = value;
             b = new BitVector32((int)tristateFlags);
         }
         public uint GetShortValues()
         {
-            return (uint)a[valueSection];
+            return a & 0xFFFF;
         }
 
         public uint GetMediumValues()
         {
-            return (uint)a.Data;
+            return a;
         }
 
         public uint GetShortTristate()
         {
-            return (uint)a[tristateSection];
+            return (a & 0xFFFF0000)>>16;
         }
 
         public uint GetMediumTristate()
@@ -169,15 +177,16 @@ namespace DLS.Simulation
         }
 
 
-        public ushort GetSmallTristate()
+        public ushort GetSmallTristatedValue()
         {
-            return (ushort)(singleBit & 1 );
+            return (ushort)a;
         }
+
         public ushort GetTristatedValue(int index)
         {
             if(size == 1)
             {
-                return GetSmallTristate();
+                return GetSmallTristatedValue();
             }
 
             else if (size <= 16)
@@ -197,13 +206,13 @@ namespace DLS.Simulation
 
         ushort GetShortBitTristatedValue(int index)
         {
-            return (ushort)((GetShortValues() >> index) & 1 | ((GetShortTristate() >> index & 1) << 1));
+            return (ushort)(((GetShortValues() >> index) & 1) | (((GetShortTristate() >> index) & 1) << 1));
         }
 
 
         ushort GetMediumBitTristatedValue(int index)
         {
-            return (ushort)((GetMediumValues() >> index) & 1 | (GetMediumTristate() >> index & 1) << 1);
+            return (ushort)((a >> index) & 1 | (GetMediumTristate() >> index & 1) << 1);
         }
 
         ushort GetBigBitTristatedValue(int index)
@@ -213,8 +222,8 @@ namespace DLS.Simulation
 
         public uint GetTristatedFlags()
         {
-            if (size == 1) { return (uint)(singleBit >> 1); }
-            if (size <=16) { return (uint)a[tristateSection]; }
+            if (size == 1) { return (uint)(a >> 1); }
+            if (size <=16) { return a & 0xFFFF0000; }
             if (size <= 32) { return (uint)b.Data; }
             return BitArrayHelper.GetFirstUIntFromByteArray(BigTristates);
         }
@@ -230,7 +239,7 @@ namespace DLS.Simulation
 
         void SmallCopyFrom(PinStateValue pinStateValue)
         {
-            singleBit = pinStateValue.singleBit;
+            a = pinStateValue.a;
         }
 
         void ShortCopyFrom(PinStateValue pinStateValue)
@@ -252,7 +261,7 @@ namespace DLS.Simulation
 
         public uint OR(PinStateValue pinStateValue)
         {
-            if (size == 1) { return (pinStateValue.singleBit | singleBit); }
+            if (size == 1) { return (pinStateValue.a | a); }
             else if (size <= 16) { return pinStateValue.GetShortValues() | GetShortValues(); }
             else if (size <= 32) { return pinStateValue.GetMediumValues() | GetMediumValues(); }
             return 0;
@@ -260,42 +269,93 @@ namespace DLS.Simulation
 
         public void SetAsOr(PinStateValue pinStateValue)
         {
-            if (size == 1) { singleBit |= pinStateValue.singleBit; }
-            else if (size <= 16) { a[valueSection] |= (int)pinStateValue.GetShortValues(); }
-            else if (size <= 32) { SetMediumValue(((uint)a.Data | pinStateValue.GetMediumValues())); }
+            if (size == 1) { a |= pinStateValue.a; }
+            else if (size <= 16) { SetShortValue((ushort)pinStateValue.GetShortValues()); }
+            else if (size <= 32) { SetMediumValue(a | pinStateValue.GetMediumValues()); }
             else { BigValues.Or(pinStateValue.BigValues); }
 
         }
 
         public void SetAsAnd(PinStateValue pinStateValue)
         {
-            if (size == 1) { singleBit &= pinStateValue.singleBit; }
-            else if (size <= 16) { a[valueSection] &= (int)pinStateValue.GetShortValues(); }
-            else if (size <= 32) { SetMediumValue(((uint)a.Data & pinStateValue.GetMediumValues())); }
+            if (size == 1) { a &= pinStateValue.a; }
+            else if (size <= 16) { SetShortValue((ushort)(a & pinStateValue.GetShortValues())); }
+            else if (size <= 32) { SetMediumValue(a & pinStateValue.GetMediumValues()); }
             else { BigValues.And(pinStateValue.BigValues); }
         }
 
-        public void SetAsRightShift(int shift)
+        public bool HandleConflictShort(PinStateValue other)
         {
-            if (shift <= 0) { return; }
-            if (size == 1) { singleBit = 0; }
-            else if (size <= 16) { a[valueSection] >>= shift; }
-            else if (size <= 32) { SetMediumValue((uint)(a.Data >> shift)); }
-            else { BigValues.RightShift(shift); }
+            bool set;
+            uint OR = a | other.a;
+            uint AND = a & other.a;
+            ushort bitsNew = (ushort)(Simulator.RandomBool() ? OR : AND);
+
+            ushort mask = (ushort)(OR >> 16); // tristate flags
+            bitsNew = (ushort)((bitsNew & ~mask) | ((ushort)OR & mask)); // can always accept input for tristated bits
+
+            ushort tristateNew = (ushort)(AND >> 16);
+            uint stateNew = (uint)(bitsNew | (tristateNew << 16));
+            set = stateNew != a;
+
+            SetShortTristateAndValue(tristateNew, bitsNew);
+
+            return set;
         }
 
-        public void SetAsLeftShift(int shift)
+        public bool HandleConflictMedium(PinStateValue other)
         {
-            if (shift <= 0) { return; }
-            if (size == 1) { singleBit = 0; }
-            else if (size <= 16) { a[valueSection] <<= shift; }
-            else if (size <= 32) { SetMediumValue((uint)(a.Data << shift)); }
-            else { BigValues.LeftShift(shift); }
+            bool set;
+            (uint a, uint b) OR = (a | other.a, (uint)(b.Data | other.b.Data)) ;
+            (uint a, uint b) AND = (a & other.a, (uint)(b.Data & other.b.Data));
+            uint bitsNew = Simulator.RandomBool() ? OR.a : AND.a;
+
+            bitsNew = (bitsNew & ~OR.b) | (OR.b);
+
+            uint tristateNew = AND.b;
+
+            set = bitsNew != a && (tristateNew != b.Data);
+
+            a = bitsNew;
+            b = new BitVector32((int)tristateNew);
+
+            return set;
         }
 
-        internal void SetShortValue(uint v)
+        public bool HandleConflictBig(PinStateValue other) {
+            bool set;
+
+            (BitArray a, BitArray b) OR = (BitArrayHelper.NonMutativeOR(BigValues, other.BigValues), BitArrayHelper.NonMutativeOR(BigTristates, other.BigTristates)) ;
+            (BitArray a, BitArray b) AND = (BitArrayHelper.NonMutativeAND(BigValues, other.BigValues), BitArrayHelper.NonMutativeAND(BigTristates, other.BigTristates));
+            BitArray bitsNew = new BitArray(Simulator.RandomBool() ? OR.a : AND.a);
+
+            bitsNew = BitArrayHelper.NonMutativeOR(
+                BitArrayHelper.NonMutativeAND(bitsNew, BitArrayHelper.NonMutativeNOT(OR.b)),
+                OR.b);
+
+            BitArray tristatesNew = AND.b;
+            set = !bitsNew.Equals(BigValues) && !tristatesNew.Equals(BigTristates);
+
+            BigValues = bitsNew;
+            BigTristates = tristatesNew;
+
+            return set;
+        }
+
+        public bool HandleConflicts(PinStateValue other)
         {
-            throw new NotImplementedException();
+            if (size <= 16)
+            {
+                return HandleConflictShort(other);
+            }
+            else if (size <= 32)
+            {
+                return HandleConflictMedium(other);
+            }
+            else
+            {
+                return HandleConflictBig(other);
+            }
         }
     }
 }

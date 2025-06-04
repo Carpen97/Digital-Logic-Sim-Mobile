@@ -24,6 +24,27 @@ namespace DLS.Simulation
         public static BitArray ShortMaskArray = new BitArray(new byte[] { 0b11111111, 0b11111111 });
         public static BitArray IntMaskArray = new BitArray(new byte[] { 0b11111111, 0b11111111, 0b11111111, 0b11111111 });
 
+        public static BitArray NonMutativeOR(BitArray A, BitArray B)
+        {
+            BitArray temp = new BitArray(A);
+            temp.Or(B);
+            return temp;
+        }
+        
+        public static BitArray NonMutativeAND(BitArray A, BitArray B)
+        {
+            BitArray temp = new BitArray(A);
+            temp.And(B);
+            return temp;
+        }
+
+        public static BitArray NonMutativeNOT(BitArray A)
+        {
+            BitArray temp = new BitArray(A);
+            temp.Not();
+            return temp;
+        }
+
         public static BitArray TrueBitArray(int length)
         {
             BitArray array = new BitArray(length);

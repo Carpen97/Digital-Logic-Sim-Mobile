@@ -4,14 +4,14 @@
   "DLSVersion_EarliestCompatible": "2.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.0",
   "CreationTime": "2025-05-19T11:48:01.969+02:00",
-  "LastSaveTime": "2025-06-03T18:02:32.975+02:00",
+  "LastSaveTime": "2025-06-04T14:55:19.314+02:00",
   "Prefs_MainPinNamesDisplayMode": 1,
   "Prefs_ChipPinNamesDisplayMode": 1,
-  "Prefs_GridDisplayMode": 0,
+  "Prefs_GridDisplayMode": 1,
   "Prefs_Snapping": 0,
   "Prefs_StraightWires": 0,
   "Prefs_SimPaused": false,
-  "Prefs_SimTargetStepsPerSecond": 100,
+  "Prefs_SimTargetStepsPerSecond": 100000000,
   "Prefs_SimStepsPerClockTick": 250,
   "AllCustomChipNames":[
     "128Nand"
@@ -62,7 +62,7 @@
       "Name":"MEMORY"
     },
     {
-      "Chips":["BUTTON","DIPSWITCH","CONST","RAM-8","BUZZER","128Nand","IN-32","OUT-32","IN-16","OUT-16","IN-24","OUT-24","IN-128","OUT-128"],
+      "Chips":["BUTTON","DIPSWITCH","CONST","RAM-8","BUZZER","128Nand","IN-32","OUT-32","IN-16","OUT-16","IN-24","OUT-24","IN-128","OUT-128","IN-1024","OUT-1024","IN-20736000","OUT-20736000","IN-345600","OUT-345600"],
       "IsToggledOpen":true,
       "Name":"OTHER"
     }
@@ -74,6 +74,8 @@
     "32",
     "16",
     "24",
-    "128"
+    "128",
+    "1024",
+    "15"
   ]
 }

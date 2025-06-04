@@ -79,7 +79,7 @@ namespace DLS.Simulation
 				}
 				catch (Exception)
 				{
-					throw;// Possible for sim to be temporarily out of sync since running on separate threads, so just ignore failure to find pin.
+					// Possible for sim to be temporarily out of sync since running on separate threads, so just ignore failure to find pin.
 				}
 			}
 
@@ -237,8 +237,8 @@ namespace DLS.Simulation
 				// ---- Process Built-in chips ----
 				case ChipType.Nand:
 				{
-                        uint nandOp = 1 ^ (chip.InputPins[0].State.singleBit & chip.InputPins[1].State.singleBit);
-                        chip.OutputPins[0].State.singleBit = (nandOp & 1);
+                        uint nandOp = 1 ^ (chip.InputPins[0].State.a & chip.InputPins[1].State.a);
+                        chip.OutputPins[0].State.a = (nandOp & 1);
                         break;
                 }
 				case ChipType.Clock:
@@ -253,7 +253,7 @@ namespace DLS.Simulation
                         const int pulseTicksRemainingIndex = 1;
                         const int pulseInputOldIndex = 2;
 
-                        uint inputState = chip.InputPins[0].State.singleBit;
+                        uint inputState = chip.InputPins[0].State.a;
                         bool pulseInputHigh = (inputState & 1) == 1;
                         uint pulseTicksRemaining = chip.InternalState[pulseTicksRemainingIndex];
 
@@ -278,7 +278,7 @@ namespace DLS.Simulation
                             outputState = 2;
                         }
 
-                        chip.OutputPins[0].State.singleBit = outputState;
+                        chip.OutputPins[0].State.a = outputState;
                         chip.InternalState[pulseInputOldIndex] = pulseInputHigh ? 1u : 0;
 
                         break;
@@ -312,7 +312,7 @@ namespace DLS.Simulation
 					SimPin outputPin = chip.OutputPins[0];	
 
 					if (enablePin.State.SmallHigh()) outputPin.State = dataPin.State;
-					else outputPin.State.singleBit = 2;
+					else outputPin.State.a = 2;
 
 					break;
 				}
@@ -367,9 +367,9 @@ namespace DLS.Simulation
 
 					// Output current pixel colour
 					uint colData = chip.InternalState[addressPin];
-					chip.OutputPins[0].State.SetShortValue(colData & 0b1111);//red
-					chip.OutputPins[1].State.SetShortValue((colData >> 4) & 0b1111);//green
-					chip.OutputPins[2].State.SetShortValue((colData >> 8) & 0b1111);//blue
+					chip.OutputPins[0].State.SetShort((ushort)(colData & 0b1111));//red
+					chip.OutputPins[1].State.SetShort((ushort)((colData >> 4) & 0b1111));//green
+					chip.OutputPins[2].State.SetShort((ushort)((colData >> 8) & 0b1111)	);//blue
 
 
                     break;
@@ -450,7 +450,7 @@ namespace DLS.Simulation
 					}
 
 					// Output data at current address
-					chip.OutputPins[0].State.SetShortValue((ushort)chip.InternalState[addressPin]);
+					chip.OutputPins[0].State.SetShort((ushort)chip.InternalState[addressPin]);
 
 					break;
 				}
@@ -459,8 +459,8 @@ namespace DLS.Simulation
 					uint address = chip.InputPins[0].State.GetShortValues();
 					uint data = chip.InternalState[address];
 
-					chip.OutputPins[0].State.SetShortValue((ushort)(data << 8));
-					chip.OutputPins[1].State.SetShortValue((ushort)data);
+					chip.OutputPins[0].State.SetShort((ushort)(data << 8));
+					chip.OutputPins[1].State.SetShort((ushort)data);
 
                     break;
 				}
@@ -487,8 +487,8 @@ namespace DLS.Simulation
                         uint data = chip.InternalState[address];
 
 	
-                        chip.OutputPins[0].State.SetShortValue((ushort)(data << 8));
-                        chip.OutputPins[1].State.SetShortValue((ushort)(data << 0));
+                        chip.OutputPins[0].State.SetShort((ushort)(data << 8));
+                        chip.OutputPins[1].State.SetShort((ushort)(data << 0));
                         break;
                 }
 
@@ -502,7 +502,7 @@ namespace DLS.Simulation
 
 				case ChipType.Constant_8Bit:
 				{
-					chip.OutputPins[0].State.SetShortValue((ushort)chip.InternalState[0]);
+					chip.OutputPins[0].State.SetShort((ushort)chip.InternalState[0]);
 					break;
 				}
 				// ---- Bus types ----

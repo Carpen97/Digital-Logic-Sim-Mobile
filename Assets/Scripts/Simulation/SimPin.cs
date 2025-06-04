@@ -62,15 +62,7 @@ namespace DLS.Simulation
 
 			if (numInputsReceivedThisFrame > 0)
 			{
-				PinStateValue OR = new(); OR.MakeFromAnother(source.State) ;
-				OR.SetAsOr(State);
-				PinStateValue AND = new(); AND.MakeFromAnother(source.State);
-				AND.SetAsAnd(State);
-
-				PinStateValue bitsNew = new(); AND.MakeFromAnother(Simulator.RandomBool() ? OR : AND); // randomly accept or reject conflicting state
-
-				set = bitsNew.GetValue() != State.GetValue();
-				State = bitsNew;
+				set = State.HandleConflicts(source.State);
 			}
 			else
 			{
