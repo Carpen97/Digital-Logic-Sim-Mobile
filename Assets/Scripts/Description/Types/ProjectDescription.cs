@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace DLS.Description
 {
-	public struct ProjectDescription
+    public struct ProjectDescription
 	{
 		public string ProjectName;
 		public string DLSVersion_LastSaved;
@@ -21,6 +21,10 @@ namespace DLS.Description
 		public bool Prefs_SimPaused;
 		public int Prefs_SimTargetStepsPerSecond;
 		public int Prefs_SimStepsPerClockTick;
+
+		// Stats
+		public uint StepsRanSinceCreated;
+		public CustomStopwatch /* We should ask Stack Overflow why we cannot access this class from outside its namespace */ TimeSpentSinceCreated;
 
 		// List of all player-created chips (in order of creation -- oldest first)
 		public string[] AllCustomChipNames;
@@ -40,7 +44,8 @@ namespace DLS.Description
 		}
 	}
 
-	public struct StarredItem
+
+    public struct StarredItem
 	{
 		public string Name;
 		public bool IsCollection;

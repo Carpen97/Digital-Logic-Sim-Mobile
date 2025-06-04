@@ -20,6 +20,7 @@ namespace DLS.Graphics
 			RomEdit,
 			ChipStats,
 			CollectionStats,
+			ProjectStats,
 			PulseEdit,
 			UnsavedChanges,
 			Search,
@@ -69,6 +70,7 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.RomEdit) RomEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ChipStats) ChipStatsMenu.DrawMenu(); 
 			else if (menuToDraw == MenuType.CollectionStats) CollectionStatsMenu.DrawMenu();
+			else if (menuToDraw == MenuType.ProjectStats) ProjectStatsMenu.DrawMenu();
 			else if (menuToDraw == MenuType.UnsavedChanges) UnsavedChangesPopup.DrawMenu();
 			else if (menuToDraw == MenuType.Search) SearchPopup.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLabelPopup) ChipLabelMenu.DrawMenu();
