@@ -37,13 +37,9 @@ namespace DLS.Game
 			IsBusPin = parent is SubChipInstance subchip && subchip.IsBus;
 			faceRight = isSourcePin;
 
-			Debug.Log(desc.BitCount.BitCount);
 			State.MakeFromPinBitCount(bitCount);
 			PlayerInputState.MakeFromPinBitCount(bitCount);
-            Debug.Log(State.size);
-            Debug.Log("AfterDisconnect :" + State.size);
 
-			Debug.Log("Maybe this ?");
 		}
 
 		public Vector2 ForwardDir => faceRight ? Vector2.right : Vector2.left;

@@ -108,7 +108,6 @@ namespace DLS.Simulation
         }
         public void ToggleBit(int index)
         {
-            UnityEngine.Debug.Log("Index: " + index);
             if (size == 1) { SmallToggle(); }
             else if (size <= 32) { a ^= (uint)(1 << index); }
             else if (size > 32) BigValues.Set(index, !BigValues.Get(index));
