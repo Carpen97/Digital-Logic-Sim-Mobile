@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -129,7 +131,7 @@ namespace DLS.Description
             }
         }
 
-		class CustomJsonTextWriter : JsonTextWriter
+        class CustomJsonTextWriter : JsonTextWriter
 		{
 			int arrayDepth;
 

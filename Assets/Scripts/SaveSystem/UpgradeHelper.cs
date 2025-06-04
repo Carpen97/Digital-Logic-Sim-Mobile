@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DLS.Description;
 using DLS.Game;
 using UnityEngine;
@@ -37,11 +38,18 @@ namespace DLS.SaveSystem
             if ((!canParseModdedVersion) || projectVersion.ToInt() < moddedVersion_1_1_0.ToInt())
 			{
                 projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
-				projectDescription.pinBitCounts = new PinBitCount[]{1,4,8};
+				projectDescription.pinBitCounts = new List<PinBitCount> {1,4,8};
+				projectDescription.SplitMergePairs = new(){
+					new(8,4),
+                    new(8,1),
+                    new(4,1)
+                };
+
             }
+			Saver.SaveProjectDescription(projectDescription);
         }
 
-		static void UpdateChipPre_2_1_5(ChipDescription chipDesc)
+        static void UpdateChipPre_2_1_5(ChipDescription chipDesc)
 		{
 			string ledName = ChipTypeHelper.GetName(ChipType.DisplayLED);
 

@@ -30,8 +30,11 @@ namespace DLS.Description
 		public List<ChipCollection> ChipCollections;
 
 		// List of all I/O (in order of creation -- oldest first)
-		public PinBitCount[] pinBitCounts;
+		public List<PinBitCount> pinBitCounts;
 
+		// Used both for Merge Chips and Split Chips
+		// Dictionnary of  Big Pin and  Small Pin  Ex : (4,1) or (8,4) or (8,1)
+		public List<KeyValuePair<PinBitCount, PinBitCount>> SplitMergePairs;
 
         // ---- Helper functions ----
         public bool IsStarred(string chipName, bool isCollection)

@@ -1,10 +1,10 @@
 {
-  "ProjectName": "ahic CHIPS",
+  "ProjectName": "ATEST",
   "DLSVersion_LastSaved": "2.1.6",
   "DLSVersion_EarliestCompatible": "2.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.0",
-  "CreationTime": "2025-05-24T13:06:54.829+02:00",
-  "LastSaveTime": "2025-06-04T18:36:44.513+02:00",
+  "CreationTime": "2025-06-04T18:32:03.724+02:00",
+  "LastSaveTime": "2025-06-04T18:36:36.826+02:00",
   "Prefs_MainPinNamesDisplayMode": 1,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 0,
@@ -22,47 +22,22 @@
     {
       "Name":"NAND",
       "IsCollection":false
-    },
-    {
-      "Name":"MERGE/SPLIT",
-      "IsCollection":true
-    },
-    {
-      "Name":"BASIC",
-      "IsCollection":true
-    },
-    {
-      "Name":"DISPLAY",
-      "IsCollection":true
-    },
-    {
-      "Name":"MEMORY",
-      "IsCollection":true
-    },
-    {
-      "Name":"OTHER",
-      "IsCollection":true
     }
   ],
   "ChipCollections":[
     {
-      "Chips":["NAND","CLOCK","PULSE","KEY","3-STATE BUFFER"],
-      "IsToggledOpen":true,
+      "Chips":["NAND","CLOCK","PULSE","KEY","3-STATE BUFFER","CONST"],
+      "IsToggledOpen":false,
       "Name":"BASIC"
     },
     {
-      "Chips":["IN-1","IN-4","IN-8","OUT-1","OUT-4","OUT-8","BUTTON"],
-      "IsToggledOpen":true,
+      "Chips":["BUTTON"],
+      "IsToggledOpen":false,
       "Name":"IN/OUT"
     },
     {
-      "Chips":["1-4BIT","1-8BIT","4-8BIT","4-1BIT","8-4BIT","8-1BIT"],
-      "IsToggledOpen":true,
-      "Name":"MERGE/SPLIT"
-    },
-    {
       "Chips":["BUS-1","BUS-4","BUS-8"],
-      "IsToggledOpen":true,
+      "IsToggledOpen":false,
       "Name":"BUS"
     },
     {
@@ -74,11 +49,6 @@
       "Chips":["ROM 256×16","EEPROM 256×16"],
       "IsToggledOpen":false,
       "Name":"MEMORY"
-    },
-    {
-      "Chips":["DIPSWITCH","RAM-8","BUZZER"],
-      "IsToggledOpen":false,
-      "Name":"OTHER"
     }
   ],
   "pinBitCounts":[

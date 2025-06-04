@@ -4,7 +4,7 @@
   "DLSVersion_EarliestCompatible": "2.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.0",
   "CreationTime": "2025-05-30T15:28:02.070+02:00",
-  "LastSaveTime": "2025-05-30T15:28:02.070+02:00",
+  "LastSaveTime": "2025-06-04T18:32:00.638+02:00",
   "Prefs_MainPinNamesDisplayMode": 1,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 0,
@@ -60,5 +60,6 @@
     "1",
     "4",
     "8"
-  ]
+  ],
+  "SplitMergePairs": null
 }

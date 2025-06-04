@@ -56,11 +56,11 @@ namespace DLS.Game
 			.ToArray();
 		}
 
-		static ChipDescription[] CreateInOutPins(PinBitCount[] pinBitCountsToLoad)
+		static ChipDescription[] CreateInOutPins(List<PinBitCount> pinBitCountsToLoad)
 		{
-			ChipDescription[] DevPinDescriptions = new ChipDescription[pinBitCountsToLoad.Length * 2];
+			ChipDescription[] DevPinDescriptions = new ChipDescription[pinBitCountsToLoad.Count * 2];
 
-            for (int i = 0; i < pinBitCountsToLoad.Length; i++)
+            for (int i = 0; i < pinBitCountsToLoad.Count; i++)
             {
                 PinBitCount pinBitCount = pinBitCountsToLoad[i];
 				PinDescription[] outPin = new[] { CreatePinDescription("OUT", 0, pinBitCount) };

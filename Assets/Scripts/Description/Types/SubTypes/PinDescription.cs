@@ -32,6 +32,10 @@ namespace DLS.Description
 
 		public ushort BitCount;
 
+		public override string ToString()
+		{
+			return BitCount.ToString();
+		}
 		public PinBitCount(ushort BitCount = 1)
 		{
 			this.BitCount = BitCount;

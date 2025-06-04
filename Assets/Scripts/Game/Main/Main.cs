@@ -91,7 +91,8 @@ namespace DLS.Game
 				AllCustomChipNames = Array.Empty<string>(),
 				StarredList = BuiltinCollectionCreator.GetDefaultStarredList().ToList(),
 				ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections()),
-				pinBitCounts = new PinBitCount[]{ 1, 4, 8 }
+				pinBitCounts = new List<PinBitCount> { 1, 4, 8 },
+				SplitMergePairs = new() { new(8,4), new(8,1), new(4,1) }
 			};
 
 			Saver.SaveProjectDescription(initialDescription);
