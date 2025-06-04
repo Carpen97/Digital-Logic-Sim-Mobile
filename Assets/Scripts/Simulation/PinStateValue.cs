@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Specialized;
 using DLS.Description;
+using JetBrains.Annotations;
 using Seb.Helpers;
 using UnityEngine;
 using static UnityEngine.Random;
@@ -356,5 +357,66 @@ namespace DLS.Simulation
                 return HandleConflictBig(other);
             }
         }
+
+        public void HandleShortSplit(ref SimPin[] targets)
+        {
+            int targetSize = targets[0].State.size;
+            int mask = (1 << (targetSize))-1;
+            for (int i = 0; i < targets.Length; i++) {
+                targets[^(i+1)].State.a = (uint)(((GetShortValues() >> (i * targetSize) )& mask) | ((GetShortTristate() >> (i * targetSize)) & mask) << 16);
+            }
+        }
+
+        public void HandleMediumSplit(ref SimPin[] targets) {
+            int targetSize = targets[0].State.size;
+            int mask = (1 << (targetSize)) - 1; 
+            for (int i = 0; i < targets.Length; i++)
+            {
+                targets[^(i + 1)].State.a = ((uint)(a >> (i* targetSize) & mask)) | (uint)((b.Data>>(i*targetSize) & mask)<<16);
+            }
+        }
+
+        public void HandleBigSplit(ref SimPin[] targets)
+        {
+            int targetSize = targets[0].State.size;
+            BitArray mask = BitArrayHelper.TrueBitArray(targetSize - 1);
+
+            if (targetSize <= 16)
+            {
+                for (int i = 0; i < targets.Length; i++)
+                {
+                    targets[^(i+1)].State.a = (uint)(BitArrayHelper.GetUShortAtIndexOfMaxLength(BigValues, i * targetSize, targetSize)
+                        | BitArrayHelper.GetUShortAtIndexOfMaxLength(BigTristates, i * targetSize, targetSize) << 16);
+                }
+            }
+
+            else if (targetSize <= 32)
+            {
+                for (int i = 0; i < targets.Length; i++)
+                {
+                    targets[i].State.a = BitArrayHelper.GetUIntAtIndexOfMaxLength(BigValues, i * targetSize, targetSize);
+                    targets[i].State.b = new BitVector32((int)BitArrayHelper.GetUIntAtIndexOfMaxLength(BigTristates, i * targetSize, targetSize));
+                }
+            }
+
+            else
+            {
+                for (int i = 0; i < targets.Length; i++)
+                {
+                    targets[^(i + 1)].State.BigValues = new BitArray(BitArrayHelper.GetBitArrayOfMaxLengthStartingAtIndex(BigValues, i * targetSize, targetSize));
+                    targets[^(i + 1)].State.BigTristates = new BitArray(BitArrayHelper.GetBitArrayOfMaxLengthStartingAtIndex(BigTristates, i * targetSize, targetSize));
+                }
+            }
+
+        }
+
+        public void HandleSplit(ref SimPin[] targets)
+        {
+            if (size <= 1) return;
+            else if (size <= 16) { HandleShortSplit(ref targets); }
+            else if (size <= 32) { HandleMediumSplit(ref targets); }
+            else { HandleBigSplit(ref targets); }
+        }
+
     }
 }

@@ -4,7 +4,7 @@
   "DLSVersion_EarliestCompatible": "2.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.0",
   "CreationTime": "2025-06-04T18:16:56.000+02:00",
-  "LastSaveTime": "2025-06-04T18:32:00.639+02:00",
+  "LastSaveTime": "2025-06-04T20:31:33.685+02:00",
   "Prefs_MainPinNamesDisplayMode": 1,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 0,
@@ -56,5 +56,18 @@
     "4",
     "8"
   ],
-  "SplitMergePairs": null
+  "SplitMergePairs":[
+    {
+      "Key":"8",
+      "Value":"4"
+    },
+    {
+      "Key":"8",
+      "Value":"1"
+    },
+    {
+      "Key":"4",
+      "Value":"1"
+    }
+  ]
 }

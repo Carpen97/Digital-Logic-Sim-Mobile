@@ -53,6 +53,8 @@ namespace DLS.Game
 				CreateBuzzer()
 			}
 			.Concat(CreateInOutPins(description.pinBitCounts))
+			.Concat(CreateSplitMergePins(description.SplitMergePairs))
+			
 			.ToArray();
 		}
 
@@ -78,7 +80,56 @@ namespace DLS.Game
 			return DevPinDescriptions;
         }
 
-        static ChipDescription CreateNand()
+		static ChipDescription[] CreateSplitMergePins(List<KeyValuePair<PinBitCount, PinBitCount>> pairs)
+		{
+			char[] letters = new[] { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
+			ChipDescription[] SplitMergeDescriptions = new ChipDescription[pairs.Count * 2];
+
+
+
+			for (int i = 0; i < pairs.Count; i++)
+			{
+				(PinBitCount a, PinBitCount b) counts = (pairs[i].Key, pairs[i].Value);
+				int smallInBig = counts.a / counts.b;
+
+				PinDescription[] mergeIN = new PinDescription[smallInBig];
+				PinDescription[] mergeOUT = new[] { CreatePinDescription("OUT", smallInBig, counts.a) };
+
+				PinDescription[] splitIN = new[] { CreatePinDescription("IN", 0, counts.a) };
+				PinDescription[] splitOUT = new PinDescription[smallInBig];
+
+				for(int j = 0; j < smallInBig; j++)
+				{
+					mergeIN[^(j+1)] = CreatePinDescription("IN-" + letters[j], j, counts.b);
+				}
+                for (int j = 0; j < smallInBig; j++)
+                {
+                    splitOUT[^(j+1)] = CreatePinDescription("OUT-" + letters[j], j+1, counts.b);
+                }
+
+
+
+
+
+
+
+
+                string mergeName = counts.b.ToString() + "-" + counts.a.ToString()+"BIT";
+                string splitName = counts.a.ToString() + "-" + counts.b.ToString()+"BIT";
+
+				Vector2 minChipSize = SubChipInstance.CalculateMinChipSize(mergeIN, mergeOUT, mergeName); // both same size in the end anyway
+				float width = Mathf.Max(GridSize * 9, minChipSize.x);
+
+                Vector2 size = new Vector2(width, minChipSize.y);
+
+
+                SplitMergeDescriptions[i * 2] = CreateBuiltinChipDescription(ChipType.Merge_Pin, size, GetColor(ChipCol_SplitMerge), mergeIN, mergeOUT, name:mergeName );
+                SplitMergeDescriptions[i * 2+1] = CreateBuiltinChipDescription(ChipType.Split_Pin, size, GetColor(ChipCol_SplitMerge), splitIN, splitOUT, name:splitName);
+            }
+
+            return SplitMergeDescriptions;
+		}
+            static ChipDescription CreateNand()
 		{
 			Color col = GetColor(new(0.73f, 0.26f, 0.26f));
 			Vector2 size = new(CalculateGridSnappedWidth(GridSize * 8), GridSize * 4);
@@ -477,7 +528,7 @@ namespace DLS.Game
 
 		static ChipDescription CreateBuiltinChipDescription(ChipType type, Vector2 size, Color col, PinDescription[] inputs, PinDescription[] outputs, DisplayDescription[] displays = null, NameDisplayLocation nameLoc = NameDisplayLocation.Centre, string name = "")
 		{
-			if (!ChipTypeHelper.IsDevPin(type)){name = ChipTypeHelper.GetName(type); }
+			if (!ChipTypeHelper.IsDevPin(type) && !ChipTypeHelper.IsMergeSplitChip(type)){name = ChipTypeHelper.GetName(type); }
 			
 			ValidatePinIDs(inputs, outputs, name);
 

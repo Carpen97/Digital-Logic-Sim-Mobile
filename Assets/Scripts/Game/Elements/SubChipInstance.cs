@@ -200,7 +200,7 @@ namespace DLS.Game
 					PinBitCount.Bit1 => 2,
 					PinBitCount.Bit4 => 3,
 					PinBitCount.Bit8 => 4,
-                    _ => Mathf.RoundToInt(0.43f / 8 * pinBitCount.BitCount / DrawSettings.GridSize)
+                    _ => Mathf.RoundToInt(0.43f / 8 * pinBitCount.BitCount / DrawSettings.GridSize +0.5f)
 
                 };
 

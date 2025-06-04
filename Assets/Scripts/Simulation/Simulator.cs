@@ -505,6 +505,14 @@ namespace DLS.Simulation
 					chip.OutputPins[0].State.SetShort((ushort)chip.InternalState[0]);
 					break;
 				}
+
+				case ChipType.Split_Pin:
+				{ 
+					chip.InputPins[0].State.HandleSplit(ref chip.OutputPins);
+					break;
+				}
+
+
 				// ---- Bus types ----
 				default:
 				{

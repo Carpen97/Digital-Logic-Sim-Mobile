@@ -94,5 +94,10 @@ namespace DLS.Description
 		public static bool IsInternalDataModifiable(ChipType type) {
 			return type == ChipType.EEPROM_256x16 || type == ChipType.Toggle;
 		}
+
+		public static bool IsMergeSplitChip(ChipType chipType)
+		{
+			return chipType == ChipType.Split_Pin || chipType == ChipType.Merge_Pin;
+		}
 	}
 } 

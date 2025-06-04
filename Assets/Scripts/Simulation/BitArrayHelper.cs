@@ -147,6 +147,31 @@ namespace DLS.Simulation
             return n;
         }
 
+        public static ushort GetUShortAtIndexOfMaxLength(BitArray state, int index, int maxLength)
+        {
+            int len = Mathf.Min(maxLength + index, state.Count, 16 + index);
+            ushort n = 0;
+            for (int i = index; i < len ; i++)
+            {
+                if (state.Get(i))
+                    n |= (ushort)(1 << i);
+            }
+            return n;
+        }
+
+        public static uint GetUIntAtIndexOfMaxLength(BitArray state, int index, int maxLength)
+        {
+            int len = Mathf.Min(maxLength + index, state.Count, 32 + index);
+            uint n = 0;
+            for (int i = index; i < len; i++)
+            {
+                if (state.Get(i))
+                    n |= (uint)(1 << i);
+            }
+            return n;
+        }
+
+
         public static uint GetFirstUIntFromByteArray(BitArray state)
         {
             int len = Math.Min(32, state.Count);
@@ -202,6 +227,17 @@ namespace DLS.Simulation
             }
 
             return bytes;
+        }
+
+        public static BitArray GetBitArrayOfMaxLengthStartingAtIndex(BitArray state, int index, int length)
+        {
+            BitArray bitArray = new BitArray(length);
+            int len = Mathf.Min(length + index, state.Length);
+            for(int i = index;i < len;i++)
+            {
+                bitArray[i - index] = state[i];
+            }
+            return bitArray;
         }
 
 
