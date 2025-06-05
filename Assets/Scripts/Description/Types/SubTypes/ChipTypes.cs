@@ -9,10 +9,12 @@ namespace DLS.Description
 		TriStateBuffer,
 		Clock,
 		Pulse,
+		Detector,
 
 		// ---- Memory ----
 		dev_Ram_8Bit,
 		Rom_256x16,
+		EEPROM_256x16,
 
 		// ---- Displays ----
 		SevenSegmentDisplay,
@@ -38,8 +40,13 @@ namespace DLS.Description
 
 		Key,
 
-		// ---- Buses ----
-		Bus_1Bit,
+		Button,
+		Toggle,
+
+		Constant_8Bit,
+
+        // ---- Buses ----
+        Bus_1Bit,
 		BusTerminus_1Bit,
 		Bus_4Bit,
 		BusTerminus_4Bit,
@@ -47,7 +54,12 @@ namespace DLS.Description
 		BusTerminus_8Bit,
 		
 		// ---- Audio ----
-		Buzzer
+		Buzzer,
 
+		// ---- Time ----
+		RTC,
+
+		// ---- Clock ----
+		SPS,
 	}
 }

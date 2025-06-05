@@ -10,7 +10,7 @@
   "Prefs_Snapping": 0,
   "Prefs_StraightWires": 0,
   "Prefs_SimPaused": false,
-  "Prefs_SimTargetStepsPerSecond": 150,
+  "Prefs_SimTargetStepsPerSecond": 100,
   "Prefs_SimStepsPerClockTick": 6,
   "StepsRanSinceCreated": 912542,
   "TimeSpentSinceCreated": {
@@ -69,7 +69,13 @@
     "#AA",
     "StatsTest",
     "StatsTest1",
-    "StatsTest2"
+    "StatsTest2",
+    "SPSTest",
+    "EEPROM_test",
+    "BUTTON_test",
+    "BUTTON_test2",
+    "4sw",
+    "ConstTest"
   ],
   "StarredList":[
     {
@@ -103,30 +109,22 @@
     {
       "Name":"BuzzTest",
       "IsCollection":false
-    },
-    {
-      "Name":"#AA",
-      "IsCollection":false
-    },
-    {
-      "Name":"StatsTest",
-      "IsCollection":false
     }
   ],
   "ChipCollections":[
     {
       "Chips":["NAND","AND","NOT","NOR","XOR","OR","KEY","CLOCK","3-STATE BUFFER"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"BASICS"
     },
     {
       "Chips":["IN-1","IN-4","IN-8","OUT-1","OUT-4","OUT-8"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"IN/OUT"
     },
     {
       "Chips":["1-4BIT","1-8BIT","4-8BIT","8-4BIT","8-1BIT","4-1BIT"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"MERGE/SPLIT"
     },
     {
@@ -136,7 +134,7 @@
     },
     {
       "Chips":["BUS-1","BUS-4","BUS-8"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"BUS"
     },
     {
@@ -145,17 +143,17 @@
       "Name":"MEMORY"
     },
     {
-      "Chips":["FLIP-FLOP","OR-8","MEM-1","NOT-8","AND(8,1)","MUX-8","PC","BUF-8","ALU-8","DECODE-3","AND-3","CONTROL UNIT","TOGGLE","FLAGS","DISP-7","demo","7-SEGMENT DRIVER","DABBLE","LSB","LSHIFT-8","DOUBLE DABBLE","ALU","BUS BUFFER","MEM-256","REGISTER-8","XNOR","EQUALS-8","ADDER-4","DECODER-2","ADDER-8","ADDER","MEM-16","REGISTER-1","AND-8","RAM-256×8 (async)","ROM 256×16"],
+      "Chips":["D-LATCH","FLIP-FLOP","OR-8","MEM-1","NOT-8","AND(8,1)","MUX-8","PC","BUF-8","ALU-8","DECODE-3","AND-3","CONTROL UNIT","TOGGLE","FLAGS","DISP-7","demo","7-SEGMENT DRIVER","DABBLE","LSB","LSHIFT-8","DOUBLE DABBLE","ALU","BUS BUFFER","MEM-256","REGISTER-8","XNOR","EQUALS-8","ADDER-4","DECODER-2","ADDER-8","ADDER","MEM-16","REGISTER-1","AND-8","RAM-256×8 (async)","ROM 256×16"],
       "IsToggledOpen":true,
       "Name":"KEEP"
     },
     {
-      "Chips":["WIP2","RAM-sync"],
-      "IsToggledOpen":false,
+      "Chips":["WIP2","RAM-sync","CONST"],
+      "IsToggledOpen":true,
       "Name":"TEST"
     },
     {
-      "Chips":["PULSE","TEST MergeSplit","BUZZER","#","BuzzTest","dev.RAM-8","#AA","StatsTest","StatsTest1","StatsTest2"],
+      "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest","#AA","StatsTest","StatsTest1","StatsTest2","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8","DETECTOR","RTC","ConstTest"],
       "IsToggledOpen":true,
       "Name":"OTHER"
     }

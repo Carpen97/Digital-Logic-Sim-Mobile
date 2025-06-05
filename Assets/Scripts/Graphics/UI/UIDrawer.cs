@@ -22,7 +22,8 @@ namespace DLS.Graphics
 			CollectionStats,
 			ProjectStats,
 			PulseEdit,
-			UnsavedChanges,
+            ConstantEdit,
+            UnsavedChanges,
 			Search,
 			ChipLabelPopup
 		}
@@ -75,6 +76,7 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.Search) SearchPopup.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLabelPopup) ChipLabelMenu.DrawMenu();
 			else if (menuToDraw == MenuType.PulseEdit) PulseEditMenu.DrawMenu();
+			else if (menuToDraw == MenuType.ConstantEdit)  ConstantEditMenu.DrawMenu();
 			else
 			{
 				bool showSimPausedBanner = project.simPaused;
@@ -105,8 +107,10 @@ namespace DLS.Graphics
 				else if (ActiveMenu == MenuType.Search) SearchPopup.OnMenuOpened();
 				else if (ActiveMenu == MenuType.ChipLabelPopup) ChipLabelMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.PulseEdit) PulseEditMenu.OnMenuOpened();
+                else if (ActiveMenu == MenuType.ConstantEdit) ConstantEditMenu.OnMenuOpened();
 
-				if (InInputBlockingMenu() && Project.ActiveProject != null && Project.ActiveProject.controller != null)
+
+                if (InInputBlockingMenu() && Project.ActiveProject != null && Project.ActiveProject.controller != null)
 				{
 					Project.ActiveProject.controller.CancelEverything();
 				}
