@@ -73,8 +73,8 @@ namespace DLS.Graphics
 				}
 
 				// Draw close
-				Vector2 buttonTopLeft = new(labelPosCurr.x * 2.223f, UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));
-				bool result = UI.Button("CLOSE", MenuHelper.Theme.ButtonTheme, buttonTopLeft, new Vector2(menuWidth / 1.115f, 0));
+				Vector2 buttonTopLeft = new(labelPosCurr.x * 2.222f, UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));
+				bool result = UI.Button("CLOSE", MenuHelper.Theme.ButtonTheme, buttonTopLeft, new Vector2(menuWidth / 1.118f, 0));
 
 				// Draw menu background
 				Bounds2D menuBounds = UI.GetCurrentBoundsScope();
