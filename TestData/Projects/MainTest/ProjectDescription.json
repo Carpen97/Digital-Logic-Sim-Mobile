@@ -3,7 +3,7 @@
   "DLSVersion_LastSaved": "2.1.6",
   "DLSVersion_EarliestCompatible": "2.0.0",
   "CreationTime": "2025-03-15T00:23:30.404+07:00",
-  "LastSaveTime": "2025-05-31T16:34:51.885+07:00",
+  "LastSaveTime": "2025-06-05T16:46:49.335+07:00",
   "Prefs_MainPinNamesDisplayMode": 2,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 1,
@@ -12,9 +12,12 @@
   "Prefs_SimPaused": false,
   "Prefs_SimTargetStepsPerSecond": 100,
   "Prefs_SimStepsPerClockTick": 6,
+  "StepsRanSinceCreated": 912542,
+  "TimeSpentSinceCreated": {
+    "StartFrom": "02:03:06.6299650"
+  },
   "AllCustomChipNames":[
     "AND",
-    "D-LATCH",
     "NOT",
     "OR",
     "NOR",
@@ -63,6 +66,10 @@
     "TEST MergeSplit",
     "#",
     "BuzzTest",
+    "#AA",
+    "StatsTest",
+    "StatsTest1",
+    "StatsTest2",
     "SPSTest",
     "EEPROM_test",
     "BUTTON_test",
@@ -101,29 +108,6 @@
     },
     {
       "Name":"BuzzTest",
-      "IsCollection":false
-    },
-    {
-      "Name":"SPSTest",
-    },
-    {
-      "Name":"EEPROM_test",
-      "IsCollection":false
-    },
-    {
-      "Name":"BUTTON_test",
-      "IsCollection":false
-    },
-    {
-      "Name":"BUTTON_test2",
-      "IsCollection":false
-    },
-    {
-      "Name":"4sw",
-      "IsCollection":false
-    },
-    {
-      "Name":"ConstTest",
       "IsCollection":false
     }
   ],
@@ -169,7 +153,7 @@
       "Name":"TEST"
     },
     {
-      "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8","DETECTOR","RTC","ConstTest"],
+      "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest","#AA","StatsTest","StatsTest1","StatsTest2","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8","DETECTOR","RTC","ConstTest"],
       "IsToggledOpen":true,
       "Name":"OTHER"
     }

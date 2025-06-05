@@ -90,6 +90,7 @@ namespace DLS.Simulation
 			}
 
 			UpdateAudioState();
+			Project.ActiveProject.description.StepsRanSinceCreated++;
 		}
 
 		public static void UpdateInPausedState()

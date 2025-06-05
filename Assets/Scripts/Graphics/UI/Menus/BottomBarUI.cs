@@ -24,6 +24,7 @@ namespace DLS.Graphics
 			$"SAVE CHIP    {shortcutTextCol}Ctrl+S",
 			$"FIND CHIP    {shortcutTextCol}Ctrl+F",
 			$"LIBRARY      {shortcutTextCol}Ctrl+L",
+			$"STATS        {shortcutTextCol}Ctrl+T", // Ctrl+'T' from the T in Stats
 			$"PREFS        {shortcutTextCol}Ctrl+P",
 			$"QUIT         {shortcutTextCol}Ctrl+Q"
 		};
@@ -32,8 +33,9 @@ namespace DLS.Graphics
 		const int SaveChipButtonIndex = 1;
 		const int FindChipButtonIndex = 2;
 		const int LibraryButtonIndex = 3;
-		const int OptionsButtonIndex = 4;
-		const int QuitButtonIndex = 5;
+		const int StatsButtonIndex = 4;
+		const int OptionsButtonIndex = 5;
+		const int QuitButtonIndex = 6;
 
 		// ---- State ----
 		static float scrollX;
@@ -111,6 +113,7 @@ namespace DLS.Graphics
 				else if (i == SaveChipButtonIndex) OpenSaveMenu();
 				else if (i == FindChipButtonIndex) OpenSearchMenu();
 				else if (i == LibraryButtonIndex) OpenLibraryMenu();
+				else if (i == StatsButtonIndex) OpenStatsMenu();
 				else if (i == OptionsButtonIndex) OpenPreferencesMenu();
 				else if (i == QuitButtonIndex) ExitToMainMenu();
 			}
@@ -388,6 +391,7 @@ namespace DLS.Graphics
 		static void OpenSaveMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipSave);
 		static void OpenSearchMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.Search);
 		static void OpenLibraryMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipLibrary);
+		static void OpenStatsMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ProjectStats);
 		static void OpenPreferencesMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.Preferences);
 
 		static void CreateNewChip()
@@ -413,6 +417,7 @@ namespace DLS.Graphics
 				if (KeyboardShortcuts.LibraryShortcutTriggered) OpenLibraryMenu();
 			}
 
+			if (KeyboardShortcuts.StatsShortcutTriggered) OpenStatsMenu();
 			if (KeyboardShortcuts.PreferencesShortcutTriggered) OpenPreferencesMenu();
 			if (KeyboardShortcuts.QuitToMainMenuShortcutTriggered) ExitToMainMenu();
 		}

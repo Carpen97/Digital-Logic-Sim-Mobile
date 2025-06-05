@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using DLS.Game;
 using Seb.Vis.UI;
 
@@ -17,6 +18,9 @@ namespace DLS.Graphics
 			MainMenu,
 			RebindKeyChip,
 			RomEdit,
+			ChipStats,
+			CollectionStats,
+			ProjectStats,
 			PulseEdit,
             ConstantEdit,
             UnsavedChanges,
@@ -65,6 +69,9 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.PinRename) PinEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.RebindKeyChip) RebindKeyChipMenu.DrawMenu();
 			else if (menuToDraw == MenuType.RomEdit) RomEditMenu.DrawMenu();
+			else if (menuToDraw == MenuType.ChipStats) ChipStatsMenu.DrawMenu(); 
+			else if (menuToDraw == MenuType.CollectionStats) CollectionStatsMenu.DrawMenu();
+			else if (menuToDraw == MenuType.ProjectStats) ProjectStatsMenu.DrawMenu();
 			else if (menuToDraw == MenuType.UnsavedChanges) UnsavedChangesPopup.DrawMenu();
 			else if (menuToDraw == MenuType.Search) SearchPopup.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLabelPopup) ChipLabelMenu.DrawMenu();
