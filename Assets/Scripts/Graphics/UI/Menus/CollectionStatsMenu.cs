@@ -43,7 +43,7 @@ namespace DLS.Graphics
 				UI.DrawText(GetCollectionChipsLength().ToString(), theme.FontBold, theme.FontSizeRegular, numOfChipsLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 
 				// Draw close
-				Vector2 buttonTopLeft = new(labelPosCurr.x * 2.222f, UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));
+				Vector2 buttonTopLeft = new(50, UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));
 				bool result = UI.Button("CLOSE", MenuHelper.Theme.ButtonTheme, buttonTopLeft, new Vector2(menuWidth / 1.118f, 0));
 
 				// Draw menu background
