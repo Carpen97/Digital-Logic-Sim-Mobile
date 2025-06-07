@@ -4,19 +4,20 @@
   "DLSVersion_EarliestCompatible": "2.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.0",
   "CreationTime": "2025-05-19T11:48:01.969+02:00",
-  "LastSaveTime": "2025-06-04T22:20:48.944+02:00",
+  "LastSaveTime": "2025-06-07T15:26:29.796+02:00",
   "Prefs_MainPinNamesDisplayMode": 1,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 1,
   "Prefs_Snapping": 0,
   "Prefs_StraightWires": 0,
   "Prefs_SimPaused": false,
-  "Prefs_SimTargetStepsPerSecond": 1000000000,
+  "Prefs_SimTargetStepsPerSecond": 100000000,
   "Prefs_SimStepsPerClockTick": 250,
   "AllCustomChipNames":[
     "128Nand",
     "2NAND",
-    "4nand"
+    "4nand",
+    "MergeTestChip"
   ],
   "StarredList":[
     {
@@ -37,6 +38,10 @@
     },
     {
       "Name":"4nand",
+      "IsCollection":false
+    },
+    {
+      "Name":"MergeTestChip",
       "IsCollection":false
     }
   ],
@@ -72,7 +77,7 @@
       "Name":"MEMORY"
     },
     {
-      "Chips":["BUTTON","DIPSWITCH","CONST","RAM-8","BUZZER","128Nand","IN-32","OUT-32","IN-16","OUT-16","IN-24","OUT-24","IN-128","OUT-128","IN-1024","OUT-1024","IN-20736000","OUT-20736000","IN-345600","OUT-345600","IN-15","OUT-15","4-16BIT","16-4BIT","16-32BIT","32-16BIT","2NAND","4nand"],
+      "Chips":["BUTTON","DIPSWITCH","CONST","RAM-8","BUZZER","128Nand","IN-32","OUT-32","IN-16","OUT-16","IN-24","OUT-24","IN-128","OUT-128","IN-1024","OUT-1024","IN-20736000","OUT-20736000","IN-345600","OUT-345600","IN-15","OUT-15","4-16BIT","16-4BIT","16-32BIT","32-16BIT","2NAND","4nand","IN-64","OUT-64","64-128BIT","128-64BIT","32-64BIT","64-32BIT","16-64BIT","64-16BIT","MergeTestChip"],
       "IsToggledOpen":true,
       "Name":"OTHER"
     }
@@ -86,7 +91,8 @@
     "24",
     "128",
     "1024",
-    "15"
+    "15",
+    "64"
   ],
   "SplitMergePairs":[
     {
@@ -107,6 +113,18 @@
     },
     {
       "Key":"32",
+      "Value":"16"
+    },
+    {
+      "Key":"128",
+      "Value":"64"
+    },
+    {
+      "Key":"64",
+      "Value":"32"
+    },
+    {
+      "Key":"64",
       "Value":"16"
     }
   ]

@@ -24,6 +24,79 @@ namespace DLS.Simulation
         public static BitArray ShortMaskArray = new BitArray(new byte[] { 0b11111111, 0b11111111 });
         public static BitArray IntMaskArray = new BitArray(new byte[] { 0b11111111, 0b11111111, 0b11111111, 0b11111111 });
 
+        public static uint[] PreComputedUINTMasks = {
+            0b0000_0000_0000_0000__0000_0000_0000_0000,
+
+            0b0000_0000_0000_0001__0000_0000_0000_0001,
+            0b0000_0000_0000_0011__0000_0000_0000_0011,
+            0b0000_0000_0000_0111__0000_0000_0000_0111,
+            0b0000_0000_0000_1111__0000_0000_0000_1111,
+
+            0b0000_0000_0001_1111__0000_0000_0001_1111,
+            0b0000_0000_0011_1111__0000_0000_0011_1111,
+            0b0000_0000_0111_1111__0000_0000_0111_1111,
+            0b0000_0000_1111_1111__0000_0000_1111_1111,
+
+            0b0000_0001_1111_1111__0000_0001_1111_1111,
+            0b0000_0011_1111_1111__0000_0011_1111_1111,
+            0b0000_0111_1111_1111__0000_0111_1111_1111,
+            0b0000_1111_1111_1111__0000_1111_1111_1111,
+
+            0b0001_1111_1111_1111__0001_1111_1111_1111,
+            0b0011_1111_1111_1111__0011_1111_1111_1111,
+            0b0111_1111_1111_1111__0111_1111_1111_1111,
+            0b1111_1111_1111_1111__1111_1111_1111_1111,
+        };
+
+        public static ushort[] PreComputedSHORTMasks = {
+            0000_0000_0000_0000,
+
+            0b0000_0000_0000_0001,
+            0b0000_0000_0000_0011,
+            0b0000_0000_0000_0111,
+            0b0000_0000_0000_1111,
+
+            0b0000_0000_0001_1111,
+            0b0000_0000_0011_1111,
+            0b0000_0000_0111_1111,
+            0b0000_0000_1111_1111,
+
+            0b0000_0001_1111_1111,
+            0b0000_0011_1111_1111,
+            0b0000_0111_1111_1111,
+            0b0000_1111_1111_1111,
+
+            0b0001_1111_1111_1111,
+            0b0011_1111_1111_1111,
+            0b0111_1111_1111_1111,
+            0b1111_1111_1111_1111,
+        };
+
+        public static int[] PreComputedINTMasks = {
+            0000_0000_0000_0000,
+
+            0b0000_0000_0000_0001,
+            0b0000_0000_0000_0011,
+            0b0000_0000_0000_0111,
+            0b0000_0000_0000_1111,
+
+            0b0000_0000_0001_1111,
+            0b0000_0000_0011_1111,
+            0b0000_0000_0111_1111,
+            0b0000_0000_1111_1111,
+
+            0b0000_0001_1111_1111,
+            0b0000_0011_1111_1111,
+            0b0000_0111_1111_1111,
+            0b0000_1111_1111_1111,
+
+            0b0001_1111_1111_1111,
+            0b0011_1111_1111_1111,
+            0b0111_1111_1111_1111,
+            0b1111_1111_1111_1111,
+        };
+
+
         public static BitArray NonMutativeOR(BitArray A, BitArray B)
         {
             BitArray temp = new BitArray(A);
@@ -154,7 +227,7 @@ namespace DLS.Simulation
             for (int i = index; i < len ; i++)
             {
                 if (state.Get(i))
-                    n |= (ushort)(1 << i);
+                    n |= (ushort)(1 << (i-index));
             }
             return n;
         }
@@ -166,7 +239,7 @@ namespace DLS.Simulation
             for (int i = index; i < len; i++)
             {
                 if (state.Get(i))
-                    n |= (uint)(1 << i);
+                    n |= (uint)(1 << (i - index));
             }
             return n;
         }
@@ -259,6 +332,34 @@ namespace DLS.Simulation
             }
             return bitArray;
         }
+
+        public static void SetNBitsAtIndex(ref BitArray state, BitArray source, int index, int length)
+        {
+            int len = Mathf.Min(index + length, state.Length, index + source.Length);
+            for (int i = index; i < len; i++)
+            {
+                state.Set(i, source[i-index]);
+            }
+        }
+
+        public static void SetUShortOfMaxLengthAtIndex(ref BitArray state, ushort value, int index, int length)
+        {
+            int len = Mathf.Min(index + length, state.Length, index + 16);
+            for(int i = index; i < len; i++)
+            {
+                state.Set(i, ((value >> (i-index)) & 1) == 1);
+            }
+        }
+
+        public static void SetUIntOfMaxLengthAtIndex(ref BitArray state, uint value, int index, int length)
+        {
+            int len = Mathf.Min(index + length, state.Length, index + 32);
+            for (int i = index; i < len; i++)
+            {
+                state.Set(i, ((value >> (i - index)) & 1) == 1);
+            }
+        }
+
 
 
 

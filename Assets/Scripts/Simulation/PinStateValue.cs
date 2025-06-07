@@ -5,6 +5,7 @@ using DLS.Description;
 using JetBrains.Annotations;
 using Seb.Helpers;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 using static UnityEngine.Random;
 
 namespace DLS.Simulation
@@ -69,19 +70,13 @@ namespace DLS.Simulation
         
         public void SetAllDisconnected()
         {
-            if(size == 1)
-            {
-                a = 2;
-                return;
-            }
-
             if(size <= 16)
             {
                 a = 0xFFFF0000;
                 return;
             }
 
-            if(size <= 32)
+            else if(size <= 32)
             {
                 a = 0;
                 b = new BitVector32(-1);
@@ -125,7 +120,7 @@ namespace DLS.Simulation
 
         public void SetShortValue(ushort value)
         {
-            a = value | (a & 0xFFFF0000);
+            a = value| (a & 0xFFFF0000);
         }
 
         public void SetShortTristateAndValue(ushort tristate, ushort value)
@@ -176,20 +171,17 @@ namespace DLS.Simulation
             return BitArrayHelper.GetFirstUIntFromByteArray(BigValues);
         }
 
-
         public ushort GetSmallTristatedValue()
         {
-            return (ushort)a;
+            return (ushort)((a & 1) | ((a >> 16) & 1) << 1);
         }
 
         public ushort GetTristatedValue(int index)
         {
-            if(size == 1)
-            {
-                return GetSmallTristatedValue();
+            if (size == 1) {
+                GetSmallTristatedValue();
             }
-
-            else if (size <= 16)
+            if (size <= 16)
             {
                 return GetShortBitTristatedValue(index);
             }
@@ -361,32 +353,35 @@ namespace DLS.Simulation
         public void HandleShortSplit(ref SimPin[] targets)
         {
             int targetSize = targets[0].State.size;
-            int mask = (1 << (targetSize))-1;
+            uint fullMask = BitArrayHelper.PreComputedUINTMasks[targetSize];
+            int offset = targets.Length - 1;
+
             for (int i = 0; i < targets.Length; i++) {
-                targets[^(i+1)].State.a = (uint)(((GetShortValues() >> (i * targetSize) )& mask) | ((GetShortTristate() >> (i * targetSize)) & mask) << 16);
+                targets[offset - i].State.a = (a>>(i*targetSize)) & fullMask;
             }
         }
 
         public void HandleMediumSplit(ref SimPin[] targets) {
             int targetSize = targets[0].State.size;
-            int mask = (1 << (targetSize)) - 1; 
+            uint mask = BitArrayHelper.PreComputedSHORTMasks[targetSize];
+            int offset = targets.Length - 1;
+
             for (int i = 0; i < targets.Length; i++)
             {
-                targets[^(i + 1)].State.a = ((uint)(a >> (i* targetSize) & mask)) | (uint)((b.Data>>(i*targetSize) & mask)<<16);
+                int off = (i * targetSize);
+                targets[offset - i].State.a = (uint)(((a>>off) & mask) | (((b.Data>>off) & mask) <<16));
             }
         }
 
         public void HandleBigSplit(ref SimPin[] targets)
         {
-            int targetSize = targets[0].State.size;
-            BitArray mask = BitArrayHelper.TrueBitArray(targetSize - 1);
-
+            int targetSize = targets[0].State.size; 
             if (targetSize <= 16)
             {
                 for (int i = 0; i < targets.Length; i++)
                 {
                     targets[^(i+1)].State.a = (uint)(BitArrayHelper.GetUShortAtIndexOfMaxLength(BigValues, i * targetSize, targetSize)
-                        | BitArrayHelper.GetUShortAtIndexOfMaxLength(BigTristates, i * targetSize, targetSize) << 16);
+                        | (BitArrayHelper.GetUShortAtIndexOfMaxLength(BigTristates, i * targetSize, targetSize) << 16));
                 }
             }
 
@@ -394,8 +389,8 @@ namespace DLS.Simulation
             {
                 for (int i = 0; i < targets.Length; i++)
                 {
-                    targets[i].State.a = BitArrayHelper.GetUIntAtIndexOfMaxLength(BigValues, i * targetSize, targetSize);
-                    targets[i].State.b = new BitVector32((int)BitArrayHelper.GetUIntAtIndexOfMaxLength(BigTristates, i * targetSize, targetSize));
+                    targets[^(i + 1)].State.a = BitArrayHelper.GetUIntAtIndexOfMaxLength(BigValues, i * targetSize, targetSize);
+                    targets[^(i + 1)].State.b = new BitVector32((int)BitArrayHelper.GetUIntAtIndexOfMaxLength(BigTristates, i * targetSize, targetSize));
                 }
             }
 
@@ -412,11 +407,92 @@ namespace DLS.Simulation
 
         public void HandleSplit(ref SimPin[] targets)
         {
-            if (size <= 1) return;
-            else if (size <= 16) { HandleShortSplit(ref targets); }
+            if (size <= 16) { HandleShortSplit(ref targets); }
             else if (size <= 32) { HandleMediumSplit(ref targets); }
             else { HandleBigSplit(ref targets); }
+
         }
 
+
+        public void HandleShortMerge(SimPin[] sources)
+        {
+            int sourceSize = sources[0].State.size;
+            uint fullMask = BitArrayHelper.PreComputedUINTMasks[sourceSize];
+            int offset = sources.Length - 1;
+
+            a = sources[offset].State.a & fullMask;
+
+            for (int i = 1; i < sources.Length; i++)
+            {
+                a = a | ( sources[offset - i].State.a & fullMask) << (i * sourceSize);
+            }
+
+        }
+
+        public void HandleMediumMerge(SimPin[] sources)
+        {
+            int sourceSize = sources[0].State.size;
+            uint mask = BitArrayHelper.PreComputedSHORTMasks[sourceSize];
+            int offset = sources.Length - 1;
+
+
+            a = sources[offset].State.a & mask;
+            int tri = (int)(sources[offset].State.a >> 16 & mask);
+
+            for (int i = 1; i < sources.Length; i++)
+            {
+                int shift = (i * sourceSize);
+                uint sourceState = sources[offset-i].State.a;
+                a |= (sourceState & mask) << shift;
+                tri |= (int)((sourceState >> 16)& mask) << shift;
+            }
+
+            b = new BitVector32(tri);
+        }
+
+        public void HandleBigMerge(SimPin[] sources)
+        {
+            int sourceSize = sources[0].State.size; // Always the same
+            BigValues = new BitArray(size);
+            BigTristates = BitArrayHelper.TrueBitArray(size);
+
+            if (sourceSize <= 16)
+            {
+                uint mask = BitArrayHelper.PreComputedSHORTMasks[sourceSize];
+                uint triMask = mask << 16;
+                for (int i = 0; i < sources.Length; i++)
+                {
+                    uint sourceState = sources[^(i + 1)].State.a;
+                    BitArrayHelper.SetUShortOfMaxLengthAtIndex(ref BigValues, (ushort)(sourceState & mask), (i * sourceSize), sourceSize);
+                    BitArrayHelper.SetUShortOfMaxLengthAtIndex(ref BigTristates, (ushort)((sourceState & triMask)>>16), (i * sourceSize), sourceSize);
+                }
+            }
+            else if (sourceSize <= 32)
+            {
+                for (int i = 0; i < sources.Length; i++)
+                {
+                    BitArrayHelper.SetUIntOfMaxLengthAtIndex(ref BigValues, sources[^(i + 1)].State.a, i * sourceSize, sourceSize);
+                    BitArrayHelper.SetUIntOfMaxLengthAtIndex(ref BigTristates, (uint)sources[^(i + 1)].State.b.Data, i * sourceSize, sourceSize);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < sources.Length; i++)
+                {
+                    BitArrayHelper.SetNBitsAtIndex(ref BigValues, sources[^(i + 1)].State.BigValues, sourceSize * i, sourceSize);
+                    BitArrayHelper.SetNBitsAtIndex(ref BigTristates, sources[^(i+1)].State.BigTristates, sourceSize * i, sourceSize);
+                }
+            }
+        }
+
+        public void HandleMerge(SimPin[] sources)
+        {
+            if(size <= 16) { HandleShortMerge(sources); }
+            else if(size <= 32) { HandleMediumMerge(sources); }
+            else
+            {
+                 HandleBigMerge(sources);
+            }
+        }
     }
 }

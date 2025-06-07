@@ -238,7 +238,9 @@ namespace DLS.Simulation
 				case ChipType.Nand:
 				{
                         uint nandOp = 1 ^ (chip.InputPins[0].State.a & chip.InputPins[1].State.a);
+
                         chip.OutputPins[0].State.a = (nandOp & 1);
+
                         break;
                 }
 				case ChipType.Clock:
@@ -307,12 +309,10 @@ namespace DLS.Simulation
 
                 case ChipType.TriStateBuffer:
 				{
-					SimPin dataPin = chip.InputPins[0];
-					SimPin enablePin = chip.InputPins[1];
 					SimPin outputPin = chip.OutputPins[0];	
 
-					if (enablePin.State.SmallHigh()) outputPin.State = dataPin.State;
-					else outputPin.State.a = 2;
+					if (chip.InputPins[1].State.SmallHigh()) outputPin.State = chip.InputPins[0].State;
+					else outputPin.State.a = 0b_0000_0000_0000_0001___0000_0000_0000_0000;
 
 					break;
 				}
@@ -326,12 +326,7 @@ namespace DLS.Simulation
 				{
 					const uint addressSpace = 256;
 					uint addressPin = chip.InputPins[0].State.GetShortValues();
-					uint redPin = chip.InputPins[1].State.GetShortValues();
-                    uint greenPin = chip.InputPins[2].State.GetShortValues();
-                    uint bluePin = chip.InputPins[3].State.GetShortValues();
-                    bool resetPin = chip.InputPins[4].State.SmallHigh();
 					bool writePin = chip.InputPins[5].State.SmallHigh();
-					bool refreshPin = chip.InputPins[6].State.SmallHigh();
 					bool clockPin = chip.InputPins[7].State.SmallHigh();
 
 					bool isRisingEdge = clockPin && chip.InternalState[^1] == 0;
@@ -340,7 +335,7 @@ namespace DLS.Simulation
 					if (isRisingEdge)
 					{
 						// Clear back buffer
-						if (resetPin)
+						if (chip.InputPins[4].State.SmallHigh())
 						{
 							for (int i = 0; i < addressSpace; i++)
 							{
@@ -350,13 +345,12 @@ namespace DLS.Simulation
 						// Write to back-buffer
 						else if (writePin)
 						{
-							uint addressIndex = addressPin + addressSpace;
-							uint data = (uint)(redPin | (greenPin << 4) | (bluePin << 8));
-							chip.InternalState[addressIndex] = data;
+							uint data = (chip.InputPins[1].State.GetShortValues() | (chip.InputPins[2].State.GetShortValues() << 4) | (chip.InputPins[3].State.GetShortValues() << 8));
+							chip.InternalState[addressPin + addressSpace] = data;
 						}
 
 						// Copy back-buffer to display buffer
-						if (refreshPin)
+						if (chip.InputPins[6].State.SmallHigh())
 						{
 							for (int i = 0; i < addressSpace; i++)
 							{
@@ -378,10 +372,6 @@ namespace DLS.Simulation
 				{
 					const uint addressSpace = 256;
 					uint addressPin = chip.InputPins[0].State.GetShortValues();
-                    bool pixelInputPin = chip.InputPins[1].State.SmallHigh();
-					bool resetPin = chip.InputPins[2].State.SmallHigh();
-					bool writePin = chip.InputPins[3].State.SmallHigh();
-					bool refreshPin = chip.InputPins[4].State.SmallHigh();
 					bool clockPin = chip.InputPins[5].State.SmallHigh();
 
 					// Detect clock rising edge
@@ -391,7 +381,7 @@ namespace DLS.Simulation
 					if (isRisingEdge)
 					{
 						// Clear back buffer
-						if (resetPin)
+						if (chip.InputPins[2].State.SmallHigh())
 						{
 							for (int i = 0; i < addressSpace; i++)
 							{
@@ -399,15 +389,14 @@ namespace DLS.Simulation
 							}
 						}
 						// Write to back-buffer
-						else if (writePin)
+						else if (chip.InputPins[3].State.SmallHigh())
 						{
-							uint addressIndex = addressPin + addressSpace;
-							uint data = (uint)(pixelInputPin ? 1 : 0);
-							chip.InternalState[addressIndex] = data;
+							uint data = (uint)(chip.InputPins[1].State.SmallHigh() ? 1 : 0);
+							chip.InternalState[addressPin + addressSpace] = data;
 						}
 
 						// Copy back-buffer to display buffer
-						if (refreshPin)
+						if (chip.InputPins[4].State.SmallHigh())
 						{
 							for (int i = 0; i < addressSpace; i++)
 							{
@@ -417,8 +406,7 @@ namespace DLS.Simulation
 					}
 
 					// Output current pixel colour
-					uint pixelState = chip.InternalState[addressPin];
-					chip.OutputPins[0].State.SmallSet(pixelState);
+					chip.OutputPins[0].State.SmallSet(chip.InternalState[addressPin]);
 					break;
 				}
 				case ChipType.dev_Ram_8Bit:
@@ -459,8 +447,8 @@ namespace DLS.Simulation
 					uint address = chip.InputPins[0].State.GetShortValues();
 					uint data = chip.InternalState[address];
 
-					chip.OutputPins[0].State.SetShort((ushort)(data << 8));
-					chip.OutputPins[1].State.SetShort((ushort)data);
+					chip.OutputPins[0].State.SetShort((ushort)((data&0xFF00) >> 8)); 
+					chip.OutputPins[1].State.SetShort((ushort)(data& 0x00FF));
 
                     break;
 				}
@@ -487,8 +475,8 @@ namespace DLS.Simulation
                         uint data = chip.InternalState[address];
 
 	
-                        chip.OutputPins[0].State.SetShort((ushort)(data << 8));
-                        chip.OutputPins[1].State.SetShort((ushort)(data << 0));
+                        chip.OutputPins[0].State.SetShort((ushort)((data & 0xFF00) >> 8));
+                        chip.OutputPins[1].State.SetShort((ushort)(data & 0x00FF));
                         break;
                 }
 
@@ -512,6 +500,11 @@ namespace DLS.Simulation
 					break;
 				}
 
+				case ChipType.Merge_Pin:
+				{	
+					chip.OutputPins[0].State.HandleMerge(chip.InputPins);
+					break;
+				}
 
 				// ---- Bus types ----
 				default:
