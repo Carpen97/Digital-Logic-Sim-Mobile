@@ -55,6 +55,19 @@ namespace DLS.Game
 
 		public ChipDescription GetChipDescription(string name) => descriptionFromNameLookup[name];
 
+		public ChipDescription GetTerminusDescription(PinBitCount bitCount)
+		{
+			foreach(ChipDescription desc in hiddenChips)
+			{
+				if(desc.ChipType == ChipType.BusTerminus && desc.InputPins[0].BitCount == bitCount)
+				{
+					return desc;
+				}
+			}
+
+			throw new System.Exception("Bus terminus not found");
+		}
+
 		public bool TryGetChipDescription(string name, out ChipDescription description) => descriptionFromNameLookup.TryGetValue(name, out description);
 
 		public void RemoveChip(string chipName)

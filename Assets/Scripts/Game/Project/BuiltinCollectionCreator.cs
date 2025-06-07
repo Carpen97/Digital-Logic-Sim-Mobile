@@ -25,14 +25,33 @@ namespace DLS.Game
 					ChipType.Key,
 					ChipType.TriStateBuffer,
 					ChipType.Constant_8Bit
-                ),
-				CreateChipCollection("IN/OUT",
-					ChipType.Button
 				),
-				CreateChipCollection("BUS",
-					ChipType.Bus_1Bit,
-					ChipType.Bus_4Bit,
-					ChipType.Bus_8Bit
+				CreateChipCollection("IN/OUT",
+					ChipType.Button,
+					ChipType.Toggle
+				).AddNames
+				(
+					"IN-1",
+					"IN-4",
+					"IN-8",
+					"OUT-1",
+					"OUT-4",
+					"OUT-8"
+				)
+				
+				,
+				CreateByNames("MERGE/SPLIT",
+					"1-4",
+					"1-8",
+					"4-8",
+					"4-1",
+					"8-4",
+					"8-1"
+				),
+				CreateByNames("BUS",
+					"BUS-1",
+					"BUS-4",
+					"BUS-8"
 				),
 				CreateChipCollection("DISPLAY",
 					ChipType.SevenSegmentDisplay,
@@ -42,7 +61,8 @@ namespace DLS.Game
 				),
 				CreateChipCollection("MEMORY",
 					ChipType.Rom_256x16,
-					ChipType.EEPROM_256x16
+					ChipType.EEPROM_256x16,
+					ChipType.dev_Ram_8Bit
 				)
 			};
 		}
@@ -50,6 +70,17 @@ namespace DLS.Game
 		static ChipCollection CreateChipCollection(string name, params ChipType[] chipTypes)
 		{
 			return new ChipCollection(name, chipTypes.Select(t => ChipTypeHelper.GetName(t)).ToArray());
+		}
+
+		static ChipCollection CreateByNames(string name, params string[] chipNames)
+		{
+			return new ChipCollection(name, chipNames);
+		}
+
+		static ChipCollection AddNames(this ChipCollection chipCollection, params string[] chipNames)
+		{
+			chipCollection.Chips.AddRange(chipNames);
+			return chipCollection;
 		}
 	}
 }

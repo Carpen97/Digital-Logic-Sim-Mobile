@@ -46,6 +46,18 @@ namespace DLS.Description
 
 			return false;
 		}
+
+		public void AddChipToCollection(string collectionName, string chipName) {
+			if(collectionName == null) throw new ArgumentNullException(collectionName);
+			foreach(ChipCollection collection in ChipCollections)
+			{
+				if(collection.Name.Equals(chipName, StringComparison.OrdinalIgnoreCase))
+				{
+					collection.Chips.Add(chipName);
+				}
+			}
+			
+		}
 	}
 
 	public struct StarredItem

@@ -929,8 +929,7 @@ namespace DLS.Game
 			{
 				elementToPlace.MoveStartPosition -= Vector2.right * busPairSpacing / 2;
 
-				ChipType terminusType = ChipTypeHelper.GetCorrespondingBusTerminusType(chipType);
-				ChipDescription terminusDescription = Project.ActiveProject.chipLibrary.GetChipDescription(ChipTypeHelper.GetName(terminusType));
+				ChipDescription terminusDescription = Project.ActiveProject.chipLibrary.GetTerminusDescription(((SubChipInstance)elementToPlace).OutputPins[0].bitCount);
 				SubChipInstance terminus = (SubChipInstance)StartPlacing(terminusDescription, position, false);
 
 				SubChipInstance busOrigin = (SubChipInstance)elementToPlace;

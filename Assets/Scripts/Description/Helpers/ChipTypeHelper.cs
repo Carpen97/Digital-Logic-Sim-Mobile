@@ -35,13 +35,6 @@ namespace DLS.Description
             { ChipType.Button, "BUTTON" },
 			{ ChipType.Toggle, "DIPSWITCH" },
 
-			// ---- Buses ----
-			{ ChipType.Bus_1Bit, "BUS-1" },
-			{ ChipType.Bus_4Bit, "BUS-4" },
-			{ ChipType.Bus_8Bit, "BUS-8" },
-			{ ChipType.BusTerminus_1Bit, "BUS-TERMINUS-1" },
-			{ ChipType.BusTerminus_4Bit, "BUS-TERMINUS-4" },
-			{ ChipType.BusTerminus_8Bit, "BUS-TERMINUS-8" }
 		};
 
 
@@ -49,22 +42,11 @@ namespace DLS.Description
 
 		public static bool IsBusType(ChipType type) => IsBusOriginType(type) || IsBusTerminusType(type);
 
-		public static bool IsBusOriginType(ChipType type) => type is ChipType.Bus_1Bit or ChipType.Bus_4Bit or ChipType.Bus_8Bit;
+		public static bool IsBusOriginType(ChipType type) => type is ChipType.Bus;
 
-		public static bool IsBusTerminusType(ChipType type) => type is ChipType.BusTerminus_1Bit or ChipType.BusTerminus_4Bit or ChipType.BusTerminus_8Bit;
+		public static bool IsBusTerminusType(ChipType type) => type is ChipType.BusTerminus;
 
 		public static bool IsRomType(ChipType type) => type == ChipType.Rom_256x16 || type == ChipType.EEPROM_256x16;
-
-		public static ChipType GetCorrespondingBusTerminusType(ChipType type)
-		{
-			return type switch
-			{
-				ChipType.Bus_1Bit => ChipType.BusTerminus_1Bit,
-				ChipType.Bus_4Bit => ChipType.BusTerminus_4Bit,
-				ChipType.Bus_8Bit => ChipType.BusTerminus_8Bit,
-				_ => throw new Exception("No corresponding bus terminus found for type: " + type)
-			};
-		}
 
 		public static (bool isInput, bool isOutput, PinBitCount numBits) IsInputOrOutputPin(ChipDescription chip)
 		{
@@ -81,7 +63,18 @@ namespace DLS.Description
 			return (isInput ? "IN-" : "OUT-") + numBits.BitCount.ToString();
 		}
 
-		public static bool IsDevPin(ChipType chipType)
+		public static string GetBusName(PinBitCount numBits)
+		{
+			return "BUS-" + numBits.ToString();
+		}
+
+        public static string GetBusTerminusName(PinBitCount numBits)
+        {
+            return "BUS-TERMINUS-" + numBits.ToString();
+        }
+
+
+        public static bool IsDevPin(ChipType chipType)
 		{
 			return chipType == ChipType.In_Pin || chipType == ChipType.Out_Pin;
 		}

@@ -37,12 +37,8 @@ namespace DLS.Description
 		Constant_8Bit,
 
         // ---- Buses ----
-        Bus_1Bit,
-		BusTerminus_1Bit,
-		Bus_4Bit,
-		BusTerminus_4Bit,
-		Bus_8Bit,
-		BusTerminus_8Bit,
+        Bus,
+		BusTerminus,
 		
 		// ---- Audio ----
 		Buzzer
