@@ -100,18 +100,12 @@ namespace DLS.Game
 
 				for(int j = 0; j < smallInBig; j++)
 				{
-					mergeIN[^(j+1)] = CreatePinDescription("IN-" + letters[j], j, counts.b);
+					mergeIN[j] = CreatePinDescription("IN-" + letters[smallInBig+1-j], j, counts.b);
 				}
                 for (int j = 0; j < smallInBig; j++)
                 {
-                    splitOUT[^(j+1)] = CreatePinDescription("OUT-" + letters[j], j+1, counts.b);
+                    splitOUT[j] = CreatePinDescription("OUT-" + letters[smallInBig + 1 - j], j+1, counts.b);
                 }
-
-
-
-
-
-
 
 
                 string mergeName = counts.b.ToString() + "-" + counts.a.ToString()+"BIT";
