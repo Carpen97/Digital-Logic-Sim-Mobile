@@ -2,10 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Specialized;
 using DLS.Description;
-using JetBrains.Annotations;
-using Seb.Helpers;
-using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 using static UnityEngine.Random;
 
 namespace DLS.Simulation

@@ -76,8 +76,8 @@ namespace DLS.Game
 		{
 			PinStateValue pinState = (IsSourcePin && canUsePlayerState) ? PlayerInputState : State; // dev input pin uses player state (so it updates even when sim is paused)
 			uint state = pinState.GetTristatedValue(bitIndex);
-			if (state == BitArrayHelper.LogicDisconnected) return DrawSettings.ActiveTheme.StateDisconnectedCol;
-			return DrawSettings.GetStateColour(state == BitArrayHelper.LogicHigh, (uint)Colour, hover);
+			if (state == PinStateValue.LOGIC_DISCONNECTED) return DrawSettings.ActiveTheme.StateDisconnectedCol;
+			return DrawSettings.GetStateColour(state == PinStateValue.LOGIC_HIGH, (uint)Colour, hover);
 			
 		}
 
