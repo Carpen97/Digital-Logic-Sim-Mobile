@@ -105,7 +105,7 @@ namespace DLS.SaveSystem
             builtinChips = builtinChips.Where(b => !customChipNameHashset.Contains(b.Name)).ToArray();
 
 			UpgradeHelper.ApplyVersionChanges(loadedChips, builtinChips);
-			return new ChipLibrary(loadedChips, builtinChips);
+			return new ChipLibrary(loadedChips, builtinChips); 
 		}
 	}
 }
