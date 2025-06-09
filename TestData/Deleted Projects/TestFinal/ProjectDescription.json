@@ -1,10 +1,10 @@
 {
-  "ProjectName": "za",
+  "ProjectName": "TestFinal",
   "DLSVersion_LastSaved": "2.1.6",
   "DLSVersion_EarliestCompatible": "2.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.0",
-  "CreationTime": "2025-06-07T20:05:44.258+02:00",
-  "LastSaveTime": "2025-06-09T16:46:02.153+02:00",
+  "CreationTime": "2025-06-09T17:48:33.979+02:00",
+  "LastSaveTime": "2025-06-09T17:51:29.885+02:00",
   "Prefs_MainPinNamesDisplayMode": 1,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 0,
@@ -13,7 +13,10 @@
   "Prefs_SimPaused": false,
   "Prefs_SimTargetStepsPerSecond": 1000,
   "Prefs_SimStepsPerClockTick": 250,
-  "AllCustomChipNames":[],
+  "AllCustomChipNames":[
+    "8-16",
+    "16-8"
+  ],
   "StarredList":[
     {
       "Name":"IN/OUT",
@@ -31,40 +34,41 @@
       "Name":"BASIC"
     },
     {
-      "Chips":["BUTTON"],
+      "Chips":["BUTTON","DIPSWITCH","IN-1","IN-4","IN-8","OUT-1","OUT-4","OUT-8","IN-16","OUT-16"],
       "IsToggledOpen":false,
       "Name":"IN/OUT"
     },
     {
-      "Chips":[],
+      "Chips":["1-4","1-8","4-8","4-1","8-4","8-1","4-16","16-4","1-16","16-1","8-16","16-8"],
       "IsToggledOpen":true,
       "Name":"MERGE/SPLIT"
     },
     {
-      "Chips":[],
+      "Chips":["BUS-1","BUS-4","BUS-8"],
       "IsToggledOpen":true,
       "Name":"BUS"
     },
     {
       "Chips":["7-SEGMENT","DOT DISPLAY","RGB DISPLAY","LED"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"DISPLAY"
     },
     {
-      "Chips":["ROM 256×16","EEPROM 256×16"],
-      "IsToggledOpen":false,
+      "Chips":["ROM 256×16","EEPROM 256×16","RAM-8"],
+      "IsToggledOpen":true,
       "Name":"MEMORY"
     },
     {
-      "Chips":["DIPSWITCH","RAM-8","BUZZER","IN-1","OUT-1","IN-4","OUT-4","IN-8","OUT-8","4-8BIT","8-4BIT","1-8BIT","8-1BIT","1-4BIT","4-1BIT","BUS-1","BUS-4","BUS-8"],
-      "IsToggledOpen":true,
+      "Chips":["BUZZER","BUS-16"],
+      "IsToggledOpen":false,
       "Name":"OTHER"
     }
   ],
   "pinBitCounts":[
     "1",
     "4",
-    "8"
+    "8",
+    "16"
   ],
   "SplitMergePairs":[
     {
@@ -78,6 +82,18 @@
     {
       "Key":"4",
       "Value":"1"
+    },
+    {
+      "Key":"16",
+      "Value":"4"
+    },
+    {
+      "Key":"16",
+      "Value":"1"
+    },
+    {
+      "Key":"16",
+      "Value":"8"
     }
   ]
 }

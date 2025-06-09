@@ -60,78 +60,89 @@ namespace DLS.Game
 
             for (int i = 0; i < pinBitCountsToLoad.Count; i++)
             {
-                PinBitCount pinBitCount = pinBitCountsToLoad[i];
-                PinDescription[] outPin = new[] { CreatePinDescription("OUT", 0, pinBitCount) };
-
-
-                ChipDescription InChip = CreateBuiltinChipDescription(ChipType.In_Pin, Vector2.zero, Color.clear, null, outPin, null,
-					NameDisplayLocation.Hidden, name: ChipTypeHelper.GetDevPinName(true, pinBitCount));
-
-                DevPinDescriptions[i * 2] = InChip;
-
+                DevPinDescriptions[i * 2] = CreateInPin(pinBitCountsToLoad[i]);
+                DevPinDescriptions[i * 2 + 1] = CreateOutPin(pinBitCountsToLoad[i]);
             }
-
-            for (int i = 0; i < pinBitCountsToLoad.Count; i++)
-            {
-                PinBitCount pinBitCount = pinBitCountsToLoad[i];
-                PinDescription[] inPin = new[] { CreatePinDescription("IN", 0, pinBitCount) };
-
-                ChipDescription OutChip = CreateBuiltinChipDescription(ChipType.Out_Pin, Vector2.zero, Color.clear, inPin, null, null,
-                    NameDisplayLocation.Hidden, name: ChipTypeHelper.GetDevPinName(false, pinBitCount));
-
-                DevPinDescriptions[i * 2 + 1] = OutChip;
-
-            }
-
             return DevPinDescriptions;
         }
 
-		static ChipDescription[] CreateSplitMergePins(List<KeyValuePair<PinBitCount, PinBitCount>> pairs)
+		public static ChipDescription CreateInPin(PinBitCount pinBitCount)
 		{
-			char[] letters = new[] { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
+            PinDescription[] outPin = new[] { CreatePinDescription("OUT", 0, pinBitCount) };
+            ChipDescription InChip = CreateBuiltinChipDescription(ChipType.In_Pin, Vector2.zero, Color.clear, null, outPin, null,
+                NameDisplayLocation.Hidden, name: ChipTypeHelper.GetDevPinName(true, pinBitCount));
+			return InChip;
+        }
+
+		public static ChipDescription CreateOutPin(PinBitCount pinBitCount)
+		{
+            PinDescription[] inPin = new[] { CreatePinDescription("IN", 0, pinBitCount) };
+
+            ChipDescription OutChip = CreateBuiltinChipDescription(ChipType.Out_Pin, Vector2.zero, Color.clear, inPin, null, null,
+                NameDisplayLocation.Hidden, name: ChipTypeHelper.GetDevPinName(false, pinBitCount));
+
+			return OutChip;
+        }
+
+        static ChipDescription[] CreateSplitMergePins(List<KeyValuePair<PinBitCount, PinBitCount>> pairs)
+		{
 			ChipDescription[] SplitMergeDescriptions = new ChipDescription[pairs.Count * 2];
-
-
 
 			for (int i = 0; i < pairs.Count; i++)
 			{
-				(PinBitCount a, PinBitCount b) counts = (pairs[i].Key, pairs[i].Value);
-				int smallInBig = counts.a / counts.b;
-
-				PinDescription[] mergeIN = new PinDescription[smallInBig];
-				PinDescription[] mergeOUT = new[] { CreatePinDescription("OUT", smallInBig, counts.a) };
-
-				PinDescription[] splitIN = new[] { CreatePinDescription("IN", 0, counts.a) };
-				PinDescription[] splitOUT = new PinDescription[smallInBig];
-
-				for(int j = 0; j < smallInBig; j++)
-				{
-					mergeIN[j] = CreatePinDescription("IN-" + letters[smallInBig+1-j], j, counts.b);
-				}
-                for (int j = 0; j < smallInBig; j++)
-                {
-                    splitOUT[j] = CreatePinDescription("OUT-" + letters[smallInBig + 1 - j], j+1, counts.b);
-                }
-
-
-                string mergeName = counts.b.ToString() + "-" + counts.a.ToString()+"BIT";
-                string splitName = counts.a.ToString() + "-" + counts.b.ToString()+"BIT";
-
-				Vector2 minChipSize = SubChipInstance.CalculateMinChipSize(mergeIN, mergeOUT, mergeName); // both same size in the end anyway
-				float width = Mathf.Max(GridSize * 9, minChipSize.x);
-
-                Vector2 size = new Vector2(width, minChipSize.y);
-
-				ChipDescription mergeDesc = CreateBuiltinChipDescription(ChipType.Merge_Pin, size, GetColor(ChipCol_SplitMerge), mergeIN, mergeOUT, name: mergeName);
-				ChipDescription splitDesc = CreateBuiltinChipDescription(ChipType.Split_Pin, size, GetColor(ChipCol_SplitMerge), splitIN, splitOUT, name: splitName);
-				SplitMergeDescriptions[i * 2] = mergeDesc;
-				SplitMergeDescriptions[i * 2 + 1] = splitDesc;
+				SplitMergeDescriptions[i * 2]     = CreateMergeChip(pairs[i]);
+				SplitMergeDescriptions[i * 2 + 1] = CreateSplitChip(pairs[i]);
             }
 
             return SplitMergeDescriptions;
 		}
 
-		static ChipDescription[] CreateBusAndBusTerminus(List<PinBitCount> pinBitCountsToLoad)
+		public static ChipDescription CreateSplitChip(KeyValuePair<PinBitCount, PinBitCount> pair)
+		{
+            (PinBitCount a, PinBitCount b) counts = (pair.Key, pair.Value);
+            int smallInBig = counts.a / counts.b;
+
+            PinDescription[] splitIN = new[] { CreatePinDescription("IN", 0, counts.a) };
+            PinDescription[] splitOUT = new PinDescription[smallInBig];
+
+            for (int j = 0; j < smallInBig; j++)
+            {
+                string letter = " " + (char)('A' + smallInBig -1 - j);
+                splitOUT[j] = CreatePinDescription("OUT" + letter, j + 1, counts.b);
+            }
+            string splitName = counts.a.ToString() + "-" + counts.b.ToString();
+
+            Vector2 minChipSize = SubChipInstance.CalculateMinChipSize(splitIN, splitOUT, splitName);
+            float width = Mathf.Max(GridSize * 9, minChipSize.x);
+
+            Vector2 size = new Vector2(width, minChipSize.y);
+			return CreateBuiltinChipDescription(ChipType.Split_Pin, size, GetColor(ChipCol_SplitMerge), splitIN, splitOUT, name: splitName);
+        }
+
+        public static ChipDescription CreateMergeChip(KeyValuePair<PinBitCount, PinBitCount> pair)
+        {
+            (PinBitCount a, PinBitCount b) counts = (pair.Key, pair.Value);
+            int smallInBig = counts.a / counts.b;
+
+            PinDescription[] mergeIN = new PinDescription[smallInBig];
+            PinDescription[] mergeOUT = new[] { CreatePinDescription("OUT", smallInBig, counts.a) };
+
+            for (int j = 0; j < smallInBig; j++)
+            {
+                string letter = " " + (char)('A' + smallInBig -1 - j);
+                mergeIN[j] = CreatePinDescription("IN" + letter, j, counts.b);
+            }
+            string mergeName = counts.b.ToString() + "-" + counts.a.ToString();
+
+            Vector2 minChipSize = SubChipInstance.CalculateMinChipSize(mergeIN, mergeOUT, mergeName);
+            float width = Mathf.Max(GridSize * 9, minChipSize.x);
+            Vector2 size = new Vector2(width, minChipSize.y);
+
+            return CreateBuiltinChipDescription(ChipType.Merge_Pin, size, GetColor(ChipCol_SplitMerge), mergeIN, mergeOUT, name: mergeName);
+        }
+
+
+        static ChipDescription[] CreateBusAndBusTerminus(List<PinBitCount> pinBitCountsToLoad)
 		{
 			ChipDescription[] descriptions = new ChipDescription[pinBitCountsToLoad.Count*2];
 
@@ -450,7 +461,7 @@ namespace DLS.Game
 			};
 		}
 
-		static ChipDescription CreateBus(PinBitCount bitCount)
+		public static ChipDescription CreateBus(PinBitCount bitCount)
 		{
 
 			string name = ChipTypeHelper.GetBusName(bitCount);
@@ -492,7 +503,7 @@ namespace DLS.Game
 		}
 
 
-		static ChipDescription CreateBusTerminus(PinBitCount bitCount)
+		public static ChipDescription CreateBusTerminus(PinBitCount bitCount)
 		{
 			string name = ChipTypeHelper.GetBusTerminusName(bitCount);
 			ChipDescription busOrigin = CreateBus(bitCount);

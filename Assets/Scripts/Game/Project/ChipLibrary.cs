@@ -76,7 +76,7 @@ namespace DLS.Game
 			RebuildChipDescriptionLookup();
 		}
 
-		public void NotifyChipSaved(ChipDescription description)
+		public void NotifyChipSaved(ChipDescription description, bool hidden = false)
 		{
 			// Replace chip description if already exists
 			bool foundChip = false;
@@ -92,10 +92,11 @@ namespace DLS.Game
 			}
 
 			// Otherwise add as new description
-			if (!foundChip) AddChipToLibrary(description);
+			if (!foundChip) AddChipToLibrary(description, hidden);
 
 			RebuildChipDescriptionLookup();
 		}
+
 
 		public void NotifyChipRenamed(ChipDescription description, string nameOld)
 		{
@@ -146,6 +147,7 @@ namespace DLS.Game
 
 		void AddChipToLibrary(ChipDescription description, bool hidden = false)
 		{
+			if(description.ChipType != ChipType.Custom) builtinChipNames.Add(description.Name);
 			if (hidden) hiddenChips.Add(description);
 			else allChips.Add(description);
 		}

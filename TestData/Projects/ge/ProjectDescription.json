@@ -4,7 +4,7 @@
   "DLSVersion_EarliestCompatible": "2.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.0",
   "CreationTime": "2025-06-07T20:16:17.213+02:00",
-  "LastSaveTime": "2025-06-07T20:16:17.215+02:00",
+  "LastSaveTime": "2025-06-09T15:57:44.031+02:00",
   "Prefs_MainPinNamesDisplayMode": 1,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 0,
@@ -42,18 +42,23 @@
     },
     {
       "Chips":["BUS-1","BUS-4","BUS-8"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"BUS"
     },
     {
       "Chips":["7-SEGMENT","DOT DISPLAY","RGB DISPLAY","LED"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"DISPLAY"
     },
     {
       "Chips":["ROM 256×16","EEPROM 256×16"],
       "IsToggledOpen":false,
       "Name":"MEMORY"
+    },
+    {
+      "Chips":["DIPSWITCH","RAM-8","BUZZER","4-8BIT","8-4BIT","1-8BIT","8-1BIT","1-4BIT","4-1BIT"],
+      "IsToggledOpen":true,
+      "Name":"OTHER"
     }
   ],
   "pinBitCounts":[

@@ -1,0 +1,33 @@
+{
+  "DLSVersion": "2.1.6",
+  "Name": "a",
+  "NameLocation": 0,
+  "ChipType": 0,
+  "Size": {
+    "x": 0.37,
+    "y": 0.375
+  },
+  "Colour": {
+    "r": 0.481921643,
+    "g": 0.346283436,
+    "b": 0.516404569,
+    "a": 1
+  },
+  "InputPins":[],
+  "OutputPins":[],
+  "SubChips":[
+    {
+      "Name":"NAND",
+      "ID":1172801001,
+      "Label":"",
+      "Position":{
+        "x":-4.90984,
+        "y":-1.04918
+      },
+      "OutputPinColourInfo":[{"PinColour":0,"PinID":2}],
+      "InternalData":null
+    }
+  ],
+  "Wires":[],
+  "Displays": null
+}

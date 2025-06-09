@@ -1,10 +1,10 @@
 {
-  "ProjectName": "za",
+  "ProjectName": "FinalFinalTest",
   "DLSVersion_LastSaved": "2.1.6",
   "DLSVersion_EarliestCompatible": "2.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.0",
-  "CreationTime": "2025-06-07T20:05:44.258+02:00",
-  "LastSaveTime": "2025-06-09T16:46:02.153+02:00",
+  "CreationTime": "2025-06-09T17:56:29.965+02:00",
+  "LastSaveTime": "2025-06-09T18:18:17.307+02:00",
   "Prefs_MainPinNamesDisplayMode": 1,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 0,
@@ -31,18 +31,18 @@
       "Name":"BASIC"
     },
     {
-      "Chips":["BUTTON"],
+      "Chips":["BUTTON","DIPSWITCH","IN-1","IN-4","IN-8","OUT-1","OUT-4","OUT-8","IN-16","OUT-16","IN-64","OUT-64"],
       "IsToggledOpen":false,
       "Name":"IN/OUT"
     },
     {
-      "Chips":[],
-      "IsToggledOpen":true,
+      "Chips":["1-4","1-8","4-8","4-1","8-4","8-1","8-16","16-8","1-16","16-1","4-64","64-4"],
+      "IsToggledOpen":false,
       "Name":"MERGE/SPLIT"
     },
     {
-      "Chips":[],
-      "IsToggledOpen":true,
+      "Chips":["BUS-1","BUS-4","BUS-8"],
+      "IsToggledOpen":false,
       "Name":"BUS"
     },
     {
@@ -51,20 +51,17 @@
       "Name":"DISPLAY"
     },
     {
-      "Chips":["ROM 256×16","EEPROM 256×16"],
+      "Chips":["ROM 256×16","EEPROM 256×16","RAM-8"],
       "IsToggledOpen":false,
       "Name":"MEMORY"
-    },
-    {
-      "Chips":["DIPSWITCH","RAM-8","BUZZER","IN-1","OUT-1","IN-4","OUT-4","IN-8","OUT-8","4-8BIT","8-4BIT","1-8BIT","8-1BIT","1-4BIT","4-1BIT","BUS-1","BUS-4","BUS-8"],
-      "IsToggledOpen":true,
-      "Name":"OTHER"
     }
   ],
   "pinBitCounts":[
     "1",
     "4",
-    "8"
+    "8",
+    "16",
+    "64"
   ],
   "SplitMergePairs":[
     {
@@ -78,6 +75,18 @@
     {
       "Key":"4",
       "Value":"1"
+    },
+    {
+      "Key":"16",
+      "Value":"8"
+    },
+    {
+      "Key":"16",
+      "Value":"1"
+    },
+    {
+      "Key":"64",
+      "Value":"4"
     }
   ]
 }
