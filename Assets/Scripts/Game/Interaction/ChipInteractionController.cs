@@ -232,7 +232,8 @@ namespace DLS.Game
 			{
 				CancelEverything();
 			}
-		}
+
+        }
 
 		void HandleMouseInput()
 		{

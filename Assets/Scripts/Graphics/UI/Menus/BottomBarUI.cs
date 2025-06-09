@@ -419,6 +419,7 @@ namespace DLS.Graphics
 
 			if (KeyboardShortcuts.PreferencesShortcutTriggered) OpenPreferencesMenu();
 			if (KeyboardShortcuts.QuitToMainMenuShortcutTriggered) ExitToMainMenu();
+			if (KeyboardShortcuts.SpecialChipsShortcutTriggered) OpenAddSpecialMenu();
 		}
 
 		public static void Reset()
