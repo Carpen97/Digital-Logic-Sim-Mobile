@@ -68,7 +68,7 @@ namespace DLS.Game
 
 		public static ChipDescription CreateInPin(PinBitCount pinBitCount)
 		{
-            PinDescription[] outPin = new[] { CreatePinDescription("OUT", 0, pinBitCount) };
+            PinDescription[] outPin = new[] { CreatePinDescription("IN", 0, pinBitCount) };
             ChipDescription InChip = CreateBuiltinChipDescription(ChipType.In_Pin, Vector2.zero, Color.clear, null, outPin, null,
                 NameDisplayLocation.Hidden, name: ChipTypeHelper.GetDevPinName(true, pinBitCount));
 			return InChip;
@@ -76,7 +76,7 @@ namespace DLS.Game
 
 		public static ChipDescription CreateOutPin(PinBitCount pinBitCount)
 		{
-            PinDescription[] inPin = new[] { CreatePinDescription("IN", 0, pinBitCount) };
+            PinDescription[] inPin = new[] { CreatePinDescription("OUT", 0, pinBitCount) };
 
             ChipDescription OutChip = CreateBuiltinChipDescription(ChipType.Out_Pin, Vector2.zero, Color.clear, inPin, null, null,
                 NameDisplayLocation.Hidden, name: ChipTypeHelper.GetDevPinName(false, pinBitCount));

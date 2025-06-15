@@ -17,7 +17,7 @@ namespace DLS.Simulation
         public BitVector32 b; // If 16 < bitcount <=32 : use this too -- medium
         public BitArray BigValues; // If bitcount >= 32 use this INSTEAD  -- SLOWEST
         public BitArray BigTristates; // Goes with it
-        public ushort size;
+        public int size;
 
         const short maxSigned16bitValue = 0x7FFF;
         public void MakeFromPinBitCount(PinBitCount pinBitCount)

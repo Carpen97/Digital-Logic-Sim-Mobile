@@ -893,8 +893,9 @@ namespace DLS.Graphics
 
 			WireLayoutHelper.CreateMultiBitWireLayout(wire.BitWires, wire, WireThickness);
 
+			int length = wire.BitWires.Length / (wire.bitCount <= 64 ? 1 : wire.bitCount <=512 ? 8 : 64);
 			// Draw
-			for (int bitIndex = 0; bitIndex < wire.BitWires.Length; bitIndex++)
+			for (int bitIndex = 0; bitIndex < length; bitIndex++)
 			{
 				WireInstance.BitWire bitWire = wire.BitWires[bitIndex];
 				Color col = wire.GetColour(bitIndex);
@@ -1000,6 +1001,8 @@ namespace DLS.Graphics
 			bool canInteract = controller.CanInteractWithPin;
 
 			Color pinCol = mouseOverPin && canInteract ? ActiveTheme.PinHighlightCol : ActiveTheme.PinCol;
+
+
 			// If hovering over pin while creating a wire, colour should indicate whether it is a valid connection
 			if (mouseOverPin && canInteract && controller.IsCreatingWire && !controller.CanCompleteWireConnection(pin))
 			{
@@ -1007,7 +1010,13 @@ namespace DLS.Graphics
 			}
 
 			Draw.Quad(pinPos, pinSize, pinCol);
-		}
+
+			if(pin.bitCount <= 64 || mouseOverPin) { return; }
+
+			Vector2 depthIndicatorSize = new(pinWidth / 8f, pinHeight);
+			Draw.Quad(pinPos + pin.ForwardDir * 0.25f * pinWidth, depthIndicatorSize, ActiveTheme.PinSizeIndicatorColors[pin.bitCount.GetTier()]);
+
+        }
 
 		public static void DrawGrid(Color gridCol)
 		{

@@ -200,7 +200,7 @@ namespace DLS.Game
 					PinBitCount.Bit1 => 2,
 					PinBitCount.Bit4 => 3,
 					PinBitCount.Bit8 => 4,
-                    _ => Mathf.RoundToInt(0.43f / 8 * pinBitCount.BitCount / DrawSettings.GridSize +0.5f)
+                    _ => Mathf.RoundToInt((GetPinDepthMultiplier(pinBitCount) * pinBitCount.BitCount * DrawSettings.PinHeightPerBit + 0.03f)/DrawSettings.GridSize)
 
                 };
 
@@ -311,8 +311,13 @@ namespace DLS.Game
 				PinBitCount.Bit1 => DrawSettings.PinRadius * 2,
 				PinBitCount.Bit4 => DrawSettings.PinHeight4Bit, 
 				PinBitCount.Bit8 => DrawSettings.PinHeight8Bit,
-                _ => 0.43f/8 * bitCount.BitCount,
+                _ => (GetPinDepthMultiplier(bitCount) * bitCount.BitCount * DrawSettings.PinHeightPerBit) + 0.03f,
             };
+		}
+
+		public static float GetPinDepthMultiplier(PinBitCount bitCount)
+		{
+			return (float)Math.Pow(8, -bitCount.GetTier());
 		}
 
 		// Split chip name into two lines (if contains a space character)

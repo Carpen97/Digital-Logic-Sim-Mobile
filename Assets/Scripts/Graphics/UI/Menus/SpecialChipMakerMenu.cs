@@ -239,7 +239,7 @@ namespace DLS.Graphics
             if (int.TryParse(s, out int a))
             {
                 if(a < 0) return false;
-                if(a > 4096) return false;
+                if(a > 65536) return false;
                 return true;
             }
             return false;
@@ -248,8 +248,9 @@ namespace DLS.Graphics
         public static (bool valid, string reason) RealSizeConfirmation(int a)
         {
             if(a < 1) { return (false, "Pin size must be at least 1 bit."); }
-            if (a > 64 && a % 8 != 0 && a< 512) { return (false, "Pin size > 64 and not a multiple of 8."); }
-            if(a > 512 && a % 64 != 0) { return (false, "Pin size > 512 and not a multiple of 64."); }
+            if (a > 64 && a % 8 != 0 && a<= 512) { return (false, "Pin size > 64 and not a multiple of 8."); }
+            if(a > 512 && a % 64 != 0 && a <= 4096) { return (false, "Pin size > 512 and not a multiple of 64."); }
+            if (a > 4096 && a % 512 != 0) { return (false, "Pin size > 4096 and not a multiple of 512."); }
             if (PinBitCountsMade.Contains(a)) { return (false, "Pins with this count already exist."); }
 
             return (true, "");

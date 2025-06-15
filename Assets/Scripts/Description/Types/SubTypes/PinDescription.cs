@@ -30,7 +30,7 @@ namespace DLS.Description
 		public const int Bit4 = 4;
 		public const int Bit8 = 8;
 
-		public ushort BitCount;
+		public int BitCount;
 
 		public override string ToString()
 		{
@@ -42,7 +42,7 @@ namespace DLS.Description
 		}
 		public readonly BitArray GetEmptyBitArray()
 		{
-			return new BitArray(BitCount<<1);
+			return new BitArray(length: (int)BitCount<<1);
 		}
 
         public override bool Equals(System.Object @object)
@@ -58,6 +58,14 @@ namespace DLS.Description
         {
             return HashCode.Combine(BitCount);
         }
+		
+		public int GetTier()
+		{
+			if (BitCount <= 64) return 0;
+			else if (BitCount <= 512) return 1;
+			else if (BitCount <= 4096) return 2;
+			else return 3;
+		}
 
         public static bool operator ==(PinBitCount a, PinBitCount b) => a.BitCount == b.BitCount;
         public static bool operator !=(PinBitCount a, PinBitCount b) => a.BitCount != b.BitCount;
@@ -71,9 +79,9 @@ namespace DLS.Description
         public static bool operator !=(PinBitCount a, int number) => number != a.BitCount;
 
 
-        public static implicit operator uint(PinBitCount b) => b.BitCount;
+        public static implicit operator uint(PinBitCount b) => (uint)b.BitCount;
         public static implicit operator int(PinBitCount b) => b.BitCount;
-		public static implicit operator ushort(PinBitCount b) => b.BitCount;
+		public static implicit operator ushort(PinBitCount b) => (ushort)b.BitCount;
 		public static implicit operator PinBitCount(Int64 b) => new PinBitCount((ushort)b);
 
 
