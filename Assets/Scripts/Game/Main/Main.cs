@@ -14,6 +14,7 @@ namespace DLS.Game
 	{
 		public static readonly Version DLSVersion = new(2, 1, 6);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
+		public static readonly Version DLSVersion_ModdedID = new(1, 1, 0);
 		public const string LastUpdatedString = "5 May 2025";
 		public static AppSettings ActiveAppSettings;
 
@@ -65,7 +66,7 @@ namespace DLS.Game
 
 		public static void CreateOrLoadProject(string projectName, string startupChipName = "")
 		{
-			if (Loader.ProjectExists(projectName)) ActiveProject = LoadProject(projectName);
+			if (Loader.ProjectExists(projectName)) { ActiveProject = LoadProject(projectName); Saver.SaveProjectDescription(ActiveProject.description); }
 			else ActiveProject = CreateProject(projectName);
 
 			ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(startupChipName);
@@ -80,6 +81,7 @@ namespace DLS.Game
 			{
 				ProjectName = projectName,
 				DLSVersion_LastSaved = DLSVersion.ToString(),
+				DLSVersion_LastSavedModdedVersion = DLSVersion_ModdedID.ToString(),
 				DLSVersion_EarliestCompatible = DLSVersion_EarliestCompatible.ToString(),
 				CreationTime = DateTime.Now,
 				TimeSpentSinceCreated = new(),
@@ -90,7 +92,9 @@ namespace DLS.Game
 				Prefs_SimPaused = false,
 				AllCustomChipNames = Array.Empty<string>(),
 				StarredList = BuiltinCollectionCreator.GetDefaultStarredList().ToList(),
-				ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections())
+				ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections()),
+				pinBitCounts = new List<PinBitCount> { 1, 4, 8 },
+				SplitMergePairs = new() { new(8,4), new(8,1), new(4,1) }
 			};
 
 			Saver.SaveProjectDescription(initialDescription);

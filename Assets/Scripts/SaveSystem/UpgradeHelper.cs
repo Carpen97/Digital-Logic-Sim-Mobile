@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DLS.Description;
 using DLS.Game;
 using UnityEngine;
@@ -26,8 +27,42 @@ namespace DLS.SaveSystem
 			}
 		}
 
+		public static void ApplyVersionChangesToProject(ref ProjectDescription projectDescription)
+		{
+			Main.Version defaultModdedVersion = new(1, 0, 0);
+			Main.Version moddedVersion_1_1_0 = new(1, 1, 0); // Custom IN and OUTS version
 
-		static void UpdateChipPre_2_1_5(ChipDescription chipDesc)
+
+			bool canParseModdedVersion = Main.Version.TryParse(projectDescription.DLSVersion_LastSavedModdedVersion, out Main.Version projectVersion);
+
+			bool isVersionEarlierThan_1_1_0 = (!canParseModdedVersion) || projectVersion.ToInt() < moddedVersion_1_1_0.ToInt();
+
+            bool isSplitMergeInvalid = projectDescription.SplitMergePairs == null || projectDescription.SplitMergePairs.Count == 0;
+			bool isPinBitCountInvalid = projectDescription.pinBitCounts == null || projectDescription.pinBitCounts.Count == 0;
+
+            if (isVersionEarlierThan_1_1_0 | isPinBitCountInvalid)
+			{
+                projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
+				projectDescription.pinBitCounts = new List<PinBitCount> {1,4,8};
+				projectDescription.SplitMergePairs = new(){
+					new(8,4),
+                    new(8,1),
+                    new(4,1)
+                };
+            }
+
+			if(isVersionEarlierThan_1_1_0 | isSplitMergeInvalid)
+			{
+                projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
+                projectDescription.SplitMergePairs = new(){
+                    new(8,4),
+                    new(8,1),
+                    new(4,1)
+                };
+            }
+        }
+
+        static void UpdateChipPre_2_1_5(ChipDescription chipDesc)
 		{
 			string ledName = ChipTypeHelper.GetName(ChipType.DisplayLED);
 

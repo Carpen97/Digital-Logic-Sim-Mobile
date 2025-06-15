@@ -463,10 +463,11 @@ namespace DLS.Graphics
 					topLeft = UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
 					MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
 				}
-			}
 
-			// Delete confirmation
-			if (isConfirmingChipDeletion || isConfirmingCollectionDeletion)
+            }
+
+            // Delete confirmation
+            if (isConfirmingChipDeletion || isConfirmingCollectionDeletion)
 			{
 				using (UI.BeginBoundsScope(true))
 				{
@@ -749,5 +750,6 @@ namespace DLS.Graphics
 				}
 			}
 		}
-	}
+
+    }
 }

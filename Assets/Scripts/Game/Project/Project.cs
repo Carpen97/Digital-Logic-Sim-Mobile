@@ -9,6 +9,7 @@ using DLS.SaveSystem;
 using DLS.Simulation;
 using Seb.Helpers;
 using UnityEngine;
+using UnityEngine.Windows;
 using Debug = UnityEngine.Debug;
 
 namespace DLS.Game
@@ -725,5 +726,47 @@ namespace DLS.Game
 				}
 			}
 		}
-	}
+
+		public void AddNewPinSize(int pinSize)
+		{
+			PinBitCount pinBitCount = pinSize;
+			description.pinBitCounts.Add(pinBitCount);
+			ChipDescription inPin = BuiltinChipCreator.CreateInPin(pinBitCount);
+            ChipDescription outPin = BuiltinChipCreator.CreateOutPin(pinBitCount);
+			ChipDescription bus = BuiltinChipCreator.CreateBus(pinBitCount);
+			ChipDescription busTerminus = BuiltinChipCreator.CreateBusTerminus(pinBitCount);
+            chipLibrary.NotifyChipSaved(inPin);
+            chipLibrary.NotifyChipSaved(outPin);
+            chipLibrary.NotifyChipSaved(bus);
+            chipLibrary.NotifyChipSaved(busTerminus, true);
+
+
+            if (description.ChipCollections.Any(c => c.Name == "IN/OUT"))
+			{
+				description.ChipCollections.First(c => c.Name == "IN/OUT").Chips.Add(inPin.Name);
+                description.ChipCollections.First(c => c.Name == "IN/OUT").Chips.Add(outPin.Name);
+            }
+
+			if(description.ChipCollections.Any(c => c.Name == "BUS"))
+			{
+				description.ChipCollections.First(c => c.Name == "BUS").Chips.Add(bus.Name);
+			}
+        }
+
+		public void AddNewMergeSplit(int a, int b)
+		{
+			KeyValuePair<PinBitCount, PinBitCount> pair = new(Math.Max(a,b), Math.Min(b,a));
+			description.SplitMergePairs.Add(pair);
+			ChipDescription mergeChip = BuiltinChipCreator.CreateMergeChip(pair);
+			ChipDescription splitChip = BuiltinChipCreator.CreateSplitChip(pair);
+			chipLibrary.NotifyChipSaved(mergeChip);
+			chipLibrary.NotifyChipSaved(splitChip);
+            if (description.ChipCollections.Any(c => c.Name == "MERGE/SPLIT"))
+            {
+                description.ChipCollections.First(c => c.Name == "MERGE/SPLIT").Chips.Add(mergeChip.Name);
+                description.ChipCollections.First(c => c.Name == "MERGE/SPLIT").Chips.Add(splitChip.Name);
+            }
+
+        }
+    }
 }
