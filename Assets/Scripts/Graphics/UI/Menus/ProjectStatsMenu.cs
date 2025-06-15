@@ -7,7 +7,6 @@ using DLS.Game;
 using Seb.Types;
 using Seb.Vis;
 using Seb.Vis.UI;
-using Unity.Android.Gradle;
 using UnityEngine;
 
 namespace DLS.Graphics

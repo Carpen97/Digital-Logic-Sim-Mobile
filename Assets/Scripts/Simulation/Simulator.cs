@@ -475,7 +475,7 @@ namespace DLS.Simulation
 						}
           
             uint data = chip.InternalState[address];
-            hip.OutputPins[0].State.SetShort((ushort)((data & 0xFF00) >> 8));
+            chip.OutputPins[0].State.SetShort((ushort)((data & 0xFF00) >> 8));
             chip.OutputPins[1].State.SetShort((ushort)(data & 0x00FF));
             break;
                 }
@@ -494,8 +494,8 @@ namespace DLS.Simulation
 					ushort sps = (ushort)tps;
 					ushort spc = (ushort)stepsPerClockTransition;
 
-					chip.OutputPins[5].State.SmallSet(tps >= 65536 ? 1 : 0);
-					chip.OutputPins[4].State.SmallSet( stepsPerClockTransition > 65535 ? PinState.1 : 0.LogicLow);
+					chip.OutputPins[5].State.SmallSet((uint)(tps >= 65536 ? 1 : 0));
+					chip.OutputPins[4].State.SmallSet((uint)(stepsPerClockTransition > 65535 ? 1 : 0));
 					chip.OutputPins[3].State.SetShort((ushort)(sps & ByteMask));
 					chip.OutputPins[2].State.SetShort((ushort)((sps >> 8) & ByteMask));
 					chip.OutputPins[1].State.SetShort((ushort)(spc & ByteMask));
@@ -521,11 +521,15 @@ namespace DLS.Simulation
 				case ChipType.Split_Pin:
 				{ 
 					chip.InputPins[0].State.HandleSplit(ref chip.OutputPins);
+						break;
 				}
 				case ChipType.Detector:
 				{
-					uint state = PinState.GetBitTristatedValue(chip.InputPin[0].State)
-					chip.OutputPins[state] = 1
+					uint state = chip.InputPins[0].State.GetSmallTristatedValue();
+					chip.OutputPins[0].State.SmallSet(1 << 16);
+                    chip.OutputPins[1].State.SmallSet(1 << 16);
+					chip.OutputPins[2].State.SmallSet(1 << 16);
+					chip.OutputPins[state].State.SmallSet(1);
 					break;
 				}
 

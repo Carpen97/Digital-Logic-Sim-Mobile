@@ -56,7 +56,7 @@ namespace DLS.Game
 			.Concat(CreateBusAndBusTerminus(description.pinBitCounts))
 			.ToArray();
 				
-			};
+			
 		}
 
 		static ChipDescription[] CreateInOutPins(List<PinBitCount> pinBitCountsToLoad)
