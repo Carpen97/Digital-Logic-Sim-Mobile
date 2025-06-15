@@ -13,9 +13,12 @@
   "Prefs_SimPaused": false,
   "Prefs_SimTargetStepsPerSecond": 10000000,
   "Prefs_SimStepsPerClockTick": 6,
+  "StepsRanSinceCreated": 912542,
+  "TimeSpentSinceCreated": {
+    "StartFrom": "02:03:06.6299650"
+  },
   "AllCustomChipNames":[
     "AND",
-    "D-LATCH",
     "NOT",
     "OR",
     "NOR",
@@ -64,6 +67,11 @@
     "TEST MergeSplit",
     "#",
     "BuzzTest",
+    "#AA",
+    "StatsTest",
+    "StatsTest1",
+    "StatsTest2",
+    "SPSTest",
     "EEPROM_test",
     "BUTTON_test",
     "BUTTON_test2",
@@ -101,26 +109,6 @@
     },
     {
       "Name":"BuzzTest",
-      "IsCollection":false
-    },
-    {
-      "Name":"EEPROM_test",
-      "IsCollection":false
-    },
-    {
-      "Name":"BUTTON_test",
-      "IsCollection":false
-    },
-    {
-      "Name":"BUTTON_test2",
-      "IsCollection":false
-    },
-    {
-      "Name":"4sw",
-      "IsCollection":false
-    },
-    {
-      "Name":"ConstTest",
       "IsCollection":false
     }
   ],
@@ -166,7 +154,7 @@
       "Name":"TEST"
     },
     {
-      "Chips":["PULSE","TEST MergeSplit","BUZZER","#","BuzzTest","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8","ConstTest"],
+      "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest","#AA","StatsTest","StatsTest1","StatsTest2","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8","DETECTOR","RTC","ConstTest"],
       "IsToggledOpen":true,
       "Name":"OTHER"
     }

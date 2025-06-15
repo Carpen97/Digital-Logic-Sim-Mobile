@@ -24,6 +24,7 @@ namespace DLS.SaveSystem
 		public static Project LoadProject(string projectName)
 		{
 			ProjectDescription projectDescription = LoadProjectDescription(projectName);
+			if (projectDescription.TimeSpentSinceCreated == null) projectDescription.TimeSpentSinceCreated = new();
 			ChipLibrary chipLibrary = LoadChipLibrary(projectDescription);
 			return new Project(projectDescription, chipLibrary);
 		}

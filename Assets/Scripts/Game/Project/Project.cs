@@ -519,6 +519,7 @@ namespace DLS.Game
 		public void NotifyExit()
 		{
 			simThreadActive = false;
+			ActiveProject.UpdateAndSaveProjectDescription(ActiveProject.description);
 		}
 
 		void SimThread()

@@ -30,6 +30,7 @@ namespace DLS.Game
 				CreateClock(),
 				CreatePulse(),
 				CreateConstant_8(),
+				CreateDetector(),
 
 				// ---- Memory ----
 				dev_CreateRAM_8(),
@@ -44,13 +45,18 @@ namespace DLS.Game
 				CreateDisplayDot(),
 				CreateDisplayLED(),
 				// ---- Audio ----
-				CreateBuzzer()
+				CreateBuzzer(),
+				// ---- Clock ----
+				CreateSPSChip(),
+				// ---- Time ----
+				CreateRTC()
 			}
 			.Concat(CreateInOutPins(description.pinBitCounts))
 			.Concat(CreateSplitMergePins(description.SplitMergePairs))
 			.Concat(CreateBusAndBusTerminus(description.pinBitCounts))
-
 			.ToArray();
+				
+			};
 		}
 
 		static ChipDescription[] CreateInOutPins(List<PinBitCount> pinBitCountsToLoad)
@@ -186,6 +192,43 @@ namespace DLS.Game
 
 			return CreateBuiltinChipDescription(ChipType.Buzzer, size, col, inputPins, null, null);
 		}
+		static ChipDescription CreateSPSChip()
+		{
+			Color col = new(0.4f, 0.3f, 0.3f);
+
+			PinDescription[] outputPins =
+			{
+				CreatePinDescription("SPCT_B", 5, PinBitCount.Bit8),
+				CreatePinDescription("SPCT_A", 4, PinBitCount.Bit8),
+				CreatePinDescription("SPS_B", 3, PinBitCount.Bit8),
+				CreatePinDescription("SPS_A", 2, PinBitCount.Bit8),
+				CreatePinDescription("SPS_OVERFLOW", 1, PinBitCount.Bit1),
+				CreatePinDescription("SPCT_OVERFLOW", 0, PinBitCount.Bit1),
+			};
+			
+			float height = SubChipInstance.MinChipHeightForPins(outputPins, null);
+			Vector2 size = new(CalculateGridSnappedWidth(GridSize * 9), height);
+
+			return CreateBuiltinChipDescription(ChipType.SPS, size, col, null, outputPins);
+		}
+
+		static ChipDescription CreateRTC()
+		{
+			Color col = new(0.4f, 0.4f, 0.4f);
+
+			PinDescription[] outputPins =
+			{
+				CreatePinDescription("D", 3, PinBitCount.Bit8),
+				CreatePinDescription("C", 2, PinBitCount.Bit8),
+				CreatePinDescription("B", 1, PinBitCount.Bit8),
+				CreatePinDescription("A", 0, PinBitCount.Bit8),
+			};
+
+			float height = SubChipInstance.MinChipHeightForPins(outputPins, null);
+			Vector2 size = new(CalculateGridSnappedWidth(GridSize * 9), height);
+
+			return CreateBuiltinChipDescription(ChipType.RTC, size, col, null, outputPins);
+		}
 
 		static ChipDescription dev_CreateRAM_8()
 		{
@@ -256,6 +299,26 @@ namespace DLS.Game
 			Vector2 size = Vector2.one * GridSize * 6;
 
 			return CreateBuiltinChipDescription(ChipType.Constant_8Bit, size, col, null, outputPins);
+        }
+
+        static ChipDescription CreateDetector()
+        {
+			PinDescription[] inputPins =
+			{
+				CreatePinDescription("IN", 0, PinBitCount.Bit1),
+			};
+
+            PinDescription[] outputPins =
+            {
+                CreatePinDescription("0", 1, PinBitCount.Bit1),
+                CreatePinDescription("1", 2, PinBitCount.Bit1),
+                CreatePinDescription("Z", 3, PinBitCount.Bit1),
+            };
+
+            Color col = new(0.1f, 0.1f, 0.3f);
+            Vector2 size = new(GridSize * 12, SubChipInstance.MinChipHeightForPins(inputPins, outputPins));
+
+            return CreateBuiltinChipDescription(ChipType.Detector, size, col, inputPins, outputPins);
         }
 
 

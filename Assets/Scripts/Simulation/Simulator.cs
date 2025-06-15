@@ -2,10 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using UnityEngine;
 using DLS.Description;
 using DLS.Game;
 using NUnit.Framework.Interfaces;
 using Random = System.Random;
+using System.Security.Cryptography;
 
 namespace DLS.Simulation
 {
@@ -95,6 +97,7 @@ namespace DLS.Simulation
 			}
 
 			UpdateAudioState();
+			Project.ActiveProject.description.StepsRanSinceCreated++;
 		}
 
 		public static void UpdateInPausedState()
@@ -453,9 +456,9 @@ namespace DLS.Simulation
                     break;
 				}
 
-                case ChipType.EEPROM_256x16:
-                {
-                        const int ByteMask = 0b11111111;
+				case ChipType.EEPROM_256x16:
+				{
+						const int ByteMask = 0b11111111;
 
 						uint address = chip.InputPins[0].State.GetShortValues();
                         bool isWriting = chip.InputPins[3].State.SmallHigh();
@@ -463,31 +466,52 @@ namespace DLS.Simulation
                         bool isRisingEdge = clockHigh && chip.InternalState[^1] == 0;
                         chip.InternalState[^1] = clockHigh ? 1u : 0;
 
-                        if (isWriting && isRisingEdge)
+
+						if (isWriting && isRisingEdge)
 						{
 							uint writeData = (ushort)(((chip.InputPins[1].State.GetShortValues() << 8) & (ByteMask<<8)) | (chip.InputPins[2].State.GetShortValues() & ByteMask));
-
 							chip.InternalState[address] = writeData;
-
 							Project.ActiveProject.NotifyRomContentsEditedRuntime(chip);
-							
 						}
-                        uint data = chip.InternalState[address];
-
-	
-                        chip.OutputPins[0].State.SetShort((ushort)((data & 0xFF00) >> 8));
-                        chip.OutputPins[1].State.SetShort((ushort)(data & 0x00FF));
-                        break;
+          
+            uint data = chip.InternalState[address];
+            hip.OutputPins[0].State.SetShort((ushort)((data & 0xFF00) >> 8));
+            chip.OutputPins[1].State.SetShort((ushort)(data & 0x00FF));
+            break;
                 }
 
-                case ChipType.Buzzer:
+				case ChipType.Buzzer:
 				{
 					int freqIndex = (int)chip.InputPins[0].State.GetShortValues();
 					uint volumeIndex = chip.InputPins[1].State.GetShortValues();
 					audioState.RegisterNote(freqIndex, volumeIndex);
 					break;
 				}
+				case ChipType.SPS:
+				{
+					const int ByteMask = 0b11111111;
+					double tps = Project.ActiveProject.simAvgTicksPerSec;
+					ushort sps = (ushort)tps;
+					ushort spc = (ushort)stepsPerClockTransition;
 
+					chip.OutputPins[5].State.SmallSet(tps >= 65536 ? 1 : 0);
+					chip.OutputPins[4].State.SmallSet( stepsPerClockTransition > 65535 ? PinState.1 : 0.LogicLow);
+					chip.OutputPins[3].State.SetShort((ushort)(sps & ByteMask));
+					chip.OutputPins[2].State.SetShort((ushort)((sps >> 8) & ByteMask));
+					chip.OutputPins[1].State.SetShort((ushort)(spc & ByteMask));
+					chip.OutputPins[0].State.SetShort((ushort)((spc >> 8) & ByteMask));
+					break;
+				}
+				case ChipType.RTC:
+				{
+					const uint ByteMask = 0b11111111;
+					int unixTime = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+					chip.OutputPins[0].State.SetShort((ushort)((unixTime >> 24) & ByteMask));
+					chip.OutputPins[1].State.SetShort((ushort)((unixTime >> 16) & ByteMask));
+					chip.OutputPins[2].State.SetShort((ushort)((unixTime >> 8) & ByteMask));
+					chip.OutputPins[3].State.SetShort((ushort)(unixTime & ByteMask));
+					break;
+				}
 				case ChipType.Constant_8Bit:
 				{
 					chip.OutputPins[0].State.SetShort((ushort)chip.InternalState[0]);
@@ -497,6 +521,11 @@ namespace DLS.Simulation
 				case ChipType.Split_Pin:
 				{ 
 					chip.InputPins[0].State.HandleSplit(ref chip.OutputPins);
+				}
+				case ChipType.Detector:
+				{
+					uint state = PinState.GetBitTristatedValue(chip.InputPin[0].State)
+					chip.OutputPins[state] = 1
 					break;
 				}
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.TextCore.Text;
 
 namespace DLS.Description
 {
@@ -15,6 +16,7 @@ namespace DLS.Description
 			{ ChipType.Pulse, "PULSE" },
 			{ ChipType.TriStateBuffer, "3-STATE BUFFER" },
 			{ ChipType.Constant_8Bit, "CONST" },
+			{ ChipType.Detector, "DETECTOR" },
 			// ---- Memory ----
 			{ ChipType.dev_Ram_8Bit, "RAM-8" },
 			{ ChipType.Rom_256x16, $"ROM 256{mulSymbol}16" },
@@ -27,6 +29,9 @@ namespace DLS.Description
 			{ ChipType.DisplayLED, "LED" },
 
 			{ ChipType.Buzzer, "BUZZER" },
+
+			{ ChipType.SPS, "SPS" },
+			{ ChipType.RTC, "RTC" },
 
 			// ---- Not really chips (but convenient to treat them as such anyway) ----
 

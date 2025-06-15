@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using DLS.Description;
@@ -83,6 +84,7 @@ namespace DLS.Game
 				DLSVersion_LastSavedModdedVersion = DLSVersion_ModdedID.ToString(),
 				DLSVersion_EarliestCompatible = DLSVersion_EarliestCompatible.ToString(),
 				CreationTime = DateTime.Now,
+				TimeSpentSinceCreated = new(),
 				Prefs_ChipPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
 				Prefs_MainPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
 				Prefs_SimTargetStepsPerSecond = 1000,
@@ -113,7 +115,7 @@ namespace DLS.Game
 			}
 			catch (Exception e)
 			{
-				Debug.LogError("Error opening folder: " + e.Message);
+				UnityEngine.Debug.LogError("Error opening folder: " + e.Message);
 			}
 		}
 

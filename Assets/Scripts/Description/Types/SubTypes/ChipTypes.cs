@@ -9,6 +9,7 @@ namespace DLS.Description
 		TriStateBuffer,
 		Clock,
 		Pulse,
+		Detector,
 
 		// ---- Memory ----
 		dev_Ram_8Bit,
@@ -41,7 +42,12 @@ namespace DLS.Description
 		BusTerminus,
 		
 		// ---- Audio ----
-		Buzzer
+		Buzzer,
 
+		// ---- Time ----
+		RTC,
+
+		// ---- Clock ----
+		SPS,
 	}
 }
