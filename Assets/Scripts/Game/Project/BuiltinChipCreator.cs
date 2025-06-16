@@ -202,8 +202,8 @@ namespace DLS.Game
 				CreatePinDescription("SPCT_A", 4, PinBitCount.Bit8),
 				CreatePinDescription("SPS_B", 3, PinBitCount.Bit8),
 				CreatePinDescription("SPS_A", 2, PinBitCount.Bit8),
-				CreatePinDescription("SPS_OVERFLOW", 1, PinBitCount.Bit1),
-				CreatePinDescription("SPCT_OVERFLOW", 0, PinBitCount.Bit1),
+				CreatePinDescription("SPCT_OVERFLOW", 1, PinBitCount.Bit1),
+				CreatePinDescription("SPS_OVERFLOW", 0, PinBitCount.Bit1),
 			};
 			
 			float height = SubChipInstance.MinChipHeightForPins(outputPins, null);
