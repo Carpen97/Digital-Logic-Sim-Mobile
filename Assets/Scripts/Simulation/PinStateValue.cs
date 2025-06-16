@@ -490,5 +490,13 @@ namespace DLS.Simulation
                  HandleBigMerge(sources);
             }
         }
+
+        public bool IsValueBiggerThanInt() {
+            if (size <= 32) { return false; }
+            for (int i = 33; i < BigValues.Length; i++) {
+                if (BigValues[i]) return true;
+            }
+            return false;
+        }
     }
 }

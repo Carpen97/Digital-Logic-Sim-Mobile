@@ -220,13 +220,32 @@ namespace DLS.Graphics
 			Draw.Text(font, text, FontSizePinLabel, centre, Anchor.TextFirstLineCentre, Color.white);
 		}
 
+		static void CopyToCharBuffer(DevPinInstance pin, string text)
+		{
+			char[] chars = text.ToCharArray();
+			for (int i = 0; i < chars.Length; i++) {
+				pin.decimalDisplayCharBuffer[i] = chars[i];
+			}
+		}
 		public static void DrawPinDecValue(DevPinInstance pin)
 		{
 			if (pin.pinValueDisplayMode == PinValueDisplayMode.Off) return;
 
 			int charCount;
 
-			if (pin.pinValueDisplayMode != PinValueDisplayMode.HEX)
+			if (pin.Pin.State.IsValueBiggerThanInt() || (((pin.GetStateDecimalDisplayValue()&(1<<31)) == (1<<31)) && pin.pinValueDisplayMode!=PinValueDisplayMode.SignedDecimal) )
+			{
+				charCount = 7;
+				CopyToCharBuffer(pin, "TOO BIG");
+			}
+
+			else if (pin.GetStateDecimalDisplayValue() == int.MinValue)
+			{
+				charCount = 11;
+				CopyToCharBuffer(pin, "-2147483648");
+			}
+
+			else if (pin.pinValueDisplayMode != PinValueDisplayMode.HEX)
 			{
 				charCount = StringHelper.CreateIntegerStringNonAlloc(pin.decimalDisplayCharBuffer, pin.GetStateDecimalDisplayValue());
 			}
@@ -235,6 +254,8 @@ namespace DLS.Graphics
 			{
 				charCount = StringHelper.CreateHexStringNonAlloc(pin.decimalDisplayCharBuffer, pin.GetStateDecimalDisplayValue());
 			}
+
+			
 
 			FontType font = FontBold;
 			Bounds2D parentBounds = pin.BoundingBox;
