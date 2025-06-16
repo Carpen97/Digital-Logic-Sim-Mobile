@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
-// Originally on DLS.SaveSystem, now on DLS.Description because of you bad C# does not allow ProjectDescription to use classes from outside its namespace
+// Originally on DLS.SaveSystem, now on DLS.Description because of assembly definitions.
 namespace DLS.Description {
     public class CustomStopwatch {
         [JsonIgnore]
@@ -17,8 +17,16 @@ namespace DLS.Description {
             this.StartFrom = StartFrom;
         }
         [OnSerializing]
-        public void Save(StreamingContext unused) => StartFrom = Elapsed;
-        public void Save() => StartFrom = Elapsed;
+        public void Save(StreamingContext unused)
+        {
+            StartFrom = Elapsed;
+            Stopwatch = Stopwatch.StartNew();
+        }
+        public void Save()
+        {
+            StartFrom = Elapsed;
+            Stopwatch = Stopwatch.StartNew();
+        }
         public CustomStopwatch() {
             Stopwatch = Stopwatch.StartNew();
             StartFrom = new();
