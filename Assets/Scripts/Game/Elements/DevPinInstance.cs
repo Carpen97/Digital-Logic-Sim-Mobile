@@ -84,7 +84,7 @@ namespace DLS.Game
 
 			if (pinValueDisplayMode == PinValueDisplayMode.SignedDecimal)
 			{
-				displayValue = Maths.TwosComplement(rawValue, (int)BitCount);
+				displayValue = Maths.TwosComplement(rawValue, Math.Min((int)BitCount,32));
 			}
 
 			return displayValue;
