@@ -16,6 +16,10 @@ namespace DLS.Graphics
         public static List<int> PinBitCountsMade = new();
         public static List<KeyValuePair<int, int>> MergeSplitsMade = new();
 
+        public static List<int> PinBitCountsAwaitingSave = new();
+        public static List<KeyValuePair<int, int>> MergeSplitsAwaitingSave = new();
+
+        public static bool saved;
 
         const float textSpacing = 0.25f;
         const float entrySpacing = 0.5f;
@@ -90,7 +94,7 @@ namespace DLS.Graphics
                 DrawDoneSection(displayDone);
 
                 Vector2 buttonTopLeft = new(labelPosCurr.x, UI.PrevBounds.Bottom - 2f);
-                int addOrClose = UI.VerticalButtonGroup(new[] { "Add special chip", "Save", "Close" }, new[] {canAddChip, true, true },
+                int addOrClose = UI.VerticalButtonGroup(new[] { "Add special chip", "Save", "Close" }, new[] {canAddChip && !displayDone, !saved, true },
                 ActiveUITheme.ButtonTheme, buttonTopLeft + (menuWidth / 2) * Vector2.right, entrySize, false, false, entrySpacing);
 
                 if(mainPinNamesMode == OPTION_PIN && canAddChip && addOrClose == 0)
@@ -107,8 +111,9 @@ namespace DLS.Graphics
 
                 if (addOrClose == 1)
                 {
-                    // Save changes
+                    SaveChanges();
                     Main.ActiveProject.SaveCurrentProjectDescription() ;
+                    saved = true;
                 }
 
                 if (addOrClose == 2)
@@ -131,7 +136,7 @@ namespace DLS.Graphics
                 
 
 
-                if (firstPinSizeAttempt != -1 && secondPinSizeAttempt != -1 && !confirmation.valid)
+                if (firstPinSizeAttempt != -1 && secondPinSizeAttempt != -1 && !confirmation.valid && !displayDone)
                 {
                     AddSpacing();
                     DrawErrorSection(confirmation.reason);
@@ -155,7 +160,7 @@ namespace DLS.Graphics
                 InputFieldState pinSizeInput = MenuHelper.LabeledInputField("Size of new pin:", labelCol, labelPosCurr,entrySize,ID_PinSize, pinSizeInputValidator, settingFieldSize.x);
                 int pinSizeAttempt = int.TryParse(pinSizeInput.text, out int a) ? a : -1;
                 (bool valid, string reason) confirmation = RealSizeConfirmation(pinSizeAttempt);
-                if (!confirmation.valid && pinSizeAttempt != -1)
+                if (!confirmation.valid && pinSizeAttempt != -1 && !displayDone)
                 {
                     AddSpacing();
                     DrawErrorSection(confirmation.reason);
@@ -233,8 +238,15 @@ namespace DLS.Graphics
 
         public static void OnMenuOpened()
         {
+            PinBitCountsAwaitingSave = new();
+            MergeSplitsAwaitingSave = new();
+
             RefreshPinBitCounts();
             RefreshMergeSplits();
+            saved = true;
+            changeToBeAdded = true;
+            displayDone = false;
+            previousValue = -1;
         }
 
         public static void RefreshPinBitCounts()
@@ -243,6 +255,10 @@ namespace DLS.Graphics
             foreach(var pinBit in Main.ActiveProject.description.pinBitCounts)
             {
                 PinBitCountsMade.Add(pinBit.BitCount);
+            }
+            foreach(var pinBit in PinBitCountsAwaitingSave)
+            {
+                PinBitCountsMade.Add(pinBit);
             }
         }
 
@@ -253,11 +269,16 @@ namespace DLS.Graphics
             {
                 MergeSplitsMade.Add(new(PinBitPair.Key, PinBitPair.Value));
             }
+
+            foreach(var pair in MergeSplitsAwaitingSave)
+            {
+                MergeSplitsAwaitingSave.Add(pair);
+            }
         }
         
         public static bool ValidatePinSizeInput(string s)
         {
-            if (string.IsNullOrEmpty(s)) return true;
+            if (string.IsNullOrEmpty(s)){ changeToBeAdded = false; return true; }
             if (s.Contains(" ")) return false;
             if (int.TryParse(s, out int a))
             {
@@ -276,7 +297,7 @@ namespace DLS.Graphics
             if (a > 64 && a % 8 != 0 && a<= 512) { return (false, "Pin size > 64 and not a multiple of 8."); }
             if(a > 512 && a % 64 != 0 && a <= 4096) { return (false, "Pin size > 512 and not a multiple of 64."); }
             if (a > 4096 && a % 512 != 0) { return (false, "Pin size > 4096 and not a multiple of 512."); }
-            if (PinBitCountsMade.Contains(a) && changeToBeAdded) { return (false, "Pins with this count already exist."); }
+            if (PinBitCountsMade.Contains(a)) { return (false, "Pins with this count already exist."); }
 
 
             return (true, "");
@@ -284,7 +305,7 @@ namespace DLS.Graphics
 
         public static (bool valid, string reason) RealMergeSplitConfirmation(int a, int b)
         {
-            if (MergeSplitsMade.Any(k => (k.Key == a && k.Value == b) || (k.Value == a && k.Key == b)) && changeToBeAdded) { return (false, "These Merge/Split chips already exist."); }
+            if (MergeSplitsMade.Any(k => (k.Key == a && k.Value == b) || (k.Value == a && k.Key == b))) { return (false, "These Merge/Split chips already exist."); }
             if (!PinBitCountsMade.Contains(a) && !PinBitCountsMade.Contains(b) ) { return (false, $"No pins with pinsize {a} and {b} exist. Create them first."); }
             if (!PinBitCountsMade.Contains(a) ) { return (false, $"No pin with pinsize {a} exist. Create it first, if valid."); }
             if (!PinBitCountsMade.Contains(b) ) { return (false, $"No pin with pinsize {b} exist. Create it first, if valid."); }
@@ -298,19 +319,40 @@ namespace DLS.Graphics
 
         public static void AddNewBitSize(int a)
         {
-            Main.ActiveProject.AddNewPinSize(a);
+            PinBitCountsAwaitingSave.Add(a);
             RefreshPinBitCounts();
+            saved = false;
+
         }
 
         public static void AddNewMergeSplit(int a, int b)
         {
-            Main.ActiveProject.AddNewMergeSplit(a, b);
+            MergeSplitsAwaitingSave.Add(new(a,b));
             RefreshMergeSplits();
+            saved = false;
         }
 
         public static bool DisplayDone(bool empty)
         {
             return !changeToBeAdded && !empty;
+        }
+
+        public static void SaveChanges()
+        {
+            if (!saved)
+            {
+                foreach (int a in PinBitCountsAwaitingSave)
+                {
+                    Main.ActiveProject.AddNewPinSize(a);
+                }
+                foreach (var pair in MergeSplitsAwaitingSave)
+                {
+                    Main.ActiveProject.AddNewMergeSplit(pair.Key, pair.Value);
+                }
+                saved = true;
+                PinBitCountsAwaitingSave = new();
+                MergeSplitsAwaitingSave = new();
+            }
         }
     }
 }
