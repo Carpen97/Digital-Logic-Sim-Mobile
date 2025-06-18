@@ -328,12 +328,14 @@ namespace DLS.Game
 			for (int i = 0; i < pins.Length; i++)
 			{
 				PinBitCount pinBitCount = pins[i];
-				int pinGridHeight = pinBitCount switch
+				int pinGridHeight = pinBitCount.BitCount switch
 				{
 					PinBitCount.Bit1 => 2,
 					PinBitCount.Bit4 => 3,
-					_ => 4
-				};
+					PinBitCount.Bit8 => 4,
+                    _ => Mathf.RoundToInt((GetPinDepthMultiplier(pinBitCount) * pinBitCount.BitCount * DrawSettings.PinHeightPerBit + 0.03f)/DrawSettings.GridSize)
+
+                };
 
 				pinGridYVals[i] = gridY - pinGridHeight / 2f;
 				gridY -= pinGridHeight;
@@ -437,13 +439,18 @@ namespace DLS.Game
 
 		public static float PinHeightFromBitCount(PinBitCount bitCount)
 		{
-			return bitCount switch
+			return bitCount.BitCount switch
 			{
 				PinBitCount.Bit1 => DrawSettings.PinRadius * 2,
-				PinBitCount.Bit4 => DrawSettings.PinHeight4Bit,
+				PinBitCount.Bit4 => DrawSettings.PinHeight4Bit, 
 				PinBitCount.Bit8 => DrawSettings.PinHeight8Bit,
-				_ => throw new Exception("Bit count not implemented " + bitCount)
-			};
+                _ => (GetPinDepthMultiplier(bitCount) * bitCount.BitCount * DrawSettings.PinHeightPerBit) + 0.03f,
+            };
+		}
+
+		public static float GetPinDepthMultiplier(PinBitCount bitCount)
+		{
+			return (float)Math.Pow(8, -bitCount.GetTier());
 		}
 
 		// Split chip name into two lines (if contains a space character)

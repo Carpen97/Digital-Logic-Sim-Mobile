@@ -220,13 +220,32 @@ namespace DLS.Graphics
 			Draw.Text(font, text, FontSizePinLabel, centre, Anchor.TextFirstLineCentre, Color.white);
 		}
 
+		static void CopyToCharBuffer(DevPinInstance pin, string text)
+		{
+			char[] chars = text.ToCharArray();
+			for (int i = 0; i < chars.Length; i++) {
+				pin.decimalDisplayCharBuffer[i] = chars[i];
+			}
+		}
 		public static void DrawPinDecValue(DevPinInstance pin)
 		{
 			if (pin.pinValueDisplayMode == PinValueDisplayMode.Off) return;
 
 			int charCount;
 
-			if (pin.pinValueDisplayMode != PinValueDisplayMode.HEX)
+			if (pin.Pin.State.IsValueBiggerThanInt() || (((pin.GetStateDecimalDisplayValue()&(1<<31)) == (1<<31)) && pin.pinValueDisplayMode!=PinValueDisplayMode.SignedDecimal) )
+			{
+				charCount = 7;
+				CopyToCharBuffer(pin, "TOO BIG");
+			}
+
+			else if (pin.GetStateDecimalDisplayValue() == int.MinValue)
+			{
+				charCount = 11;
+				CopyToCharBuffer(pin, "-2147483648");
+			}
+
+			else if (pin.pinValueDisplayMode != PinValueDisplayMode.HEX)
 			{
 				charCount = StringHelper.CreateIntegerStringNonAlloc(pin.decimalDisplayCharBuffer, pin.GetStateDecimalDisplayValue());
 			}
@@ -235,6 +254,8 @@ namespace DLS.Graphics
 			{
 				charCount = StringHelper.CreateHexStringNonAlloc(pin.decimalDisplayCharBuffer, pin.GetStateDecimalDisplayValue());
 			}
+
+			
 
 			FontType font = FontBold;
 			Bounds2D parentBounds = pin.BoundingBox;
@@ -267,7 +288,7 @@ namespace DLS.Graphics
 			if (isKeyChip)
 			{
 				// Key changes colour when pressed down
-				if (PinState.FirstBitHigh(subchip.OutputPins[0].State)) chipCol = Color.white;
+				if (subchip.OutputPins[0].State.SmallHigh()) chipCol = Color.white;
 			}
 
 			Color outlineCol = GetChipOutlineCol(chipCol);
@@ -634,7 +655,7 @@ namespace DLS.Graphics
                 pressed = inBounds && InputHelper.IsMouseHeld(MouseButton.Left) && controller.CanInteractWithButton;
                 uint displayColIndex = chipSource.InternalState[0];
                 col = GetStateColour(pressed, displayColIndex);
-                chipSource.OutputPins[0].State = (uint)(pressed ? 1 : 0);
+				chipSource.OutputPins[0].State.SmallSet(pressed ? Constants.LOGIC_HIGH : Constants.LOGIC_LOW);
             }
 
             Vector2 buttonDrawSize = Vector2.one * (scale * buttonSize);
@@ -677,7 +698,7 @@ namespace DLS.Graphics
                 inBounds = bounds.PointInBounds(InputHelper.MousePosWorld);
                 gettingClicked = inBounds && InputHelper.IsMouseDownThisFrame(MouseButton.Left) && controller.CanInteractWithButton;
 				bool nextState = gettingClicked ? !currentState : currentState;
-                chipSource.OutputPins[0].State = (uint)(nextState ? 1 : 0);
+				chipSource.OutputPins[0].State.SmallSet(nextState ? Constants.LOGIC_HIGH : Constants.LOGIC_LOW);
 
 
 				nextSwitchHeadPos = nextState ? -1 : 1;
@@ -700,7 +721,7 @@ namespace DLS.Graphics
 
         public static void DrawDevPin(DevPinInstance devPin)
 		{
-			if (devPin.BitCount == PinBitCount.Bit1)
+			if (devPin.BitCount == (uint)1)
 			{
 				Draw1BitDevPin(devPin);
 			}
@@ -893,8 +914,9 @@ namespace DLS.Graphics
 
 			WireLayoutHelper.CreateMultiBitWireLayout(wire.BitWires, wire, WireThickness);
 
+			int length = wire.BitWires.Length / (wire.bitCount <= 64 ? 1 : wire.bitCount <=512 ? 8 : 64);
 			// Draw
-			for (int bitIndex = 0; bitIndex < wire.BitWires.Length; bitIndex++)
+			for (int bitIndex = 0; bitIndex < length; bitIndex++)
 			{
 				WireInstance.BitWire bitWire = wire.BitWires[bitIndex];
 				Color col = wire.GetColour(bitIndex);
@@ -1193,8 +1215,15 @@ namespace DLS.Graphics
                     Draw.Triangle(tip, baseLeft, baseRight, new Color(34f / 255f, 34f / 255f, 34f / 255f, 1f));
                 }
 			}
-		}
 
+			Draw.Quad(pinPos, pinSize, pinCol);
+
+			if(pin.bitCount <= 64 || mouseOverPin) { return; }
+
+			Vector2 depthIndicatorSize = new(pinWidth / 8f, pinHeight);
+			Draw.Quad(pinPos + pin.ForwardDir * 0.25f * pinWidth, depthIndicatorSize, ActiveTheme.PinSizeIndicatorColors[pin.bitCount.GetTier()]);
+
+        }
         public static void DrawGrid(Color gridCol)
 		{
 			float thickness = GridThickness;
@@ -1251,7 +1280,7 @@ namespace DLS.Graphics
 			if (wire.IsBusWire) return int.MaxValue - 2;
 
 			// Draw wires carrying high signal above those carrying low signal (for single bit wires)
-			bool wireIsHigh = wire.bitCount == PinBitCount.Bit1 && PinState.FirstBitHigh(wire.SourcePin.State);
+			bool wireIsHigh = wire.bitCount == PinBitCount.Bit1 && wire.SourcePin.State.SmallHigh();
 			int drawPriority_signalHigh = wireIsHigh ? 1000 : 0;
 
 			// Draw multi-bit wires above single bit wires

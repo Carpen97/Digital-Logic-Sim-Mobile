@@ -230,7 +230,7 @@ namespace DLS.Game
 			AddElement(pin);
 			if (!isLoadingFromFile)
 			{
-				Simulator.AddPin(SimChip, pin.ID, pin.IsInputPin);
+				Simulator.AddPin(SimChip, pin.ID, pin.IsInputPin, pin.BitCount);
 			}
 		}
 
