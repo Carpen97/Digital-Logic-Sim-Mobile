@@ -199,7 +199,7 @@ namespace DLS.Graphics
 			FontType font = FontBold;
 
 			Vector2 size = Draw.CalculateTextBoundsSize(text, FontSizePinLabel, font) + LabelBackgroundPadding;
-			Vector2 centre = pin.GetWorldPos() + pin.ForwardDir * (size.x / 2 + offsetX);
+			Vector2 centre = pin.GetWorldPos() + pin.FacingDir * (size.x / 2 + offsetX);
 
 			Draw.Quad(centre, size, ActiveTheme.PinLabelCol);
 			Draw.Text(font, text, FontSizePinLabel, centre, Anchor.TextFirstLineCentre, Color.white);
@@ -1132,6 +1132,7 @@ namespace DLS.Graphics
                 case 3: offsetDir = Vector2.right; break; // left face
             }
 
+
             Vector2 pinSelectionBoundsPos = pinPos + offsetDir * 0.02f;
             bool mouseOverPin = !InteractionState.MouseIsOverUI &&
                                 InputHelper.MouseInsideBounds_World(pinSelectionBoundsPos, pinSize);
@@ -1148,6 +1149,14 @@ namespace DLS.Graphics
             }
 
             Draw.Quad(pinPos, pinSize, pinCol);
+
+
+			// Draw pin indicator
+			if (pin.bitCount >= 64 && !mouseOverPin)
+			{
+				Vector2 depthIndicatorSize = isHorizontal ? new(pinHeight, pinWidth / 8f) : new(pinWidth / 8f, pinHeight);
+				Draw.Quad(pinPos + pin.FacingDir * 0.25f * pinWidth, depthIndicatorSize, ActiveTheme.PinSizeIndicatorColors[pin.bitCount.GetTier()]);
+			}
 
             // Draws input/output indicators on subchip pins only
             bool isOnCustomChip = pin.parent is SubChipInstance;
@@ -1216,12 +1225,6 @@ namespace DLS.Graphics
                 }
 			}
 
-			Draw.Quad(pinPos, pinSize, pinCol);
-
-			if(pin.bitCount <= 64 || mouseOverPin) { return; }
-
-			Vector2 depthIndicatorSize = new(pinWidth / 8f, pinHeight);
-			Draw.Quad(pinPos + pin.ForwardDir * 0.25f * pinWidth, depthIndicatorSize, ActiveTheme.PinSizeIndicatorColors[pin.bitCount.GetTier()]);
 
         }
         public static void DrawGrid(Color gridCol)

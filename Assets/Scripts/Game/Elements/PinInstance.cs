@@ -40,16 +40,15 @@ namespace DLS.Game
 			faceRight = isSourcePin;
 			desc.face = faceRight ? 1 : 3; // 1 for right, 3 for left
 			face = faceRight ? 1 : 3;
-            PinState.SetAllDisconnected(ref State);
+            State.SetAllDisconnected();
             ID = desc.ID;
             LocalPosY = desc.LocalOffset;
-        }
 			State.MakeFromPinBitCount(bitCount);
 			PlayerInputState.MakeFromPinBitCount(bitCount);
 		}
 
 		public Vector2 ForwardDir => faceRight ? Vector2.right : Vector2.left;
-
+        public Vector2 FacingDir => face == 1 ? Vector2.right : face == 3 ? Vector2.left : face == 2 ? Vector2.down : Vector2.up;
 
         public Vector2 GetWorldPos()
         {

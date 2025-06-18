@@ -24,7 +24,9 @@
       },
       "BitCount":"16",
       "Colour":0,
-      "ValueDisplayMode":1
+      "ValueDisplayMode":1,
+      "face":1,
+      "LocalOffset":0.0
     },
     {
       "Name":"OUT",
@@ -35,7 +37,9 @@
       },
       "BitCount":"16",
       "Colour":0,
-      "ValueDisplayMode":1
+      "ValueDisplayMode":1,
+      "face":1,
+      "LocalOffset":0.0
     },
     {
       "Name":"OUT",
@@ -46,7 +50,9 @@
       },
       "BitCount":"1",
       "Colour":0,
-      "ValueDisplayMode":0
+      "ValueDisplayMode":0,
+      "face":1,
+      "LocalOffset":0.0
     },
     {
       "Name":"OUT",
@@ -57,7 +63,9 @@
       },
       "BitCount":"1",
       "Colour":0,
-      "ValueDisplayMode":0
+      "ValueDisplayMode":0,
+      "face":1,
+      "LocalOffset":0.0
     }
   ],
   "SubChips":[
@@ -131,5 +139,6 @@
       "Points":[{"x":0.0,"y":0.0},{"x":0.0,"y":0.0}]
     }
   ],
-  "Displays": null
+  "Displays": null,
+  "HasCustomLayout": false
 }

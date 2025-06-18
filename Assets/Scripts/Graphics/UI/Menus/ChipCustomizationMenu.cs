@@ -316,17 +316,21 @@ namespace DLS.Graphics
                     float maxOffset;
                     float offsetAlongFace;
 
+                    bool shouldSnapToGrid = Project.ActiveProject.ShouldSnapToGrid;
+
                     if (closestFace == 0 || closestFace == 2)
                     {
                         // Horizontal face - move along X axis
                         maxOffset = chipHalfSize.x - pinHeight / 2f;
-                        offsetAlongFace = Mathf.Clamp(localMouse.x, -maxOffset, maxOffset);
+                        offsetAlongFace = shouldSnapToGrid ? GridHelper.ClampToGrid(localMouse.x, -maxOffset, maxOffset) :
+                            Mathf.Clamp(localMouse.x, -maxOffset, maxOffset);
                     }
                     else
                     {
                         // Vertical face - move along Y axis
                         maxOffset = chipHalfSize.y - pinHeight / 2f;
-                        offsetAlongFace = Mathf.Clamp(localMouse.y, -maxOffset, maxOffset);
+                        offsetAlongFace = shouldSnapToGrid ? GridHelper.ClampToGrid(localMouse.y, -maxOffset, maxOffset) :
+                            Mathf.Clamp(localMouse.y, -maxOffset, maxOffset);
                     }
 
                     selectedPin.LocalPosY = offsetAlongFace;
