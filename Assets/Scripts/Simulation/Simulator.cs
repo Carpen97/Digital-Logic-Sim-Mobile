@@ -451,7 +451,7 @@ namespace DLS.Simulation
 					uint address = chip.InputPins[0].State.GetShortValues();
 					uint data = chip.InternalState[address];
 
-					chip.OutputPins[0].State.SetShort((data>>16) & mask);
+					chip.OutputPins[0].State.SetShort((data>>8) & mask);
 					chip.OutputPins[1].State.SetShort(data & mask);
 			
                     break;
@@ -475,7 +475,7 @@ namespace DLS.Simulation
 					}
           
             		uint data = chip.InternalState[address];
-            		chip.OutputPins[0].State.SetShort((data >> 16) & mask);
+            		chip.OutputPins[0].State.SetShort((data >> 8) & mask);
 					chip.OutputPins[1]. State.SetShort(data & mask);
             		break;
                 }
