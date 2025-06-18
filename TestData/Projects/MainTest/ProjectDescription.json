@@ -13,6 +13,7 @@
   "Prefs_SimPaused": false,
   "Prefs_SimTargetStepsPerSecond": 150,
   "Prefs_SimStepsPerClockTick": 6,
+  "Perfs_PinIndicators": 0,
   "StepsRanSinceCreated": 77973032,
   "TimeSpentSinceCreated": {
     "StartFrom": "02:29:09.3105859"

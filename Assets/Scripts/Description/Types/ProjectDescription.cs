@@ -22,6 +22,7 @@ namespace DLS.Description
 		public bool Prefs_SimPaused;
 		public int Prefs_SimTargetStepsPerSecond;
 		public int Prefs_SimStepsPerClockTick;
+		public int Perfs_PinIndicators;
 
 		// Stats
 		public ulong StepsRanSinceCreated;
