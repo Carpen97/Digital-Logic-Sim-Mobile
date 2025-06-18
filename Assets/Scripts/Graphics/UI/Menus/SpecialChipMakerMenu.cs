@@ -25,6 +25,9 @@ namespace DLS.Graphics
         static readonly Vector2 entrySize = new(menuWidth, DrawSettings.SelectorWheelHeight);
         public static readonly Vector2 settingFieldSize = new(entrySize.x / 3, entrySize.y);
 
+        static int previousValue;
+        public static bool changeToBeAdded;
+        public static bool displayDone;
 
         static readonly string[] SpecialChipTypes =
         {
@@ -66,7 +69,7 @@ namespace DLS.Graphics
             Color labelCol = Color.white;
             Color headerCol = new(0.46f, 1, 0.54f);
             Color errorCol = new(1, 0.4f, 0.45f);
-
+            Color doneCol = new(128, 128, 0);
 
 
             using (UI.BeginBoundsScope(true))
@@ -83,17 +86,22 @@ namespace DLS.Graphics
                     DrawSpecialMergeSplitMenu();
                 }
 
-                Vector2 buttonTopLeft = new(labelPosCurr.x, UI.PrevBounds.Bottom - 2.5f);
-                int addOrClose = UI.VerticalButtonGroup(new[] { "Add special chip", "Save and close" }, new[] {canAddChip, true },
+                AddSpacing();
+                DrawDoneSection(displayDone);
+
+                Vector2 buttonTopLeft = new(labelPosCurr.x, UI.PrevBounds.Bottom - 2f);
+                int addOrClose = UI.VerticalButtonGroup(new[] { "Add special chip", "Save", "Close" }, new[] {canAddChip, true, true },
                 ActiveUITheme.ButtonTheme, buttonTopLeft + (menuWidth / 2) * Vector2.right, entrySize, false, false, entrySpacing);
 
                 if(mainPinNamesMode == OPTION_PIN && canAddChip && addOrClose == 0)
                 {
                     AddNewBitSize(currentlyAddingPinBitOfSize);
+                    changeToBeAdded = false;
                 }
                 if(mainPinNamesMode == OPTION_MERGE_SPLIT && canAddChip && addOrClose == 0)
                 {
                     AddNewMergeSplit(currentlyAddingMergeSplit.Key, currentlyAddingMergeSplit.Value);
+                    changeToBeAdded = false;
                 }
 
 
@@ -101,6 +109,10 @@ namespace DLS.Graphics
                 {
                     // Save changes
                     Main.ActiveProject.SaveCurrentProjectDescription() ;
+                }
+
+                if (addOrClose == 2)
+                {
                     UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
                 }
 
@@ -116,6 +128,8 @@ namespace DLS.Graphics
                 int firstPinSizeAttempt = int.TryParse(firstPinSize.text, out int a) ? a : -1;
                 int secondPinSizeAttempt = int.TryParse(secondPinSize.text, out int b) ? b : -1;
                 (bool valid, string reason) confirmation = RealMergeSplitConfirmation(firstPinSizeAttempt, secondPinSizeAttempt);
+                
+
 
                 if (firstPinSizeAttempt != -1 && secondPinSizeAttempt != -1 && !confirmation.valid)
                 {
@@ -128,8 +142,10 @@ namespace DLS.Graphics
                 {
                     canAddChip = true;
                     currentlyAddingMergeSplit = new (Math.Max(firstPinSizeAttempt, secondPinSizeAttempt), Math.Min(firstPinSizeAttempt, secondPinSizeAttempt));
+                    displayDone = DisplayDone(false);
                     return;
                 }
+                displayDone = DisplayDone(firstPinSizeAttempt == -1 && secondPinSizeAttempt == -1);
                 canAddChip = false;
             }
 
@@ -145,12 +161,22 @@ namespace DLS.Graphics
                     DrawErrorSection(confirmation.reason);
                     canAddChip = false;
                 }
-                else if (confirmation.valid && pinSizeAttempt != 1) {
+                else if (confirmation.valid && pinSizeAttempt != -1) {
                     canAddChip = true;
                     currentlyAddingPinBitOfSize = pinSizeAttempt;
+                    displayDone = DisplayDone(false);
                     return;
                 }
+                displayDone = DisplayDone(pinSizeAttempt == -1);
                 canAddChip = false;
+            }
+
+            void DrawDoneSection(bool done) {
+                if(!done) { return; }
+                AddHeaderSpacing();
+                UI.DrawText("DONE !", theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, doneCol);
+                AddHeaderSpacing();
+
             }
 
             void DrawErrorSection(string reason)
@@ -237,6 +263,8 @@ namespace DLS.Graphics
             {
                 if(a < 0) return false;
                 if(a > 65536) return false;
+                changeToBeAdded = previousValue != a;
+                previousValue = a;
                 return true;
             }
             return false;
@@ -244,25 +272,26 @@ namespace DLS.Graphics
 
         public static (bool valid, string reason) RealSizeConfirmation(int a)
         {
-            if(a < 1) { return (false, "Pin size must be at least 1 bit."); }
+            if (a < 1) { return (false, "Pin size must be at least 1 bit."); }
             if (a > 64 && a % 8 != 0 && a<= 512) { return (false, "Pin size > 64 and not a multiple of 8."); }
             if(a > 512 && a % 64 != 0 && a <= 4096) { return (false, "Pin size > 512 and not a multiple of 64."); }
             if (a > 4096 && a % 512 != 0) { return (false, "Pin size > 4096 and not a multiple of 512."); }
-            if (PinBitCountsMade.Contains(a)) { return (false, "Pins with this count already exist."); }
+            if (PinBitCountsMade.Contains(a) && changeToBeAdded) { return (false, "Pins with this count already exist."); }
+
 
             return (true, "");
         }
 
         public static (bool valid, string reason) RealMergeSplitConfirmation(int a, int b)
         {
-            if (MergeSplitsMade.Any(k => (k.Key == a && k.Value == b )||(k.Value == a && k.Key == b))){ return (false, "These Merge/Split chips already exist."); }
+            if (MergeSplitsMade.Any(k => (k.Key == a && k.Value == b) || (k.Value == a && k.Key == b)) && changeToBeAdded) { return (false, "These Merge/Split chips already exist."); }
             if (!PinBitCountsMade.Contains(a) && !PinBitCountsMade.Contains(b) ) { return (false, $"No pins with pinsize {a} and {b} exist. Create them first."); }
-            if (!PinBitCountsMade.Contains(a)) { return (false, $"No pin with pinsize {a} exist. Create it first, if valid."); }
-            if (!PinBitCountsMade.Contains(b)) { return (false, $"No pin with pinsize {b} exist. Create it first, if valid."); }
+            if (!PinBitCountsMade.Contains(a) ) { return (false, $"No pin with pinsize {a} exist. Create it first, if valid."); }
+            if (!PinBitCountsMade.Contains(b) ) { return (false, $"No pin with pinsize {b} exist. Create it first, if valid."); }
             int bigger = Math.Max(a, b);
             int smaller = Math.Min(a, b);
-
             if(bigger%smaller != 0) { return (false, $"{bigger} / {smaller} isn't an integer."); }
+
 
             return (true, "");
         }
@@ -277,6 +306,11 @@ namespace DLS.Graphics
         {
             Main.ActiveProject.AddNewMergeSplit(a, b);
             RefreshMergeSplits();
+        }
+
+        public static bool DisplayDone(bool empty)
+        {
+            return !changeToBeAdded && !empty;
         }
     }
 }
