@@ -20,6 +20,11 @@ namespace DLS.Game
 			return centrePos_Snapped;
 		}
 
+		public static float ClampToGrid(float number, float min, float max)
+		{
+			return Mathf.Clamp(SnapToGrid(number), Mathf.Max(min,SnapToGrid(min)), Mathf.Min(max,SnapToGrid(max)));
+		}
+
 		public static float SnapToGrid(float v)
 		{
 			int intV = Mathf.RoundToInt(v / GridSize);

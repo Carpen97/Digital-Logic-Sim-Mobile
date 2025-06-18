@@ -278,12 +278,14 @@ namespace DLS.Game
             foreach (PinInstance pin in pins)
             {
 				
-                int pinGridHeight = pin.bitCount switch
+                int pinGridHeight = pin.bitCount.BitCount switch
                 {
                     PinBitCount.Bit1 => 2,
                     PinBitCount.Bit4 => 3,
-                    _ => 4
+                    PinBitCount.Bit8 => 4,
+					_ => Mathf.RoundToInt(PinHeightFromBitCount(pin.bitCount) /DrawSettings.GridSize)
                 };
+
                 if (pin.face == 0)
                 {
                     Min0 += pinGridHeight;
@@ -333,7 +335,7 @@ namespace DLS.Game
 					PinBitCount.Bit1 => 2,
 					PinBitCount.Bit4 => 3,
 					PinBitCount.Bit8 => 4,
-                    _ => Mathf.RoundToInt((GetPinDepthMultiplier(pinBitCount) * pinBitCount.BitCount * DrawSettings.PinHeightPerBit + 0.03f)/DrawSettings.GridSize)
+                    _ => Mathf.RoundToInt(PinHeightFromBitCount(pinBitCount) / DrawSettings.GridSize)
 
                 };
 
