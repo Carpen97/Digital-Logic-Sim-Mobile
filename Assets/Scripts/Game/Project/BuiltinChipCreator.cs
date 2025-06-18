@@ -198,12 +198,10 @@ namespace DLS.Game
 
 			PinDescription[] outputPins =
 			{
-				CreatePinDescription("SPCT_B", 5, PinBitCount.Bit8),
-				CreatePinDescription("SPCT_A", 4, PinBitCount.Bit8),
-				CreatePinDescription("SPS_B", 3, PinBitCount.Bit8),
-				CreatePinDescription("SPS_A", 2, PinBitCount.Bit8),
-				CreatePinDescription("SPS_OVERFLOW", 1, PinBitCount.Bit1),
-				CreatePinDescription("SPCT_OVERFLOW", 0, PinBitCount.Bit1),
+				CreatePinDescription("SPCT", 3, PinBitCount.Bit16),
+				CreatePinDescription("SPS", 2, PinBitCount.Bit16),
+				CreatePinDescription("SPCT_OVERFLOW", 1, PinBitCount.Bit1),
+				CreatePinDescription("SPS_OVERFLOW", 0, PinBitCount.Bit1),
 			};
 			
 			float height = SubChipInstance.MinChipHeightForPins(outputPins, null);
@@ -218,10 +216,7 @@ namespace DLS.Game
 
 			PinDescription[] outputPins =
 			{
-				CreatePinDescription("D", 3, PinBitCount.Bit8),
-				CreatePinDescription("C", 2, PinBitCount.Bit8),
-				CreatePinDescription("B", 1, PinBitCount.Bit8),
-				CreatePinDescription("A", 0, PinBitCount.Bit8),
+				CreatePinDescription("TIME", 0, PinBitCount.Bit32),
 			};
 
 			float height = SubChipInstance.MinChipHeightForPins(outputPins, null);
@@ -256,8 +251,7 @@ namespace DLS.Game
 			};
 			PinDescription[] outputPins =
 			{
-				CreatePinDescription("OUT B", 1, PinBitCount.Bit8),
-				CreatePinDescription("OUT A", 2, PinBitCount.Bit8)
+				CreatePinDescription("OUT", 1, PinBitCount.Bit16),
 			};
 
 			Color col = GetColor(new(0.25f, 0.35f, 0.5f));
@@ -271,15 +265,13 @@ namespace DLS.Game
             PinDescription[] inputPins =
             {
                 CreatePinDescription("ADDRESS", 0, PinBitCount.Bit8),
-				CreatePinDescription("WRITE B", 1, PinBitCount.Bit8),
-                CreatePinDescription("WRITE A", 2, PinBitCount.Bit8),
-                CreatePinDescription("WRITE", 3, PinBitCount.Bit1),
-				CreatePinDescription("CLOCK", 4, PinBitCount.Bit1)
+				CreatePinDescription("DATA", 1, PinBitCount.Bit16),
+                CreatePinDescription("WRITE", 2, PinBitCount.Bit1),
+				CreatePinDescription("CLOCK", 3, PinBitCount.Bit1)
             };
             PinDescription[] outputPins =
             {
-                CreatePinDescription("OUT B", 5, PinBitCount.Bit8),
-                CreatePinDescription("OUT A", 6, PinBitCount.Bit8)
+                CreatePinDescription("OUT", 5, PinBitCount.Bit16)
             };
 
             Color col = GetColor(new(0.25f, 0.35f, 0.5f));

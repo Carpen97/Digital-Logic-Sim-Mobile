@@ -29,6 +29,8 @@ namespace DLS.Description
 		public const int Bit1 = 1;
 		public const int Bit4 = 4;
 		public const int Bit8 = 8;
+		public const int Bit16 = 16;
+		public const int Bit32 = 32;
 
 		public int BitCount;
 
@@ -42,10 +44,10 @@ namespace DLS.Description
 		}
 		public readonly BitArray GetEmptyBitArray()
 		{
-			return new BitArray(length: (int)BitCount<<1);
+			return new BitArray(length: BitCount<<1);
 		}
 
-        public override bool Equals(System.Object @object)
+        public override bool Equals(object @object)
         {
 			if(@object is uint number)
 			{
@@ -82,7 +84,7 @@ namespace DLS.Description
         public static implicit operator uint(PinBitCount b) => (uint)b.BitCount;
         public static implicit operator int(PinBitCount b) => b.BitCount;
 		public static implicit operator ushort(PinBitCount b) => (ushort)b.BitCount;
-		public static implicit operator PinBitCount(Int64 b) => new PinBitCount((ushort)b);
+		public static implicit operator PinBitCount(long b) => new PinBitCount((ushort)b);
 
 
         public static explicit operator PinBitCount(ushort number) => new PinBitCount(number);
