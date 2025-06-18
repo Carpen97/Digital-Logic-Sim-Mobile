@@ -4,7 +4,7 @@
   "DLSVersion_EarliestCompatible": "2.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.1",
   "CreationTime": "2025-03-15T00:23:30.404+07:00",
-  "LastSaveTime": "2025-06-18T16:46:43.402+07:00",
+  "LastSaveTime": "2025-06-18T16:49:42.362+07:00",
   "Prefs_MainPinNamesDisplayMode": 2,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 1,
@@ -13,9 +13,9 @@
   "Prefs_SimPaused": false,
   "Prefs_SimTargetStepsPerSecond": 150,
   "Prefs_SimStepsPerClockTick": 6,
-  "StepsRanSinceCreated": 77972165,
+  "StepsRanSinceCreated": 77973032,
   "TimeSpentSinceCreated": {
-    "StartFrom": "02:29:03.8432934"
+    "StartFrom": "02:29:09.3105859"
   },
   "AllCustomChipNames":[
     "AND",
@@ -124,7 +124,7 @@
       "Name":"IN/OUT"
     },
     {
-      "Chips":["32-16BIT","32-8BIT","32-4BIT","32-1BIT","16-32BIT","16-8BIT","16-4BIT","16-1BIT","8-32BIT","8-16BIT","4-32BIT","4-16BIT","1-32BIT","1-16BIT"],
+      "Chips":["32-16BIT","32-8BIT","32-4BIT","32-1BIT","16-32BIT","16-8BIT","16-4BIT","16-1BIT","8-32BIT","8-16BIT","8-4BIT","8-1BIT","4-32BIT","4-16BIT","4-8BIT","4-1BIT","1-32BIT","1-16BIT","1-8BIT","1-4BIT"],
       "IsToggledOpen":true,
       "Name":"MERGE/SPLIT"
     },
@@ -154,7 +154,7 @@
       "Name":"TEST"
     },
     {
-      "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest","#AA","StatsTest","StatsTest1","StatsTest2","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8","DETECTOR","RTC","ConstTest","4-8BIT","8-4BIT","1-8BIT","8-1BIT","1-4BIT","4-1BIT"],
+      "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest","#AA","StatsTest","StatsTest1","StatsTest2","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8","DETECTOR","RTC","ConstTest"],
       "IsToggledOpen":true,
       "Name":"OTHER"
     }
