@@ -447,16 +447,19 @@ namespace DLS.Simulation
 				}
 				case ChipType.Rom_256x16:
 				{
+					const uint mask = 0x00ff;
 					uint address = chip.InputPins[0].State.GetShortValues();
 					uint data = chip.InternalState[address];
 
-					chip.OutputPins[0].State.SetShort(data); 
-
+					chip.OutputPins[0].State.SetShort((data>>16) & mask);
+					chip.OutputPins[1].State.SetShort(data & mask);
+			
                     break;
 				}
 
 				case ChipType.EEPROM_256x16:
 				{
+                    const uint mask = 0x00ff;
 					uint address = chip.InputPins[0].State.GetShortValues();
                     bool isWriting = chip.InputPins[2].State.SmallHigh();
                     bool clockHigh = chip.InputPins[3].State.SmallHigh();
@@ -472,7 +475,8 @@ namespace DLS.Simulation
 					}
           
             		uint data = chip.InternalState[address];
-            		chip.OutputPins[0].State.SetShort(data);
+            		chip.OutputPins[0].State.SetShort((data >> 16) & mask);
+					chip.OutputPins[1]. State.SetShort(data & mask);
             		break;
                 }
 
