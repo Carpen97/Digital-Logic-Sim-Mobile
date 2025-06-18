@@ -32,7 +32,7 @@ namespace DLS.SaveSystem
 		public static void ApplyVersionChangesToProject(ref ProjectDescription projectDescription)
 		{
 			Main.Version defaultModdedVersion = new(1, 0, 0);
-			Main.Version moddedVersion_1_1_0 = new(1, 1, 1); // Custom IN and OUTS version
+			Main.Version moddedVersion_1_1_0 = new(1, 1, 0); // Custom IN and OUTS version
 			Main.Version moddedVersion_1_1_1 = new(1, 1, 1); // New 16 and 32 bit pins
 
 
