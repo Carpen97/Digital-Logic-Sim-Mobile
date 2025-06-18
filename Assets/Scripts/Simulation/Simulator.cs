@@ -461,15 +461,15 @@ namespace DLS.Simulation
 				{
                     const uint mask = 0x00ff;
 					uint address = chip.InputPins[0].State.GetShortValues();
-                    bool isWriting = chip.InputPins[2].State.SmallHigh();
-                    bool clockHigh = chip.InputPins[3].State.SmallHigh();
+                    bool isWriting = chip.InputPins[3].State.SmallHigh();
+                    bool clockHigh = chip.InputPins[4].State.SmallHigh();
                     bool isRisingEdge = clockHigh && chip.InternalState[^1] == 0;
                     chip.InternalState[^1] = clockHigh ? 1u : 0;
 
 
 					if (isWriting && isRisingEdge)
 					{
-						uint writeData = (ushort)chip.InputPins[1].State.a;//(ushort)(((chip.InputPins[1].State.GetShortValues() << 8) & (ByteMask<<8)) | (chip.InputPins[2].State.GetShortValues() & ByteMask))
+							uint writeData = (ushort)(((chip.InputPins[1].State.GetShortValues() & mask) << 8) | (chip.InputPins[2].State.GetShortValues() & mask));
 						chip.InternalState[address] = writeData;
 						Project.ActiveProject.NotifyRomContentsEditedRuntime(chip);
 					}
