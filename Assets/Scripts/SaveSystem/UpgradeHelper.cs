@@ -8,9 +8,7 @@ namespace DLS.SaveSystem
 {
 	public static class UpgradeHelper
 	{
-		public static readonly string[] OldMergeSplits = {
-			"1-4BIT","1-8BIT","4-8BIT","8-4BIT","8-1BIT","4-1BIT",
-		};
+
 		public static void ApplyVersionChanges(ChipDescription[] customChips, ChipDescription[] builtinChips)
 		{
 			Main.Version defaultVersion = new(2, 0, 0);
@@ -49,7 +47,6 @@ namespace DLS.SaveSystem
 			if (isVersionEarlierThan_1_1_0 | isPinBitCountInvalid)
 			{
 				projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
-				RemoveOldMergeSplits(ref projectDescription.ChipCollections);
 				projectDescription.pinBitCounts = Project.PinBitCounts;
 				projectDescription.SplitMergePairs = Project.SplitMergePairs;
 			}
@@ -57,26 +54,16 @@ namespace DLS.SaveSystem
 			if (isVersionEarlierThan_1_1_0 | isSplitMergeInvalid)
 			{
 				projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
-				RemoveOldMergeSplits(ref projectDescription.ChipCollections);
 				projectDescription.SplitMergePairs = Project.SplitMergePairs;
 			}
 			
 			if (isVersionEarlierThan_1_1_1)
 			{
 				projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
-				RemoveOldMergeSplits(ref projectDescription.ChipCollections);
 				projectDescription.pinBitCounts.Union(Project.PinBitCounts);
 				projectDescription.SplitMergePairs.Union(Project.SplitMergePairs);
 			}
         }
-
-		static void RemoveOldMergeSplits(ref List<ChipCollection> chips)
-		{
-			foreach (ChipCollection chip in chips)
-			{
-				chip.Chips.RemoveAll(e => OldMergeSplits.Contains(e));
-			}
-		}
 
         static void UpdateChipPre_2_1_5(ChipDescription chipDesc)
 		{
