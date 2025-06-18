@@ -116,7 +116,7 @@ namespace DLS.Game
                 string letter = " " + (char)('A' + smallInBig -1 - j);
                 splitOUT[j] = CreatePinDescription("OUT" + letter, j + 1, counts.b);
             }
-            string splitName = counts.a.ToString() + "-" + counts.b.ToString();
+            string splitName = counts.a.ToString() + "-" + counts.b.ToString() + "BIT";
 
             Vector2 minChipSize = SubChipInstance.CalculateMinChipSize(splitIN, splitOUT, splitName);
             float width = Mathf.Max(GridSize * 9, minChipSize.x);
@@ -138,7 +138,7 @@ namespace DLS.Game
                 string letter = " " + (char)('A' + smallInBig -1 - j);
                 mergeIN[j] = CreatePinDescription("IN" + letter, j, counts.b);
             }
-            string mergeName = counts.b.ToString() + "-" + counts.a.ToString();
+            string mergeName = counts.b.ToString() + "-" + counts.a.ToString() + "BIT";
 
             Vector2 minChipSize = SubChipInstance.CalculateMinChipSize(mergeIN, mergeOUT, mergeName);
             float width = Mathf.Max(GridSize * 9, minChipSize.x);
