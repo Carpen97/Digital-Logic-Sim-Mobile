@@ -123,6 +123,11 @@ namespace DLS.Graphics
 
                 MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
             }
+            
+            if(KeyboardShortcuts.CancelShortcutTriggered)
+            {
+                UIDrawer.SetActiveMenu(UIDrawer.MenuType.None) ;
+            }
 
             void DrawSpecialMergeSplitMenu()
             {
