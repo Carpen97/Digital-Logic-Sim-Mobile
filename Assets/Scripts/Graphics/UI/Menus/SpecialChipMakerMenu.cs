@@ -65,8 +65,6 @@ namespace DLS.Graphics
             InputFieldTheme inputTheme = ActiveUITheme.ChipNameInputField;
             Draw.ID panelID = UI.ReservePanel();
 
-
-            const int inputTextPad = 1;
             const float headerSpacing = 1.5f;
             Vector2 topLeft = UI.Centre + new Vector2(-menuWidth / 2, verticalOffset);
             Vector2 labelPosCurr = topLeft;
@@ -215,14 +213,6 @@ namespace DLS.Graphics
                 UI.DrawText(text, theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, headerCol);
                 AddHeaderSpacing();
             }
-
-            void DrawLineOfText(string text)
-            {
-                AddTextSpacing();
-                UI.DrawText(text, theme.FontRegular, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, labelCol);
-                AddTextSpacing();
-            }
-
 
             void AddSpacing()
             {
