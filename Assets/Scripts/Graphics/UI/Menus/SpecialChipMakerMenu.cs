@@ -277,7 +277,7 @@ namespace DLS.Graphics
 
             foreach(var pair in MergeSplitsAwaitingSave)
             {
-                MergeSplitsAwaitingSave.Add(pair);
+                MergeSplitsMade.Add(pair);
             }
         }
         
