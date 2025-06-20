@@ -415,10 +415,7 @@ namespace DLS.Simulation
 				case ChipType.dev_Ram_8Bit:
 				{
 					uint addressPin = chip.InputPins[0].State.GetShortValues();
-					uint dataPin = chip.InputPins[1].State.GetShortValues();
 
-                    bool writeEnablePin = chip.InputPins[2].State.SmallHigh();
-                    bool resetPin = chip.InputPins[3].State.SmallHigh();
 					// Detect clock rising edge
 					bool clockHigh = chip.InputPins[4].State.SmallHigh();
 					bool isRisingEdge = clockHigh && chip.InternalState[^1] == 0;
@@ -427,16 +424,16 @@ namespace DLS.Simulation
 					// Write/Reset on rising edge
 					if (isRisingEdge)
 					{
-						if (resetPin)
+						if (chip.InputPins[3].State.SmallHigh())
 						{
 							for (int i = 0; i < 256; i++)
 							{
 								chip.InternalState[i] = 0;
 							}
 						}
-						else if (writeEnablePin)
+						else if (chip.InputPins[2].State.SmallHigh())
 						{
-							chip.InternalState[addressPin] = dataPin;
+							chip.InternalState[addressPin] = chip.InputPins[1].State.GetShortValues();
 						}
 					}
 
