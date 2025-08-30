@@ -259,6 +259,7 @@ namespace DLS.Graphics
 						int buttonIndex_moveStep = DrawHorizontalButtonGroup(buttonNames_moveSingleStep, interactableStates_move, ref topLeft, panelContentBounds.Width);
 						int buttonIndex_moveJump = DrawHorizontalButtonGroup(buttonNames_jump, interactableStates_move, ref topLeft, panelContentBounds.Width);
 						ChipActionButtons(selectedChipName, ref topLeft, panelContentBounds.Width);
+						bool stats = DrawHorizontalButtonGroup(new[]{"STATS"}, null, ref topLeft, panelContentBounds.Width) == 0;
 
 						bool moveSingleStepDown = buttonIndex_moveStep == 1;
 						bool moveJumpDown = buttonIndex_moveJump == 1;
@@ -269,6 +270,11 @@ namespace DLS.Graphics
 						if (toggleStarred)
 						{
 							project.SetStarred(selectedChipName, !isStarred, false);
+						}
+
+						if (stats) {
+							ChipStatsMenu.SetChip(selectedChipName);
+							UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipStats);
 						}
 
 						if (moveSingleStepDown || moveJumpDown) // Move chip down
@@ -307,6 +313,7 @@ namespace DLS.Graphics
 					{
 						// ---- Draw ----
 						ChipCollection collection = collections[selectedCollectionIndex];
+						string selectedCollectionName = collection.Name;
 						ButtonTheme colSource = GetButtonTheme(true, true);
 						DrawHeader(collection.Name, colSource.buttonCols.normal, colSource.textCols.normal, ref topLeft, panelContentBounds.Width);
 
@@ -322,6 +329,12 @@ namespace DLS.Graphics
 						interactableStates_renameDelete[1] = canRenameOrDelete;
 						int buttonIndexEditCollection = DrawHorizontalButtonGroup(buttonNames_collectionRenameOrDelete, interactableStates_renameDelete, ref topLeft, panelContentBounds.Width);
 
+						bool stats = DrawHorizontalButtonGroup(new[]{"STATS"}, null, ref topLeft, panelContentBounds.Width) == 0;
+
+						if (stats) {	
+							CollectionStatsMenu.SetCollection(selectedCollectionName);
+							UIDrawer.SetActiveMenu(UIDrawer.MenuType.CollectionStats);
+						}
 						// ---- Handle button inputs ----
 						if (toggleStarred)
 						{
@@ -459,10 +472,11 @@ namespace DLS.Graphics
 					topLeft = UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
 					MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
 				}
-			}
 
-			// Delete confirmation
-			if (isConfirmingChipDeletion || isConfirmingCollectionDeletion)
+            }
+
+            // Delete confirmation
+            if (isConfirmingChipDeletion || isConfirmingCollectionDeletion)
 			{
 				using (UI.BeginBoundsScope(true))
 				{
@@ -481,6 +495,7 @@ namespace DLS.Graphics
 						{
 							if (isConfirmingChipDeletion)
 							{
+
 								if (selectedCollectionIndex != -1) // deleting from collection
 								{
 									ChipCollection collection = collections[selectedCollectionIndex];
@@ -526,9 +541,10 @@ namespace DLS.Graphics
 			static void ChipActionButtons(string selectedChipName, ref Vector2 topLeft, float width)
 			{
 				bool isBuiltin = project.chipLibrary.IsBuiltinChip(selectedChipName);
+				bool isSpecialCustom = project.description.isPlayerAddedSpecialChip(selectedChipName); 
 				interactable_chipActionButtons[0] = project.ViewedChip.CanAddSubchip(selectedChipName);
 				interactable_chipActionButtons[1] = !isBuiltin;
-				interactable_chipActionButtons[2] = !isBuiltin;
+				interactable_chipActionButtons[2] = !(isBuiltin && !isSpecialCustom);
 				int chipActionIndex = DrawHorizontalButtonGroup(buttonNames_chipAction, interactable_chipActionButtons, ref topLeft, width);
 
 				if (chipActionIndex == 0) // use
@@ -745,5 +761,6 @@ namespace DLS.Graphics
 				}
 			}
 		}
-	}
+
+    }
 }

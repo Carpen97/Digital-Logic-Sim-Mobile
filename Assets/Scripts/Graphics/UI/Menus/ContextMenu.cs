@@ -49,6 +49,8 @@ namespace DLS.Graphics
 
 		static readonly MenuEntry[] entries_builtinLED = entries_builtinSubchip.Concat(new[] { dividerMenuEntry }).Concat(pinColEntries).ToArray();
 
+		static readonly MenuEntry[] entries_builtinButton = entries_builtinLED;
+
 		static readonly MenuEntry[] entries_builtinBus =
 		{
 			new(Format("FLIP"), FlipBus, CanFlipBus),
@@ -77,8 +79,16 @@ namespace DLS.Graphics
 			deleteEntry
 		};
 
+        static readonly MenuEntry[] entries_builtinConstantChip =
+{
+            new(Format("EDIT"), OpenConstantEditMenu, CanEditCurrentChip),
+            labelChipEntry,
+            deleteEntry
+        };
 
-		static readonly MenuEntry[] entries_subChipOutput = pinColEntries;
+
+
+        static readonly MenuEntry[] entries_subChipOutput = pinColEntries;
 
 		static readonly MenuEntry[] entries_inputDevPin = new[]
 		{
@@ -193,6 +203,9 @@ namespace DLS.Graphics
 							else if (subChip.ChipType is ChipType.Pulse) activeContextMenuEntries = entries_builtinPulseChip;
 							else if (ChipTypeHelper.IsBusType(subChip.ChipType)) activeContextMenuEntries = entries_builtinBus;
 							else if (subChip.ChipType == ChipType.DisplayLED) activeContextMenuEntries = entries_builtinLED;
+							else if (subChip.ChipType == ChipType.Button) activeContextMenuEntries = entries_builtinButton;
+							else if (subChip.ChipType == ChipType.Constant_8Bit) activeContextMenuEntries = entries_builtinConstantChip;
+
 							else activeContextMenuEntries = entries_builtinSubchip;
 						}
 						#if !UNITY_ANDROID || UNITY_IOS
@@ -356,7 +369,7 @@ namespace DLS.Graphics
 		{
 			if (!Project.ActiveProject.CanEditViewedChip || UIDrawer.ActiveMenu == UIDrawer.MenuType.ChipCustomization) return false;
 			if (interactionContext is PinInstance pin) return pin.IsSourcePin;
-			if (interactionContext is SubChipInstance subchip) return subchip.ChipType == ChipType.DisplayLED;
+			if (interactionContext is SubChipInstance subchip) return subchip.ChipType == ChipType.DisplayLED || subchip.ChipType == ChipType.Button;
 
 			return false;
 		}
@@ -372,12 +385,20 @@ namespace DLS.Graphics
 			{
 				pin.Colour = col;
 			}
-			else if (interactionContext is SubChipInstance subchip)
+
+			if(!(interactionContext is SubChipInstance subchip)) { return; }
+
+			else if (subchip.ChipType == ChipType.DisplayLED)
 			{
 				Project.ActiveProject.NotifyLEDColourChanged(subchip, (uint)col);
 			}
-			
-		}
+            else if (subchip.ChipType == ChipType.Button)
+            {
+                Project.ActiveProject.NotifyLEDColourChanged(subchip, (uint)col);
+				subchip.OutputPins[0].Colour = col;
+            }
+
+        }
 
 		static void OpenChipLabelPopup()
 		{
@@ -413,6 +434,8 @@ namespace DLS.Graphics
 		static void OpenRomEditMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.RomEdit);
 
 		static void OpenPulseEditMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.PulseEdit);
+
+		static void OpenConstantEditMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ConstantEdit);
 
 		static bool CanEditCurrentChip() => Project.ActiveProject.CanEditViewedChip;
 

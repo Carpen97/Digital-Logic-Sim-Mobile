@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using DLS.Description;
 using DLS.Game;
+using UnityEngine;
 
 namespace DLS.SaveSystem
 {
@@ -18,6 +19,7 @@ namespace DLS.SaveSystem
 			projectDescription.LastSaveTime = DateTime.Now;
 			projectDescription.DLSVersion_LastSaved = Main.DLSVersion.ToString();
 			projectDescription.DLSVersion_EarliestCompatible = Main.DLSVersion_EarliestCompatible.ToString();
+			projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
 
 			string data = Serializer.SerializeProjectDescription(projectDescription);
 			WriteToFile(data, SavePaths.GetProjectDescriptionPath(projectDescription.ProjectName));
@@ -59,6 +61,7 @@ namespace DLS.SaveSystem
 		// Delete chip save file, with option to keep backup in a DeletedChips folder.
 		public static void DeleteChip(string chipName, string projectName, bool backupInDeletedFolder = true)
 		{
+
 			string filePath = GetChipFilePath(chipName, projectName);
 			if (backupInDeletedFolder)
 			{
@@ -72,6 +75,7 @@ namespace DLS.SaveSystem
 				File.Delete(filePath);
 			}
 		}
+
 
 		public static void DeleteProject(string projectName, bool backupInDeletedFolder = true)
 		{

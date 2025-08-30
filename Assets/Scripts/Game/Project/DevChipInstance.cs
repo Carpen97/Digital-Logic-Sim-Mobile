@@ -24,6 +24,7 @@ namespace DLS.Game
 
 		public SimChip SimChip;
 		bool hasSimChip;
+		public bool HasCustomLayout;
 
 		public string ChipName => LastSavedDescription == null ? string.Empty : LastSavedDescription.Name;
 
@@ -67,6 +68,7 @@ namespace DLS.Game
 			description.InputPins ??= Array.Empty<PinDescription>();
 			description.OutputPins ??= Array.Empty<PinDescription>();
 			description.Wires ??= Array.Empty<WireDescription>();
+			instance.HasCustomLayout = description.HasCustomLayout;
 
 			bool anyElementFailedToLoad = false;
 
@@ -212,6 +214,8 @@ namespace DLS.Game
 			LastSavedDescription = savedDescription;
 
 			RegenerateParentChipNamesHash();
+
+			SimChip.combinationalChipCaches.Remove(savedDescription.Name);
 		}
 
 		public void AddNewSubChip(SubChipInstance subChip, bool isLoading)
@@ -228,7 +232,7 @@ namespace DLS.Game
 			AddElement(pin);
 			if (!isLoadingFromFile)
 			{
-				Simulator.AddPin(SimChip, pin.ID, pin.IsInputPin);
+				Simulator.AddPin(SimChip, pin.ID, pin.IsInputPin, pin.BitCount);
 			}
 		}
 

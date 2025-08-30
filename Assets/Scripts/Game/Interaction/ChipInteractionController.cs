@@ -60,6 +60,7 @@ namespace DLS.Game
 		public bool CanInteractWithPinHandle => CanInteractWithPinStateDisplay;
 
 		bool isDraggingWirePoint;
+		public bool CanInteractWithButton => CanInteract;
 
 		public ChipInteractionController(Project project)
 		{
@@ -245,7 +246,8 @@ namespace DLS.Game
 			{
 				CancelEverything();
 			}
-		}
+
+        }
 
 		void HandleTouchInput()
 		{
@@ -1172,7 +1174,7 @@ namespace DLS.Game
 			}
 
 			ChipType chipType;
-			if (elementToPlace is DevPinInstance devPin) chipType = ChipTypeHelper.GetPinType(devPin.IsInputPin, devPin.BitCount);
+			if (elementToPlace is DevPinInstance devPinInstance) chipType = devPinInstance.IsInputPin ? ChipType.In_Pin : ChipType.Out_Pin;
 			else chipType = ((SubChipInstance)elementToPlace).ChipType;
 
 			// Place bus terminus to right of bus origin
@@ -1216,8 +1218,7 @@ namespace DLS.Game
 			{
 				elementToPlace.MoveStartPosition -= Vector2.right * busPairSpacing / 2;
 
-				ChipType terminusType = ChipTypeHelper.GetCorrespondingBusTerminusType(chipType);
-				ChipDescription terminusDescription = Project.ActiveProject.chipLibrary.GetChipDescription(ChipTypeHelper.GetName(terminusType));
+				ChipDescription terminusDescription = Project.ActiveProject.chipLibrary.GetTerminusDescription(((SubChipInstance)elementToPlace).OutputPins[0].bitCount);
 				SubChipInstance terminus = (SubChipInstance)StartPlacing(terminusDescription, position, false);
 
 				SubChipInstance busOrigin = (SubChipInstance)elementToPlace;
@@ -1232,13 +1233,14 @@ namespace DLS.Game
 			int instanceID = IDGenerator.GenerateNewElementID(ActiveDevChip);
 
 			// Input/output dev pins are represented as chips for convenience
-			(bool isInput, bool isOutput, PinBitCount numBits) ioPinInfo = ChipTypeHelper.IsInputOrOutputPin(chipDescription.ChipType);
+			(bool isInput, bool isOutput, PinBitCount numBits) ioPinInfo = ChipTypeHelper.IsInputOrOutputPin(chipDescription);
 
 			if (ioPinInfo.isInput || ioPinInfo.isOutput) // Dev pin
 			{
-				PinDescription pinDesc = ioPinInfo.isInput ? chipDescription.InputPins[0] : chipDescription.OutputPins[0];
+				PinDescription pinDesc = ioPinInfo.isInput ? chipDescription.OutputPins[0] : chipDescription.InputPins[0];
 				pinDesc.ID = instanceID;
-				elementToPlace = new DevPinInstance(pinDesc, ioPinInfo.isInput);
+                elementToPlace = new DevPinInstance(pinDesc, ioPinInfo.isInput);
+				
 			}
 
 			else // SubChip

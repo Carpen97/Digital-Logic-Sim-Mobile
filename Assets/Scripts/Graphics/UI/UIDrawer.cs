@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using DLS.Game;
+using DLS.Simulation;
 using Seb.Vis.UI;
 
 namespace DLS.Graphics
@@ -17,18 +19,23 @@ namespace DLS.Graphics
 			MainMenu,
 			RebindKeyChip,
 			RomEdit,
+			ChipStats,
+			CollectionStats,
+			ProjectStats,
 			PulseEdit,
+			ConstantEdit,
 			UnsavedChanges,
-			Overwrite,
 			Search,
-			ChipLabelPopup
+			ChipLabelPopup,
+			SpecialChipMaker,
+			Overwrite
 		}
 
 		static MenuType activeMenuOld;
 
 		public static MenuType ActiveMenu { get; private set; }
 
-		public static void Draw()
+        public static void Draw()
 		{
 			NotifyIfActiveMenuChanged();
 
@@ -58,6 +65,7 @@ namespace DLS.Graphics
 
 			if (menuToDraw != MenuType.ChipCustomization) BottomBarUI.DrawUI(project);
 
+			bool aMenuIsOpen = true;
 			if (menuToDraw == MenuType.ChipSave) ChipSaveMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLibrary) ChipLibraryMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ChipCustomization) ChipCustomizationMenu.DrawMenu();
@@ -65,17 +73,27 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.PinRename) PinEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.RebindKeyChip) RebindKeyChipMenu.DrawMenu();
 			else if (menuToDraw == MenuType.RomEdit) RomEditMenu.DrawMenu();
+			else if (menuToDraw == MenuType.ChipStats) ChipStatsMenu.DrawMenu(); 
+			else if (menuToDraw == MenuType.CollectionStats) CollectionStatsMenu.DrawMenu();
+			else if (menuToDraw == MenuType.ProjectStats) ProjectStatsMenu.DrawMenu();
 			else if (menuToDraw == MenuType.UnsavedChanges) UnsavedChangesPopup.DrawMenu();
 			else if (menuToDraw == MenuType.Overwrite) ConfirmOverwritePopup.DrawMenu();
 			else if (menuToDraw == MenuType.Search) SearchPopup.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLabelPopup) ChipLabelMenu.DrawMenu();
 			else if (menuToDraw == MenuType.PulseEdit) PulseEditMenu.DrawMenu();
+			else if (menuToDraw == MenuType.ConstantEdit)  ConstantEditMenu.DrawMenu();
+			else if (menuToDraw == MenuType.SpecialChipMaker) SpecialChipMakerMenu.DrawMenu();
 			else
 			{
 				bool showSimPausedBanner = project.simPaused;
 				if (showSimPausedBanner) SimPausedUI.DrawPausedBanner();
 				if (project.chipViewStack.Count > 1) ViewedChipsBar.DrawViewedChipsBanner(project, showSimPausedBanner);
+				if (SimChip.isCreatingACache) CreateCacheUI.DrawCreatingCacheInfo();
+				aMenuIsOpen = false;
 			}
+			// Cancel current caching process when a menu gets opened
+			if(aMenuIsOpen)
+				SimChip.AbortCache();
 
 			ContextMenu.Update();
 		}
@@ -100,6 +118,9 @@ namespace DLS.Graphics
 				else if (ActiveMenu == MenuType.Search) SearchPopup.OnMenuOpened();
 				else if (ActiveMenu == MenuType.ChipLabelPopup) ChipLabelMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.PulseEdit) PulseEditMenu.OnMenuOpened();
+                else if (ActiveMenu == MenuType.ConstantEdit) ConstantEditMenu.OnMenuOpened();
+				else if (ActiveMenu == MenuType.SpecialChipMaker) SpecialChipMakerMenu.OnMenuOpened();
+
 
 				if (InInputBlockingMenu() && Project.ActiveProject != null && Project.ActiveProject.controller != null)
 				{

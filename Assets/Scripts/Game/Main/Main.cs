@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using DLS.Description;
@@ -11,9 +12,11 @@ namespace DLS.Game
 {
 	public static class Main
 	{
-		public static readonly Version DLSVersion = new(2, 1, 6, 7);
-		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0, 0);
-		public const string LastUpdatedString = "18 May 2025";
+		public static readonly Version DLSVersion = new(2, 1, 6);
+		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
+		public static readonly Version DLSVersion_ModdedID = new(1, 1, 2);
+		public const string LastUpdatedString = "5 May 2025";
+		public const string LastUpdatedModdedString = "10 August 2025";
 		public static AppSettings ActiveAppSettings;
 
 		public static Project ActiveProject { get; private set; }
@@ -81,7 +84,7 @@ namespace DLS.Game
 
 		public static void CreateOrLoadProject(string projectName, string startupChipName = "")
 		{
-			if (Loader.ProjectExists(projectName)) ActiveProject = LoadProject(projectName);
+			if (Loader.ProjectExists(projectName)) { ActiveProject = LoadProject(projectName); Saver.SaveProjectDescription(ActiveProject.description); }
 			else ActiveProject = CreateProject(projectName);
 
 			ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(startupChipName);
@@ -96,8 +99,10 @@ namespace DLS.Game
 			{
 				ProjectName = projectName,
 				DLSVersion_LastSaved = DLSVersion.ToString(),
+				DLSVersion_LastSavedModdedVersion = DLSVersion_ModdedID.ToString(),
 				DLSVersion_EarliestCompatible = DLSVersion_EarliestCompatible.ToString(),
 				CreationTime = DateTime.Now,
+                TimeSpentSinceCreated = new(),
 				Prefs_ChipPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
 				Prefs_MainPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
 				Prefs_SimTargetStepsPerSecond = 1000,
@@ -105,7 +110,9 @@ namespace DLS.Game
 				Prefs_SimPaused = false,
 				AllCustomChipNames = Array.Empty<string>(),
 				StarredList = BuiltinCollectionCreator.GetDefaultStarredList().ToList(),
-				ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections())
+				ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections()),
+				pinBitCounts = Project.PinBitCounts,
+				SplitMergePairs = Project.SplitMergePairs
 			};
 
 			Saver.SaveProjectDescription(initialDescription);
@@ -119,7 +126,7 @@ namespace DLS.Game
 			{
 				if (string.IsNullOrEmpty(path))
 				{
-					Debug.LogWarning("[ImportProject] No file selected.");
+					UnityEngine.Debug.LogWarning("[ImportProject] No file selected.");
 					return;
 				}
 
@@ -147,7 +154,7 @@ namespace DLS.Game
 			}
 			catch (Exception e)
 			{
-				Debug.LogError("Error opening folder: " + e.Message);
+				UnityEngine.Debug.LogError("Error opening folder: " + e.Message);
 			}
 		}
 

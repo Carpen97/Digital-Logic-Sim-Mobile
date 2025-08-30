@@ -20,9 +20,60 @@ namespace DLS.SaveSystem
 			string name = hasSavedDesc ? descOld.Name : string.Empty;
 			DisplayDescription[] displays = hasSavedDesc ? descOld.Displays : null;
 
-			// Create pin and subchip descriptions
-			PinDescription[] inputPins = OrderPins(chip.GetInputPins()).Select(CreatePinDescription).ToArray();
-			PinDescription[] outputPins = OrderPins(chip.GetOutputPins()).Select(CreatePinDescription).ToArray();
+
+            // Create pin and subchip descriptions
+
+            PinDescription[] inputPins = new PinDescription[chip.GetInputPins().Length];
+            PinDescription[] outputPins = new PinDescription[chip.GetOutputPins().Count()];
+
+			// Restores custom layout customization position of pins. Useful on modification detection when exiting a chip.
+            if (hasSavedDesc && descOld.HasCustomLayout)
+			{
+                if (chip.GetInputPins().Length != descOld.InputPins.Length || chip.GetOutputPins().Count() != descOld.OutputPins.Length)
+				{
+                    inputPins = OrderPins(chip.GetInputPins()).Select(CreatePinDescription).ToArray();
+                    outputPins = OrderPins(chip.GetOutputPins()).Select(CreatePinDescription).ToArray();
+                }
+
+				else
+				{
+					DevPinInstance[] inpins = OrderPins(chip.GetInputPins()).ToArray();
+                    DevPinInstance[] outpins = OrderPins(chip.GetOutputPins()).ToArray();
+
+					int[] inputOldIDs = descOld.InputPins.Select(input => input.ID).ToArray();
+                    int[] outputOldIDs = descOld.OutputPins.Select(output => output.ID).ToArray();
+
+                    for (int i = 0; i < inpins.Length; i++)
+					{
+						if (inputOldIDs.Contains(inpins[i].ID))
+						{
+                            inputPins[i] = CreatePinDescriptionAndConserveCustomInfo(inpins[i], descOld.InputPins.Where(p => p.ID.Equals(inpins[i].ID)).First());
+						}
+						else
+						{
+                            inputPins[i] = CreatePinDescription(inpins[i]);
+						}
+					}
+
+                    for (int i = 0; i < outpins.Length; i++)
+                    {
+                        if (outputOldIDs.Contains(outpins[i].ID))
+                        {
+                            outputPins[i] = CreatePinDescriptionAndConserveCustomInfo(outpins[i], descOld.OutputPins.Where(p => p.ID.Equals(outpins[i].ID)).First());
+                        }
+                        else
+                        {
+                            outputPins[i] = CreatePinDescription(outpins[i]);
+                        }
+                    }
+                }
+
+            }
+			else
+			{
+				inputPins = OrderPins(chip.GetInputPins()).Select(CreatePinDescription).ToArray();
+				outputPins = OrderPins(chip.GetOutputPins()).Select(CreatePinDescription).ToArray();
+			}
 			SubChipDescription[] subchips = chip.GetSubchips().Select(CreateSubChipDescription).ToArray();
 			Vector2 minChipsSize = SubChipInstance.CalculateMinChipSize(inputPins, outputPins, name);
 			size = Vector2.Max(minChipsSize, size);
@@ -37,13 +88,15 @@ namespace DLS.SaveSystem
 				NameLocation = hasSavedDesc ? descOld.NameLocation : NameDisplayLocation.Centre,
 				Size = size,
 				Colour = col,
+				ShouldBeCached = hasSavedDesc ? descOld.ShouldBeCached : false,
 
 				SubChips = subchips,
 				InputPins = inputPins,
 				OutputPins = outputPins,
 				Wires = chip.Wires.Select(CreateWireDescription).ToArray(),
 				Displays = displays,
-				ChipType = ChipType.Custom
+				ChipType = ChipType.Custom,
+				HasCustomLayout = hasSavedDesc ? descOld.HasCustomLayout : false
 			};
 		}
 
@@ -85,9 +138,13 @@ namespace DLS.SaveSystem
 			return type switch
 			{
 				ChipType.Rom_256x16 => new uint[256], // ROM contents
+				ChipType.EEPROM_256x16 => new uint[257], // EEPROM contents + Rising-Edge detection
 				ChipType.Key => new uint[] { 'K' }, // Key binding
 				ChipType.Pulse => new uint[] { 50, 0, 0 }, // Pulse width, ticks remaining, input state old
 				ChipType.DisplayLED => new uint[] { 0 }, // LED colour
+				ChipType.Button => new uint[] { 0 }, // Button colour
+				ChipType.Toggle => new uint[] { 0 }, // Toggle State 
+				ChipType.Constant_8Bit => new uint[] { 0 }, // Content
 				_ => ChipTypeHelper.IsBusType(type) ? new uint[2] : null
 			};
 		}
@@ -159,6 +216,18 @@ namespace DLS.SaveSystem
 				// Don't save colour info for output pin since it changes based on received input, so would just trigger unecessary 'unsaved changes' warnings
 				devPin.IsInputPin ? devPin.Pin.Colour : default,
 				devPin.pinValueDisplayMode
+			);
+
+		public static PinDescription CreatePinDescriptionAndConserveCustomInfo(DevPinInstance devPin, PinDescription pinDescription) =>
+			new(
+				devPin.Pin.Name,
+				devPin.ID,
+				devPin.Position,
+				devPin.Pin.bitCount,
+				devPin.IsInputPin ? devPin.Pin.Colour : default,
+				devPin.pinValueDisplayMode,
+				pinDescription.LocalOffset,
+				pinDescription.face
 			);
 
 		static Color RandomInitialChipColour()
