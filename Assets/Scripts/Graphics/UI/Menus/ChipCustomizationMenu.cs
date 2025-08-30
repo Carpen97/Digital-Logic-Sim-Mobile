@@ -12,7 +12,7 @@ namespace DLS.Graphics
 {
 	public static class ChipCustomizationMenu
 	{
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string[] nameDisplayOptions =
 		{
 			"Middle",
@@ -70,7 +70,7 @@ namespace DLS.Graphics
 
 
 			// ---- Chip colour UI ----
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS 
 			Color newCol = UI.DrawColourPicker(ID_ColourPicker, NextPos(), pw, Anchor.TopLeft);
 			#else
 			Color newCol = UI.DrawColourPicker(ID_ColourPicker, NextPos(), pw, Anchor.TopLeft);

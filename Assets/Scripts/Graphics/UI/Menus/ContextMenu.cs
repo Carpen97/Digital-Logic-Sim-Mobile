@@ -153,7 +153,7 @@ namespace DLS.Graphics
 		static void HandleOpenMenuInput()
 		{
 			// Open menu input
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			if (MobileUIController.Instance.isWrenchToolActive && TouchInputHelper.TouchTapDown() &&!TouchInputHelper.Instance.isPressingUI)
 			#else
 			if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && !KeyboardShortcuts.CameraActionKeyHeld && !InteractionState.MouseIsOverUI)
@@ -195,7 +195,7 @@ namespace DLS.Graphics
 							else if (subChip.ChipType == ChipType.DisplayLED) activeContextMenuEntries = entries_builtinLED;
 							else activeContextMenuEntries = entries_builtinSubchip;
 						}
-						#if !UNITY_ANDROID
+						#if !UNITY_ANDROID || UNITY_IOS
 						Project.ActiveProject.controller.Select(interactionContext as IMoveable, false);
 						#endif
 					}
@@ -287,7 +287,7 @@ namespace DLS.Graphics
 			menuWidth = Mathf.Max(menuWidth, menuWidthHeader);
 
 			Draw.ID panelID = UI.ReservePanel();
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			Vector2 buttonSize = new(menuWidth, 2*2);
 			#else
 			Vector2 buttonSize = new(menuWidth, 2);

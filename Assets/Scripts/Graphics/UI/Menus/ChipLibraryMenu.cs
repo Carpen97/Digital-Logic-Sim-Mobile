@@ -19,7 +19,7 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_CollectionsScrollbar = new("ChipLibrary_CollectionsScrollbar");
 		static readonly UIHandle ID_StarredScrollbar = new("ChipLibrary_StarredScrollbar");
 		static readonly UIHandle ID_NameInput = new("ChipLibrary_NameField");
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string[] buttonNames_moveSingleStep = { "MOVE UP", "DOWN" };
 		static readonly string[] buttonNames_jump = { "JUMP UP", "DOWN" };
 		#else
@@ -32,7 +32,7 @@ namespace DLS.Graphics
 		static readonly string[][] buttonName_starUnstar =
 		{
 			new[] { "ADD TO STARRED" },
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			new[] { "UNSTAR" }
 			#else
 			new[] { "REMOVE FROM STARRED" }

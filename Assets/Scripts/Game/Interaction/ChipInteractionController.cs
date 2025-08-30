@@ -39,7 +39,7 @@ namespace DLS.Game
         public DevChipInstance ActiveDevChip => project.ViewedChip;
 		public bool IsMovingSelection { get; private set; }
 		public bool IsCreatingSelectionBox { get; private set; }
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		public Vector2 SelectionBoxCentre => (TouchInputHelper.Instance.TouchStartPosition + TouchInputHelper.Instance.TouchWorldPosition) / 2;
 		public Vector2 SelectionBoxSize => Maths.Abs(TouchInputHelper.Instance.TouchStartPosition-TouchInputHelper.Instance.TouchWorldPosition);
 		#else
@@ -68,7 +68,7 @@ namespace DLS.Game
 
 		public void Update()
 		{
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			HandleTouchInput();
 			#else
 			HandleKeyboardInput();
@@ -426,7 +426,7 @@ namespace DLS.Game
 				}
 			}
 
-			#if !UNITY_ANDROID
+			#if !UNITY_ANDROID || UNITY_IOS
 			// Find element closest to mouse to use as origin point for duplicated elements
 			Vector2 mousePos = InputHelper.MousePosWorld;
 			Vector2 closestElementPos = Vector2.zero;
@@ -779,7 +779,7 @@ namespace DLS.Game
 			{
 				wire.ApplyMoveOffset();
 			}
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 				ClearSelection();
 				MobileUIController.Instance.HidePlacementButtons();
 			#endif
@@ -824,14 +824,14 @@ namespace DLS.Game
 				DuplicateElements(newlyPlacedElements);
 			}
 
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 				MobileUIController.Instance.HidePlacementButtons();
 			#endif
 		}
 
 		public void EnterWireEditMode(WireInstance wire)
 		{
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			if (wireToEdit == wire) ExitWireEditMode();
 			else {
 				wireToEdit = wire;
@@ -941,7 +941,7 @@ namespace DLS.Game
 
 		void UpdatePositionsToMouse()
 		{
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			Vector2 mousePos = TouchInputHelper.TouchPositionWorld();
 			#else
 			Vector2 mousePos = InputHelper.MousePosWorld;
@@ -1066,7 +1066,7 @@ namespace DLS.Game
 		void StartMovingSelectedItems(bool isDuplicationOnMobileCall = false)
 		{
 			IsMovingSelection = true;
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			MobileUIController.Instance.ShowPlacementButtons(
 				FinishPlacingNewElements,
 				CancelPlacingItems
@@ -1143,7 +1143,7 @@ namespace DLS.Game
 
 		public IMoveable StartPlacing(ChipDescription chipDescription, Vector2 position, bool isDuplicating)
 		{
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			MobileUIController.Instance.ShowPlacementButtons(
 				FinishPlacingNewElements,
 				CancelPlacingItems
@@ -1164,7 +1164,7 @@ namespace DLS.Game
 				CancelEverything();
 				isPlacingNewElements = true;
 				hasExittedMultiModeSincePlacementStart = false;
-				#if UNITY_ANDROID
+				#if UNITY_ANDROID || UNITY_IOS
 					StartMovingSelectedItems(isDuplicating);
 				#else
 					StartMovingSelectedItems();
@@ -1199,7 +1199,7 @@ namespace DLS.Game
 			}
 			else
 			{
-				#if UNITY_ANDROID
+				#if UNITY_ANDROID || UNITY_IOS
 				#else
 					moveElementMouseStartPos = InputHelper.MousePosWorld;
 				#endif

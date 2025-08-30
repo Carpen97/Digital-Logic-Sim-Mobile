@@ -73,7 +73,7 @@ namespace DLS.Game
 					chipViewStateLookup.Remove(Project.ActiveProject.ViewedChip.ChipName);
 				}
 
-				#if UNITY_ANDROID
+				#if UNITY_ANDROID || UNITY_IOS
 					if(!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip &&
    					!DLS.Graphics.CustomizationSceneDrawer.IsPlacingDisplay &&
    					DLS.Graphics.CustomizationSceneDrawer.SelectedDisplay == null && 
@@ -101,7 +101,7 @@ namespace DLS.Game
 			UpdateCameraState();
 		}
 
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		static bool isTouchPanning;
 		static Vector2 panTouchStartScreen;
 		static Vector2 panTouchStartWorld;
@@ -194,7 +194,7 @@ namespace DLS.Game
 		{
 			if (CanMove)
 			{
-				#if UNITY_ANDROID
+				#if UNITY_ANDROID || UNITY_IOS
 				if (TouchInputHelper.Instance != null &&
 		    		TouchInputHelper.Instance.Dragging &&
 		    		Project.ActiveProject.controller.SelectedElements.Count == 0 &&
@@ -245,7 +245,7 @@ namespace DLS.Game
 			if (InputHelper.IsMouseUpThisFrame(MouseButton.Middle) || InputHelper.IsMouseUpThisFrame(MouseButton.Left))
 			{
 				isMovingCamera = false;
-				#if UNITY_ANDROID
+				#if UNITY_ANDROID || UNITY_IOS
 				isTouchPanning = false;
 				#endif
 			}

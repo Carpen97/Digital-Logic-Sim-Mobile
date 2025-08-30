@@ -11,7 +11,7 @@ namespace DLS.Graphics
 {
 	public static class BottomBarUI
 	{
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		public const float barHeight = 5;
 		#else
 		public const float barHeight = 3;
@@ -22,7 +22,7 @@ namespace DLS.Graphics
 
 		const string shortcutTextCol = "<color=#666666ff>";
 
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		public static int showScrollingButtons = 0;
 		const float scrollButtonWidth = 1.2f;
 

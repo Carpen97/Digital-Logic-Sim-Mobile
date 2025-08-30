@@ -42,7 +42,7 @@ namespace DLS.Graphics
 		public const float SelectorWheelHeight = 2.8f;
 		public const float ButtonHeight = 2.5f;
 
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		public const float DefaultButtonSpacing = SpacingUnitUI * 1.2f;
 		public const float InfoBarHeight = 5f;
 		#else
@@ -200,7 +200,7 @@ namespace DLS.Graphics
 					scrollBarColNormal = scrollBarCol,
 					scrollBarColHover = Brighten(scrollBarCol, 0.05f, -0.025f),
 					scrollBarColPressed = Darken(scrollBarCol, 0.05f, 0.025f),
-					#if UNITY_ANDROID
+					#if UNITY_ANDROID || UNITY_IOS
 					scrollBarWidth = 2
 					#else
 					scrollBarWidth = 1

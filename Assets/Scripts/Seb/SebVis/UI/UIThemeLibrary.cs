@@ -12,7 +12,7 @@ namespace Seb.Vis.UI
 			BlueTest
 		}
 
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		public const float mobileFontScaleFactor = 1.5f;
 		public const float FontSizeSmall = 1*mobileFontScaleFactor;
 		public const float FontSizeMedium = 1.5f*mobileFontScaleFactor;
@@ -25,7 +25,7 @@ namespace Seb.Vis.UI
 		public const float FontSizeLarge = 2;
 		public const float FontSizeVeryLarge = 3;
 		#endif
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		public const float FontSizeButton = FontSizeLarge;
 		#else
 		public const float FontSizeButton = FontSizeMedium;

@@ -11,7 +11,7 @@ namespace DLS.Graphics
 	public static class PreferencesMenu
 	{
 		const float entrySpacing = 0.2f;
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		const float menuWidth = 80;
 		#else
 		const float menuWidth = 55;
@@ -24,7 +24,7 @@ namespace DLS.Graphics
 
 		static readonly string[] PinDisplayOptions =
 		{
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			"On",
 			"Multi-Hover",
 			"Off"
@@ -51,7 +51,7 @@ namespace DLS.Graphics
 
 		static readonly string[] SnappingOptions =
 		{
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			"Off",
 			"If Grid Shown",
 			"On"
@@ -64,7 +64,7 @@ namespace DLS.Graphics
 
 		static readonly string[] StraightWireOptions =
 		{
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			"Off",
 			"If Grid Shown",
 			"On"
@@ -75,7 +75,7 @@ namespace DLS.Graphics
 			#endif
 		};
 
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string[] UIThemeOptions =
 		{
 			"Theme 1",
@@ -105,7 +105,7 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_SimFrequencyField = new("PREFS_SimTickTarget");
 		static readonly UIHandle ID_ClockSpeedInput = new("PREFS_ClockSpeed");
 
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string showGridLabel = "Show grid";
 		static readonly string wireCurvatureLabel = "Wire curvature";
 		static readonly string UIThemeLabel = "UI Theme";
@@ -266,7 +266,7 @@ namespace DLS.Graphics
 			UI.GetWheelSelectorState(ID_UIThemeDisplay).index = projDesc.Prefs_UIThemeMode;
 	
 			// 🛠 Clamp snapping and straight wire mode indexes
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			UI.GetWheelSelectorState(ID_Snapping).index = Mathf.Clamp(projDesc.Prefs_Snapping, 0, SnappingOptions.Length - 1);
 			UI.GetWheelSelectorState(ID_StraightWires).index = Mathf.Clamp(projDesc.Prefs_StraightWires, 0, StraightWireOptions.Length - 1);
 			#else
@@ -349,7 +349,7 @@ namespace DLS.Graphics
 			return frequencyErrorCol;
 		}
 
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 
 		static string CreateShortcutString(string s) => "";
 		#else

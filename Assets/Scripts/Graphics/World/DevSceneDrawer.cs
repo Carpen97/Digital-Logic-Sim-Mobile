@@ -824,7 +824,7 @@ namespace DLS.Graphics
 				}
 			}
 
-			#if !UNITY_ANDROID
+			#if !UNITY_ANDROID || UNITY_IOS
 			// If no highlighted point, and mouse over wire, then draw insertion point
 			if (controller.wireEditPointIndex == -1 && InteractionState.ElementUnderMouse == wire && canInteract)
 			{

@@ -2,7 +2,7 @@
 using System.IO;
 using UnityEngine;
 using System.Threading.Tasks;
-#if UNITY_ANDROID || UNITY_IOS
+#if UNITY_ANDROID || UNITY_IOS || UNITY_IOS
 using NativeFilePickerNamespace;
 #endif
 
@@ -16,7 +16,7 @@ public static class NativeFilePicker
 	public enum Permission { Denied = 0, Granted = 1, ShouldAsk = 2 };
 
 	#region Platform Specific Elements
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID || UNITY_IOS
 	private static AndroidJavaClass m_ajc = null;
 	private static AndroidJavaClass AJC
 	{
@@ -63,7 +63,7 @@ public static class NativeFilePicker
 #endif
 	#endregion
 
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID || UNITY_IOS
 	private static string m_selectedFilePath = null;
 	private static string SelectedFilePath
 	{
@@ -83,7 +83,7 @@ public static class NativeFilePicker
 	#region Runtime Permissions
 	public static bool CheckPermission( bool readPermissionOnly = false )
 	{
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID || UNITY_IOS
 		return AJC.CallStatic<int>( "CheckPermission", Context, readPermissionOnly ) == 1;
 #else
 		return true;
@@ -92,7 +92,7 @@ public static class NativeFilePicker
 
 	public static void RequestPermissionAsync( PermissionCallback callback, bool readPermissionOnly = false )
 	{
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID || UNITY_IOS
 		FPPermissionCallbackAndroid nativeCallback = new( callback );
 		AJC.CallStatic( "RequestPermission", Context, nativeCallback, readPermissionOnly );
 #else
@@ -109,7 +109,7 @@ public static class NativeFilePicker
 
 	public static void OpenSettings()
 	{
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID || UNITY_IOS
 		AJC.CallStatic( "OpenSettings", Context );
 #endif
 	}
@@ -118,7 +118,7 @@ public static class NativeFilePicker
 	#region Helper Functions
 	public static bool CanPickMultipleFiles()
 	{
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID || UNITY_IOS
 		return AJC.CallStatic<bool>( "CanPickMultipleFiles" );
 #elif !UNITY_EDITOR && UNITY_IOS
 		return _NativeFilePicker_CanPickMultipleFiles() == 1;
@@ -131,7 +131,7 @@ public static class NativeFilePicker
 	{
 #if UNITY_EDITOR
 		return true;
-#elif UNITY_ANDROID
+#elif UNITY_ANDROID || UNITY_IOS
 		return AJC.CallStatic<bool>( "CanExportFiles" );
 #elif UNITY_IOS
 		return true;
@@ -144,7 +144,7 @@ public static class NativeFilePicker
 	{
 #if UNITY_EDITOR
 		return true;
-#elif UNITY_ANDROID
+#elif UNITY_ANDROID || UNITY_IOS
 		return AJC.CallStatic<bool>( "CanExportMultipleFiles" );
 #elif UNITY_IOS
 		return _NativeFilePicker_CanPickMultipleFiles() == 1;
@@ -173,7 +173,7 @@ public static class NativeFilePicker
 			throw new ArgumentException( "See: https://github.com/yasirkula/UnityNativeFilePicker#faq" );
 		}
 
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID || UNITY_IOS
 		return AJC.CallStatic<string>( "GetMimeTypeFromExtension", extension.ToLowerInvariant() );
 #elif !UNITY_EDITOR && UNITY_IOS
 		return _NativeFilePicker_ConvertExtensionToUTI( extension.ToLowerInvariant() );
@@ -189,7 +189,7 @@ public static class NativeFilePicker
 		// If no file type is specified, allow all file types
 		if( allowedFileTypes == null || allowedFileTypes.Length == 0 )
 		{
-#if UNITY_ANDROID
+#if UNITY_ANDROID || UNITY_IOS
 			allowedFileTypes = new string[] { "*/*" };
 #else
 			allowedFileTypes = new string[] { "public.item", "public.content" };
@@ -251,7 +251,7 @@ public static class NativeFilePicker
 
 			if( callback != null )
 				callback( pickedFile != "" ? pickedFile : null );
-#elif UNITY_ANDROID
+#elif UNITY_ANDROID || UNITY_IOS
 			AJC.CallStatic( "PickFiles", Context, new FPResultCallbackAndroid( callback, null, null ), false, SelectedFilePath, allowedFileTypes, "" );
 #elif UNITY_IOS
 			FPResultCallbackiOS.Initialize( callback, null, null );
@@ -268,7 +268,7 @@ public static class NativeFilePicker
 		// If no file type is specified, allow all file types
 		if( allowedFileTypes == null || allowedFileTypes.Length == 0 )
 		{
-#if UNITY_ANDROID
+#if UNITY_ANDROID || UNITY_IOS
 			allowedFileTypes = new string[] { "*/*" };
 #else
 			allowedFileTypes = new string[] { "public.item", "public.content" };
@@ -285,7 +285,7 @@ public static class NativeFilePicker
 
 			if( CanPickMultipleFiles() )
 			{
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID || UNITY_IOS
 				AJC.CallStatic( "PickFiles", Context, new FPResultCallbackAndroid( null, callback, null ), true, SelectedFilePath, allowedFileTypes, "" );
 #elif !UNITY_EDITOR && UNITY_IOS
 				FPResultCallbackiOS.Initialize( null, callback, null );
@@ -344,7 +344,7 @@ public static class NativeFilePicker
 							callback( false );
 					}
 				}
-#elif UNITY_ANDROID
+#elif UNITY_ANDROID || UNITY_IOS
 				AJC.CallStatic( "ExportFiles", Context, new FPResultCallbackAndroid( null, null, callback ), new string[1] { filePath }, 1 );
 #elif UNITY_IOS
 				FPResultCallbackiOS.Initialize( null, null, callback );
@@ -396,7 +396,7 @@ public static class NativeFilePicker
 							callback( false );
 					}
 				}
-#elif UNITY_ANDROID
+#elif UNITY_ANDROID || UNITY_IOS
 				AJC.CallStatic( "ExportFiles", Context, new FPResultCallbackAndroid( null, null, callback ), filePaths, filePaths.Length );
 #elif UNITY_IOS
 				FPResultCallbackiOS.Initialize( null, null, callback );

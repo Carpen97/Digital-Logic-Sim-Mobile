@@ -11,9 +11,9 @@ namespace DLS.Game
 {
 	public static class Main
 	{
-		public static readonly Version DLSVersion = new(2, 1, 6, 6);
+		public static readonly Version DLSVersion = new(2, 1, 6, 7);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0, 0);
-		public const string LastUpdatedString = "14 May 2025";
+		public const string LastUpdatedString = "18 May 2025";
 		public static AppSettings ActiveAppSettings;
 
 		public static Project ActiveProject { get; private set; }
@@ -33,7 +33,7 @@ namespace DLS.Game
 			if (UIDrawer.ActiveMenu != UIDrawer.MenuType.MainMenu)
 			{
 				CameraController.Update();
-				#if UNITY_ANDROID 
+				#if UNITY_ANDROID || UNITY_IOS 
 				InteractionState.ClearFrame();
 				WorldDrawer.DrawWorld(ActiveProject);
 				ActiveProject.Update();
@@ -112,7 +112,7 @@ namespace DLS.Game
 			return LoadProject(projectName);
 		}
 
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		public static void ImportProject()
 		{
 			NativeFilePicker.PickFile((path) =>

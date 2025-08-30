@@ -31,7 +31,7 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_UIScaling = new("MainMenu_UIScalingWheel");
 		static readonly UIHandle ID_ProjectsScrollView = new("MainMenu_ProjectsScrollView");
 
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string[] SettingsWheelFullScreenOptions = { "AUTO","WINDOWED", "MAXIMIZED", "BORDERLESS", "EXCLUSIVE" };
 		static readonly FullScreenMode[] FullScreenModes = { FullScreenMode.Windowed, FullScreenMode.MaximizedWindow, FullScreenMode.FullScreenWindow, FullScreenMode.ExclusiveFullScreen };
 		#else
@@ -56,7 +56,7 @@ namespace DLS.Graphics
 			FormatButtonString("Quit")
 		};
 
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string[] openProjectButtonNames =
 		{
 			FormatButtonString("Back"),
@@ -140,7 +140,7 @@ namespace DLS.Graphics
 		static (bool compatible, string message)[] projectCompatibilities;
 
 		static int selectedProjectIndex;
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string authorString = "Created by: Sebastian Lague\nMobile version by: David Carpenfelt";
 		#else
 		static readonly string authorString = "Created by: Sebastian Lague"
@@ -219,7 +219,7 @@ namespace DLS.Graphics
 
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			float buttonWidth = 40;
 			int buttonIndex = UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, UI.Centre + Vector2.up * 8, new Vector2(buttonWidth, 0.5f), false, true, 1);
 			#else
@@ -266,7 +266,7 @@ namespace DLS.Graphics
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
 			Vector2 pos = UI.Centre + new Vector2(0, -1);
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			Vector2 size = new(80, 32);
 			#else
 			Vector2 size = new(68, 32);
@@ -309,7 +309,7 @@ namespace DLS.Graphics
 			else if (buttonIndex == exportButtonIndex) Main.ExportProject(SelectedProjectName); 
 		}
 		
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		public static void ExportProject(string projectName)
 		{
 			AndroidIO.ExportProjectToZip(projectName);
@@ -425,7 +425,7 @@ namespace DLS.Graphics
 
 			float regionWidth = 30;
 			Vector2 wheelSize = new(16, 2.5f);
-			#if UNITY_ANDROID	
+			#if UNITY_ANDROID || UNITY_IOS	
 			regionWidth = 70;
 			wheelSize = new(40, 3.5f);
 			#endif
@@ -447,7 +447,7 @@ namespace DLS.Graphics
 				//bool resEnabled = EditedAppSettings.fullscreenMode == FullScreenMode.Windowed;
 
 
-				//#if !UNITY_ANDROID
+				//#if !UNITY_ANDROID || UNITY_IOS
 				// -- Full screen --
 				UI.DrawText("Fullscreen", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				int fullScreenSettingIndex = UI.WheelSelector(ID_FullscreenWheel, SettingsWheelFullScreenOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);

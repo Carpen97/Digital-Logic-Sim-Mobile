@@ -7,7 +7,7 @@ using Seb.Vis.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-#if UNITY_ANDROID || UNITY_EDITOR
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
 public class MobileUIController : MonoBehaviour
 {
 	[Header("Placement Buttons")]

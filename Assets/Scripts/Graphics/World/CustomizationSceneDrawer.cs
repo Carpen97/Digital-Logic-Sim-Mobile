@@ -95,7 +95,7 @@ namespace DLS.Graphics
 		static void HandleDisplayScaling()
 		{
 
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			Touch touch = Input.GetTouch(0);
 			if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) ||
 				InteractionState.MouseIsOverUI) return;
@@ -154,7 +154,7 @@ namespace DLS.Graphics
 
 		static void HandleDisplayMovement()
 		{
-			#if UNITY_ANDROID
+			#if UNITY_ANDROID || UNITY_IOS
 			if(Input.touchCount == 1){
 				Touch touch = Input.GetTouch(0);
 				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) ||
@@ -191,7 +191,7 @@ namespace DLS.Graphics
 			}
 			else
 			{
-				#if !UNITY_ANDROID
+				#if !UNITY_ANDROID || UNITY_IOS
 				// Confirm placement
 				bool confirmPlacement = InputHelper.IsMouseDownThisFrame(MouseButton.Left);
 				confirmPlacement |= displayInteractState == DisplayInteractState.Moving && InputHelper.IsMouseUpThisFrame(MouseButton.Left);

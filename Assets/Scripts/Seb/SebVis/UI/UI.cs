@@ -33,7 +33,7 @@ namespace Seb.Vis.UI
 		static readonly Dictionary<UIHandle, bool> checkBoxStates = new();
 
 
-		#if UNITY_ANDROID
+		#if UNITY_ANDROID || UNITY_IOS
 		public static bool IsInteractingWithColorPicker { get; private set; }
 		static TouchScreenKeyboard keyboard;
 		static string lastSyncedText = "";
@@ -76,6 +76,7 @@ namespace Seb.Vis.UI
 		public static bool IsMouseOverUIThisFrame => mouseOverUIFrameIndex == Time.frameCount;
 
         public static bool IsScrolling { get; private set; }
+        //public static bool IsInteractingWithColorPicker { get; private set; }
 
         //  --------------------------- UI Scope functions ---------------------------
 
@@ -378,7 +379,7 @@ namespace Seb.Vis.UI
 				{
 					state.SetFocus(mouseInBounds);
 					state.isMouseDownInBounds = mouseInBounds;
-					#if UNITY_ANDROID
+					#if UNITY_ANDROID || UNITY_IOS
 					if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
 					{
 						bool mouseInsideMask = Draw.IsPointInsideActiveMask(InputHelper.MousePos);
@@ -407,7 +408,7 @@ namespace Seb.Vis.UI
 					state.SetFocus(true);
 				}
 			
-				#if UNITY_ANDROID
+				#if UNITY_ANDROID || UNITY_IOS
 				if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
 				{
 					bool mouseInsideMask = Draw.IsPointInsideActiveMask(InputHelper.MousePos);
@@ -424,7 +425,7 @@ namespace Seb.Vis.UI
 				{
 					const float outlineWidth = 0.05f;
 					Draw.QuadOutline(ss.centre, ss.size, outlineWidth * scale, theme.focusBorderCol);
-					#if UNITY_ANDROID
+					#if UNITY_ANDROID || UNITY_IOS
 					if (keyboard != null && keyboard.status == TouchScreenKeyboard.Status.Visible)
 					{
 						if (keyboard.text != lastSyncedText)
@@ -498,7 +499,7 @@ namespace Seb.Vis.UI
 					}
 				}
 
-				#if UNITY_ANDROID
+				#if UNITY_ANDROID || UNITY_IOS
 				if (keyboard != null &&
 					(keyboard.status == TouchScreenKeyboard.Status.Canceled || keyboard.status == TouchScreenKeyboard.Status.Done))
 				{
