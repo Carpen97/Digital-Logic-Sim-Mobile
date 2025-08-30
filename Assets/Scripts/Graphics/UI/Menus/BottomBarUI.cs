@@ -31,7 +31,9 @@ namespace DLS.Graphics
 			$"  NEW CHIP  ",
 			$"  SAVE CHIP  ",
 			$"  FIND CHIP  ",
+			$"  ADD SPECIAL  ",
 			$"  LIBRARY  ",
+			$"  STATS  ",
 			$"  PREFS  ",
 			$"  QUIT  "
 		};
@@ -94,7 +96,7 @@ namespace DLS.Graphics
 			float menuWidth = Draw.CalculateTextBoundsSize(menuButtonNames[0].AsSpan(), theme.fontSize, theme.font).x + 1;
 
 			Vector2 pos = new(buttonSpacing, barHeight + buttonSpacing);
-			Vector2 size = new(menuWidth*1.3f, buttonHeight*1.5f);;
+			Vector2 size = new(menuWidth*1.3f, buttonHeight*1f);;
 			Draw.ID panelID = UI.ReservePanel();
 
 			using (UI.BeginBoundsScope(true))

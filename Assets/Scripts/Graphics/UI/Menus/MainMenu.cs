@@ -140,13 +140,10 @@ namespace DLS.Graphics
 		static (bool compatible, string message)[] projectCompatibilities;
 
 		static int selectedProjectIndex;
-		#if UNITY_ANDROID || UNITY_IOS
-		static readonly string authorString = "Created by: Sebastian Lague\nMobile version by: David Carpenfelt";
-		#else
-		static readonly string authorString = "Created by: Sebastian Lague"
-		#endif
+		static readonly string authorString = "Created by: Sebastian Lague";
+		static readonly string mobileString = $"Mobile port: David Carpenfelt";
 		static readonly string versionString = $"Version: {Main.DLSVersion} ({Main.LastUpdatedString})";
-		static readonly string moddedString = $"ComEdit Version : {Main.DLSVersion_ModdedID} ({Main.LastUpdatedModdedString})";
+		static readonly string moddedString = $"ComEdit: {Main.DLSVersion_ModdedID} ({Main.LastUpdatedModdedString})";
 		static string SelectedProjectName => allProjectDescriptions[selectedProjectIndex].ProjectName;
 
 		static string FormatButtonString(string s) => capitalize ? s.ToUpper() : s;
@@ -689,15 +686,20 @@ namespace DLS.Graphics
 			float pad = 1;
 			Color col = new(1, 1, 1, 0.5f);
 			Color modColor = new(0.98f, 0.76f, 0.26f);
+			Color mobileColor = new(0.26f, 0.76f, 0.98f);
 
             Vector2 versionPos = UI.PrevBounds.CentreLeft + Vector2.right * pad;
 			Vector2 datePos = UI.PrevBounds.CentreRight + Vector2.left * pad;
-			Vector2 moddedPos = UI.PrevBounds.Centre;
+			Vector2 moddedPos = UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.right * pad*5f;
+			Vector2 mobilePos = UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.left * pad*10f;
 
 			UI.DrawText(authorString, theme.FontRegular, theme.FontSizeRegular, versionPos, Anchor.TextCentreLeft, col);
 			UI.DrawText(versionString, theme.FontRegular, theme.FontSizeRegular, datePos, Anchor.TextCentreRight, col);
-            UI.DrawText(moddedString, theme.FontRegular, theme.FontSizeRegular, moddedPos, Anchor.TextCentre, modColor);
-
+			if (activeMenuScreen == MenuScreen.Main)
+			{
+            	UI.DrawText(moddedString, theme.FontRegular, theme.FontSizeRegular, moddedPos, Anchor.TextCentreLeft, modColor);
+            	UI.DrawText(mobileString, theme.FontRegular, theme.FontSizeRegular, mobilePos, Anchor.TextCentreRight, mobileColor);
+			}
         }
 
         static string ResolutionToString(Vector2Int r) => $"{r.x} x {r.y}";

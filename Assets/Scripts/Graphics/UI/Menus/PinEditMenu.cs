@@ -62,7 +62,7 @@ namespace DLS.Graphics
 				// Draw value display options
 				if (devPin.BitCount != PinBitCount.Bit1)
 				{
-					const float wheelWidth = 15.2f;
+					const float wheelWidth = 20.2f;
 
 					Vector2 topLeftCurr = UI.PrevBounds.BottomLeft + Vector2.down * spacing;
 					MenuHelper.LabeledOptionsWheel("Decimal Display", Color.white, topLeftCurr, new Vector2(inputFieldBounds.Width, DrawSettings.SelectorWheelHeight), ID_ValueDisplayMode, PinDecimalDisplayOptions, wheelWidth, true);

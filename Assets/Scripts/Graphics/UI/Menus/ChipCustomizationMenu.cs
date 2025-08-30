@@ -13,21 +13,13 @@ namespace DLS.Graphics
 {
 	public static class ChipCustomizationMenu
 	{
-		#if UNITY_ANDROID || UNITY_IOS
-		static readonly string[] nameDisplayOptions =
-		{
-			"Middle",
-			"Top",
-			"Hidden"
-		};
-		#else
+
 		static readonly string[] nameDisplayOptions =
 		{
 			"Name: Middle",
 			"Name: Top",
 			"Name: Hidden"
 		};
-		#endif
         static readonly string[] layoutOptions =
         {
             "Layout: Default",
@@ -74,9 +66,10 @@ namespace DLS.Graphics
 			UI.DrawPanel(UI.TopLeft, new Vector2(width, UI.Height), theme.MenuPanelCol, Anchor.TopLeft);
 
             // ---- Cancel/confirm buttons ----
-            int cancelConfirmButtonIndex = MenuHelper.DrawButtonPair("CANCEL", "CONFIRM", UI.TopLeft + Vector2.down * pad, pw, false);
+            int cancelConfirmButtonIndex = MenuHelper.DrawButtonPair("CANCEL", "CONFIRM", UI.BottomLeft + Vector2.down * pad, pw, false);
 
 			// ---- Chip name UI ----
+			theme.OptionsWheel.OverrideFontSize(2f);
 			int nameDisplayMode = UI.WheelSelector(ID_NameDisplayOptions, nameDisplayOptions, UI.TopLeft + Vector2.down * pad, new Vector2(pw, DrawSettings.ButtonHeight), theme.OptionsWheel, Anchor.TopLeft);
 			ChipSaveMenu.ActiveCustomizeDescription.NameLocation = (NameDisplayLocation)nameDisplayMode;
             // ---- Chip layout UI ----
@@ -135,7 +128,7 @@ namespace DLS.Graphics
 			}
 
 			// ---- Chip caching UI ----
-			UI.DrawText("Chip Caching:", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeDefault, NextPos(1), Anchor.TopLeft, Color.white);
+			// UI.DrawText("Chip Caching:", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeDefault, NextPos(1), Anchor.TopLeft, Color.white);
 			SimChip chip = Project.ActiveProject.ViewedChip.SimChip;
 			if (chip.IsCombinational())
 			{
@@ -173,7 +166,7 @@ namespace DLS.Graphics
 			Vector2 labelPos = NextPos(1);
 			UI.TextWithBackground(labelPos, new Vector2(pw, DrawSettings.ButtonHeight), Anchor.TopLeft, displayLabelString, theme.FontBold, theme.FontSizeRegular, Color.white, labelCol);
 
-			float scrollViewHeight = 18;
+			float scrollViewHeight = 12;
 			float scrollViewSpacing = UILayoutHelper.DefaultSpacing;
 			UI.DrawScrollView(ID_DisplaysScrollView, NextPos(), new Vector2(pw, scrollViewHeight), scrollViewSpacing, Anchor.TopLeft, theme.ScrollTheme, drawDisplayScrollEntry, subChipsWithDisplays.Length);
 
