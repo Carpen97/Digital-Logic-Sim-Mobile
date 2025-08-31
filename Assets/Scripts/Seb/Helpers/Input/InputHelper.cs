@@ -14,12 +14,14 @@ namespace Seb.Helpers
 	public static class InputHelper
 	{
 		public static IInputSource InputSource = new UnityInputSource();
+
 		static Camera _worldCam;
 		static Vector2 prevWorldMousePos;
 		static int prevWorldMouseFrame = -1;
 		static int leftMouseDownConsumeFrame = -1;
 		static int rightMouseDownConsumeFrame = -1;
 		static int middleMouseDownConsumeFrame = -1;
+
 		public static Vector2 MousePos => InputSource.MousePosition; // Screen-space mouse position
 		public static string InputStringThisFrame => InputSource.InputString;
 		public static bool AnyKeyOrMouseDownThisFrame => InputSource.AnyKeyOrMouseDownThisFrame;
@@ -30,7 +32,18 @@ namespace Seb.Helpers
 		{
 			get
 			{
-				if (_worldCam == null) _worldCam = Camera.main;
+				if (_worldCam == null)
+				{
+					_worldCam = Camera.main;
+					if (_worldCam == null)
+					{
+						// Fallback to any enabled camera to avoid null deref on startup scenes
+						if (Camera.allCamerasCount > 0)
+						{
+							_worldCam = Camera.allCameras[0];
+						}
+					}
+				}
 				return _worldCam;
 			}
 		}
@@ -41,10 +54,9 @@ namespace Seb.Helpers
 			{
 				if (Time.frameCount != prevWorldMouseFrame)
 				{
-					prevWorldMousePos = WorldCam.ScreenToWorldPoint(MousePos);
+					prevWorldMousePos = SafeScreenToWorldPoint(MousePos, prevWorldMousePos);
 					prevWorldMouseFrame = Time.frameCount;
 				}
-
 				return prevWorldMousePos;
 			}
 		}
@@ -59,8 +71,18 @@ namespace Seb.Helpers
 
 		public static bool IsMouseInGameWindow()
 		{
-			Vector2 mousePos = MousePos;
-			return mousePos.x >= 0 && mousePos.y >= 0 && mousePos.x < Screen.width && mousePos.y < Screen.height;
+			var cam = WorldCam;
+			Vector2 mp = MousePos;
+
+			// If camera exists, prefer its pixelRect (multi-display / letterboxed setups)
+			if (cam != null)
+			{
+				var r = cam.pixelRect;
+				return IsFinite(mp.x) && IsFinite(mp.y) && r.Contains(mp);
+			}
+
+			// Fallback to Screen bounds
+			return IsFinite(mp.x) && IsFinite(mp.y) && mp.x >= 0 && mp.y >= 0 && mp.x < Screen.width && mp.y < Screen.height;
 		}
 
 		public static bool MouseInBounds_ScreenSpace(Vector2 centre, Vector2 size)
@@ -123,7 +145,6 @@ namespace Seb.Helpers
 			return InputSource.IsMouseDownThisFrame(button);
 		}
 
-
 		// Check if any mouse button was pressed this frame, even if the event was consumed.
 		public static bool IsAnyMouseButtonDownThisFrame_IgnoreConsumed()
 		{
@@ -178,6 +199,54 @@ namespace Seb.Helpers
 			rightMouseDownConsumeFrame = -1;
 			middleMouseDownConsumeFrame = -1;
 			InputSource = new UnityInputSource();
+		}
+
+		// ---------- Helpers ----------
+
+		static bool IsFinite(float v) => !(float.IsNaN(v) || float.IsInfinity(v));
+
+		/// <summary>
+		/// Converts a screen position to world while guarding against NaN/Inf and out-of-frustum values.
+		/// If input is invalid or camera missing, returns the provided fallback (usually previous cached value).
+		/// </summary>
+		static Vector2 SafeScreenToWorldPoint(Vector2 screenPos, Vector2 fallback)
+		{
+			var cam = WorldCam;
+			if (cam == null) return fallback;
+
+			// Reject invalid input early
+			if (!IsFinite(screenPos.x) || !IsFinite(screenPos.y))
+				return fallback;
+
+			// Optionally skip when mouse is outside the camera rect (prevents inf/inf during resizes)
+			var rect = cam.pixelRect;
+			if (!rect.Contains(screenPos))
+			{
+				// Either clamp, or return fallback. Clamping avoids stalling when slightly OOB.
+				screenPos.x = Mathf.Clamp(screenPos.x, rect.xMin, rect.xMax);
+				screenPos.y = Mathf.Clamp(screenPos.y, rect.yMin, rect.yMax);
+			}
+
+			// Build a Vector3 with a sane Z for ScreenToWorldPoint
+			Vector3 sp = new Vector3(screenPos.x, screenPos.y, 0f);
+
+			if (cam.orthographic)
+			{
+				// For orthographic cameras, z component adds to camera.z; we only need x/y for a Vector2 result.
+				// Keep z = 0 to avoid precision issues.
+				sp.z = 0f;
+			}
+			else
+			{
+				// For perspective: distance from camera to the 2D gameplay plane (usually z = 0).
+				float distToPlane = Mathf.Abs(cam.transform.position.z);
+				// Ensure it's in front of the near clip
+				sp.z = Mathf.Max(cam.nearClipPlane, distToPlane);
+			}
+
+			Vector3 world = cam.ScreenToWorldPoint(sp);
+			// Only x/y are used by callers
+			return new Vector2(world.x, world.y);
 		}
 	}
 }

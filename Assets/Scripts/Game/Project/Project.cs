@@ -43,7 +43,7 @@ namespace DLS.Game
 		// If chips are entered in view mode, they will be placed above on the stack.
 		public readonly Stack<DevChipInstance> chipViewStack = new();
 
-		SimChip ViewedSimChip => ViewedChip.SimChip;
+		public SimChip ViewedSimChip => ViewedChip.SimChip;
 
 		// The chip currently in view. This chip may be in view-only mode.
 		public DevChipInstance ViewedChip => chipViewStack.Peek();

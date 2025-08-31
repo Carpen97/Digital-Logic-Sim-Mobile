@@ -535,6 +535,11 @@ namespace DLS.Game
 			return Elements.OfType<DevPinInstance>().Where(p => !p.IsInputPin);
 		}
 
+
+		public DevPinInstance[] GetOutputPinsAsArray() {
+			return Elements.OfType<DevPinInstance>().Where(p => !p.IsInputPin).ToArray();
+		}
+
 		void RegenerateParentChipNamesHash()
 		{
 			AllParentChipNames.Clear();

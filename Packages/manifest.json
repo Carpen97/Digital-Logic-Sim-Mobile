@@ -7,6 +7,7 @@
     "com.unity.toolchain.win-x86_64-linux-x86_64": "2.0.10",
     "com.unity.ugui": "2.0.0",
     "com.unity.vectorgraphics": "2.0.0-preview.25",
+    "com.yourorg.dls-levels": "file:I:/Programmering/UNITY_PROJECTS/dls-levels",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.assetbundle": "1.0.0",
