@@ -698,7 +698,6 @@ namespace DLS.Graphics
             	UI.DrawText(mobileString, theme.FontRegular, theme.FontSizeRegular, mobilePos, Anchor.TextCentreRight, mobileColor);
 			}
         }
-
         static string ResolutionToString(Vector2Int r) => $"{r.x} x {r.y}";
 
 		static void Quit()

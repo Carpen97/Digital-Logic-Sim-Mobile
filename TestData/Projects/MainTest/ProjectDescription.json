@@ -98,6 +98,7 @@
     {
       "Name":"BuzzTest",
       "IsCollection":false
+<<<<<<< HEAD
     },
     {
       "Name":"_",
@@ -110,6 +111,8 @@
     {
       "Name":"MERGE/SPLIT",
       "IsCollection":true
+=======
+>>>>>>> 0634057942af5b3854ecee0d826d2741f9134593
     }
   ],
   "ChipCollections":[
@@ -129,8 +132,13 @@
       "Name":"MERGE/SPLIT"
     },
     {
+<<<<<<< HEAD
       "Chips":["7-SEGMENT","DECIMAL-4","DECIMAL-8","DOT DISPLAY","RGB DISPLAY","LED"],
       "IsToggledOpen":false,
+=======
+      "Chips":["7-SEGMENT","DECIMAL-4","DECIMAL-8","DOT DISPLAY","RGB DISPLAY","LED","TOUCHSCREEN RGB DISPLAY"],
+      "IsToggledOpen":true,
+>>>>>>> 0634057942af5b3854ecee0d826d2741f9134593
       "Name":"DISPLAY"
     },
     {

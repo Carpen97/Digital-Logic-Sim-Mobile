@@ -15,6 +15,7 @@ namespace DLS.Description
 		public NameDisplayLocation NameLocation;
 		public ChipType ChipType;
 		public ChipTypeId InternalTypeId;
+		public bool CanBeCached;
 		public bool ShouldBeCached;
 		public Vector2 Size;
 		public Color Colour;
