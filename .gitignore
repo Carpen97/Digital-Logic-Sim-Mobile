@@ -52,7 +52,31 @@ ExportedObj/
 # Firebase large files that exceed GitHub's 100MB limit
 Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_2_0.so
 Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_2_0.bundle
-*.VC.db
+
+# Mobile build artifacts
+*.apk
+*.aab
+*.ipa
+*.app
+
+# iOS build output
+DLS_IOS/
+DLS_IOS.zip
+
+# Android build output
+build-android/
+platform-tools/
+
+# Backup folders
+*_BackUpThisFolder_ButDontShipItWithYourGame/
+*BackUpThisFolder_ButDontShipItWithYourGame/
+
+# Symbol files and debug builds
+*.symbols.zip
+*IL2CPP.symbols.zip
+
+# Test data (contains user-specific data)
+TestData/
 
 # Unity3D generated meta files
 *.pidb.meta
@@ -62,9 +86,7 @@ Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_2_0.bundle
 # Unity3D generated file on crash reports
 sysinfo.txt
 
-# Builds
-*.apk
-*.aab
+# Unity packages
 *.unitypackage
 
 # Crashlytics generated file
@@ -110,6 +132,3 @@ DLS_IOS/
 Digital-Logic-Sim-Mobile_BackUpThisFolder_ButDontShipItWithYourGame/*
 
 *.zip
-
-
-/TestData/*
