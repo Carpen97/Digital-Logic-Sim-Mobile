@@ -8,9 +8,10 @@
 * **Development Environment**: All development work is done in **Cursor** with integrated AI assistance. Cursor provides code completion, refactoring, debugging, and AI-powered code generation directly within the IDE.
 * **Workflow**: 
   - Select a ticket from the open tickets below
+  - Move it to the "In Progress" section while working on it
   - Work on implementation using Cursor's AI features
   - Test and verify the changes
-  - Update ticket status and move to completed when done
+  - Move to completed tickets when done
   - Use git for version control and collaboration
 * **AI Integration**: Cursor's AI assistant helps with code understanding, implementation, debugging, and optimization while maintaining full context of the project.
 
@@ -56,6 +57,12 @@ Mobile Port (origin)
 ### 💡 Ideas / Future Features
 
 * (Unscoped ideas to maybe turn into tickets later)
+
+---
+
+### 🔄 In Progress
+
+*Currently no tickets in progress*
 
 ---
 
