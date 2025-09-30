@@ -7,6 +7,7 @@ public class FirebaseProbe : MonoBehaviour {
         // Skip Firebase initialization in Editor to avoid DllNotFoundException
         #if UNITY_EDITOR
         Debug.Log("[Firebase] Editor mode - skipping Firebase initialization to avoid DllNotFoundException");
+        await System.Threading.Tasks.Task.CompletedTask; // Satisfy async requirement
         return;
         #else
         FirebaseApp.LogLevel = LogLevel.Debug; // verbose client logs
