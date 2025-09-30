@@ -5,7 +5,14 @@
 ### 📌 How We Work
 
 * **Tickets**: All work is broken down into numbered tickets (001, 002…). Only open tickets are kept here. When a ticket is completed, it is moved to [CompletedTickets.md](CompletedTickets.md) with closure details and removed from this plan.
-* **Worker Chats**: Each ticket gets its own dedicated worker chat. Moving forward, these will be handled in **Cursor**, where the worker chat is in charge of coding. The Project Manager (this chat) creates the ticket description and sends an intro paragraph to the worker chat so it knows its role and scope. The worker chat then reports back when work is done.
+* **Development Environment**: All development work is done in **Cursor** with integrated AI assistance. Cursor provides code completion, refactoring, debugging, and AI-powered code generation directly within the IDE.
+* **Workflow**: 
+  - Select a ticket from the open tickets below
+  - Work on implementation using Cursor's AI features
+  - Test and verify the changes
+  - Update ticket status and move to completed when done
+  - Use git for version control and collaboration
+* **AI Integration**: Cursor's AI assistant helps with code understanding, implementation, debugging, and optimization while maintaining full context of the project.
 
 ---
 
