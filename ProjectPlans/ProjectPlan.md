@@ -4,8 +4,39 @@
 
 ### 📌 How We Work
 
-* **Tickets**: All work is broken down into numbered tickets (001, 002…). Only open tickets are kept here. When a ticket is completed, a closure note is written (including the date of closure) and saved offline; it is then removed from this plan.
+* **Tickets**: All work is broken down into numbered tickets (001, 002…). Only open tickets are kept here. When a ticket is completed, it is moved to [CompletedTickets.md](CompletedTickets.md) with closure details and removed from this plan.
 * **Worker Chats**: Each ticket gets its own dedicated worker chat. Moving forward, these will be handled in **Cursor**, where the worker chat is in charge of coding. The Project Manager (this chat) creates the ticket description and sends an intro paragraph to the worker chat so it knows its role and scope. The worker chat then reports back when work is done.
+
+---
+
+### 🌳 Git Workflow
+
+**Repository Structure:**
+```
+Seb's Original (upstream)
+    ↓
+Community Edition (community) 
+    ↓
+Mobile Port (origin)
+```
+
+**Remotes:**
+- `upstream`: https://github.com/SebLague/Digital-Logic-Sim.git (Seb's original)
+- `community`: https://github.com/logic-mindful/Digital-Logic-Sim-Community-Edit.git (Community improvements)
+- `origin`: https://github.com/Carpen97/Digital-Logic-Sim-Mobile.git (Mobile port)
+
+**Branch Strategy:**
+- **`upstream/main`**: Track Seb's original updates
+- **`community/main` & `community/dev`**: Track community improvements and features
+- **`origin/main`**: Main mobile development branch
+- **`merge/mobile-community`**: Integration branch for merging community updates into mobile
+- **`mobile-port`**: Legacy mobile development branch
+
+**Workflow:**
+1. **Community Updates**: Pull from `community/dev` into `merge/mobile-community`
+2. **Mobile Development**: Work on `origin/main` or create feature branches
+3. **Integration**: Merge community updates into mobile branch as needed
+4. **Upstream Updates**: Periodically check `upstream/main` for Seb's latest changes
 
 ---
 
