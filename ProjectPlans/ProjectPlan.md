@@ -4,16 +4,8 @@
 
 ### 📌 How We Work
 
-* **Tickets**: All work is broken down into numbered tickets (001, 002…). Only open tickets are kept here. When a ticket is completed, it is moved to [CompletedTickets.md](CompletedTickets.md) with closure details and removed from this plan.
-* **Development Environment**: All development work is done in **Cursor** with integrated AI assistance. Cursor provides code completion, refactoring, debugging, and AI-powered code generation directly within the IDE.
-* **Workflow**: 
-  - Select a ticket from the open tickets below
-  - Move it to the "In Progress" section while working on it
-  - Work on implementation using Cursor's AI features
-  - Test and verify the changes
-  - Move to completed tickets when done
-  - Use git for version control and collaboration
-* **AI Integration**: Cursor's AI assistant helps with code understanding, implementation, debugging, and optimization while maintaining full context of the project.
+* **Tickets**: All work is broken down into numbered tickets (001, 002…). Only open tickets are kept here. When a ticket is completed, a closure note is written (including the date of closure) and saved offline; it is then removed from this plan.
+* **Worker Chats**: Each ticket gets its own dedicated worker chat. Moving forward, these will be handled in **Cursor**, where the worker chat is in charge of coding. The Project Manager (this chat) creates the ticket description and sends an intro paragraph to the worker chat so it knows its role and scope. The worker chat then reports back when work is done.
 
 ---
 
@@ -76,7 +68,37 @@ Mobile Port (origin)
 | 018 | Share solutions (zip + ghost)          | Open   | Normalize & zip solution JSON, upload/download, and implement ghost playback viewer.                                                                                                                                                  |
 | 019 | Server validation for submissions      | Open   | Cloud Function re-simulates solutions/scores to verify; flags "verified" entries and rejects impossible ones.                                                                                                                         |
 | 020 | Fix layout in 'Add Special' menu       | Open   | Adjust the UI layout in the 'Add Special' menu so buttons and labels align correctly across devices.                                                                                                                                  |
-| 023 | Redo customization view layout         | Open   | Redesign customization view: fix overflow of warning text (e.g., caching messages) and move display elements from left to right side.                                                                                                 |
 | 024 | Component grouping system              | Open   | Add support for grouping multiple components. Selecting multiple components shows a new UI button to create a group. Groups behave as single units for selection/deselection. Groups can also be saved and spawned, similar to chips. |
-| 025 | Chip preview in library menu           | Open   | Show a preview of the currently selected chip in the library menu. Use unoccupied space in the bottom-right corner for this preview.                                                                                                  |
 | 026 | Perpendicular guide for straight lines | Open   | When straight line mode is toggled, draw a perpendicular guide line to assist alignment.                                                                                                                                              |
+
+---
+
+## 📋 **Project Manager Workflow**
+
+### **Role Definition:**
+The Project Manager coordinates workflow, manages ticket status, and maintains project documentation. **Code implementation is delegated to development teams.**
+
+### **Responsibilities:**
+- **Ticket Management**: Move tickets between states only when explicitly instructed
+- **Worker Chat Kick-off**: Prepare detailed kick-off statements in raw format (not .md) with ticket title as first line
+- **Workflow Coordination**: Provide guidance and oversight for development teams  
+- **Documentation**: Maintain project plans and track progress
+- **Status Updates**: Report on project status and coordinate next steps
+
+### **Ticket Workflow:**
+1. **Open Tickets** → Available for selection
+2. **In Progress** → Moved only when PM receives explicit instruction
+3. **Completed** → Moved to CompletedTickets.md with closure details
+
+### **Key Rules:**
+- ❌ **Never move tickets** without explicit instruction
+- ❌ **Never make code changes** - delegate to development teams
+- ✅ **Coordinate workflow** and provide project oversight
+- ✅ **Update documentation** and maintain project plans
+- ✅ **Provide guidance** and technical specifications when needed
+- ✅ **Always require approval** - Worker chats must discuss and get approval before making code changes
+
+### **Current Status:**
+- **8 Open Tickets** available for selection
+- **0 In Progress** tickets
+- **Project ready** for next instructions

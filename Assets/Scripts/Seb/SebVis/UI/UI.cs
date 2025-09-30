@@ -659,6 +659,46 @@ namespace Seb.Vis.UI
 			OnFinishedDrawingUIElement(centre, size);
 		}
 
+		public static void DrawDiamond(Vector2 pos, Vector2 size, Color col, Anchor anchor = Anchor.Centre)
+		{
+			Vector2 centre = CalculateCentre(pos, size, anchor);
+
+			if (IsRendering)
+			{
+				(Vector2 centre, Vector2 size) ss = UIToScreenSpace(centre, size);
+				Draw.Diamond(ss.centre, ss.size, col);
+			}
+
+			OnFinishedDrawingUIElement(centre, size);
+		}
+
+		public static void DrawPoint(Vector2 pos, float radius, Color col, Anchor anchor = Anchor.Centre)
+		{
+			Vector2 size = Vector2.one * radius * 2;
+			Vector2 centre = CalculateCentre(pos, size, anchor);
+
+			if (IsRendering)
+			{
+				(Vector2 centre, Vector2 size) ss = UIToScreenSpace(centre, size);
+				Draw.Point(ss.centre, ss.size.x, col);
+			}
+
+			OnFinishedDrawingUIElement(centre, size);
+		}
+
+		public static void DrawQuad(Vector2 pos, Vector2 size, Color col, Anchor anchor = Anchor.Centre)
+		{
+			Vector2 centre = CalculateCentre(pos, size, anchor);
+
+			if (IsRendering)
+			{
+				(Vector2 centre, Vector2 size) ss = UIToScreenSpace(centre, size);
+				Draw.Quad(ss.centre, ss.size, col);
+			}
+
+			OnFinishedDrawingUIElement(centre, size);
+		}
+
 		public static Color DrawColourPicker(UIHandle id, Vector2 pos, float width, Anchor anchor = Anchor.Centre)
 		{
 			ColourPickerState state = GetColourPickerState(id);

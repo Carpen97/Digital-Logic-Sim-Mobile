@@ -70,7 +70,7 @@ public class MobileUIController : MonoBehaviour
 		if (defaultState)
 		{
 			wrenchTool.SetActive(true);
-			if (Project.ActiveProject.CanEditViewedChip)
+			if (Project.ActiveProject != null && Project.ActiveProject.CanEditViewedChip)
 			{
 				boxSelectTool.SetActive(true);
 				bool temp = Project.ActiveProject.controller.SelectedElements.Count > 0 && !Project.ActiveProject.controller.IsPlacingElements;
@@ -96,7 +96,7 @@ public class MobileUIController : MonoBehaviour
 				copyTool.SetActive(false);
 			}
 			// Show Validate button only in Level Mode, when not showing placement buttons
-			if (_levelManager != null && _levelManager.IsActive && Project.ActiveProject.CanEditViewedChip && !isShowingPlacementButtons
+			if (_levelManager != null && _levelManager.IsActive && Project.ActiveProject != null && Project.ActiveProject.CanEditViewedChip && !isShowingPlacementButtons
 			&& UIDrawer.ActiveMenu != UIDrawer.MenuType.BottomBarMenuPopup)
 			{
 				validateButton.SetActive(true);
@@ -107,14 +107,14 @@ public class MobileUIController : MonoBehaviour
 			}
 
 			// Show Hint button only in Level Mode, when nothing is selected (no trash/copy tools visible)
-			bool hasSelection = Project.ActiveProject.controller.SelectedElements.Count > 0 && !Project.ActiveProject.controller.IsPlacingElements;
-			bool shouldShowHint = _levelManager != null && _levelManager.IsActive && Project.ActiveProject.CanEditViewedChip && !isShowingPlacementButtons
+			bool hasSelection = Project.ActiveProject != null && Project.ActiveProject.controller.SelectedElements.Count > 0 && !Project.ActiveProject.controller.IsPlacingElements;
+			bool shouldShowHint = _levelManager != null && _levelManager.IsActive && Project.ActiveProject != null && Project.ActiveProject.CanEditViewedChip && !isShowingPlacementButtons
 			&& UIDrawer.ActiveMenu != UIDrawer.MenuType.BottomBarMenuPopup && !hasSelection;
 			
 			// Debug logging
 			if (hintTool.activeSelf != shouldShowHint)
 			{
-				Debug.Log($"Hint button visibility changed: {shouldShowHint} (LevelActive: {_levelManager?.IsActive}, CanEdit: {Project.ActiveProject.CanEditViewedChip}, HasSelection: {hasSelection})");
+				Debug.Log($"Hint button visibility changed: {shouldShowHint} (LevelActive: {_levelManager?.IsActive}, CanEdit: {Project.ActiveProject?.CanEditViewedChip}, HasSelection: {hasSelection})");
 			}
 			
 			hintTool.SetActive(shouldShowHint);

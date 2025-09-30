@@ -42,6 +42,17 @@ namespace DLS.Graphics
         public static readonly UIHandle ID_LayoutOptions = new("CustomizeMenu_LayoutOptions");
 		static readonly Func<string, bool> hexStringInputValidator = ValidateHexStringInput;
 		public static bool isCustomLayout;
+		
+		// Collapsible right panel state
+		static bool rightPanelExpanded = false; // Start minimized
+		static readonly UIHandle ID_RightPanelToggle = new("CustomizeMenu_RightPanelToggle");
+		
+		// Helper function to detect if we're moving or scaling a display
+		static bool IsMovingOrScalingDisplay()
+		{
+			// Check if there's a selected display and we're in moving or scaling state
+			return CustomizationSceneDrawer.SelectedDisplay != null;
+		}
         public static void OnMenuOpened()
 		{
 			DevChipInstance chip = Project.ActiveProject.ViewedChip;
@@ -55,25 +66,71 @@ namespace DLS.Graphics
 
 		public static void DrawMenu()
 		{
-			// Don't draw menu when placing display
-			if (CustomizationSceneDrawer.IsPlacingDisplay) return;
-
 			const float width = 25;
 			const float pad = UILayoutHelper.DefaultSpacing;
 			const float pw = width - pad * 2;
 
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
-			UI.DrawPanel(UI.TopLeft, new Vector2(width, UI.Height), theme.MenuPanelCol, Anchor.TopLeft);
+			
+			// Left panel for main customization options - hide during display interactions
+			if (!IsMovingOrScalingDisplay())
+			{
+				UI.DrawPanel(UI.TopLeft, new Vector2(width, UI.Height), theme.MenuPanelCol, Anchor.TopLeft);
+			}
+			
+			// Right panel for displays list (collapsible) - hide during any display interaction
+			if (!CustomizationSceneDrawer.IsPlacingDisplay && !IsMovingOrScalingDisplay())
+			{
+				if (rightPanelExpanded)
+				{
+					// Full panel when expanded
+					UI.DrawPanel(UI.TopRight, new Vector2(width, UI.Height), theme.MenuPanelCol, Anchor.TopRight);
+					
+					// ---- Displays UI in right panel ----
+					Color labelCol = ColHelper.Darken(theme.MenuPanelCol, 0.01f);
+					Vector2 rightLabelPos = UI.TopRight + Vector2.down * pad;
+					
+					// Make the header text itself clickable to minimize (reasonable width)
+					if (UI.Button("COMPONENTS -", theme.ButtonTheme, rightLabelPos, new Vector2(8, DrawSettings.ButtonHeight * 0.8f), true, true, false, theme.ButtonTheme.buttonCols, Anchor.TopRight))
+					{
+						rightPanelExpanded = false;
+					}
+
+					// Calculate full height scroll view - from below header to bottom of panel
+					float headerHeight = DrawSettings.ButtonHeight * 0.8f + pad;
+					float availableHeight = UI.Height - headerHeight - pad; // Full panel height minus header and bottom padding
+					float scrollViewSpacing = UILayoutHelper.DefaultSpacing;
+					
+					// Position scroll view below the header
+					Vector2 scrollViewPos = new Vector2(UI.Width - width + pad, rightLabelPos.y - headerHeight);
+					UI.DrawScrollView(ID_DisplaysScrollView, scrollViewPos, new Vector2(pw, availableHeight), scrollViewSpacing, Anchor.TopLeft, theme.ScrollTheme, drawDisplayScrollEntry, subChipsWithDisplays.Length);
+				}
+				else
+				{
+					// Minimized button in top right corner (reasonable width)
+					Vector2 minimizedButtonPos = UI.TopRight + Vector2.down * pad;
+					Vector2 minimizedButtonSize = new Vector2(8, DrawSettings.ButtonHeight * 0.8f); // Reasonable width
+					string minimizedButtonText = "COMPONENTS +";
+					
+					if (UI.Button(minimizedButtonText, theme.ButtonTheme, minimizedButtonPos, minimizedButtonSize, true, true, false, theme.ButtonTheme.buttonCols, Anchor.TopRight))
+					{
+						rightPanelExpanded = true;
+					}
+				}
+			}
 
             // ---- Cancel/confirm buttons ----
             int cancelConfirmButtonIndex = MenuHelper.DrawButtonPair("CANCEL", "CONFIRM", UI.BottomLeft + Vector2.down * pad, pw, false);
 
-			// ---- Chip name UI ----
+			// Only show left panel content when not interacting with displays
+			if (!IsMovingOrScalingDisplay())
+			{
+				// ---- Chip name UI ----
 			theme.OptionsWheel.OverrideFontSize(2f);
-			int nameDisplayMode = UI.WheelSelector(ID_NameDisplayOptions, nameDisplayOptions, UI.TopLeft + Vector2.down * pad, new Vector2(pw, DrawSettings.ButtonHeight), theme.OptionsWheel, Anchor.TopLeft);
+			int nameDisplayMode = UI.WheelSelector(ID_NameDisplayOptions, nameDisplayOptions, UI.TopLeft + Vector2.down * pad, new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
 			ChipSaveMenu.ActiveCustomizeDescription.NameLocation = (NameDisplayLocation)nameDisplayMode;
             // ---- Chip layout UI ----
-            int layoutMode = UI.WheelSelector(ID_LayoutOptions, layoutOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight), theme.OptionsWheel, Anchor.TopLeft);
+            int layoutMode = UI.WheelSelector(ID_LayoutOptions, layoutOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
             if (layoutMode == 0 && isCustomLayout)
             {
                 // Switch to default layout
@@ -139,20 +196,21 @@ namespace DLS.Graphics
 				}
 				else if (numberOfInputBits <= SimChip.MAX_NUM_INPUT_BITS_WHEN_USER_CACHING)
 				{
-					int shouldBeCachedNum = UI.WheelSelector(ID_CachingOptions, cachingOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight), theme.OptionsWheel, Anchor.TopLeft);
+					int shouldBeCachedNum = UI.WheelSelector(ID_CachingOptions, cachingOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
 					bool shouldBeCached = false;
 					if (shouldBeCachedNum == 1) shouldBeCached = true;
 					ChipSaveMenu.ActiveCustomizeDescription.ShouldBeCached = shouldBeCached;
-					UI.DrawText("WARNING: Caching chips with many", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-					UI.DrawText("input bits significantly", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-					UI.DrawText("increases the time required to", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-					UI.DrawText("create the cache and may also", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-					UI.DrawText("increase memory consumption!", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("WARNING: Caching chips", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("with many input bits", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("significantly increases", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("the time required to", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("create the cache and", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("may also increase", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("memory consumption!", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
 				}
 				else
 				{
-					UI.DrawText("This chip has too many input", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-					UI.DrawText("bits to be cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("This chip has too many input bits to be cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
 				}
 			}
 			else
@@ -161,17 +219,33 @@ namespace DLS.Graphics
 				UI.DrawText("can not be cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
 			}
 
-			// ---- Displays UI ----
-			Color labelCol = ColHelper.Darken(theme.MenuPanelCol, 0.01f);
-			Vector2 labelPos = NextPos(1);
-			UI.TextWithBackground(labelPos, new Vector2(pw, DrawSettings.ButtonHeight), Anchor.TopLeft, displayLabelString, theme.FontBold, theme.FontSizeRegular, Color.white, labelCol);
+			// Add info button after caching content with proper spacing and centering
+			Vector2 infoButtonPos = NextPos(1); // Add extra padding above
+			infoButtonPos.x = UI.TopLeft.x + width / 2f; // Center horizontally in the left panel
+			Vector2 infoButtonSize = new Vector2(DrawSettings.ButtonHeight * 1.5f, DrawSettings.ButtonHeight * 0.8f);
+			bool infoButtonPressed = UI.Button(
+				"info",
+				theme.ButtonTheme,
+				infoButtonPos,
+				infoButtonSize,
+				true,
+				true,
+				false,
+				theme.ButtonTheme.buttonCols,
+				Anchor.CentreTop
+			);
+			
+			if (infoButtonPressed)
+			{
+				CachingExplanationPopup.Open();
+			}
 
-			float scrollViewHeight = 12;
-			float scrollViewSpacing = UILayoutHelper.DefaultSpacing;
-			UI.DrawScrollView(ID_DisplaysScrollView, NextPos(), new Vector2(pw, scrollViewHeight), scrollViewSpacing, Anchor.TopLeft, theme.ScrollTheme, drawDisplayScrollEntry, subChipsWithDisplays.Length);
+			// ---- Displays UI moved to right panel ----
 
-			// ---- Cancel/confirm buttons ----
-			cancelConfirmButtonIndex = MenuHelper.DrawButtonPair("CANCEL", "CONFIRM", NextPos(), pw, false);
+			// ---- Cancel/confirm buttons positioned at bottom of left panel ----
+			Vector2 buttonPos = UI.BottomLeft + Vector2.up * (DrawSettings.ButtonHeight * 2 + pad * 2);
+			cancelConfirmButtonIndex = MenuHelper.DrawButtonPair("CANCEL", "CONFIRM", buttonPos, pw, false);
+			}
 
 			Vector2 NextPos(float extraPadding = 0)
 			{
@@ -317,6 +391,7 @@ namespace DLS.Graphics
 
 			return numHexDigits <= 6;
 		}
+
 
         static void FaceSnapping(PinInstance pin, float mouseY)
             {

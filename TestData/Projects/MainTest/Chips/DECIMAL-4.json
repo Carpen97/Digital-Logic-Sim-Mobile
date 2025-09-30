@@ -1,6 +1,11 @@
 {
+  "DLSVersion": "2.1.6.8",
   "Name": "DECIMAL-4",
   "NameLocation": 2,
+  "ChipType": 0,
+  "InternalTypeId": 0,
+  "CanBeCached": false,
+  "ShouldBeCached": false,
   "Size": {
     "x": 1.7,
     "y": 1.25
@@ -19,9 +24,11 @@
         "x":-9.52703,
         "y":-3.08354
       },
-      "BitCount":4,
+      "BitCount":"4",
       "Colour":0,
-      "ValueDisplayMode":0
+      "ValueDisplayMode":0,
+      "face":3,
+      "LocalOffset":0.0
     }
   ],
   "OutputPins":[],
@@ -298,5 +305,5 @@
       "Scale":0.625
     }
   ],
-  "ChipType": 0
+  "HasCustomLayout": false
 }

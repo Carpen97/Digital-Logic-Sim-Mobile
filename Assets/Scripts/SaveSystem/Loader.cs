@@ -45,6 +45,10 @@ namespace DLS.SaveSystem
 			if (!File.Exists(path)) throw new Exception("No project description found at " + path);
 
 			ProjectDescription desc = Serializer.DeserializeProjectDescription(File.ReadAllText(path));
+			if (string.IsNullOrEmpty(desc.ProjectName))
+			{
+				throw new Exception($"Failed to deserialize project description for {projectName}. The JSON file may be corrupted.");
+			}
 			desc.ProjectName = projectName; // Enforce name = directory name (in case player modifies manually -- operations like deleting projects rely on this)
 
 			for (int i = 0; i < desc.StarredList.Count; i++)

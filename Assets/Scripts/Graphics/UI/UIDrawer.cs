@@ -33,7 +33,8 @@ namespace DLS.Graphics
 			Levels,
 			LevelValidationResult,
 			Leaderboard,
-			ScoreExplanation
+			ScoreExplanation,
+			CachingExplanation
 		}
 
 		static MenuType activeMenuOld;
@@ -92,6 +93,7 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.LevelValidationResult) LevelValidationPopup.DrawMenu();
 			else if (menuToDraw == MenuType.Leaderboard) LeaderboardPopup.DrawMenu();
 			else if (menuToDraw == MenuType.ScoreExplanation) ScoreExplanationPopup.DrawMenu();
+			else if (menuToDraw == MenuType.CachingExplanation) CachingExplanationPopup.DrawMenu();
 			else
 			{
 				bool showSimPausedBanner = project.simPaused;
