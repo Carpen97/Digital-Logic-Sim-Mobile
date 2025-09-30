@@ -24,9 +24,13 @@ namespace DLS.Graphics
 				stepCountPrev = Project.ActiveProject.simPausedSingleStepCounter;
 				stepString = Project.ActiveProject.simPausedSingleStepCounter + "";
 			}
-
-			Vector2 frameLabelPos = panelBounds.CentreRight + Vector2.left * 1;
+			#if UNITY_ANDROID || UNITY_IOS
+			Vector2 frameLabelPos = panelBounds.CentreTop + Vector2.right * UI.Width * 0.27f + Vector2.down * UI.Height * 0.08f;
+			UI.DrawText(stepString, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular*1.2f, frameLabelPos, Anchor.TextCentreRight, Color.white * 0.8f);
+			#else
+			Vector2 frameLabelPos = panelBounds.CentreRight + Vector2.left * 1f;
 			UI.DrawText(stepString, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, frameLabelPos, Anchor.TextCentreRight, Color.white * 0.8f);
+			#endif
 		}
 	}
 }

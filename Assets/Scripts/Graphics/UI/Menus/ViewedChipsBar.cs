@@ -24,7 +24,7 @@ namespace DLS.Graphics
 			// Back button
 			Vector2 buttonSize = new(8, InfoBarHeight - pad);
 			Vector2 buttonCentreRight = new(UI.Width - pad, pos.y);
-			bool backButtonPressed = UI.Button("Back", ActiveUITheme.ChipButton, buttonCentreRight, buttonSize, true, false, false, Anchor.CentreRight);
+			bool backButtonPressed = UI.Button("Back", ActiveUITheme.ChipButton, buttonCentreRight, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreRight);
 
 			if (backButtonPressed || KeyboardShortcuts.CancelShortcutTriggered)
 			{

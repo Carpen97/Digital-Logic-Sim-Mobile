@@ -33,8 +33,9 @@ namespace Seb.Vis.UI
 		static readonly Dictionary<UIHandle, bool> checkBoxStates = new();
 
 
-		#if UNITY_ANDROID || UNITY_IOS
 		public static bool IsInteractingWithColorPicker { get; private set; }
+		
+		#if UNITY_ANDROID || UNITY_IOS
 		static TouchScreenKeyboard keyboard;
 		static string lastSyncedText = "";
 		static bool keyboardWasClosedThisFrame = false;
@@ -76,7 +77,6 @@ namespace Seb.Vis.UI
 		public static bool IsMouseOverUIThisFrame => mouseOverUIFrameIndex == Time.frameCount;
 
         public static bool IsScrolling { get; private set; }
-        //public static bool IsInteractingWithColorPicker { get; private set; }
 
         //  --------------------------- UI Scope functions ---------------------------
 
@@ -765,11 +765,11 @@ namespace Seb.Vis.UI
 			OnFinishedDrawingUIElement(centre, size);
 		}
 
-		public static bool Button(string text, ButtonTheme theme, Vector2 pos, bool enabled = true, Anchor anchor = Anchor.Centre) => Button(text, theme, pos, Vector2.zero, true, true, enabled, anchor);
+		public static bool Button(string text, ButtonTheme theme, Vector2 pos, bool enabled = true, Anchor anchor = Anchor.Centre) => Button(text, theme, pos, Vector2.zero, true, true, enabled, theme.buttonCols, anchor);
 
-		public static bool Button(string text, ButtonTheme theme, Vector2 pos, Vector2 size, bool enabled = true, bool fitToText = true, Anchor anchor = Anchor.Centre) => Button(text, theme, pos, size, enabled, fitToText, fitToText, anchor);
+		public static bool Button(string text, ButtonTheme theme, Vector2 pos, Vector2 size, bool enabled = true, bool fitToText = true, Anchor anchor = Anchor.Centre) => Button(text, theme, pos, size, enabled, fitToText, fitToText,theme.buttonCols, anchor);
 
-		public static bool Button(string text, ButtonTheme theme, Vector2 pos, Vector2 size, bool enabled, bool fitTextX, bool fitTextY, Anchor anchor = Anchor.Centre, bool leftAlignText = false, float textOffsetX = 0, bool ignoreInputs = false)
+		public static bool Button(string text, ButtonTheme theme, Vector2 pos, Vector2 size, bool enabled, bool fitTextX, bool fitTextY, Seb.Vis.UI.ButtonTheme.StateCols btnColor, Anchor anchor = Anchor.Centre, bool leftAlignText = false, float textOffsetX = 0, bool ignoreInputs = false)
 		{
 			enabled &= !forceInteractionDisabled;
 
@@ -804,7 +804,7 @@ namespace Seb.Vis.UI
 				}
 
 				// --- Draw ---
-				Color buttonCol = theme.buttonCols.GetCol(mouseOver, mouseIsDown, enabled);
+				Color buttonCol = btnColor.GetCol(mouseOver, mouseIsDown, enabled);
 				Draw.Quad(ss.centre, ss.size, buttonCol);
 
 				Color textCol = theme.textCols.GetCol(mouseOver, mouseIsDown, enabled);
@@ -837,7 +837,7 @@ namespace Seb.Vis.UI
 			for (int i = 0; i < names.Length; i++)
 			{
 				bool active = activeStates == null ? true : activeStates[i];
-				if (Button(names[i], theme, pos, buttonSize, active, fitToTextX, fitToTextY))
+				if (Button(names[i], theme, pos, buttonSize, active, fitToTextX, fitToTextY, theme.buttonCols))
 				{
 					buttonPressIndex = i;
 				}
@@ -875,7 +875,7 @@ namespace Seb.Vis.UI
 				Vector2 buttonPos = new(buttonCentre.x, pos.y);
 
 				bool active = activeStates == null || activeStates[i];
-				if (Button(names[i], theme, buttonPos, buttonSize, active, false, autoHeight, buttonAnchor, ignoreInputs: ignoreInputs))
+				if (Button(names[i], theme, buttonPos, buttonSize, active, false, autoHeight, theme.buttonCols, buttonAnchor, ignoreInputs: ignoreInputs))
 				{
 					buttonPressIndex = i;
 				}
@@ -1015,8 +1015,8 @@ namespace Seb.Vis.UI
 				Vector2 rightEdge = centre + new Vector2(size.x / 2, 0);
 
 				int delta = 0;
-				if (Button("<", theme.buttonTheme, leftEdge, buttonSize, enabledLeft, false, false, Anchor.CentreLeft)) delta--;
-				if (Button(">", theme.buttonTheme, rightEdge, buttonSize, enabledRight, false, false, Anchor.CentreRight)) delta++;
+				if (Button("<", theme.buttonTheme, leftEdge, buttonSize, enabledLeft, false, false,theme.buttonTheme.buttonCols, Anchor.CentreLeft)) delta--;
+				if (Button(">", theme.buttonTheme, rightEdge, buttonSize, enabledRight, false, false,theme.buttonTheme.buttonCols, Anchor.CentreRight)) delta++;
 
 				// Update state
 				elementIndex = (elementIndex + delta + elements.Length) % elements.Length;

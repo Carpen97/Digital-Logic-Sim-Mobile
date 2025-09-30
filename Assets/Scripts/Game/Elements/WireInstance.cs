@@ -33,6 +33,7 @@ namespace DLS.Game
 		// This allows the wire to keep its connection as close to this original point as possible when things are moved around.
 		public Vector2 originalWireConnectionPoint;
 
+
 		public ConnectionInfo SourceConnectionInfo;
 		public ConnectionInfo TargetConnectionInfo;
 
@@ -218,6 +219,7 @@ namespace DLS.Game
 		}
 
 		public void AddWirePoint(Vector2 p) => WirePoints.Add(p);
+
 
 		public void DeleteWirePoint(int i)
 		{

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using DLS.Game;
+using DLS.Game.LevelsIntegration;
 using DLS.Simulation;
 using Seb.Vis.UI;
 
@@ -28,7 +29,11 @@ namespace DLS.Graphics
 			Search,
 			ChipLabelPopup,
 			SpecialChipMaker,
-			Overwrite
+			Overwrite,
+			Levels,
+			LevelValidationResult,
+			Leaderboard,
+			ScoreExplanation
 		}
 
 		static MenuType activeMenuOld;
@@ -83,10 +88,16 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.PulseEdit) PulseEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ConstantEdit)  ConstantEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.SpecialChipMaker) SpecialChipMakerMenu.DrawMenu();
+			else if (menuToDraw == MenuType.Levels) LevelsMenu.DrawMenu();
+			else if (menuToDraw == MenuType.LevelValidationResult) LevelValidationPopup.DrawMenu();
+			else if (menuToDraw == MenuType.Leaderboard) LeaderboardPopup.DrawMenu();
+			else if (menuToDraw == MenuType.ScoreExplanation) ScoreExplanationPopup.DrawMenu();
 			else
 			{
 				bool showSimPausedBanner = project.simPaused;
 				if (showSimPausedBanner) SimPausedUI.DrawPausedBanner();
+				bool showLevelBanner = LevelManager.Instance.IsActive;
+				if (showLevelBanner && !showSimPausedBanner) LevelBannerUI.DrawLevelBanner();
 				if (project.chipViewStack.Count > 1) ViewedChipsBar.DrawViewedChipsBanner(project, showSimPausedBanner);
 				if (SimChip.isCreatingACache) CreateCacheUI.DrawCreatingCacheInfo();
 				aMenuIsOpen = false;
@@ -120,6 +131,7 @@ namespace DLS.Graphics
 				else if (ActiveMenu == MenuType.PulseEdit) PulseEditMenu.OnMenuOpened();
                 else if (ActiveMenu == MenuType.ConstantEdit) ConstantEditMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.SpecialChipMaker) SpecialChipMakerMenu.OnMenuOpened();
+				else if (ActiveMenu == MenuType.Levels) LevelsMenu.OnMenuOpened();
 
 
 				if (InInputBlockingMenu() && Project.ActiveProject != null && Project.ActiveProject.controller != null)

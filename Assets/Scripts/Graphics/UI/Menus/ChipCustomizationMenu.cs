@@ -6,8 +6,8 @@ using DLS.Game;
 using DLS.Simulation;
 using Seb.Helpers;
 using Seb.Vis;
-using Seb.Vis.UI;
 using UnityEngine;
+using Seb.Vis.UI;
 
 namespace DLS.Graphics
 {
@@ -38,7 +38,7 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_ColourHexInput = new("CustomizeMenu_ChipColHexInput");
 		static readonly UIHandle ID_NameDisplayOptions = new("CustomizeMenu_NameDisplayOptions");
 		static readonly UIHandle ID_CachingOptions = new("CustomizeMenu_CachingOptions");
-		static readonly UI.ScrollViewDrawElementFunc drawDisplayScrollEntry = DrawDisplayScroll;
+		static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc drawDisplayScrollEntry = DrawDisplayScroll;
         public static readonly UIHandle ID_LayoutOptions = new("CustomizeMenu_LayoutOptions");
 		static readonly Func<string, bool> hexStringInputValidator = ValidateHexStringInput;
 		public static bool isCustomLayout;
@@ -213,7 +213,7 @@ namespace DLS.Graphics
 			}
 
 			// Display selected, start placement
-			if (UI.Button(displayName, theme.ButtonTheme, pos, new Vector2(width, 0), enabled, false, true, Anchor.TopLeft))
+			if (UI.Button(displayName, theme.ButtonTheme, pos, new Vector2(width, 0), enabled, false, true, theme.ButtonTheme.buttonCols, Anchor.TopLeft))
 			{
 				SubChipDescription subChipDesc = new(chipDesc.Name, subChipsWithDisplays[i].ID, string.Empty, Vector2.zero, null);
 				SubChipInstance instance = new(chipDesc, subChipDesc);

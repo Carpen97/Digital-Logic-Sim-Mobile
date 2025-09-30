@@ -5,7 +5,9 @@ using DLS.Graphics;
 using DLS.SaveSystem;
 using Seb.Vis.UI;
 using UnityEngine;
+using DLS.Game.LevelsIntegration;	// for LevelManager
 using UnityEngine.UI;
+
 
 #if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
 public class MobileUIController : MonoBehaviour
@@ -14,7 +16,6 @@ public class MobileUIController : MonoBehaviour
 	public GameObject confirmButton; 
 	public GameObject cancelButton; 
 	public GameObject addWirePointButton; 
-
 	public GameObject undoButton; 
 	public GameObject redoButton; 
 	public GameObject wrenchTool;  
@@ -24,10 +25,18 @@ public class MobileUIController : MonoBehaviour
 	public bool isWrenchToolActive;
 	public GameObject boxSelectTool;  
 	public bool isBoxSelectToolActive;
+	public GameObject hintTool;
+	public bool isHintToolActive;
 	public bool isShowingPlacementButtons;
+
+	[Header("Level Mode")]
+	public GameObject validateButton;	// round dark "Validate" button (assign in Inspector)
+
+	private LevelManager _levelManager;
 
 	private Image wrenchImage;
 	private Image boxSelectImage;
+	private Image hintImage;
 
 	private System.Action onConfirmCallback;
 	private System.Action onAddWirePointCallback;
@@ -42,8 +51,10 @@ public class MobileUIController : MonoBehaviour
 		if (Instance == null)
 		{
 			Instance = this;
+			_levelManager = FindFirstObjectByType<LevelManager>();
 			wrenchImage = wrenchTool.GetComponent<Image>();
 			boxSelectImage = boxSelectTool.GetComponent<Image>();
+			hintImage = hintTool.GetComponent<Image>();
 		}
 		else
 		{
@@ -56,34 +67,71 @@ public class MobileUIController : MonoBehaviour
     void Update()
     {
 		bool defaultState = UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup;
-		if(defaultState){
+		if (defaultState)
+		{
 			wrenchTool.SetActive(true);
-			if(Project.ActiveProject.CanEditViewedChip){
+			if (Project.ActiveProject.CanEditViewedChip)
+			{
 				boxSelectTool.SetActive(true);
-				bool temp = Project.ActiveProject.controller.SelectedElements.Count>0 && !Project.ActiveProject.controller.IsPlacingElements;
+				bool temp = Project.ActiveProject.controller.SelectedElements.Count > 0 && !Project.ActiveProject.controller.IsPlacingElements;
 				trashCanTool.SetActive(temp);
 				copyTool.SetActive(temp);
-				if(!isShowingPlacementButtons){
+				if (!isShowingPlacementButtons)
+				{
 					redoButton.SetActive(true);
 					undoButton.SetActive(true);
 				}
 				singleStepTool.SetActive(Project.ActiveProject.simPaused);
-			}else{
+			}
+			else
+			{
 				confirmButton.SetActive(false);
 				cancelButton.SetActive(false);
 				addWirePointButton.SetActive(false);
 				undoButton.SetActive(false);
 				redoButton.SetActive(false);
 				boxSelectTool.SetActive(false);
+				hintTool.SetActive(false);
 				trashCanTool.SetActive(false);
 				copyTool.SetActive(false);
 			}
-		}else if(UIDrawer.ActiveMenu is UIDrawer.MenuType.ChipCustomization){
+			// Show Validate button only in Level Mode, when not showing placement buttons
+			if (_levelManager != null && _levelManager.IsActive && Project.ActiveProject.CanEditViewedChip && !isShowingPlacementButtons
+			&& UIDrawer.ActiveMenu != UIDrawer.MenuType.BottomBarMenuPopup)
+			{
+				validateButton.SetActive(true);
+			}
+			else
+			{
+				validateButton.SetActive(false);
+			}
+
+			// Show Hint button only in Level Mode, when nothing is selected (no trash/copy tools visible)
+			bool hasSelection = Project.ActiveProject.controller.SelectedElements.Count > 0 && !Project.ActiveProject.controller.IsPlacingElements;
+			bool shouldShowHint = _levelManager != null && _levelManager.IsActive && Project.ActiveProject.CanEditViewedChip && !isShowingPlacementButtons
+			&& UIDrawer.ActiveMenu != UIDrawer.MenuType.BottomBarMenuPopup && !hasSelection;
+			
+			// Debug logging
+			if (hintTool.activeSelf != shouldShowHint)
+			{
+				Debug.Log($"Hint button visibility changed: {shouldShowHint} (LevelActive: {_levelManager?.IsActive}, CanEdit: {Project.ActiveProject.CanEditViewedChip}, HasSelection: {hasSelection})");
+			}
+			
+			hintTool.SetActive(shouldShowHint);
+
+		}
+		else if (UIDrawer.ActiveMenu is UIDrawer.MenuType.ChipCustomization)
+		{
 			wrenchTool.SetActive(false);
 			boxSelectTool.SetActive(false);
-		}else{
+			hintTool.SetActive(false);
+			validateButton.SetActive(false);
+		}
+		else
+		{
 			HideAll();
 		}
+
     }
 
 	public void ApplyTheme(IconThemeSO theme)
@@ -91,6 +139,7 @@ public class MobileUIController : MonoBehaviour
 		// Set normal state sprites
 		wrenchTool.GetComponent<Image>().sprite = theme.wrenchIcon;
 		boxSelectTool.GetComponent<Image>().sprite = theme.boxSelectIcon;
+		hintTool.GetComponent<Image>().sprite = theme.hintIcon;
 		trashCanTool.GetComponent<Image>().sprite = theme.trashIcon;
 		undoButton.GetComponent<Image>().sprite = theme.undoIcon;
 		redoButton.GetComponent<Image>().sprite = theme.redoIcon;
@@ -98,12 +147,15 @@ public class MobileUIController : MonoBehaviour
 		cancelButton.GetComponent<Image>().sprite = theme.cancelIcon;
 		singleStepTool.GetComponent<Image>().sprite = theme.singleStepIcon;
 		copyTool.GetComponent<Image>().sprite = theme.copyIcon;
+		validateButton.GetComponent<Image>().sprite = theme.playIcon;	// reuse the checkmark
+
 
 		Debug.Log($"Applied Theme: {theme.name}");
 		var buttons = new (GameObject go, Sprite toggled)[]
 		{
 			(wrenchTool, theme.wrenchIconToggled),
 			(boxSelectTool, theme.boxSelectIconToggled),
+			(hintTool, theme.hintToggled),
 			(trashCanTool, theme.trashIconToggled),
 			(undoButton, theme.undoIconToggled),
 			(redoButton, theme.redoIconToggled),
@@ -111,6 +163,7 @@ public class MobileUIController : MonoBehaviour
 			(cancelButton, theme.cancelIconToggled),
 			(singleStepTool, theme.singleStepIconToggled),
 			(copyTool, theme.copyIconToggled),
+			(validateButton, theme.playToggled),
 		};
 
 		foreach (var (go, toggledSprite) in buttons)
@@ -139,9 +192,11 @@ public class MobileUIController : MonoBehaviour
 		redoButton.SetActive(false);
 		wrenchTool.SetActive(false);
 		boxSelectTool.SetActive(false);
+		hintTool.SetActive(false);
 		trashCanTool.SetActive(false);
 		copyTool.SetActive(false);
 		addWirePointButton.SetActive(false);
+		validateButton.SetActive(false);
 	}
 
     public void ShowPlacementButtons(System.Action onConfirm, System.Action onCancel)
@@ -226,6 +281,16 @@ public class MobileUIController : MonoBehaviour
 		else
 			boxSelectImage.color = Color.white;
 	}
+
+	public void OnHintToolPress()
+	{	
+		isHintToolActive = !isHintToolActive;
+		if(isHintToolActive){
+			hintImage.color = Color.yellow;
+		}
+		else
+			hintImage.color = Color.white;
+	}
 	public void OnTrashCanPress()
 	{
 		Project.ActiveProject.controller.DeleteSelected();
@@ -264,6 +329,32 @@ public class MobileUIController : MonoBehaviour
 			//UIDrawer.SetActiveMenu(UIDrawer.MenuType.None); // show dev chip
 		});
 	}
+	public void OnValidateButtonPressed()
+	{
+		if (_levelManager == null || !_levelManager.IsActive)
+			return;
+
+		var report = _levelManager.RunValidation();
+		LevelValidationPopup.Open(report);
+
+		// For now we log; next step we’ll show a popup using your existing popup infra.
+		if (report.PassedAll)
+		{
+			// Get NAND gate count for display
+			var adapter = new MobileSimulationAdapter();
+			int nandCount = adapter.CountNandGates();
+			Debug.Log($"[Levels] All tests passed ✅ — NAND Gates: {nandCount}");
+		}
+		else
+		{
+			Debug.Log($"[Levels] Validation failed — Stars={report.Stars}, Failures={report.Failures.Count}");
+			foreach (var f in report.Failures)
+				Debug.Log($"• inputs={f.Inputs} msg={f.Message}");
+			foreach (var m in report.ConstraintMessages)
+				Debug.Log($"• constraint: {m}");
+		}
+	}
+
 	public void OnSingleTimeStep()
 	{
 		Debug.Log("SINGLE STEP");

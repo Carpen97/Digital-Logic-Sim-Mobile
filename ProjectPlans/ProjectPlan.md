@@ -1,250 +1,37 @@
-## Project Plan
+## Project Plan – Version 2.0
 
 ---
 
-### 🌟 Open Tickets
+### 📌 How We Work
 
-| ID         | Name                                      |   |
-| ---------- | ----------------------------------------- | - |
-| TICKET-006 | Improve UI Scaling and Black Bars         |   |
-| TICKET-008 | Fix Camera Movement and Zoom (Multitouch) |   |
-| TICKET-010 | Add Box-Select Tool                       |   |
+* **Tickets**: All work is broken down into numbered tickets (001, 002…). Only open tickets are kept here. When a ticket is completed, a closure note is written (including the date of closure) and saved offline; it is then removed from this plan.
+* **Worker Chats**: Each ticket gets its own dedicated worker chat. Moving forward, these will be handled in **Cursor**, where the worker chat is in charge of coding. The Project Manager (this chat) creates the ticket description and sends an intro paragraph to the worker chat so it knows its role and scope. The worker chat then reports back when work is done.
 
 ---
 
-### ✅ Completed Tickets
+### 🎯 Goals
 
-| ID         | Name                                          |
-| ---------- | --------------------------------------------- |
-| TICKET-001 | Android Test Build                            |
-| TICKET-002 | Codebase Exploration                          |
-| TICKET-003 | Create TouchInputHelper                       |
-| TICKET-004 | Add Confirm Buttons for Placement             |
-| TICKET-005 | Enable Android Keyboard Input                 |
-| TICKET-007 | Fix Wire Placement with Confirm Button        |
-| TICKET-009 | Add Wrench Tool for Interacting with Elements |
+* (High-level project goals go here)
 
 ---
 
-### 📜 Ticket Descriptions
+### 💡 Ideas / Future Features
+
+* (Unscoped ideas to maybe turn into tickets later)
 
 ---
 
-#### [TICKET-001] Android Test Build
-
-- Build and run the current project on an Android device.
-- Check:
-  - Does the game boot and run?
-  - Are resolution and UI scaling acceptable?
-  - Does any touch input work (even partially)?
-- Take notes on major problems observed.
-- **Outcome:** Purely observation. No code changes yet.
-
-**Result:**
-
-- Game boots and runs.
-- UI buttons work natively via touch.
-- Input based on mouse hover (e.g., placing chips following cursor) does not work on mobile.
-- Text input in input fields requires a physical keyboard and does not work on mobile.
-- Resolution is acceptable but has minor black bars on the sides.
-
----
-
-#### [TICKET-002] Codebase Exploration
-
-- Download the provided Assets zip (or receive it via project file).
-- Browse core systems:
-  - Input handling
-  - UI menus and keyboard usage
-  - Wire editing and chip interaction
-- Plan next tickets based on exploration.
-- **Outcome:** List of suggested tickets for input handling, UI scaling fixes, touch improvements, etc.
-
----
-
-#### [TICKET-003] Create TouchInputHelper
-
-- Create a new class to abstract basic mobile touch input.
-- Detect simple tap and hold gestures.
-- Mirror InputHelper methods for touch devices.
-- Ensure future mobile input changes can reuse this helper easily.
-
-**Result:**
-
-- Implemented `TouchInputHelper.cs` with basic tap, hold, and release detection.
-- World-space touch position method added.
-- File placed alongside InputHelper.cs for organization.
-- Ready for integration into interaction controllers in future tickets.
-
----
-
-#### [TICKET-004] Add Confirm Buttons for Placement
-
-- When placing a chip or wire, display two buttons: green (confirm) and red (cancel).
-- Tap-to-move behavior will act as hovering does on PC.
-- Chip or wire will "ghost move" to tapped location without instantly placing.
-- Player must tap the green button to confirm placement.
-- Cancel button reverts the placement.
-
-**Result:**
-
-- Confirm and Cancel buttons added.
-- Placement now requires confirmation, avoiding accidental placement on mobile.
-- Ghost movement behavior implemented.
-
----
-
-#### [TICKET-005] Enable Android Keyboard Input
-
-- Adapt MenuInputField or equivalent to open Android TouchScreenKeyboard.
-- Trigger TouchScreenKeyboard.Open() when selecting a text field on mobile.
-- Ensure smooth user experience without needing external hardware keyboard.
-
-**Result:**
-
-- Android TouchScreenKeyboard now opens properly.
-- No hardware keyboard needed.
-- Smooth input field experience achieved.
-
----
-
-#### [TICKET-006] Improve UI Scaling and Black Bars
-
-- Investigate black bar appearance on mobile screens.
-- Adjust resolution, canvas scaler settings, or aspect ratio settings.
-- Ensure menus and UI elements fit nicely across different devices.
-
----
-
-#### [TICKET-007] Fix Wire Placement with Confirm Button
-
-- On mobile, tapping the green confirm button should add a new waypoint for wire placement.
-- Tapping on another pin should finalize the wire.
-- Wire should behave naturally without double-tapping or missing inputs.
-
-**Result:**
-
-- Confirm button now adds waypoints while drawing wires.
-- Tapping another pin finalizes wire placement.
-- Placement feels intuitive and reliable.
-
----
-
-#### [TICKET-008] Fix Camera Movement and Zoom (Multitouch)
-
-- Implement camera panning using two-finger drag.
-- Implement zooming in and out using pinch gestures.
-- Ensure camera movement and zoom scaling feels smooth and natural.
-- Avoid sudden jumps or sensitivity issues.
-
----
-
-#### [TICKET-009] Add Wrench Tool for Interacting with Elements
-
-- Add a "wrench" button.
-- When active, the wrench tool allows tapping on chips, pins, or wires to trigger their standard left-click functionality.
-- Same behavior as mouse left-click on PC.
-- Important for mobile devices where hover/click separation is missing.
-
-**Result:**
-
-- Wrench tool button implemented.
-- Tapping chips, pins, and wires now correctly triggers interaction.
-- Smooth functionality matching PC behavior.
-
----
-
-#### [TICKET-010] Add Box-Select Tool
-
-- Add a "box-select" button.
-- When active, allows player to drag-select a rectangle.
-- Upon confirming the selection, elements inside the box will be selected.
-- Mimic existing PC behavior of click-dragging to select multiple chips, pins, etc.
-- Use `IsCreatingSelectionBox` and `SelectionBoxCentre` / `SelectionBoxSize` logic.
-
-#### [TICKET-006] Improve UI Scaling and Black Bars
-
-Investigate black bar appearance on mobile screens.
-
-Adjust resolution, canvas scaler settings, or aspect ratio settings.
-
-Ensure menus and UI elements fit nicely across different devices.
-
-Result:
-
-Black bars are still present, but mobile UI is now properly scaled and positioned.
-
-No UI overlap with black bars. Experience improved.
-
-#### [TICKET-007] Fix Wire Placement with Confirm Button
-
-On mobile, tapping the green confirm button should add a new waypoint for wire placement.
-
-Tapping on another pin should finalize the wire.
-
-Wire should behave naturally without double-tapping or missing inputs.
-
-Result:
-
-Confirm button now adds waypoints while drawing wires.
-
-Tapping another pin finalizes wire placement.
-
-Placement feels intuitive and reliable.
-
-#### [TICKET-008] Fix Camera Movement and Zoom (Multitouch)
-
-Implement camera panning using two-finger drag.
-
-Implement zooming in and out using pinch gestures.
-
-Ensure camera movement and zoom scaling feels smooth and natural.
-
-Avoid sudden jumps or sensitivity issues.
-
-Result:
-
-Camera movement and zoom now work naturally with multitouch.
-
-Scaling is consistent with finger positions.
-
-Smooth user experience across devices.
-
-#### [TICKET-009] Add Wrench Tool for Interacting with Elements
-
-Add a "wrench" button.
-
-When active, the wrench tool allows tapping on chips, pins, or wires to trigger their standard left-click functionality.
-
-Same behavior as mouse left-click on PC.
-
-Important for mobile devices where hover/click separation is missing.
-
-Result:
-
-Wrench tool button implemented.
-
-Tapping chips, pins, and wires now correctly triggers interaction.
-
-Smooth functionality matching PC behavior.
-
-#### [TICKET-010] Add Box-Select Tool
-
-Add a "box-select" button.
-
-When active, allows player to drag-select a rectangle.
-
-Upon confirming the selection, elements inside the box will be selected.
-
-Mimic existing PC behavior of click-dragging to select multiple chips, pins, etc.
-
-Use IsCreatingSelectionBox and SelectionBoxCentre / SelectionBoxSize logic.
-
-Result:
-
-Box-select tool implemented.
-
-Dragging now selects multiple elements correctly on mobile.
-
-Matching behavior to PC version.
-
+### ✨ Open Tickets
+
+| ID  | Name                                   | Status | Notes                                                                                                                                                                                                                                 |
+| --- | -------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 007 | Add iOS import/export support          | Open   | Currently project import/export works on Android. Implement equivalent functionality for iOS.                                                                                                                                         |
+| 012 | Add pin hitbox size setting            | Open   | Add a preference to adjust the hitbox size of pins for easier touch interaction.                                                                                                                                                      |
+| 013 | Add scrollbar size + buttons setting   | Open   | Add a setting to adjust scrollbar size and provide optional up/down buttons to assist navigation.                                                                                                                                     |
+| 018 | Share solutions (zip + ghost)          | Open   | Normalize & zip solution JSON, upload/download, and implement ghost playback viewer.                                                                                                                                                  |
+| 019 | Server validation for submissions      | Open   | Cloud Function re-simulates solutions/scores to verify; flags "verified" entries and rejects impossible ones.                                                                                                                         |
+| 020 | Fix layout in 'Add Special' menu       | Open   | Adjust the UI layout in the 'Add Special' menu so buttons and labels align correctly across devices.                                                                                                                                  |
+| 023 | Redo customization view layout         | Open   | Redesign customization view: fix overflow of warning text (e.g., caching messages) and move display elements from left to right side.                                                                                                 |
+| 024 | Component grouping system              | Open   | Add support for grouping multiple components. Selecting multiple components shows a new UI button to create a group. Groups behave as single units for selection/deselection. Groups can also be saved and spawned, similar to chips. |
+| 025 | Chip preview in library menu           | Open   | Show a preview of the currently selected chip in the library menu. Use unoccupied space in the bottom-right corner for this preview.                                                                                                  |
+| 026 | Perpendicular guide for straight lines | Open   | When straight line mode is toggled, draw a perpendicular guide line to assist alignment.                                                                                                                                              |

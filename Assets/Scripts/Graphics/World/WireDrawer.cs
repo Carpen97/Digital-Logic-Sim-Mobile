@@ -11,7 +11,7 @@ namespace DLS.Graphics
 
 
         public static float DrawWire(Vector2[] points, float thickness, Color col, Vector2 interactPos){
-			if(Project.ActiveProject.description.Prefs_WireCurvatureMode == 0){
+			if(Project.ActiveProject.description.Prefs_WireCurvatureMode == 0 || Project.ActiveProject.description.Prefs_MultiWireLayoutAlgorithm == 1){
         		return DrawWireStraight(points, thickness, col, interactPos);
 			}else{
         		return DrawWireCurved(points, thickness, col, interactPos);
@@ -21,6 +21,11 @@ namespace DLS.Graphics
         public static float DrawWireStraight(Vector2[] points, float thickness, Color col, Vector2 interactPos)
 		{
 			float interactSqrDst = float.MaxValue;
+			if (points.Length == 0)
+			{
+				Debug.Log("No points");
+				return 0;
+			}
 			Vector2 inA = points[0];
 
 			for (int i = 1; i < points.Length; i++)

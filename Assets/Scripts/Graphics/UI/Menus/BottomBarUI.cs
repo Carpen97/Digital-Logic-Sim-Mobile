@@ -1,6 +1,7 @@
 using System;
 using DLS.Description;
 using DLS.Game;
+using DLS.Game.LevelsIntegration;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis;
@@ -22,9 +23,9 @@ namespace DLS.Graphics
 
 		const string shortcutTextCol = "<color=#666666ff>";
 
-		#if UNITY_ANDROID || UNITY_IOS
-		public static int showScrollingButtons = 0;
 		const float scrollButtonWidth = 1.2f;
+		public static int showScrollingButtons = 0;
+		#if UNITY_ANDROID || UNITY_IOS
 
 		static readonly string[] menuButtonNames =
 		{
@@ -35,6 +36,7 @@ namespace DLS.Graphics
 			$"  LIBRARY  ",
 			$"  STATS  ",
 			$"  PREFS  ",
+			$"  LEVELS  ",
 			$"  QUIT  "
 		};
 		#else
@@ -47,6 +49,7 @@ namespace DLS.Graphics
 			$"LIBRARY      {shortcutTextCol}Ctrl+L",
 			$"STATS        {shortcutTextCol}Ctrl+T", // Ctrl+'T' from the T in Stats
 			$"PREFS        {shortcutTextCol}Ctrl+P",
+			$"LEVELS       {shortcutTextCol}",          // <-- added (no shortcut yet)
 			$"QUIT         {shortcutTextCol}Ctrl+Q"
 		};
 		#endif
@@ -58,7 +61,8 @@ namespace DLS.Graphics
 		const int LibraryButtonIndex = 4;
 		const int StatsButtonIndex = 5;
 		const int OptionsButtonIndex = 6;
-		const int QuitButtonIndex = 7;
+		const int LevelsButtonIndex = 7; // insert before Options/Quit
+		const int QuitButtonIndex = 8;
 
 		// ---- State ----
 		static float scrollX;
@@ -74,6 +78,16 @@ namespace DLS.Graphics
 		static Bounds2D barBounds_ScreenSpace;
 
 		static bool MenuButtonsAndShortcutsEnabled => Project.ActiveProject.CanEditViewedChip;
+
+		static bool ShouldHideChipInLevel(ChipDescription desc)
+		{
+			var lm = LevelManager.Instance;
+			bool isLevelActive = lm != null && lm.IsActive;
+			return isLevelActive
+				&& desc != null
+				&& (desc.ChipType == ChipType.In_Pin || desc.ChipType == ChipType.Out_Pin);
+		}
+
 
 		public static void DrawUI(Project project)
 		{
@@ -105,7 +119,7 @@ namespace DLS.Graphics
 				{
 					bool buttonEnabled = MenuButtonsAndShortcutsEnabled || i is QuitButtonIndex or OptionsButtonIndex;
 					string text = menuButtonNames[i];
-					if (UI.Button(text, theme, pos, size, buttonEnabled, false, false, Anchor.BottomLeft))
+					if (UI.Button(text, theme, pos, size, buttonEnabled, false, false, theme.buttonCols, Anchor.BottomLeft))
 					{
 						ButtonPressed(i);
 					}
@@ -140,6 +154,7 @@ namespace DLS.Graphics
 				else if (i == LibraryButtonIndex) OpenLibraryMenu();
 				else if (i == StatsButtonIndex) OpenStatsMenu();
 				else if (i == OptionsButtonIndex) OpenPreferencesMenu();
+				else if (i == LevelsButtonIndex) OpenLevelsMenu();
 				else if (i == QuitButtonIndex) ExitToMainMenu();
 			}
 		}
@@ -173,7 +188,7 @@ namespace DLS.Graphics
 			Vector2 scrollButtonSize = new(scrollButtonWidth, buttonHeight);
 			float scrollAmount = 15f; // Adjust as needed for responsiveness
 
-			if (UI.Button("MENU", theme.MenuButtonTheme, menuButtonPos, menuButtonSize, menuButtonEnabled, true, false, Anchor.BottomLeft, ignoreInputs: ignoreInputs))
+			if (UI.Button("MENU", theme.MenuButtonTheme, menuButtonPos, menuButtonSize, menuButtonEnabled, true, false, theme.ButtonTheme.buttonCols, Anchor.BottomLeft, ignoreInputs: ignoreInputs))
 			{
 				UIDrawer.ToggleBottomPopupMenu();
 				toggleMenuFrame = Time.frameCount;
@@ -182,12 +197,12 @@ namespace DLS.Graphics
 			if(showScrollingButtons!=2){
 				if(showScrollingButtons == 1) scrollAmount *= -1; //invert
 				Vector2 leftButtonPos = new Vector2(UI.PrevBounds.Right + buttonSpacing, padY);
-				if (UI.Button("←", theme.MenuButtonTheme, leftButtonPos, scrollButtonSize, true, true, false, Anchor.BottomLeft))
+				if (UI.Button("←", theme.MenuButtonTheme, leftButtonPos, scrollButtonSize, true, true, false,theme.ButtonTheme.buttonCols, Anchor.BottomLeft))
 				{
 					scrollX = Mathf.Clamp(scrollX - scrollAmount, Mathf.Min(0, chipButtonRegionWidth - chipBarTotalWidthLastFrame), 0);
 				}
 				Vector2 rightButtonPos = new Vector2(UI.PrevBounds.Right + buttonSpacing, padY);
-				if (UI.Button("→", theme.MenuButtonTheme, rightButtonPos, scrollButtonSize, true, true, false, Anchor.BottomLeft))
+				if (UI.Button("→", theme.MenuButtonTheme, rightButtonPos, scrollButtonSize, true, true, false, theme.ButtonTheme.buttonCols, Anchor.BottomLeft))
 				{
 					scrollX = Mathf.Clamp(scrollX + scrollAmount, Mathf.Min(0, chipButtonRegionWidth - chipBarTotalWidthLastFrame), 0);
 				}
@@ -234,6 +249,8 @@ namespace DLS.Graphics
 				for (int i = 0; i < project.description.StarredList.Count; i++)
 				{
 					StarredItem starred = project.description.StarredList[i];
+					ChipDescription desc;
+					project.chipLibrary.TryGetChipDescription(starred.Name, out desc);
 					bool isToggledOpenCollection = activeCollection != null && ChipDescription.NameMatch(starred.Name, activeCollection.Name);
 					string buttonName = starred.GetDisplayStringForBottomBar(isToggledOpenCollection);
 
@@ -250,7 +267,8 @@ namespace DLS.Graphics
 
 					bool canAdd = starred.IsCollection || project.ViewedChip.CanAddSubchip(buttonName);
 
-					if (UI.Button(buttonName, buttonTheme, buttonPos, buttonSize, chipButtonsEnabled && canAdd, true, false, Anchor.BottomLeft, textOffsetX: textOffsetX, ignoreInputs: ignoreInputs))
+
+					if (UI.Button(buttonName, buttonTheme, buttonPos, buttonSize, chipButtonsEnabled && canAdd, true, false, theme.ButtonTheme.buttonCols, Anchor.BottomLeft, textOffsetX: textOffsetX, ignoreInputs: ignoreInputs))
 					{
 						if (starred.IsCollection)
 						{
@@ -321,7 +339,10 @@ namespace DLS.Graphics
 					for (int i = firstButtonIndex; i >= 0; i--)
 					{
 						string chipName = activeCollection.Chips[i];
-						UI.Button(chipName, DrawSettings.ActiveUITheme.ChipButton, buttonLayoutPos, new Vector2(0, buttonHeight), false, true, false, Anchor.BottomLeft, false, 0);
+						ChipDescription desc;
+						project.chipLibrary.TryGetChipDescription(chipName, out desc);
+						//if (ShouldHideChipInLevel(desc)) continue;
+						UI.Button(chipName, DrawSettings.ActiveUITheme.ChipButton, buttonLayoutPos, new Vector2(0, buttonHeight), false, true, false, DrawSettings.ActiveUITheme.ChipButton.buttonCols, Anchor.BottomLeft, false, 0);
 						buttonLayoutPos = UI.PrevBounds.TopLeft + Vector2.up * buttonSpacing;
 
 						// Stop if approaching top of screen (we'll draw the rest of the collection starting on a new line)
@@ -330,6 +351,12 @@ namespace DLS.Graphics
 						collectionBounds = UI.GetCurrentBoundsScope();
 						numButtonsToDraw++;
 					}
+				}
+				if (numButtonsToDraw == 0)
+				{
+					// Nothing visible left in this collection (e.g., all pins hidden in level) — close popup and stop.
+					activeCollection = null;
+					return; // or: break;
 				}
 
 				if (expandLeft && !isFirstPartial)
@@ -341,7 +368,7 @@ namespace DLS.Graphics
 				Bounds2D panelBounds = Bounds2D.Grow(collectionBounds, buttonSpacing * 2);
 				panelBounds = new Bounds2D(new Vector2(panelBounds.Min.x, barHeight), panelBounds.Max);
 				UI.DrawPanel(panelBounds, theme.StarredBarCol);
-				int buttonIndex = DrawCollectionsPopupPartial(collectionBounds.BottomLeft, collectionBounds.Width, firstButtonIndex, numButtonsToDraw, ref openedContextMenu);
+				int buttonIndex = DrawCollectionsPopupPartial(collectionBounds.BottomLeft, collectionBounds.Width, firstButtonIndex, numButtonsToDraw, ref openedContextMenu, project);
 				if (buttonIndex != -1) pressedIndex = buttonIndex;
 
 				// Prepare for next part of the collection (if not all did fit on the screen)
@@ -371,7 +398,7 @@ namespace DLS.Graphics
 			}
 		}
 
-		static int DrawCollectionsPopupPartial(Vector2 bottomLeftCurr, float maxWidth, int startIndex, int count, ref bool openedContextMenu)
+		static int DrawCollectionsPopupPartial(Vector2 bottomLeftCurr, float maxWidth, int startIndex, int count, ref bool openedContextMenu, Project project)
 		{
 			int pressedIndex = -1;
 			int endIndex = startIndex - count + 1;
@@ -384,8 +411,9 @@ namespace DLS.Graphics
 			{
 				const float offsetX = 0.55f;
 				string chipName = activeCollection.Chips[i];
-				bool enabled = viewedChip.CanAddSubchip(chipName);
-				if (UI.Button(chipName, theme, bottomLeftCurr, new Vector2(maxWidth, buttonHeight), enabled, false, false, Anchor.BottomLeft, true, offsetX, ignoreInputs))
+				project.chipLibrary.TryGetChipDescription(chipName, out var desc);
+				bool enabled = viewedChip.CanAddSubchip(chipName) && !ShouldHideChipInLevel(desc);
+				if (UI.Button(chipName, theme, bottomLeftCurr, new Vector2(maxWidth, buttonHeight), enabled, false, false, theme.buttonCols, Anchor.BottomLeft, true, offsetX, ignoreInputs))
 				{
 					pressedIndex = i;
 				}
@@ -425,6 +453,7 @@ namespace DLS.Graphics
 			{
 				if (exit)
 				{
+					LevelManager.Instance?.ExitLevel();   
 					Project.ActiveProject.NotifyExit();
 					UIDrawer.SetActiveMenu(UIDrawer.MenuType.MainMenu);
 				}
@@ -437,6 +466,8 @@ namespace DLS.Graphics
 		static void OpenStatsMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ProjectStats);
 		static void OpenPreferencesMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.Preferences);
 		static void OpenAddSpecialMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.SpecialChipMaker);
+		static void OpenLevelsMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
+
 
 		static void CreateNewChip()
 		{
@@ -448,6 +479,7 @@ namespace DLS.Graphics
 				if (confirm)
 				{
 					Project.ActiveProject.CreateBlankDevChip();
+					LevelManager.Instance?.ExitLevel();   
 				}
 			}
 		}

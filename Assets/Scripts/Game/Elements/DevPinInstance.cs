@@ -5,6 +5,9 @@ using Seb.Helpers;
 using Seb.Types;
 using UnityEngine;
 using static DLS.Graphics.DrawSettings;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace DLS.Game
 {
@@ -75,7 +78,9 @@ namespace DLS.Game
 
 		public Vector2 SnapPoint => Pin.GetWorldPos();
 
-		public bool ShouldBeIncludedInSelectionBox(Vector2 selectionCentre, Vector2 selectionSize)
+		public bool anchoredToLevel { get; set; } = false;
+
+        public bool ShouldBeIncludedInSelectionBox(Vector2 selectionCentre, Vector2 selectionSize)
 		{
 			Bounds2D selfBounds = SelectionBoundingBox;
 			return Maths.BoxesOverlap(selectionCentre, selectionSize, selfBounds.Centre, selfBounds.Size);
@@ -115,6 +120,12 @@ namespace DLS.Game
 		public void ToggleState(int bitIndex)
 		{
 			Pin.PlayerInputState.ToggleBit(bitIndex);
+			
+			// Clear hint system cache when input state changes
+			if (IsInputPin)
+			{
+				Game.LevelsIntegration.HintSystem.ClearCache();
+			}
 		}
 
 		public bool PointIsInInteractionBounds(Vector2 point) => PointIsInHandleBounds(point) || PointIsInStateIndicatorBounds(point);

@@ -31,6 +31,8 @@ namespace DLS.Game
 		public string Label;
 		public bool HasCustomLayout;
 
+		public bool anchoredToLevel { get; set; } = false;
+
 		public SubChipInstance(ChipDescription description, SubChipDescription subChipDesc)
 		{
 			InitialSubChipDesc = subChipDesc;

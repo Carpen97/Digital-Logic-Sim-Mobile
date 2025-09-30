@@ -27,6 +27,7 @@ namespace DLS.Description
 			settings.Converters.Add(new ColorConverter());
 			settings.Converters.Add(new DateTimeConverter());
 			settings.Converters.Add(new PinBitCountConverter());
+			settings.Converters.Add(new ChipTypeIdConverter());
 			return settings;
 		}
 
@@ -130,6 +131,31 @@ namespace DLS.Description
 				return new PinBitCount(ushort.Parse(reader.Value.ToString()));
             }
         }
+
+		public class ChipTypeIdConverter : JsonConverter<ChipTypeId>
+		{
+			public override void WriteJson(JsonWriter writer, [AllowNull] ChipTypeId value, JsonSerializer serializer)
+			{
+				writer.WriteValue((int)value);
+			}
+
+			public override ChipTypeId ReadJson(JsonReader reader, Type objectType, [AllowNull] ChipTypeId existingValue, bool hasExistingValue, JsonSerializer serializer)
+			{
+				// Handle backward compatibility: if the field doesn't exist or is null, default to Unknown
+				if (reader.Value == null)
+				{
+					return ChipTypeId.Unknown;
+				}
+				
+				// Try to parse as integer, fallback to Unknown if parsing fails
+				if (int.TryParse(reader.Value.ToString(), out int intValue))
+				{
+					return (ChipTypeId)intValue;
+				}
+				
+				return ChipTypeId.Unknown;
+			}
+		}
 
         class CustomJsonTextWriter : JsonTextWriter
 		{

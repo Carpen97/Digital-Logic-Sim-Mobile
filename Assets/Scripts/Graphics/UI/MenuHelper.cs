@@ -107,7 +107,7 @@ namespace DLS.Graphics
 			ButtonGroupInteractableStates[0] = interactableA;
 			ButtonGroupInteractableStates[1] = interactableB;
 
-			int buttonIndex = UI.HorizontalButtonGroup(ButtonGroupNames.AsSpan(0, 2), ButtonGroupInteractableStates.AsSpan(0, 2), Theme.ButtonTheme, topLeft, new Vector2(width, ButtonHeight*1.5f), DefaultButtonSpacing, 0, Anchor.TopLeft, ignoreInputs: ignoreInputs);
+			int buttonIndex = UI.HorizontalButtonGroup(ButtonGroupNames.AsSpan(0, 2), ButtonGroupInteractableStates.AsSpan(0, 2), Theme.ButtonTheme, topLeft, new Vector2(width, ButtonHeight * 1.5f), DefaultButtonSpacing, 0, Anchor.TopLeft, ignoreInputs: ignoreInputs);
 			return buttonIndex;
 		}
 
@@ -149,5 +149,40 @@ namespace DLS.Graphics
 				_ => CancelConfirmResult.None
 			};
 		}
+
+		public static CancelConfirmResult DrawOKButton(
+			Vector2 topLeft,
+			float width,
+			float height = ButtonHeight,
+			bool addVerticalPadding = true,
+			bool useKeyboardShortcuts = true,
+			string label = "OK",
+			bool interactable = true,
+			bool ignoreInputs = false)
+		{
+			if (addVerticalPadding) topLeft += Vector2.down * (DefaultButtonSpacing * 3);
+
+			// Reuse the generic group helper with a 1-item slice
+			ButtonGroupNames[0] = label;
+			ButtonGroupInteractableStates[0] = interactable;
+
+			int index = UI.HorizontalButtonGroup(
+				ButtonGroupNames.AsSpan(0, 1),
+				ButtonGroupInteractableStates.AsSpan(0, 1),
+				Theme.ButtonTheme,
+				topLeft,
+				new Vector2(width, height),
+				DefaultButtonSpacing,
+				0,
+				Anchor.TopLeft,
+				ignoreInputs: ignoreInputs
+			);
+
+			if (useKeyboardShortcuts && KeyboardShortcuts.ConfirmShortcutTriggered)
+				index = 0;
+
+			return index == 0 ? CancelConfirmResult.Confirm : CancelConfirmResult.None;
+		}
+
 	}
 }

@@ -8,7 +8,6 @@ using Seb.Helpers;
 using Seb.Vis;
 using Seb.Vis.UI;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DLS.Graphics
 {
@@ -44,7 +43,7 @@ namespace DLS.Graphics
 		static readonly string[] SettingsWheelVSyncOptions = { "DISABLED", "ENABLED" };
 
 		static readonly Func<string, bool> projectNameValidator = ProjectNameValidator;
-		static readonly UI.ScrollViewDrawContentFunc loadProjectScrollViewDrawer = DrawAllProjectsInScrollView;
+		static readonly Seb.Vis.UI.UI.ScrollViewDrawContentFunc loadProjectScrollViewDrawer = DrawAllProjectsInScrollView;
 
 
 		static readonly string[] menuButtonNames =
@@ -307,12 +306,10 @@ namespace DLS.Graphics
 			else if (buttonIndex == exportButtonIndex) Main.ExportProject(SelectedProjectName); 
 		}
 		
-		#if UNITY_ANDROID || UNITY_IOS
 		public static void ExportProject(string projectName)
 		{
 			AndroidIO.ExportProjectToZip(projectName);
 		}
-		#endif
 
 		public static void ShowOverwriteConfirmationPopup(){
 			activePopup = PopupKind.OverwriteConfirmation;
@@ -332,7 +329,7 @@ namespace DLS.Graphics
 				ButtonTheme buttonTheme = selected ? DrawSettings.ActiveUITheme.ProjectSelectionButtonSelected : DrawSettings.ActiveUITheme.ProjectSelectionButton;
 				if (!projectCompatibilities[i].compatible) buttonTheme.textCols.normal.a = 0.5f;
 
-				if (UI.Button(desc.ProjectName, buttonTheme, topLeft, new Vector2(width, 0), enabled, false, true, Anchor.TopLeft))
+				if (UI.Button(desc.ProjectName, buttonTheme, topLeft, new Vector2(width, 0), enabled, false, true, buttonTheme.buttonCols,  Anchor.TopLeft))
 				{
 					selectedProjectIndex = i;
 				}
@@ -445,7 +442,7 @@ namespace DLS.Graphics
 				//bool resEnabled = EditedAppSettings.fullscreenMode == FullScreenMode.Windowed;
 
 
-				//#if !UNITY_ANDROID || UNITY_IOS
+				//#if !(UNITY_ANDROID || UNITY_IOS)
 				// -- Full screen --
 				UI.DrawText("Fullscreen", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				int fullScreenSettingIndex = UI.WheelSelector(ID_FullscreenWheel, SettingsWheelFullScreenOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
@@ -546,8 +543,8 @@ namespace DLS.Graphics
 				(Vector2 size, Vector2 centre) layoutCancel = UILayoutHelper.HorizontalLayout(2, 0, buttonsRegionCentre, buttonsRegionSize);
 				(Vector2 size, Vector2 centre) layoutConfirm = UILayoutHelper.HorizontalLayout(2, 1, buttonsRegionCentre, buttonsRegionSize);
 
-				bool cancelButton = UI.Button("CANCEL", theme.MainMenuButtonTheme, layoutCancel.centre, new Vector2(layoutCancel.size.x, 0), true, false, true);
-				bool confirmButton = UI.Button("CONFIRM", theme.MainMenuButtonTheme, layoutConfirm.centre, new Vector2(layoutConfirm.size.x, 0), canCreateProject, false, true);
+				bool cancelButton = UI.Button("CANCEL", theme.MainMenuButtonTheme, layoutCancel.centre, new Vector2(layoutCancel.size.x, 0), true, false, true, theme.ButtonTheme.buttonCols);
+				bool confirmButton = UI.Button("CONFIRM", theme.MainMenuButtonTheme, layoutConfirm.centre, new Vector2(layoutConfirm.size.x, 0), canCreateProject, false, true,theme.ButtonTheme.buttonCols);
 
 				if (cancelButton || KeyboardShortcuts.CancelShortcutTriggered)
 				{
@@ -655,7 +652,7 @@ namespace DLS.Graphics
 			"If you need inspiration for how to play the game, check out Sebastian's YouTube playlist:\n";
 
 			UI.DrawText(about_text, theme.font, theme.fontSize*0.6f, UI.Centre + Vector2.up * 10, Anchor.Centre, Color.white);
-			if (UI.Button("Link to YouTube", theme, UI.Centre + Vector2.up * 2, Vector2.zero, true, true, true))
+			if (UI.Button("Link to YouTube", theme, UI.Centre + Vector2.up * 2, Vector2.zero, true, true, true, theme.buttonCols))
 			{
 				BackToMain();
 				Application.OpenURL("https://www.youtube.com/watch?v=QZwneRb-zqA&list=PLFt_AvWsXl0dPhqVsKt1Ni_46ARyiCGSq");
@@ -665,14 +662,14 @@ namespace DLS.Graphics
 			"If you'd like to give feedback please visit this discord thread\n";
 
 			UI.DrawText(feedback_text, theme.font, theme.fontSize*0.6f, UI.CentreBottom + Vector2.up * 24, Anchor.Centre, Color.white);
-			if (UI.Button("Link to Discord", theme, UI.CentreBottom + Vector2.up * 18, Vector2.zero, true, true, true))
+			if (UI.Button("Link to Discord", theme, UI.CentreBottom + Vector2.up * 18, Vector2.zero, true, true, true, theme.buttonCols))
 			{
 				BackToMain();
 				Application.OpenURL("https://discord.com/channels/1361307968276136007/1366859789711315106");
 
 			}
 
-			if (UI.Button("Back", theme, UI.CentreBottom + Vector2.up * 10, Vector2.zero, true, true, true))
+			if (UI.Button("Back", theme, UI.CentreBottom + Vector2.up * 10, Vector2.zero, true, true, true, theme.buttonCols))
 			{
 				BackToMain();
 			}
@@ -690,8 +687,8 @@ namespace DLS.Graphics
 
             Vector2 versionPos = UI.PrevBounds.CentreLeft + Vector2.right * pad;
 			Vector2 datePos = UI.PrevBounds.CentreRight + Vector2.left * pad;
-			Vector2 moddedPos = UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.right * pad*5f;
-			Vector2 mobilePos = UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.left * pad*10f;
+			Vector2 moddedPos = UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.right * pad*8.7f;
+			Vector2 mobilePos = UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.left * pad*9.9f;
 
 			UI.DrawText(authorString, theme.FontRegular, theme.FontSizeRegular, versionPos, Anchor.TextCentreLeft, col);
 			UI.DrawText(versionString, theme.FontRegular, theme.FontSizeRegular, datePos, Anchor.TextCentreRight, col);

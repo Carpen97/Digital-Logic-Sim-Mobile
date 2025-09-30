@@ -14,6 +14,9 @@ namespace DLS.Game
 	{
 		public readonly Project project;
 
+		// ---- Control scheme settings ----
+		public bool UseDragAndDropMode => project.description.Prefs_UseDragAndDropMode;
+
 		// ---- Selection and placement state ----
 		public readonly List<IMoveable> SelectedElements = new();
 		public List<WireInstance> DuplicatedWires = new();
@@ -34,7 +37,7 @@ namespace DLS.Game
 		Vector2 wireEditPointOld;
 		public int wireEditPointSelectedIndex;
 		public bool isMovingWireEditPoint;
-        private bool reselectMoveElementMouseStartPos;
+        // private bool reselectMoveElementMouseStartPos; // TODO: Implement if needed
 
         public DevChipInstance ActiveDevChip => project.ViewedChip;
 		public bool IsMovingSelection { get; private set; }
@@ -137,10 +140,17 @@ namespace DLS.Game
 		{
 			if (!HasControl) return;
 			List<IMoveable> elementsToDelete = elements.Concat(GetNonIncludedLinkedBusElements(elements)).ToList();
+			int skippedAnchoredPins = elementsToDelete.RemoveAll(e => e is DevPinInstance dp && dp.anchoredToLevel);
+			if (skippedAnchoredPins > 0)
+			{
+				FinishMovingElements();
+				return;
+			}
 			ActiveDevChip.UndoController.RecordDeleteElements(elementsToDelete);
 
 			foreach (IMoveable element in elementsToDelete)
 			{
+				Debug.Log($"Deleting {element}");
 				if (element is SubChipInstance subChip) ActiveDevChip.DeleteSubChip(subChip);
 				else if (element is DevPinInstance devPin) ActiveDevChip.DeleteDevPin(devPin);
 			}
@@ -262,23 +272,40 @@ namespace DLS.Game
 				}else if(touch.phase == TouchPhase.Moved){
 					if (HasControl) UpdatePositionsToMouse();
 				}else if(touch.phase == TouchPhase.Ended){
-					if (IsCreatingSelectionBox)
-					{
-						IsCreatingSelectionBox = false;
-						MobileUIController.Instance.OnBoxSelectToolPress();
+					HandleTouchEnd();
+				}
+			}
+		}
 
-						float selectionBoxArea = Mathf.Abs(SelectionBoxSize.x * SelectionBoxSize.y);
-						if (selectionBoxArea > 0.000001f)
+		void HandleTouchEnd()
+		{
+			if (IsCreatingSelectionBox)
+			{
+				IsCreatingSelectionBox = false;
+				MobileUIController.Instance.OnBoxSelectToolPress();
+
+				float selectionBoxArea = Mathf.Abs(SelectionBoxSize.x * SelectionBoxSize.y);
+				if (selectionBoxArea > 0.000001f)
+				{
+					foreach (IMoveable element in ActiveDevChip.Elements)
+					{
+						if (element.ShouldBeIncludedInSelectionBox(SelectionBoxCentre, SelectionBoxSize))
 						{
-							foreach (IMoveable element in ActiveDevChip.Elements)
-							{
-								if (element.ShouldBeIncludedInSelectionBox(SelectionBoxCentre, SelectionBoxSize))
-								{
-									Select(element);
-								}
-							}
+							Select(element);
 						}
 					}
+				}
+			}
+			// In drag and drop mode, auto-place components when touch ends
+			else if (UseDragAndDropMode)
+			{
+				if (IsPlacingElements)
+				{
+					FinishPlacingNewElements();
+				}
+				else if (IsMovingSelection)
+				{
+					FinishMovingElements();
 				}
 			}
 		}
@@ -428,7 +455,7 @@ namespace DLS.Game
 				}
 			}
 
-			#if !UNITY_ANDROID || UNITY_IOS
+			#if !(UNITY_ANDROID || UNITY_IOS)
 			// Find element closest to mouse to use as origin point for duplicated elements
 			Vector2 mousePos = InputHelper.MousePosWorld;
 			Vector2 closestElementPos = Vector2.zero;
@@ -448,21 +475,22 @@ namespace DLS.Game
 			Vector2 offset = InputHelper.MousePosWorld - closestElementPos;
 			moveElementMouseStartPos -= offset;
 			#else
-			Vector2 closestElementPos = Vector2.zero;
+			Vector2 averageElementPos = Vector2.zero;
 			int counter = 0;
 			foreach (IMoveable element in elementsToDuplicate)
 			{
 				Vector2 pos = element is DevPinInstance pin ? pin.HandlePosition : element.Position;
-				closestElementPos+=pos;
+				averageElementPos+=pos;
 				counter++;
 			}
-			moveElementMouseStartPos  = closestElementPos/counter;
-			reselectMoveElementMouseStartPos = false;
+			moveElementMouseStartPos  = averageElementPos/counter;
+			// reselectMoveElementMouseStartPos = true; // TODO: Implement if needed
 			#endif
 		}
 
 		public void DuplicateSelectedElements()
 		{
+			FinishMovingElements(false);
 			DuplicateElements(SelectedElements);
 		}
 
@@ -536,16 +564,7 @@ namespace DLS.Game
 					}
 				}else{ //IsPlacing Element
 					if(InteractionState.ElementUnderMouse is IMoveable element){
-						if(reselectMoveElementMouseStartPos){
-							moveElementMouseStartPos = TouchInputHelper.Instance.TouchWorldPosition;
-						}
-						reselectMoveElementMouseStartPos = true;
-						foreach (IMoveable moveableElement in SelectedElements)
-						{
-							moveableElement.MoveStartPosition = moveableElement.Position;
-							moveableElement.StraightLineReferencePoint = moveableElement.Position;
-							moveableElement.HasReferencePointForStraightLineMovement = true;
-						}
+						StartMovingSelectedItems();
 					}
 				}
 			}else if(MobileUIController.Instance.isWrenchToolActive){
@@ -609,16 +628,25 @@ namespace DLS.Game
 					Select(element, addToSelection);
 
 					StartMovingSelectedItems();
-					MobileUIController.Instance.ShowPlacementButtons(
-						FinishMovingElements,
-						CancelMovingSelectedItems
-					);
+					// Only show placement buttons in drag and lock mode
+					if (!UseDragAndDropMode)
+					{
+						MobileUIController.Instance.ShowPlacementButtons(
+							FinishMovingElements,
+							CancelMovingSelectedItems
+						);
+					}
 				}else if (InteractionState.ElementUnderMouse == null && !IsPlacingElementOrCreatingWire && !IsMovingSelection){
 					// Tapped on free space
 					if(MobileUIController.Instance.isBoxSelectToolActive)
 						IsCreatingSelectionBox = true;
 					else if (SelectedElements.Count>0)
-						ClearSelection();
+					{
+						// In drag and drop mode, always clear selection when tapping empty space
+						// In drag and lock mode, only clear if not currently moving
+						if (UseDragAndDropMode || !IsMovingSelection)
+							ClearSelection();
+					}
 					wireEditPointIndex = -1;
 					isMovingWireEditPoint = false;
 					//FinishEditingWires();
@@ -756,7 +784,9 @@ namespace DLS.Game
 			WireToPlace = new WireInstance(connectionInfo, spawnOrder);
 		}
 
-		void FinishMovingElements()
+		void FinishMovingElements() => FinishMovingElements(true);
+
+		void FinishMovingElements(bool clearSelection)
 		{
 			// -- If any elements are in invalid position, cancel the movement --
 			bool hasMoved = false;
@@ -782,8 +812,13 @@ namespace DLS.Game
 				wire.ApplyMoveOffset();
 			}
 			#if UNITY_ANDROID || UNITY_IOS
+			// In drag and drop mode, don't clear selection after placement
+			// In drag and lock mode, clear selection as before
+			if (clearSelection && !UseDragAndDropMode)
+			{
 				ClearSelection();
 				MobileUIController.Instance.HidePlacementButtons();
+			}
 			#endif
 		}
 
@@ -956,6 +991,7 @@ namespace DLS.Game
 			}
 			else if (IsMovingSelection || isPlacingNewElements)
 			{
+				Debug.Log("is Moving Selection");
 				Vector2 moveOffset = mousePos - moveElementMouseStartPos;
 
 				for (int i = 0; i < SelectedElements.Count; i++)
@@ -1069,10 +1105,14 @@ namespace DLS.Game
 		{
 			IsMovingSelection = true;
 			#if UNITY_ANDROID || UNITY_IOS
-			MobileUIController.Instance.ShowPlacementButtons(
-				FinishPlacingNewElements,
-				CancelPlacingItems
-			);
+			// Only show placement buttons in drag and lock mode
+			if (!UseDragAndDropMode)
+			{
+				MobileUIController.Instance.ShowPlacementButtons(
+					FinishPlacingNewElements,
+					CancelPlacingItems
+				);
+			}
 			if(!isDuplicationOnMobileCall){
 				moveElementMouseStartPos = InputHelper.MousePosWorld;
 			}
@@ -1146,10 +1186,14 @@ namespace DLS.Game
 		public IMoveable StartPlacing(ChipDescription chipDescription, Vector2 position, bool isDuplicating)
 		{
 			#if UNITY_ANDROID || UNITY_IOS
-			MobileUIController.Instance.ShowPlacementButtons(
-				FinishPlacingNewElements,
-				CancelPlacingItems
-			);
+			// Only show placement buttons in drag and lock mode
+			if (!UseDragAndDropMode)
+			{
+				MobileUIController.Instance.ShowPlacementButtons(
+					FinishPlacingNewElements,
+					CancelPlacingItems
+				);
+			}
 			#endif
 			IMoveable elementToPlace = CreateElementFromChipDescription(chipDescription);
 			StartPlacing(elementToPlace, position, isDuplicating);
@@ -1358,7 +1402,12 @@ namespace DLS.Game
 
 		void OnFinishedOrCancelledPlacingItems()
 		{
-			ClearSelection();
+			// In drag and drop mode, don't clear selection after placing new elements
+			// In drag and lock mode, clear selection as before
+			if (!UseDragAndDropMode)
+			{
+				ClearSelection();
+			}
 			IsMovingSelection = false;
 
 			isPlacingNewElements = false;

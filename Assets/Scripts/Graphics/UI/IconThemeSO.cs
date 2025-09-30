@@ -12,6 +12,8 @@ public class IconThemeSO : ScriptableObject
 	public Sprite cancelIcon;
 	public Sprite singleStepIcon;
 	public Sprite copyIcon;
+	public Sprite playIcon;
+	public Sprite hintIcon;
 
 	public Sprite wrenchIconToggled;
 	public Sprite boxSelectIconToggled;
@@ -22,4 +24,6 @@ public class IconThemeSO : ScriptableObject
 	public Sprite cancelIconToggled;
 	public Sprite singleStepIconToggled;
 	public Sprite copyIconToggled;
+	public Sprite playToggled;
+	public Sprite hintToggled;
 }

@@ -21,6 +21,8 @@ MonoBehaviour:
   cancelIcon: {fileID: 3286163911610860551, guid: 04350634e0d39b74e8b9624b4ea00fb7, type: 3}
   singleStepIcon: {fileID: 9141346441460425236, guid: f40561fae8a2cee4a8d22a2607ce3024, type: 3}
   copyIcon: {fileID: 3286163911610860551, guid: 0ec44296730710a42adf65381af38c6e, type: 3}
+  playIcon: {fileID: 3286163911610860551, guid: 1aefb35f2b8f0c947ae299576f6c14e7, type: 3}
+  hintIcon: {fileID: 3286163911610860551, guid: a28434692c58612459a8d87d190fd8db, type: 3}
   wrenchIconToggled: {fileID: 3286163911610860551, guid: 5ca2a42925924c247a3795078c42815e, type: 3}
   boxSelectIconToggled: {fileID: 3286163911610860551, guid: 35286d121551ffd4a9fbd32b16a4c841, type: 3}
   trashIconToggled: {fileID: 3286163911610860551, guid: 0264be7583616da4fb0ad38d40e6619f, type: 3}
@@ -30,3 +32,5 @@ MonoBehaviour:
   cancelIconToggled: {fileID: 3286163911610860551, guid: a543fd71609f9d14ca9773e314236054, type: 3}
   singleStepIconToggled: {fileID: 9141346441460425236, guid: f40561fae8a2cee4a8d22a2607ce3024, type: 3}
   copyIconToggled: {fileID: 3286163911610860551, guid: 9def3c47273d971438d979006137c0c5, type: 3}
+  playToggled: {fileID: 3286163911610860551, guid: 114c58125b1a4cf46bba2215c5bc058b, type: 3}
+  hintToggled: {fileID: 3286163911610860551, guid: f4cb40ce71c4230428c02b5f0dc9d56e, type: 3}

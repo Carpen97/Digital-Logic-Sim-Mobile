@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DLS.Description;
 using DLS.Game;
+using DLS.Game.LevelsIntegration;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis;
@@ -20,7 +21,7 @@ namespace DLS.Graphics
 
 		static string[] allChipNames;
 		static string[] filteredChipNames;
-		static readonly UI.ScrollViewDrawElementFunc drawChipSearchEntry = DrawChipSearchEntry;
+		static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc drawChipSearchEntry = DrawChipSearchEntry;
 		static int menuOpenedFrame;
 		static bool isDraggingScrollbar;
 
@@ -45,9 +46,18 @@ namespace DLS.Graphics
 				UI.InputField(ID_SearchInput, inputTheme, topLeft, inputFieldSize, string.Empty, Anchor.TopLeft, inputFieldTextPad, searchStringValidator, true);
 				topLeft = UI.PrevBounds.BottomLeft + Vector2.down * 2;
 
-				// Draw scroll view
-				ScrollBarState scrollState = UI.DrawScrollView(ID_Scrollbar, topLeft, new Vector2(width, UI.Height * 0.7f), UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawChipSearchEntry, filteredChipNames.Length);
+				// Draw scroll view (reduced height to make room for exit button)
+				ScrollBarState scrollState = UI.DrawScrollView(ID_Scrollbar, topLeft, new Vector2(width, UI.Height * 0.6f), UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawChipSearchEntry, filteredChipNames.Length);
 				isDraggingScrollbar = scrollState.isDragging;
+
+				// Draw exit button at the bottom
+				Vector2 exitButtonTopLeft = UI.PrevBounds.BottomLeft + Vector2.down * 1;
+				MenuHelper.CancelConfirmResult exitResult = MenuHelper.DrawOKButton(exitButtonTopLeft, UI.PrevBounds.Width, ButtonHeight, false, true, "EXIT", true, false);
+
+				if (exitResult == MenuHelper.CancelConfirmResult.Confirm)
+				{
+					UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+				}
 
 				// Draw background panel
 				MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
@@ -91,7 +101,7 @@ namespace DLS.Graphics
 
 				// Draw chip name (drawn as non-interactive button)
 				ButtonTheme nameTheme = ActiveUITheme.ChipLibraryChipToggleOn;
-				UI.Button(chipName, nameTheme, topLeft, new Vector2(nameWidth, ButtonHeight), true, false, false, Anchor.TopLeft, true, 1, true);
+				UI.Button(chipName, nameTheme, topLeft, new Vector2(nameWidth, ButtonHeight), true, false, false,nameTheme.buttonCols, Anchor.TopLeft, true, 1, true);
 
 				// Draw buttons
 				Vector2 buttonsTopLeft = topLeft + Vector2.right * (nameWidth + DefaultButtonSpacing);
@@ -219,6 +229,7 @@ namespace DLS.Graphics
 				{
 					project.LoadDevChipOrCreateNewIfDoesntExist(chipName);
 					UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+					LevelManager.Instance?.ExitLevel();   
 				}
 			}
 		}

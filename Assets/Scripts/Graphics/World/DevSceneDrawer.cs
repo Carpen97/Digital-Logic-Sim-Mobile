@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DLS.Description;
 using DLS.Game;
+using DLS.Game.LevelsIntegration;
 using DLS.Simulation;
 using Seb.Helpers;
 using Seb.Types;
@@ -18,6 +19,11 @@ namespace DLS.Graphics
 		public const int DisplayOffState = 0;
 		public const int DisplayOnState = 1;
 		public const int DisplayHighlightState = 2;
+		#if UNITY_ANDROID || UNITY_IOS
+		public const float wireHitboxMultiplier = 40f;
+		#else
+		public const float wireHitboxMultiplier = 1f;
+		#endif
 
 		static readonly List<WireInstance> orderedWires = new();
 		static readonly Comparison<WireInstance> WireComparison = WireOrderCompare;
@@ -822,7 +828,23 @@ namespace DLS.Graphics
 			// ---- Movement handle ----
 			bool mouseOverHandle = InputHelper.MouseInsideBounds_World(pos, size);
 			bool isInteracting = mouseOverHandle && (controller.CanInteractWithPinHandle || InteractionState.ElementUnderMousePrevFrame == item);
-			Color handleCol = isInteracting ? ActiveTheme.DevPinHandleHighlighted : ActiveTheme.DevPinHandle;
+			
+			Color handleCol;
+			if (isInteracting)
+			{
+				handleCol = ActiveTheme.DevPinHandleHighlighted;
+			}
+			else if (item is DevPinInstance devPin && !devPin.IsInputPin)
+			{
+				// Apply hint color for output pin handles
+				var levelManager = Game.LevelsIntegration.LevelManager.Instance;
+				handleCol = Game.LevelsIntegration.HintSystem.GetPinHandleColor(devPin, levelManager?.Current);
+			}
+			else
+			{
+				handleCol = ActiveTheme.DevPinHandle;
+			}
+			
 			Draw.Quad(pos, size, handleCol);
 
 			if (isInteracting)
@@ -869,7 +891,7 @@ namespace DLS.Graphics
 
 			Vector2 mousePos = InputHelper.MousePosWorld;
 			const float highlightDstThreshold = WireHighlightedThickness + (WireHighlightedThickness - WireThickness) * 0.8f;
-			const float sqrDstThreshold = highlightDstThreshold * highlightDstThreshold;
+			const float sqrDstThreshold = highlightDstThreshold * highlightDstThreshold * wireHitboxMultiplier;
 			bool canInteract = controller.CanInteractWithWire(wire);
 
 			// Init and populate points array
@@ -897,7 +919,6 @@ namespace DLS.Graphics
 				float radius = highlightWire ? 0.07f : 0.06f;
 				Draw.Point(connectionPoint, radius, col);
 			}
-
 			if (canInteract && interactSqrDst < sqrDstThreshold)
 			{
 				InteractionState.NotifyElementUnderMouse(wire);
@@ -913,7 +934,15 @@ namespace DLS.Graphics
 			const float sqrDstThreshold = highlightDstThreshold * highlightDstThreshold;
 			bool canInteract = controller.CanInteractWithWire(wire);
 
-			WireLayoutHelper.CreateMultiBitWireLayout(wire.BitWires, wire, WireThickness);
+			// Use the selected multi-wire layout algorithm
+			if (Project.ActiveProject.description.Prefs_MultiWireLayoutAlgorithm == 1)
+			{
+				WireLayoutHelper.CreateMultiBitWireLayoutSlerp(wire.BitWires, wire, WireThickness);
+			}
+			else
+			{
+				WireLayoutHelper.CreateMultiBitWireLayout(wire.BitWires, wire, WireThickness);
+			}
 
 			int length = wire.BitWires.Length / (wire.bitCount <= 64 ? 1 : wire.bitCount <=512 ? 8 : 64);
 			// Draw
@@ -924,6 +953,7 @@ namespace DLS.Graphics
 				float sqrInteractDst = WireDrawer.DrawWire(bitWire.Points, thickness, col, mousePos);
 				if (canInteract && sqrInteractDst < sqrDstThreshold) InteractionState.NotifyElementUnderMouse(wire);
 			}
+
 		}
 
 		public static void DrawWireEditPoints(WireInstance wire)
@@ -962,7 +992,7 @@ namespace DLS.Graphics
 				}
 			}
 
-			#if !UNITY_ANDROID || UNITY_IOS
+			#if !(UNITY_ANDROID || UNITY_IOS)
 			// If no highlighted point, and mouse over wire, then draw insertion point
 			if (controller.wireEditPointIndex == -1 && InteractionState.ElementUnderMouse == wire && canInteract)
 			{
@@ -1029,6 +1059,13 @@ namespace DLS.Graphics
 				pinCol = ActiveTheme.PinInvalidCol;
 			}
 
+			if (controller.IsCreatingWire && controller.WireToPlace.FirstPin.Equals(pin))
+			{
+
+				pinCol = ActiveTheme.PinSelectedCol;
+				Debug.Log($"DRAWING PIN WITH COLOR {pinCol}");
+			}
+
 			Draw.Point(pinPos, PinRadius, pinCol);
 
 			// ---- input/output arrow ----
@@ -1060,7 +1097,7 @@ namespace DLS.Graphics
 
 			// Draws input/output indicators on subchip pins only
 			bool isInputToCustomChip = pin.parent is SubChipInstance;
-			if (isInputToCustomChip)
+			if (isInputToCustomChip && false)
 			{
                 // Check if pin is connect to any wire for the Is Disconnected setting
                 

@@ -28,6 +28,7 @@ namespace DLS.Description
 		public int Prefs_ChipPinNamesDisplayMode;
 		public int Prefs_GridDisplayMode;
 		public int Prefs_WireCurvatureMode;
+		public int Prefs_MultiWireLayoutAlgorithm;
 		public int Prefs_UIThemeMode;
 		public int Prefs_Snapping;
 		public int Prefs_StraightWires;
@@ -35,6 +36,7 @@ namespace DLS.Description
 		public int Prefs_SimTargetStepsPerSecond;
 		public int Prefs_SimStepsPerClockTick;
 		public int Perfs_PinIndicators;
+		public bool Prefs_UseDragAndDropMode;
 
 		// Stats
 		public ulong StepsRanSinceCreated;

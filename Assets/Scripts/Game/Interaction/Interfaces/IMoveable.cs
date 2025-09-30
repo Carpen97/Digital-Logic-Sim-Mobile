@@ -14,6 +14,7 @@ namespace DLS.Game
 		Vector2 SnapPoint { get; }
 		Bounds2D SelectionBoundingBox { get; }
 		Bounds2D BoundingBox { get; }
+		bool anchoredToLevel { get; set; }
 		int ID { get; }
 
 		public bool ShouldBeIncludedInSelectionBox(Vector2 selectionCentre, Vector2 selectionSize);

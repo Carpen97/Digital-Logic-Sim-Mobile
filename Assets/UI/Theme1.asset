@@ -21,3 +21,14 @@ MonoBehaviour:
   cancelIcon: {fileID: 9055211082839658301, guid: 6b8dbcc7971a5524cbc9270705580047, type: 3}
   singleStepIcon: {fileID: 9141346441460425236, guid: f40561fae8a2cee4a8d22a2607ce3024, type: 3}
   copyIcon: {fileID: 6588479138510667315, guid: 08d9fa0c7da2459408b724b46763ee44, type: 3}
+  playIcon: {fileID: 3286163911610860551, guid: e75f01aabdb5b564fa91b32df2bae83e, type: 3}
+  wrenchIconToggled: {fileID: 0}
+  boxSelectIconToggled: {fileID: 0}
+  trashIconToggled: {fileID: 0}
+  undoIconToggled: {fileID: 0}
+  redoIconToggled: {fileID: 0}
+  confirmIconToggled: {fileID: 0}
+  cancelIconToggled: {fileID: 0}
+  singleStepIconToggled: {fileID: 0}
+  copyIconToggled: {fileID: 0}
+  playToggled: {fileID: 0}

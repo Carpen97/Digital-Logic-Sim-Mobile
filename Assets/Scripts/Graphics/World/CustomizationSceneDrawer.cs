@@ -202,7 +202,7 @@ namespace DLS.Graphics
 			}
 			else
 			{
-				#if !UNITY_ANDROID || UNITY_IOS
+				#if !(UNITY_ANDROID || UNITY_IOS)
 				// Confirm placement
 				bool confirmPlacement = InputHelper.IsMouseDownThisFrame(MouseButton.Left);
 				confirmPlacement |= displayInteractState == DisplayInteractState.Moving && InputHelper.IsMouseUpThisFrame(MouseButton.Left);

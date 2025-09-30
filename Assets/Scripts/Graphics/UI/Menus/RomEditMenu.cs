@@ -34,20 +34,21 @@ namespace DLS.Graphics
 		static DataDisplayMode[] allDisplayModes;
 
 		static DataDisplayMode dataDisplayMode;
-		static readonly UI.ScrollViewDrawElementFunc scrollViewDrawElementFunc = DrawScrollEntry;
+		static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc scrollViewDrawElementFunc = DrawScrollEntry;
 		static readonly Func<string, bool> inputStringValidator = ValidateInputString;
 
 		static Bounds2D scrollViewBounds;
 
 		static float textPad => 0.52f;
 		static float height => 2.5f;
+		static float leftAdjustmentOfScrollView => 10f;
 
 		public static void DrawMenu()
 		{
 			MenuHelper.DrawBackgroundOverlay();
 
 			// ---- Draw ROM contents ----
-			scrollViewBounds = Bounds2D.CreateFromCentreAndSize(UI.Centre, new Vector2(UI.Width * 0.4f, UI.Height * 0.8f));
+			scrollViewBounds = Bounds2D.CreateFromCentreAndSize(UI.Centre + Vector2.left * leftAdjustmentOfScrollView, new Vector2(UI.Width * 0.4f, UI.Height * 0.8f));
 
 			ScrollViewTheme scrollTheme = DrawSettings.ActiveUITheme.ScrollTheme;
 			UI.DrawScrollView(ID_scrollbar, scrollViewBounds.TopLeft, scrollViewBounds.Size, 0, Anchor.TopLeft, scrollTheme, scrollViewDrawElementFunc, RowCount);
@@ -74,7 +75,7 @@ namespace DLS.Graphics
 			}
 
 			// --- Draw side panel with buttons ----
-			Vector2 sidePanelSize = new(UI.Width * 0.2f, UI.Height * 0.8f);
+			Vector2 sidePanelSize = new(UI.Width * 0.3f, UI.Height * 0.8f);
 			Vector2 sidePanelTopLeft = scrollViewBounds.TopRight + Vector2.right * (UI.Width * 0.05f);
 			Draw.ID sidePanelID = UI.ReservePanel();
 
@@ -88,7 +89,7 @@ namespace DLS.Graphics
 
 				int copyPasteButtonIndex = MenuHelper.DrawButtonPair("COPY ALL", "PASTE ALL", buttonTopleft, sidePanelSize.x, false);
 				buttonTopleft = UI.PrevBounds.BottomLeft + Vector2.down * buttonSpacing;
-				bool clearAll = UI.Button("CLEAR ALL", MenuHelper.Theme.ButtonTheme, buttonTopleft, new Vector2(sidePanelSize.x, 0), true, false, true, Anchor.TopLeft);
+				bool clearAll = UI.Button("CLEAR ALL", MenuHelper.Theme.ButtonTheme, buttonTopleft, new Vector2(sidePanelSize.x, 0), true, false, true, MenuHelper.Theme.ButtonTheme.buttonCols, Anchor.TopLeft);
 				buttonTopleft = UI.PrevBounds.BottomLeft + Vector2.down * (buttonSpacing * 2f);
 				MenuHelper.CancelConfirmResult result = MenuHelper.DrawCancelConfirmButtons(buttonTopleft, sidePanelSize.x, false, false);
 
@@ -326,7 +327,7 @@ namespace DLS.Graphics
 				inputTheme.focusBorderCol = Color.clear;
 
 
-				UI.InputField(inputFieldID, inputTheme, topLeft, panelSize, "0", Anchor.TopLeft, 5, inputStringValidator);
+				UI.InputField(inputFieldID, inputTheme, topLeft, panelSize, "0", Anchor.TopLeft, 7, inputStringValidator);
 
 				// Draw line index
 				Color lineNumCol = inputFieldState.focused ? new Color(0.53f, 0.8f, 0.57f) : ColHelper.MakeCol(0.32f);

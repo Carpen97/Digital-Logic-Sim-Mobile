@@ -32,7 +32,12 @@ namespace DLS.Graphics
 		public const float GridThickness = 0.0035f;
 		public const float DevPinStateDisplayRadius = 0.2f;
 		public const float DevPinStateDisplayOutline = 0.0175f;
+
+		#if UNITY_ANDROID || UNITY_IOS
+		public const float DevPinHandleWidth = DevPinStateDisplayRadius * 2;
+		#else
 		public const float DevPinHandleWidth = DevPinStateDisplayRadius * 0.64f;
+		#endif
 		public const float MultiBitPinStateDisplaySquareSize = 0.21f;
 
 		// ---- UI draw settings ----
@@ -135,6 +140,7 @@ namespace DLS.Graphics
 				PinLabelCol = new Color(0, 0, 0, 0.7f),
 				PinHighlightCol = Color.white,
 				PinInvalidCol = MakeCol(0.15f),
+				PinSelectedCol = MakeCol(0.9f),
 				SevenSegCols = new Color[]
 				{
 					new(0.1f, 0.09f, 0.09f), new(1, 0.32f, 0.28f), new(0.19f, 0.15f, 0.15f), // Col A: OFF, ON, HIGHLIGHT
@@ -230,7 +236,7 @@ namespace DLS.Graphics
 					scrollBarColHover = Brighten(scrollBarCol, 0.05f, -0.025f),
 					scrollBarColPressed = Darken(scrollBarCol, 0.05f, 0.025f),
 					#if UNITY_ANDROID || UNITY_IOS
-					scrollBarWidth = 2
+					scrollBarWidth = 3
 					#else
 					scrollBarWidth = 1
 					#endif
@@ -292,7 +298,8 @@ namespace DLS.Graphics
 			public Color[] FlatColors;
 			public Color[] FlatColorsHover;
 			public Color[] PinSizeIndicatorColors;
-		}
+			public Color PinSelectedCol;
+        }
 
 		public class UIThemeDLS
 		{

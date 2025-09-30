@@ -25,5 +25,9 @@ namespace DLS.SaveSystem
 		public static string GetChipsPath(string projectName) => Path.Combine(GetProjectPath(projectName), "Chips");
 		public static string GetDeletedChipsPath(string projectName) => Path.Combine(GetProjectPath(projectName), "Deleted Chips");
 		public static string GetProjectDescriptionPath(string projectName) => Path.Combine(GetProjectPath(projectName), ProjectFileName);
+
+		// Levels
+		public static string GetProjectMetaPath(string projectName) => Path.Combine(GetProjectPath(projectName), "Meta");
+		public static string GetLevelsProgressPath(string projectName) => Path.Combine(GetProjectMetaPath(projectName), "levels_progress.json");
 	}
 }

@@ -7,16 +7,17 @@ using DLS.Description;
 using DLS.Graphics;
 using DLS.SaveSystem;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DLS.Game
 {
 	public static class Main
 	{
-		public static readonly Version DLSVersion = new(2, 1, 6);
+		public static readonly Version DLSVersion = new(2, 1, 6, 8);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
 		public static readonly Version DLSVersion_ModdedID = new(1, 1, 2);
-		public const string LastUpdatedString = "5 May 2025";
-		public const string LastUpdatedModdedString = "10 August 2025";
+		public const string LastUpdatedString = "9 Sep 2025";
+		public const string LastUpdatedModdedString = "10 Aug 2025";
 		public static AppSettings ActiveAppSettings;
 
 		public static Project ActiveProject { get; private set; }
@@ -108,6 +109,9 @@ namespace DLS.Game
 				Prefs_SimTargetStepsPerSecond = 1000,
 				Prefs_SimStepsPerClockTick = 250,
 				Prefs_SimPaused = false,
+				Prefs_UIThemeMode = 1,
+				Prefs_GridDisplayMode = 1,
+				Prefs_UseDragAndDropMode = true,
 				AllCustomChipNames = Array.Empty<string>(),
 				StarredList = BuiltinCollectionCreator.GetDefaultStarredList().ToList(),
 				ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections()),
@@ -119,7 +123,6 @@ namespace DLS.Game
 			return LoadProject(projectName);
 		}
 
-		#if UNITY_ANDROID || UNITY_IOS
 		public static void ImportProject()
 		{
 			NativeFilePicker.PickFile((path) =>
@@ -137,7 +140,6 @@ namespace DLS.Game
 		{
 			AndroidIO.ExportProjectToZip(projectName);
 		}
-		#endif
 
 
 		public static void OpenSaveDataFolderInFileBrowser()

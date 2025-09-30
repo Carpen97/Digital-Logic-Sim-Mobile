@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DLS.Description;
 using DLS.Game;
+using DLS.Game.LevelsIntegration;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis;
@@ -19,13 +20,9 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_CollectionsScrollbar = new("ChipLibrary_CollectionsScrollbar");
 		static readonly UIHandle ID_StarredScrollbar = new("ChipLibrary_StarredScrollbar");
 		static readonly UIHandle ID_NameInput = new("ChipLibrary_NameField");
-		#if UNITY_ANDROID || UNITY_IOS
-		static readonly string[] buttonNames_moveSingleStep = { "MOVE UP", "DOWN" };
-		static readonly string[] buttonNames_jump = { "JUMP UP", "DOWN" };
-		#else
+
 		static readonly string[] buttonNames_moveSingleStep = { "MOVE UP", "MOVE DOWN" };
 		static readonly string[] buttonNames_jump = { "JUMP UP", "JUMP DOWN" };
-		#endif
 		static readonly string[] buttonNames_chipAction = { "USE", "OPEN", "DELETE" };
 		static readonly string[] buttonNames_collectionRenameOrDelete = { "RENAME", "DELETE" };
 
@@ -44,8 +41,10 @@ namespace DLS.Graphics
 		static readonly bool[] interactableStates_starredList = { true, true, true };
 		static readonly bool[] interactable_chipActionButtons = { true, true, true };
 
-		static readonly UI.ScrollViewDrawElementFunc drawCollectionEntry = DrawCollectionEntry;
-		static readonly UI.ScrollViewDrawElementFunc drawStarredEntry = DrawStarredEntry;
+		static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc drawCollectionEntry = DrawCollectionEntry;
+
+		
+		static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc drawStarredEntry = DrawStarredEntry;
 
 		// State
 		static int selectedCollectionIndex;
@@ -80,8 +79,8 @@ namespace DLS.Graphics
 
 			const float interPanelSpacing = 1.5f;
 			const float menuOffsetY = 1.13f;
-			const float starredPanelWidthT = 0.35f;
-			const float collectionPanelWidthT = 0.37f;
+			const float starredPanelWidthT = 0.32f;
+			const float collectionPanelWidthT = 0.35f;
 			const float selectedPanelWidthT = 1 - (starredPanelWidthT + collectionPanelWidthT);
 
 			float panelWidthSum = UI.Width - interPanelSpacing * 2 - panelEdgePadding.x * 2;
@@ -152,7 +151,7 @@ namespace DLS.Graphics
 			interactableStates_starredList[0] = index < project.description.StarredList.Count - 1; // can move down
 			interactableStates_starredList[1] = index > 0; // can move up
 
-			bool entryPressed = UI.Button(starredItem.Name, theme, topLeft, new Vector2(width, 2), true, false, false, Anchor.TopLeft, true, 1, isScrolling);
+			bool entryPressed = UI.Button(starredItem.Name, theme, topLeft, new Vector2(width, 2), true, false, false, theme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 			if (entryPressed)
 			{
 				selectedStarredItemIndex = index;
@@ -181,7 +180,7 @@ namespace DLS.Graphics
 			bool collectionHighlighted = collectionIndex == selectedCollectionIndex;
 			ButtonTheme activeCollectionTheme = GetButtonTheme(true, collectionHighlighted);
 
-			bool collectionPressed = UI.Button(label, activeCollectionTheme, topLeft, new Vector2(width, 2), true, false, false, Anchor.TopLeft, true, 1, isScrolling);
+			bool collectionPressed = UI.Button(label, activeCollectionTheme, topLeft, new Vector2(width, 2), true, false, false, activeCollectionTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 			if (collectionPressed)
 			{
 				selectedCollectionIndex = collectionIndex;
@@ -201,7 +200,7 @@ namespace DLS.Graphics
 					string chipName = collection.Chips[chipIndex];
 					ButtonTheme activeChipTheme = collectionIndex == selectedCollectionIndex && chipIndex == selectedChipInCollectionIndex ? ActiveUITheme.ChipLibraryChipToggleOn : ActiveUITheme.ChipLibraryChipToggleOff;
 					Vector2 chipLabelPos = new(topLeft.x + nestedInset, UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
-					bool chipPressed = UI.Button(chipName, activeChipTheme, chipLabelPos, new Vector2(width - nestedInset, 2), true, false, false, Anchor.TopLeft, true, 1, isScrolling);
+					bool chipPressed = UI.Button(chipName, activeChipTheme, chipLabelPos, new Vector2(width - nestedInset, 2), true, false, false,activeChipTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 					if (chipPressed)
 					{
 						bool alreadySelected = selectedChipInCollectionIndex == chipIndex && collectionHighlighted;
@@ -420,12 +419,12 @@ namespace DLS.Graphics
 					// New collection button
 					if (!renamingCollection)
 					{
-						bool createNew = UI.Button("NEW COLLECTION", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, Anchor.TopLeft);
+						bool createNew = UI.Button("NEW COLLECTION", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
 						if (createNew) creatingNewCollection = true;
 						if (!creatingNewCollection)
 						{
 							topLeft += Vector2.down * (UI.PrevBounds.Height + DefaultButtonSpacing * 1);
-							bool exit = UI.Button("EXIT LIBRARY", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, Anchor.TopLeft);
+							bool exit = UI.Button("EXIT LIBRARY", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
 							if (exit) ExitLibrary();
 						}
 
@@ -705,6 +704,7 @@ namespace DLS.Graphics
 			{
 				project.LoadDevChipOrCreateNewIfDoesntExist(chipToOpenName);
 				ExitLibrary();
+				LevelManager.Instance?.ExitLevel();  
 			}
 			else
 			{

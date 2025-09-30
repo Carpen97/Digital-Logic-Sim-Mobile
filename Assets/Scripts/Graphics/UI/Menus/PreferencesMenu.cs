@@ -49,6 +49,12 @@ namespace DLS.Graphics
 			"Large",
 		};
 
+		static readonly string[] MultiWireLayoutAlgorithmOptions =
+		{
+			"Original",
+			"Slerp",
+		};
+
 		static readonly string[] SnappingOptions =
 		{
 			#if UNITY_ANDROID || UNITY_IOS
@@ -75,14 +81,18 @@ namespace DLS.Graphics
 			#endif
 		};
 
-		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string[] UIThemeOptions =
 		{
+			#if UNITY_ANDROID || UNITY_IOS
 			"Theme 1",
 			"Squiggles",
+			#else
+			"Theme 1",
+			"Squiggles",
+			"Dark",
+			"Light"
+			#endif
 		};
-
-		#endif
 
 		static readonly string[] SimulationStatusOptions =
 		{
@@ -98,6 +108,12 @@ namespace DLS.Graphics
 			"Always"
         };
 
+		static readonly string[] ControlSchemeOptions =
+		{
+			"Drag and Lock",
+			"Drag and Drop"
+		};
+
 		static readonly Vector2 entrySize = new(menuWidth, DrawSettings.SelectorWheelHeight);
 		public static readonly Vector2 settingFieldSize = new(entrySize.x / 3, entrySize.y);
 
@@ -106,6 +122,7 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_ChipPinNames = new("PREFS_ChipPinNames");
 		static readonly UIHandle ID_GridDisplay = new("PREFS_GridDisplay");
 		static readonly UIHandle ID_WireCurvatureDisplay = new("PREFS_WireCurvatureDisplay");
+		static readonly UIHandle ID_MultiWireLayoutAlgorithm = new("PREFS_MultiWireLayoutAlgorithm");
 		static readonly UIHandle ID_UIThemeDisplay = new("PREFS_UIThemeDisplay");
 		static readonly UIHandle ID_Snapping = new("PREFS_Snapping");
 		static readonly UIHandle ID_StraightWires = new("PREFS_StraightWires");
@@ -113,6 +130,12 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_SimFrequencyField = new("PREFS_SimTickTarget");
 		static readonly UIHandle ID_ClockSpeedInput = new("PREFS_ClockSpeed");
 		static readonly UIHandle ID_PinIndicators = new("PREFS_PinIndicators");
+		static readonly UIHandle ID_ControlScheme = new("PREFS_ControlScheme");
+
+		// Section collapse/expand state
+		static readonly UIHandle ID_DisplaySection = new("PREFS_DisplaySection");
+		static readonly UIHandle ID_EditingSection = new("PREFS_EditingSection");
+		static readonly UIHandle ID_SimulationSection = new("PREFS_SimulationSection");
 
 		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string showGridLabel = "Show grid";
@@ -120,9 +143,76 @@ namespace DLS.Graphics
 		static readonly string UIThemeLabel = "UI Theme";
 		#else
 		static readonly string showGridLabel = "Show grid" + CreateShortcutString("Ctrl+G");
+		static readonly string wireCurvatureLabel = "Wire curvature";
+		static readonly string UIThemeLabel = "UI Theme";
 		#endif
 		static readonly string simStatusLabel = "Sim Status" + CreateShortcutString("Ctrl+Space");
 		static readonly Func<string, bool> integerInputValidator = ValidateIntegerInput;
+
+		// Section collapse/expand state
+		static bool displaySectionExpanded = true;
+		static bool editingSectionExpanded = true;
+		static bool simulationSectionExpanded = false; // Start collapsed
+		
+		// Track which sections were opened most recently (for limiting to max 2 open)
+		static int lastOpenedSection = 0; // 0=display, 1=editing, 2=simulation
+
+		// Helper methods for collapsible sections
+		static bool IsDisplaySectionExpanded() => displaySectionExpanded;
+		static bool IsEditingSectionExpanded() => editingSectionExpanded;
+		static bool IsSimulationSectionExpanded() => simulationSectionExpanded;
+		
+		static void ToggleDisplaySection() => ToggleSection(0);
+		static void ToggleEditingSection() => ToggleSection(1);
+		static void ToggleSimulationSection() => ToggleSection(2);
+		
+		static void ToggleSection(int sectionIndex)
+		{
+			// Count how many sections are currently expanded
+			int expandedCount = 0;
+			if (displaySectionExpanded) expandedCount++;
+			if (editingSectionExpanded) expandedCount++;
+			if (simulationSectionExpanded) expandedCount++;
+			
+			// If we're trying to expand a third section, close the oldest one
+			if (expandedCount >= 2 && !GetSectionExpanded(sectionIndex))
+			{
+				// Close the section that wasn't opened most recently
+				if (lastOpenedSection != 0) displaySectionExpanded = false;
+				if (lastOpenedSection != 1) editingSectionExpanded = false;
+				if (lastOpenedSection != 2) simulationSectionExpanded = false;
+			}
+			
+			// Toggle the requested section
+			SetSectionExpanded(sectionIndex, !GetSectionExpanded(sectionIndex));
+			
+			// Update last opened if we're expanding
+			if (GetSectionExpanded(sectionIndex))
+			{
+				lastOpenedSection = sectionIndex;
+			}
+		}
+		
+		static bool GetSectionExpanded(int sectionIndex)
+		{
+			return sectionIndex switch
+			{
+				0 => displaySectionExpanded,
+				1 => editingSectionExpanded,
+				2 => simulationSectionExpanded,
+				_ => false
+			};
+		}
+		
+		static void SetSectionExpanded(int sectionIndex, bool expanded)
+		{
+			switch (sectionIndex)
+			{
+				case 0: displaySectionExpanded = expanded; break;
+				case 1: editingSectionExpanded = expanded; break;
+				case 2: simulationSectionExpanded = expanded; break;
+			}
+		}
 
 		static double simAvgTicksPerSec_delayedRefreshForUI;
 		static float lastSimAvgTicksPerSecRefreshTime;
@@ -142,7 +232,7 @@ namespace DLS.Graphics
 			UpdateSimSpeedString(project);
 
 			const int inputTextPad = 1;
-			const float headerSpacing = 1.5f;
+			const float headerSpacing = 2.5f; // Increased from 1.5f to make header rows bigger
 			Color labelCol = Color.white;
 			Color headerCol = new(0.46f, 1, 0.54f);
 			Vector2 topLeft = UI.Centre + new Vector2(-menuWidth / 2, verticalOffset);
@@ -151,35 +241,40 @@ namespace DLS.Graphics
 			using (UI.BeginBoundsScope(true))
 			{
 				// --- Draw settings ---
-				DrawHeader("DISPLAY:");
-				int mainPinNamesMode = DrawNextWheel("Show I/O pin names", PinDisplayOptions, ID_MainPinNames); //-ERROR ORIGANTES HERE
-				int chipPinNamesMode = DrawNextWheel("Show chip pin names", PinDisplayOptions, ID_ChipPinNames);
-				int gridDisplayMode = DrawNextWheel(showGridLabel, GridDisplayOptions, ID_GridDisplay);
-				int wireDisplayMode = DrawNextWheel(wireCurvatureLabel, WireCurvatureOptions, ID_WireCurvatureDisplay);
-				int UIThemeMode = DrawNextWheel(UIThemeLabel, UIThemeOptions, ID_UIThemeDisplay);
+				DrawCollapsibleHeader("DISPLAY:", ID_DisplaySection, IsDisplaySectionExpanded, ToggleDisplaySection);
+				if (IsDisplaySectionExpanded())
+				{
+					DrawNextWheel("Show I/O pin names", PinDisplayOptions, ID_MainPinNames);
+					DrawNextWheel("Show chip pin names", PinDisplayOptions, ID_ChipPinNames);
+					DrawNextWheel(showGridLabel, GridDisplayOptions, ID_GridDisplay);
+					DrawNextWheel(wireCurvatureLabel, WireCurvatureOptions, ID_WireCurvatureDisplay);
+					DrawNextWheel("Multi-wire layout", MultiWireLayoutAlgorithmOptions, ID_MultiWireLayoutAlgorithm);
+					DrawNextWheel(UIThemeLabel, UIThemeOptions, ID_UIThemeDisplay);
+				}
 
-				DrawHeader("EDITING:");
-    			//int snappingMode = Project.ActiveProject.description.Prefs_Snapping;
-				int pinIndicatorsMode = DrawNextWheel("Show Pin indicators",PinIndicators, ID_PinIndicators);
-				int snappingMode = DrawNextWheel("Snap to grid", SnappingOptions, ID_Snapping);
-    			int straightWireMode = DrawNextWheel("Straight wires", StraightWireOptions, ID_StraightWires);
-				// Then draw using the clamped index:
-				//MenuHelper.LabeledOptionsWheel("Snap to grid", labelCol, labelPosCurr, entrySize, ID_Snapping, SnappingOptions, settingFieldSize.x, true);
-				//AddSpacing();
-				//MenuHelper.LabeledOptionsWheel("Straight wires", labelCol, labelPosCurr, entrySize, ID_StraightWires, StraightWireOptions, settingFieldSize.x, true);
-				//AddSpacing();
+				DrawCollapsibleHeader("EDITING:", ID_EditingSection, IsEditingSectionExpanded, ToggleEditingSection);
+				if (IsEditingSectionExpanded())
+				{
+					DrawNextWheel("Show Pin indicators",PinIndicators, ID_PinIndicators);
+					DrawNextWheel("Snap to grid", SnappingOptions, ID_Snapping);
+					DrawNextWheel("Straight wires", StraightWireOptions, ID_StraightWires);
+					DrawNextWheel("Control scheme", ControlSchemeOptions, ID_ControlScheme);
+				}
 
-				DrawHeader("SIMULATION:");
-				bool pauseSim = MenuHelper.LabeledOptionsWheel(simStatusLabel, labelCol, labelPosCurr, entrySize, ID_SimStatus, SimulationStatusOptions, settingFieldSize.x, true) == 1;
-				AddSpacing();
-				InputFieldState clockSpeedInputFieldState = MenuHelper.LabeledInputField("Steps per clock tick", labelCol, labelPosCurr, entrySize, ID_ClockSpeedInput, integerInputValidator, settingFieldSize.x, true);
-				AddSpacing();
-				InputFieldState freqState = MenuHelper.LabeledInputField("Steps per second (target)", labelCol, labelPosCurr, entrySize, ID_SimFrequencyField, integerInputValidator, settingFieldSize.x, true);
-				AddSpacing();
-				// Draw current simulation speed
-				Vector2 tickLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, "Steps per second (current)", labelCol * 0.75f, true);
-				UI.DrawPanel(tickLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(currentSimSpeedString, theme.FontBold, theme.FontSizeRegular, tickLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, currentSimSpeedStringColour);
+				DrawCollapsibleHeader("SIMULATION:", ID_SimulationSection, IsSimulationSectionExpanded, ToggleSimulationSection);
+				if (IsSimulationSectionExpanded())
+				{
+					MenuHelper.LabeledOptionsWheel(simStatusLabel, labelCol, labelPosCurr, entrySize, ID_SimStatus, SimulationStatusOptions, settingFieldSize.x, true);
+					AddSpacing();
+					MenuHelper.LabeledInputField("Steps per clock tick", labelCol, labelPosCurr, entrySize, ID_ClockSpeedInput, integerInputValidator, settingFieldSize.x, true);
+					AddSpacing();
+					MenuHelper.LabeledInputField("Steps per second (target)", labelCol, labelPosCurr, entrySize, ID_SimFrequencyField, integerInputValidator, settingFieldSize.x, true);
+					AddSpacing();
+					// Draw current simulation speed
+					Vector2 tickLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, "Steps per second (current)", labelCol * 0.75f, true);
+					UI.DrawPanel(tickLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+					UI.DrawText(currentSimSpeedString, theme.FontBold, theme.FontSizeRegular, tickLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, currentSimSpeedStringColour);
+				}
 
 				// Draw cancel/confirm buttons
 				Vector2 buttonTopLeft = new(labelPosCurr.x, UI.PrevBounds.Bottom);
@@ -190,9 +285,24 @@ namespace DLS.Graphics
 				MenuHelper.DrawReservedMenuPanel(panelID, menuBounds);
 
 				// ---- Handle changes ----
+				// Get values from expanded sections only
+				int mainPinNamesMode = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_MainPinNames).index : project.description.Prefs_MainPinNamesDisplayMode;
+				int chipPinNamesMode = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_ChipPinNames).index : project.description.Prefs_ChipPinNamesDisplayMode;
+				int gridDisplayMode = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_GridDisplay).index : project.description.Prefs_GridDisplayMode;
+				int wireDisplayMode = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_WireCurvatureDisplay).index : project.description.Prefs_WireCurvatureMode;
+				int multiWireLayoutAlgorithm = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_MultiWireLayoutAlgorithm).index : project.description.Prefs_MultiWireLayoutAlgorithm;
+				int UIThemeMode = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_UIThemeDisplay).index : project.description.Prefs_UIThemeMode;
+				
+				int pinIndicatorsMode = IsEditingSectionExpanded() ? UI.GetWheelSelectorState(ID_PinIndicators).index : project.description.Perfs_PinIndicators;
+				int snappingMode = IsEditingSectionExpanded() ? UI.GetWheelSelectorState(ID_Snapping).index : project.description.Prefs_Snapping;
+				int straightWireMode = IsEditingSectionExpanded() ? UI.GetWheelSelectorState(ID_StraightWires).index : project.description.Prefs_StraightWires;
+				int controlSchemeMode = IsEditingSectionExpanded() ? UI.GetWheelSelectorState(ID_ControlScheme).index : (project.description.Prefs_UseDragAndDropMode ? 1 : 0);
+				
+				bool pauseSim = IsSimulationSectionExpanded() ? (UI.GetWheelSelectorState(ID_SimStatus).index == 1) : project.description.Prefs_SimPaused;
+				InputFieldState clockSpeedInputFieldState = IsSimulationSectionExpanded() ? UI.GetInputFieldState(ID_ClockSpeedInput) : new InputFieldState();
+				InputFieldState freqState = IsSimulationSectionExpanded() ? UI.GetInputFieldState(ID_SimFrequencyField) : new InputFieldState();
+				
 				int.TryParse(clockSpeedInputFieldState.text, out int clockSpeed);
-
-				// Parse target sim tick rate
 				int.TryParse(freqState.text, out int targetSimTicksPerSecond);
 				targetSimTicksPerSecond = Mathf.Max(1, targetSimTicksPerSecond);
 				if (project.targetTicksPerSecond != targetSimTicksPerSecond || project.simPaused != pauseSim) lastSimTickRateSetTime = Time.time;
@@ -202,6 +312,7 @@ namespace DLS.Graphics
 				project.description.Prefs_ChipPinNamesDisplayMode = chipPinNamesMode;
 				project.description.Prefs_GridDisplayMode = gridDisplayMode;
 				project.description.Prefs_WireCurvatureMode = wireDisplayMode;
+				project.description.Prefs_MultiWireLayoutAlgorithm = multiWireLayoutAlgorithm;
 				project.description.Prefs_UIThemeMode = UIThemeMode;
 				project.description.Prefs_Snapping = snappingMode;
 				project.description.Prefs_StraightWires = straightWireMode;
@@ -209,6 +320,7 @@ namespace DLS.Graphics
 				project.description.Prefs_SimStepsPerClockTick = clockSpeed;
 				project.description.Prefs_SimPaused = pauseSim;
 				project.description.Perfs_PinIndicators = pinIndicatorsMode;
+				project.description.Prefs_UseDragAndDropMode = controlSchemeMode == 1;
 
                 // Cancel / Confirm
                 if (result == MenuHelper.CancelConfirmResult.Cancel)
@@ -236,10 +348,24 @@ namespace DLS.Graphics
 				return index;
 			}
 
-			void DrawHeader(string text)
+
+			void DrawCollapsibleHeader(string text, UIHandle sectionID, System.Func<bool> isExpanded, System.Action toggleAction)
 			{
 				AddHeaderSpacing();
+				
+				// Draw header text
 				UI.DrawText(text, theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, headerCol);
+				
+				// Draw toggle button to the right (much bigger for easier tapping)
+				Vector2 toggleButtonPos = new Vector2(labelPosCurr.x + menuWidth - 8.0f, labelPosCurr.y);
+				Vector2 toggleButtonSize = new Vector2(7.5f, 2.0f); // Even bigger buttons
+				string toggleText = isExpanded() ? "−" : "+";
+				
+				if (UI.Button(toggleText, theme.MenuButtonTheme, toggleButtonPos, toggleButtonSize, true, true, false, theme.ButtonTheme.buttonCols, Anchor.CentreLeft))
+				{
+					toggleAction();
+				}
+				
 				AddHeaderSpacing();
 			}
 
@@ -258,6 +384,11 @@ namespace DLS.Graphics
 		{
 			originalProjectDesc = Project.ActiveProject.description;
 
+			// Initialize section states (DISPLAY and EDITING expanded, SIMULATION collapsed)
+			displaySectionExpanded = true;
+			editingSectionExpanded = true;
+			simulationSectionExpanded = false;
+
 			UpdateUIFromDescription();
 
 			simAvgTicksPerSec_delayedRefreshForUI = Project.ActiveProject.simAvgTicksPerSec;
@@ -274,6 +405,7 @@ namespace DLS.Graphics
 			UI.GetWheelSelectorState(ID_ChipPinNames).index = projDesc.Prefs_ChipPinNamesDisplayMode;
 			UI.GetWheelSelectorState(ID_GridDisplay).index = projDesc.Prefs_GridDisplayMode;
 			UI.GetWheelSelectorState(ID_WireCurvatureDisplay).index = projDesc.Prefs_WireCurvatureMode;
+			UI.GetWheelSelectorState(ID_MultiWireLayoutAlgorithm).index = projDesc.Prefs_MultiWireLayoutAlgorithm;
 			UI.GetWheelSelectorState(ID_UIThemeDisplay).index = projDesc.Prefs_UIThemeMode;
 	
 			// 🛠 Clamp snapping and straight wire mode indexes
@@ -287,6 +419,7 @@ namespace DLS.Graphics
 	
 			UI.GetWheelSelectorState(ID_SimStatus).index = projDesc.Prefs_SimPaused ? 1 : 0;
 			UI.GetWheelSelectorState(ID_PinIndicators).index = projDesc.Perfs_PinIndicators;
+			UI.GetWheelSelectorState(ID_ControlScheme).index = projDesc.Prefs_UseDragAndDropMode ? 1 : 0;
             // -- Input fields
             UI.GetInputFieldState(ID_SimFrequencyField).SetText(projDesc.Prefs_SimTargetStepsPerSecond + "", false);
 			UI.GetInputFieldState(ID_ClockSpeedInput).SetText(projDesc.Prefs_SimStepsPerClockTick + "", false);

@@ -29,22 +29,22 @@ namespace DLS.Game
 		static ViewState mainMenuView = new();
 		public static ViewState activeView;
 		static Dictionary<string, ViewState> chipViewStateLookup = new();
-        private static float currentPinchDistance;
-        private static bool isPinching;
-        private static float initialPinchDistance;
-        private static Vector2 initialPinchMidPoint;
+		private static float currentPinchDistance;
+		private static bool isPinching;
+		private static float initialPinchDistance;
+		private static Vector2 initialPinchMidPoint;
 
-        public static bool PinchFrameStarted { get; private set; }
+		public static bool PinchFrameStarted { get; private set; }
 
-        static bool CanMove => UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup or UIDrawer.MenuType.ChipCustomization;
+		static bool CanMove => UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup or UIDrawer.MenuType.ChipCustomization;
 		static bool CanZoom => UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup or UIDrawer.MenuType.ChipCustomization;
 		static bool CanStartNewInput => !InteractionState.MouseIsOverUI;
 
 		public static bool InChipView => UIDrawer.ActiveMenu != UIDrawer.MenuType.ChipCustomization;
 
-        public static float PinchScale { get; private set; }
+		public static float PinchScale { get; private set; }
 
-        public static void Reset()
+		public static void Reset()
 		{
 			chipViewStateLookup = new Dictionary<string, ViewState>();
 			customizeView = new ViewState();
@@ -73,44 +73,43 @@ namespace DLS.Game
 					chipViewStateLookup.Remove(Project.ActiveProject.ViewedChip.ChipName);
 				}
 
-				#if UNITY_ANDROID || UNITY_IOS
-					if(!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip &&
-   					!DLS.Graphics.CustomizationSceneDrawer.IsPlacingDisplay &&
-   					DLS.Graphics.CustomizationSceneDrawer.SelectedDisplay == null && 
-					!UI.IsInteractingWithColorPicker &&
-					!UI.IsScrolling &&
-					!Project.ActiveProject.controller.isMovingWireEditPoint){
+#if UNITY_ANDROID || UNITY_IOS
+				if (!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip &&
+				   !DLS.Graphics.CustomizationSceneDrawer.IsPlacingDisplay &&
+				   DLS.Graphics.CustomizationSceneDrawer.SelectedDisplay == null &&
+				!UI.IsInteractingWithColorPicker &&
+				!UI.IsScrolling &&
+				!Project.ActiveProject.controller.isMovingWireEditPoint &&
+				!DLS.Graphics.CustomizationSceneDrawer.isDraggingPin)
+				{
 
 
 					//if(!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip){
-						Vector2 touchScreenPos = TouchInputHelper.Instance.TouchPosition;
-						Vector2 touchWorldPos = camera.ScreenToWorldPoint(touchScreenPos);
-						HandlePanInput(touchScreenPos, touchWorldPos);
-						HandleZoomInputMobile();
-					}
-				#else
+					Vector2 touchScreenPos = TouchInputHelper.Instance.TouchPosition;
+					Vector2 touchWorldPos = camera.ScreenToWorldPoint(touchScreenPos);
+					HandlePanInput(touchScreenPos, touchWorldPos);
+					HandleZoomInputMobile();
+				}
+#else
 					// Editor, including when simulating Android
 					Vector2 mouseScreenPos = InputHelper.MousePos;
 					Vector2 mouseWorldPos = camera.ScreenToWorldPoint(mouseScreenPos);
 					HandlePanInput(mouseScreenPos, mouseWorldPos);
 					HandleZoomInput(mouseScreenPos);
-				#endif
+#endif
 
 			}
 
 			UpdateCameraState();
 		}
 
-		#if UNITY_ANDROID || UNITY_IOS
 		static bool isTouchPanning;
-		static Vector2 panTouchStartScreen;
-		static Vector2 panTouchStartWorld;
-        private static float zoomPrev =1f;
-
-		static Vector2 t1StartPos;
+        private static Vector2 panTouchStartScreen;
+        static Vector2 t1StartPos;
 		static Vector2 t2StartPos;
 		static Vector2 startWorldMidPoint;
-		#endif
+		private static float zoomPrev = 1f;
+		static Vector2 panTouchStartWorld;
 
 		static void HandleZoomInputMobile()
 		{
@@ -128,7 +127,7 @@ namespace DLS.Game
 				t1StartPos = touch1ScreenPos;
 				t2StartPos = touch2ScreenPos;
 				zoomPrev = activeView.OrthoSize;
-		
+
 				// Save the midpoint in world coordinates
 				startWorldMidPoint = (camera.ScreenToWorldPoint(t1StartPos) + camera.ScreenToWorldPoint(t2StartPos)) * 0.5f;
 			}
@@ -151,9 +150,11 @@ namespace DLS.Game
 		}
 
 
-        static void HandleTouchInput(){
+		static void HandleTouchInput()
+		{
 
-			if (Input.touchCount == 1){
+			if (Input.touchCount == 1)
+			{
 
 				Touch touch = Input.GetTouch(0);
 				Vector2 t = touch.position;
@@ -194,10 +195,10 @@ namespace DLS.Game
 		{
 			if (CanMove)
 			{
-				#if UNITY_ANDROID || UNITY_IOS
+#if UNITY_ANDROID || UNITY_IOS
 				if (TouchInputHelper.Instance != null &&
-		    		TouchInputHelper.Instance.Dragging &&
-		    		Project.ActiveProject.controller.SelectedElements.Count == 0 &&
+					TouchInputHelper.Instance.Dragging &&
+					Project.ActiveProject.controller.SelectedElements.Count == 0 &&
 					!MobileUIController.Instance.isBoxSelectToolActive
 				)
 				{
@@ -221,7 +222,7 @@ namespace DLS.Game
 				{
 					isTouchPanning = false;
 				}
-				#endif
+#endif
 
 				bool altLeftMouseDown = KeyboardShortcuts.CameraActionKeyHeld && InputHelper.IsMouseDownThisFrame(MouseButton.Left);
 				bool middleMouseDown = InputHelper.IsMouseDownThisFrame(MouseButton.Middle);
@@ -245,13 +246,13 @@ namespace DLS.Game
 			if (InputHelper.IsMouseUpThisFrame(MouseButton.Middle) || InputHelper.IsMouseUpThisFrame(MouseButton.Left))
 			{
 				isMovingCamera = false;
-				#if UNITY_ANDROID || UNITY_IOS
+#if UNITY_ANDROID || UNITY_IOS
 				isTouchPanning = false;
-				#endif
+#endif
 			}
 		}
 
-				// Zoom with middle mouse scroll, or alt+right-mouse drag
+		// Zoom with middle mouse scroll, or alt+right-mouse drag
 		static void HandleZoomInput(Vector2 mouseScreenPos)
 		{
 			if (CanStartNewInput && CanZoom)
@@ -317,7 +318,7 @@ namespace DLS.Game
 			UpdateCameraState();
 		}
 
-		static void UpdateCameraState()
+		public static void UpdateCameraState()
 		{
 			Vector2 pos2D = activeView.Pos;
 			camT.position = new Vector3(pos2D.x, pos2D.y, -10);
@@ -427,5 +428,14 @@ namespace DLS.Game
 			public float OrthoSize = StartupOrthoSize;
 			public Vector2 Pos = Vector2.zero;
 		}
+
+		public static void SetViewForCurrentChip(ViewState view)
+		{
+    		var chip = Project.ActiveProject.ViewedChip;
+    		activeView = view;
+    		chipViewStateLookup[chip.ChipName] = view; // persist so Update() won’t overwrite
+    		UpdateCameraState();
+		}
+
 	}
 }

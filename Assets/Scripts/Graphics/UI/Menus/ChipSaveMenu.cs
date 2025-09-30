@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using DLS.Description;
 using DLS.Game;
+using DLS.Game.LevelsIntegration;
+using DLS.Levels;
 using DLS.SaveSystem;
 using Seb.Types;
 using Seb.Vis;
@@ -121,6 +124,9 @@ namespace DLS.Graphics
             DevChipInstance viewedChip = Project.ActiveProject.ViewedChip;
             ChipDescription desc = DescriptionCreator.CreateChipDescription(viewedChip);
 
+            // Run chip type detection and auto-complete name if appropriate
+            RunChipTypeDetection(desc);
+
             desc.HasCustomLayout = viewedChip.HasCustomLayout;
 
             // Copy layout if it exists
@@ -178,6 +184,124 @@ namespace DLS.Graphics
 			return isValid;
 		}
 
+		/// <summary>
+		/// Runs chip type detection and auto-completes the name if appropriate.
+		/// </summary>
+		static void RunChipTypeDetection(ChipDescription desc)
+		{
+			try
+			{
+				Debug.Log("RunChipTypeDetection: Starting detection");
+				
+				// Check if chip has unsaved changes (reuse existing logic)
+				var project = Project.ActiveProject;
+				if (project == null) 
+				{
+					Debug.Log("RunChipTypeDetection: No active project");
+					return;
+				}
+				
+				bool hasUnsavedChanges = project.ActiveChipHasUnsavedChanges();
+				Debug.Log($"RunChipTypeDetection: Has unsaved changes: {hasUnsavedChanges}");
+				
+				if (!hasUnsavedChanges)
+				{
+					// No changes, skip detection to save performance
+					Debug.Log("RunChipTypeDetection: Skipping detection - no unsaved changes");
+					return;
+				}
+				
+				// Save current input pin states before detection
+				var originalInputStates = SaveInputPinStates(project.ViewedChip);
+				
+				try
+				{
+					// Set up the simulation callback for circuit evaluation
+					ChipTypeDetector.SetSimulationCallback(EvaluateCircuitWithSimulation);
+					
+					// Run detection and get suggested name
+					var (detectedType, suggestedName) = ChipTypeDetector.DetectAndSuggestName(desc);
+					
+					// Clear the simulation callback
+					ChipTypeDetector.SetSimulationCallback(null);
+					
+					// Update the chip's internal type ID
+					desc.InternalTypeId = detectedType;
+					
+					// If detection found a known type and chip name is empty or generic, suggest the detected name
+					if (detectedType != ChipTypeId.Unknown && 
+					    (string.IsNullOrWhiteSpace(desc.Name) || 
+					     desc.Name.Equals("Untitled", StringComparison.OrdinalIgnoreCase)))
+					{
+						Debug.Log($"RunChipTypeDetection: Auto-completing name to '{suggestedName}'");
+						desc.Name = suggestedName;
+					}
+					else
+					{
+						Debug.Log($"RunChipTypeDetection: Not auto-completing name. Type: {detectedType}, Current name: '{desc.Name}'");
+					}
+				}
+				finally
+				{
+					// Always restore original input pin states
+					RestoreInputPinStates(project.ViewedChip, originalInputStates);
+				}
+			}
+			catch (Exception ex)
+			{
+				// Log error but don't break the save flow
+				Debug.LogError($"Chip type detection failed: {ex.Message}");
+			}
+		}
+		
+		/// <summary>
+		/// Uses the actual simulation engine to evaluate the circuit for a given input.
+		/// This reuses the same logic that level validation uses.
+		/// </summary>
+		static bool EvaluateCircuitWithSimulation(int inputValue)
+		{
+			try
+			{
+				// Get the current project and simulation adapter
+				var project = Project.ActiveProject;
+				if (project?.ViewedChip == null)
+				{
+					Debug.Log("No active project or viewed chip for simulation");
+					return false;
+				}
+				
+				// Create a simulation adapter (same as level validation)
+				var adapter = new MobileSimulationAdapter();
+				
+				// Create a bit vector for the input
+				var inputVector = new BitVector((ulong)inputValue, 32); // Support up to 32 bits
+				
+				// Apply inputs to the circuit
+				adapter.ApplyInputs(inputVector);
+				
+				// Let the circuit settle (run simulation for a few steps)
+				bool settled = adapter.SettleWithin(10, out int stepsTaken);
+				if (!settled)
+				{
+					Debug.Log($"Circuit did not settle within 10 steps (took {stepsTaken} steps)");
+				}
+				
+				// Read the outputs
+				var outputVector = adapter.ReadOutputs();
+				
+				// Return the first output bit (use indexer to access bit 0)
+				bool result = outputVector.Length > 0 ? outputVector[0] : false;
+				Debug.Log($"Simulation result: input={inputValue}, output={result}, steps={stepsTaken}");
+				
+				return result;
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"Simulation evaluation failed: {ex.Message}");
+				return false;
+			}
+		}
+		
 		static void InitUIFromDescription(ChipDescription chipDesc)
 		{
 			// Set input field to current chip name
@@ -215,6 +339,62 @@ namespace DLS.Graphics
 			float s = Mathf.Lerp(0.2f, 1, (float)rng.NextDouble());
 			float v = Mathf.Lerp(0.2f, 1, (float)rng.NextDouble());
 			return Color.HSVToRGB(h, s, v);
+		}
+		
+		/// <summary>
+		/// Saves the current state of all input pins in the chip.
+		/// </summary>
+		static Dictionary<object, bool> SaveInputPinStates(DevChipInstance viewedChip)
+		{
+			var originalStates = new Dictionary<object, bool>();
+			
+			if (viewedChip != null)
+			{
+				var inputPins = viewedChip.GetInputPins();
+				if (inputPins != null)
+				{
+					foreach (var inputPin in inputPins)
+					{
+						if (inputPin?.Pin != null)
+						{
+							originalStates[inputPin.Pin] = inputPin.Pin.PlayerInputState.FirstBitHigh();
+						}
+					}
+				}
+			}
+			
+			Debug.Log($"SaveInputPinStates: Saved {originalStates.Count} input pin states");
+			return originalStates;
+		}
+		
+		/// <summary>
+		/// Restores the input pin states to their original values.
+		/// </summary>
+		static void RestoreInputPinStates(DevChipInstance viewedChip, Dictionary<object, bool> originalStates)
+		{
+			if (viewedChip == null || originalStates == null)
+			{
+				return;
+			}
+			
+			var inputPins = viewedChip.GetInputPins();
+			if (inputPins == null)
+			{
+				return;
+			}
+			
+			int restoredCount = 0;
+			foreach (var inputPin in inputPins)
+			{
+				if (inputPin?.Pin != null && originalStates.TryGetValue(inputPin.Pin, out bool originalState))
+				{
+					// Restore the original state using PlayerInputState
+					inputPin.Pin.PlayerInputState.SetFirstBit(originalState);
+					restoredCount++;
+				}
+			}
+			
+			Debug.Log($"RestoreInputPinStates: Restored {restoredCount} input pin states");
 		}
 	}
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DLS.Description;
 using DLS.Game;
+using DLS.Game.LevelsIntegration;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis;
@@ -208,7 +209,7 @@ namespace DLS.Graphics
 
 							else activeContextMenuEntries = entries_builtinSubchip;
 						}
-						#if !UNITY_ANDROID || UNITY_IOS
+						#if !(UNITY_ANDROID || UNITY_IOS)
 						Project.ActiveProject.controller.Select(interactionContext as IMoveable, false);
 						#endif
 					}
@@ -332,7 +333,7 @@ namespace DLS.Graphics
 					}
 					else
 					{
-						if (UI.Button(entry.Text, theme, pos, buttonSize, entry.IsEnabled(), false, false, anchor, true, textOffsetX))
+						if (UI.Button(entry.Text, theme, pos, buttonSize, entry.IsEnabled(), false, false, theme.buttonCols, anchor, true, textOffsetX))
 						{
 							entry.OnPress();
 						}
@@ -352,7 +353,7 @@ namespace DLS.Graphics
 
 			void DrawHeader()
 			{
-				UI.Button(contextMenuHeader, headerTheme, pos, buttonSize, false, false, false, anchor, true, textOffsetX);
+				UI.Button(contextMenuHeader, headerTheme, pos, buttonSize, false, false, false,headerTheme.buttonCols, anchor, true, textOffsetX);
 				pos.y += buttonSize.y * dirY;
 			}
 		}
@@ -466,6 +467,7 @@ namespace DLS.Graphics
 				if (confirm)
 				{
 					project.LoadDevChipOrCreateNewIfDoesntExist(chipToOpenName);
+					LevelManager.Instance?.ExitLevel();
 				}
 			}
 		}

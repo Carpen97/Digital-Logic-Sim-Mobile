@@ -1,6 +1,9 @@
 {
+  "DLSVersion": "2.1.6.8",
   "Name": "NOT",
   "NameLocation": 0,
+  "ChipType": 0,
+  "ShouldBeCached": false,
   "Size": {
     "x": 0.95,
     "y": 0.375
@@ -19,9 +22,11 @@
         "x":-6.83871,
         "y":-0.70968
       },
-      "BitCount":1,
+      "BitCount":"1",
       "Colour":0,
-      "ValueDisplayMode":0
+      "ValueDisplayMode":0,
+      "face":1,
+      "LocalOffset":0.0
     }
   ],
   "OutputPins":[
@@ -32,9 +37,11 @@
         "x":4.90323,
         "y":-0.82258
       },
-      "BitCount":1,
+      "BitCount":"1",
       "Colour":0,
-      "ValueDisplayMode":0
+      "ValueDisplayMode":0,
+      "face":1,
+      "LocalOffset":0.0
     }
   ],
   "SubChips":[
@@ -95,5 +102,5 @@
     }
   ],
   "Displays":[],
-  "ChipType": 0
+  "HasCustomLayout": false
 }

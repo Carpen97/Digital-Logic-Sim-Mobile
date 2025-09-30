@@ -25,7 +25,6 @@ namespace DLS.Game
 		public string Name;
 		public int face;
         public int ID;
-		
 
         public PinInstance(PinDescription desc, PinAddress address, IMoveable parent, bool isSourcePin)
 		{
