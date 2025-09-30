@@ -48,6 +48,10 @@ ExportedObj/
 *.pdb
 *.mdb
 *.opendb
+
+# Firebase large files that exceed GitHub's 100MB limit
+Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_2_0.so
+Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_2_0.bundle
 *.VC.db
 
 # Unity3D generated meta files
