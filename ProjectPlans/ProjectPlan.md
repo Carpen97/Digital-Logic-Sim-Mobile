@@ -67,7 +67,6 @@ Mobile Port (origin)
 | 013 | Add scrollbar size + buttons setting   | Open   | Add a setting to adjust scrollbar size and provide optional up/down buttons to assist navigation.                                                                                                                                     |
 | 018 | Share solutions (zip + ghost)          | Open   | Normalize & zip solution JSON, upload/download, and implement ghost playback viewer.                                                                                                                                                  |
 | 019 | Server validation for submissions      | Open   | Cloud Function re-simulates solutions/scores to verify; flags "verified" entries and rejects impossible ones.                                                                                                                         |
-| 020 | Fix layout in 'Add Special' menu       | Open   | Adjust the UI layout in the 'Add Special' menu so buttons and labels align correctly across devices.                                                                                                                                  |
 | 024 | Component grouping system              | Open   | Add support for grouping multiple components. Selecting multiple components shows a new UI button to create a group. Groups behave as single units for selection/deselection. Groups can also be saved and spawned, similar to chips. |
 | 026 | Perpendicular guide for straight lines | Open   | When straight line mode is toggled, draw a perpendicular guide line to assist alignment.                                                                                                                                              |
 
@@ -102,6 +101,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - ✅ **Commit completed work** - Each completed ticket should have a clear commit with format: "Ticket XXX: Brief description"
 
 ### **Current Status:**
-- **8 Open Tickets** available for selection
+- **7 Open Tickets** available for selection
 - **0 In Progress** tickets
 - **Project ready** for next instructions

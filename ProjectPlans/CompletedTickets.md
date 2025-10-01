@@ -13,6 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📋 **Completed Tickets**
 
+### **Ticket 028** – Save Chip shortcut in level completion
+**Closed:** 2025-01-27  
+**Summary:** Successfully implemented Save Chip shortcut button in level validation reports for completed basic levels. Users can now directly access the "Save chip" menu from the validation report when completing levels, streamlining the workflow to save successful level solutions. Enhanced UX with seamless transition from level completion to chip library saving. ✅
+
+---
+
+### **Ticket 027** – Save level progress state
+**Closed:** 2025-01-27  
+**Summary:** Closed without implementation. Ticket was assigned to development team but closed before work began. Level progress saving feature remains available for future implementation. ✅
+
+---
+
 ### **Ticket 022** – Chip type detection on save
 **Closed:** 2025-09-07  
 **Summary:** Implemented automatic chip type detection during chip saving. Detects common gate types (NOT, AND, OR, XOR, NAND, NOR, XNOR, Buffer, AND3, OR3) for chips with 1–3 inputs and 1–2 outputs. Backward compatible, performance optimized, and fully tested. Save format extended with InternalTypeId. ✅
@@ -80,9 +92,9 @@ This document contains a historical record of all completed tickets from the Dig
 ---
 
 ## 📊 **Statistics**
-- **Total Completed Tickets:** 11
+- **Total Completed Tickets:** 13
 - **Latest Completion:** 2025-01-27
-- **Most Recent:** Chip preview in library menu
+- **Most Recent:** Save Chip shortcut in level completion
 - **Key Achievements:** Community integration, Levels system, UI fixes, Performance optimizations, Mobile UX improvements, Library enhancements
 
 ---
