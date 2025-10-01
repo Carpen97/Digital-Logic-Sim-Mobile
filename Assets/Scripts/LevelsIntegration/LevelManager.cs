@@ -237,5 +237,23 @@ namespace DLS.Game.LevelsIntegration
                 ValueDisplayMode = PinValueDisplayMode.Off,
             };
         }
+
+        /// <summary>
+        /// Check if there are unsaved changes in the current level
+        /// </summary>
+        public bool HasUnsavedChanges()
+        {
+            // TODO: Implement proper unsaved changes detection
+            return false;
+        }
+
+        /// <summary>
+        /// Save the current progress of the level
+        /// </summary>
+        public void SaveCurrentProgress()
+        {
+            // TODO: Implement progress saving
+            Debug.Log("[LevelManager] SaveCurrentProgress called - not yet implemented");
+        }
     }
 }

@@ -26,6 +26,7 @@ namespace DLS.Graphics
 			PulseEdit,
 			ConstantEdit,
 			UnsavedChanges,
+			LevelUnsavedChanges,
 			Search,
 			ChipLabelPopup,
 			SpecialChipMaker,
@@ -34,7 +35,8 @@ namespace DLS.Graphics
 			LevelValidationResult,
 			Leaderboard,
 			ScoreExplanation,
-			CachingExplanation
+			CachingExplanation,
+			UserNameInput
 		}
 
 		static MenuType activeMenuOld;
@@ -83,6 +85,7 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.CollectionStats) CollectionStatsMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ProjectStats) ProjectStatsMenu.DrawMenu();
 			else if (menuToDraw == MenuType.UnsavedChanges) UnsavedChangesPopup.DrawMenu();
+			else if (menuToDraw == MenuType.LevelUnsavedChanges) LevelUnsavedChangesPopup.DrawMenu();
 			else if (menuToDraw == MenuType.Overwrite) ConfirmOverwritePopup.DrawMenu();
 			else if (menuToDraw == MenuType.Search) SearchPopup.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLabelPopup) ChipLabelMenu.DrawMenu();
@@ -94,6 +97,7 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.Leaderboard) LeaderboardPopup.DrawMenu();
 			else if (menuToDraw == MenuType.ScoreExplanation) ScoreExplanationPopup.DrawMenu();
 			else if (menuToDraw == MenuType.CachingExplanation) CachingExplanationPopup.DrawMenu();
+			else if (menuToDraw == MenuType.UserNameInput) UserNameInputPopup.DrawMenu();
 			else
 			{
 				bool showSimPausedBanner = project.simPaused;

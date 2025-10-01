@@ -773,9 +773,43 @@ namespace DLS.Graphics
 		{
 			if (confirm)
 			{
-				project.LoadDevChipOrCreateNewIfDoesntExist(chipToOpenName);
-				ExitLibrary();
-				LevelManager.Instance?.ExitLevel();  
+				// Check for level unsaved changes before opening chip
+				if (LevelManager.Instance?.IsActive == true && LevelManager.Instance.HasUnsavedChanges())
+				{
+					LevelUnsavedChangesPopup.OpenPopup(OpenChipAfterLevelCheck);
+				}
+				else
+				{
+					OpenChipAfterLevelCheck(2); // Continue without saving (since there are no changes)
+				}
+
+				void OpenChipAfterLevelCheck(int option)
+				{
+					if (option == 0) // Cancel
+					{
+						// Do nothing, stay in current level
+						return;
+					}
+					else if (option == 1) // Save and Continue
+					{
+						// Save level progress before opening chip
+						if (LevelManager.Instance?.IsActive == true)
+						{
+							LevelManager.Instance.SaveCurrentProgress();
+						}
+						
+						project.LoadDevChipOrCreateNewIfDoesntExist(chipToOpenName);
+						ExitLibrary();
+						LevelManager.Instance?.ExitLevel();
+					}
+					else if (option == 2) // Continue without Saving
+					{
+						// Open chip without saving level progress
+						project.LoadDevChipOrCreateNewIfDoesntExist(chipToOpenName);
+						ExitLibrary();
+						LevelManager.Instance?.ExitLevel();
+					}
+				}  
 			}
 			else
 			{

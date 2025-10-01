@@ -13,6 +13,12 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📋 **Completed Tickets**
 
+### **Ticket 029** – User name for Firebase score uploads
+**Closed:** 2025-01-27  
+**Summary:** Successfully implemented comprehensive user name system for Firebase score uploads. Created mobile-optimized UserNameInputPopup.cs with full validation (3-20 characters, alphanumeric + spaces/hyphens/underscores). Updated Firebase data structure with userName field in ScoreEntry.cs and LeaderboardService.cs. Enhanced LeaderboardPopup.cs to display user names instead of user IDs. Added user preference storage with "Remember my name" functionality and anonymous submission support. Implemented proper error handling, mobile-optimized UI design, and seamless integration with existing level validation flow. All success criteria met with production-ready implementation. ✅
+
+---
+
 ### **Ticket 028** – Save Chip shortcut in level completion
 **Closed:** 2025-01-27  
 **Summary:** Successfully implemented Save Chip shortcut button in level validation reports for completed basic levels. Users can now directly access the "Save chip" menu from the validation report when completing levels, streamlining the workflow to save successful level solutions. Enhanced UX with seamless transition from level completion to chip library saving. ✅
@@ -92,9 +98,9 @@ This document contains a historical record of all completed tickets from the Dig
 ---
 
 ## 📊 **Statistics**
-- **Total Completed Tickets:** 13
+- **Total Completed Tickets:** 14
 - **Latest Completion:** 2025-01-27
-- **Most Recent:** Save Chip shortcut in level completion
+- **Most Recent:** User name for Firebase score uploads
 - **Key Achievements:** Community integration, Levels system, UI fixes, Performance optimizations, Mobile UX improvements, Library enhancements
 
 ---

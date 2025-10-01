@@ -288,12 +288,48 @@ namespace DLS.Graphics
 				return;
 			}
 
+			// Check for level unsaved changes before starting new level
 			var runner = GetOrCreateLevelManager();
-			runner.StartLevel(def);
+			Debug.Log($"[LevelsMenu] StartLevel: runner.IsActive={runner.IsActive}, HasUnsavedChanges={runner.HasUnsavedChanges()}");
+			
+			if (runner.IsActive && runner.HasUnsavedChanges())
+			{
+				Debug.Log("[LevelsMenu] StartLevel: Showing level unsaved changes popup");
+				LevelUnsavedChangesPopup.OpenPopup(StartLevelAfterCheck);
+			}
+			else
+			{
+				Debug.Log("[LevelsMenu] StartLevel: No unsaved changes, proceeding directly");
+				StartLevelAfterCheck(2); // Continue without saving (since there are no changes)
+			}
 
-			Debug.Log($"[LevelsMenu] Started level: id={def.id}, name={def.name}, inputs={def.inputCount}, outputs={def.outputCount}, vectors={(def.testVectors == null ? -1 : def.testVectors.Length)}");
-
-			Close();
+			void StartLevelAfterCheck(int option)
+			{
+				if (option == 0) // Cancel
+				{
+					// Do nothing, stay in current level
+					return;
+				}
+				else if (option == 1) // Save and Continue
+				{
+					// Save level progress before starting new level
+					if (runner.IsActive)
+					{
+						runner.SaveCurrentProgress();
+					}
+					
+					runner.StartLevel(def);
+					Debug.Log($"[LevelsMenu] Started level: id={def.id}, name={def.name}, inputs={def.inputCount}, outputs={def.outputCount}, vectors={(def.testVectors == null ? -1 : def.testVectors.Length)}");
+					Close();
+				}
+				else if (option == 2) // Continue without Saving
+				{
+					// Start new level without saving current progress
+					runner.StartLevel(def);
+					Debug.Log($"[LevelsMenu] Started level: id={def.id}, name={def.name}, inputs={def.inputCount}, outputs={def.outputCount}, vectors={(def.testVectors == null ? -1 : def.testVectors.Length)}");
+					Close();
+				}
+			}
 		}
 
 		static LevelManager GetOrCreateLevelManager()

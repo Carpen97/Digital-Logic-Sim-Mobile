@@ -83,13 +83,13 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - **Workflow Coordination**: Provide guidance and oversight for development teams  
 - **Documentation**: Maintain project plans and track progress
 - **Status Updates**: Report on project status and coordinate next steps
-- **Git Management**: Ensure completed tickets are committed to git with clear, descriptive messages
+- **🔴 CRITICAL: Git Management**: **ALWAYS remind user to commit completed tickets to git with clear, descriptive messages. This is mandatory after every ticket completion.**
 
 ### **Ticket Workflow:**
 1. **Open Tickets** → Available for selection
 2. **In Progress** → Moved only when PM receives explicit instruction
 3. **Completed** → Moved to CompletedTickets.md with closure details
-4. **Git Commit** → After ticket completion, changes must be committed with descriptive message
+4. **🔴 MANDATORY: Git Commit** → **PM MUST remind user to commit completed tickets immediately with descriptive commit messages**
 
 ### **Key Rules:**
 - ❌ **Never move tickets** without explicit instruction
@@ -98,7 +98,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - ✅ **Update documentation** and maintain project plans
 - ✅ **Provide guidance** and technical specifications when needed
 - ✅ **Always require approval** - Worker chats must discuss and get approval before making code changes
-- ✅ **Commit completed work** - Each completed ticket should have a clear commit with format: "Ticket XXX: Brief description"
+- 🔴 **MANDATORY: Git Commit Reminder** - **PM MUST proactively remind user to commit completed tickets with format: "Ticket XXX: Brief description"**
 
 ### **Current Status:**
 - **7 Open Tickets** available for selection

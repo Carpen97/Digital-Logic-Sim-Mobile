@@ -3,6 +3,8 @@
   "Name": "NOT",
   "NameLocation": 0,
   "ChipType": 0,
+  "InternalTypeId": 1,
+  "CanBeCached": false,
   "ShouldBeCached": false,
   "Size": {
     "x": 0.95,

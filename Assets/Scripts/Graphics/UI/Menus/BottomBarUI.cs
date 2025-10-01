@@ -119,6 +119,13 @@ namespace DLS.Graphics
 				{
 					bool buttonEnabled = MenuButtonsAndShortcutsEnabled || i is QuitButtonIndex or OptionsButtonIndex;
 					string text = menuButtonNames[i];
+					
+					// Show "Save" instead of "Save Chip" when in a level
+					if (i == SaveChipButtonIndex && LevelManager.Instance?.IsActive == true)
+					{
+						text = text.Replace("SAVE CHIP", "SAVE").Replace("Save Chip", "Save");
+					}
+					
 					if (UI.Button(text, theme, pos, size, buttonEnabled, false, false, theme.buttonCols, Anchor.BottomLeft))
 					{
 						ButtonPressed(i);
@@ -460,7 +467,19 @@ namespace DLS.Graphics
 			}
 		}
 
-		static void OpenSaveMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipSave);
+		static void OpenSaveMenu()
+		{
+			// If in a level, save level progress instead of opening chip save menu
+			if (LevelManager.Instance?.IsActive == true)
+			{
+				LevelManager.Instance.SaveCurrentProgress();
+				Debug.Log("[BottomBarUI] Saved level progress");
+			}
+			else
+			{
+				UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipSave);
+			}
+		}
 		static void OpenSearchMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.Search);
 		static void OpenLibraryMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipLibrary);
 		static void OpenStatsMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ProjectStats);
@@ -471,8 +490,45 @@ namespace DLS.Graphics
 
 		static void CreateNewChip()
 		{
-			if (Project.ActiveProject.ActiveChipHasUnsavedChanges()) UnsavedChangesPopup.OpenPopup(ConfirmNewChip);
-			else ConfirmNewChip(true);
+			Debug.Log($"[BottomBarUI] CreateNewChip: LevelManager.IsActive={LevelManager.Instance?.IsActive}, HasUnsavedChanges={LevelManager.Instance?.HasUnsavedChanges()}");
+			
+			// Check for level unsaved changes first
+			if (LevelManager.Instance?.IsActive == true && LevelManager.Instance.HasUnsavedChanges())
+			{
+				Debug.Log("[BottomBarUI] CreateNewChip: Showing level unsaved changes popup");
+				LevelUnsavedChangesPopup.OpenPopupForNewChip(HandleLevelUnsavedChanges);
+			}
+			// Then check for chip unsaved changes
+			else if (Project.ActiveProject.ActiveChipHasUnsavedChanges())
+			{
+				Debug.Log("[BottomBarUI] CreateNewChip: Showing chip unsaved changes popup");
+				UnsavedChangesPopup.OpenPopup(ConfirmNewChip);
+			}
+			else
+			{
+				Debug.Log("[BottomBarUI] CreateNewChip: No unsaved changes, proceeding directly");
+				ConfirmNewChip(true);
+			}
+
+			static void HandleLevelUnsavedChanges(int option)
+			{
+				if (option == 0) // Cancel
+				{
+					// Do nothing, stay in current level
+					return;
+				}
+				else if (option == 1) // Save and Continue
+				{
+					// Save level progress before creating new chip
+					LevelManager.Instance?.SaveCurrentProgress();
+					ConfirmNewChip(true);
+				}
+				else if (option == 2) // Continue without Saving
+				{
+					// Continue with new chip creation without saving
+					ConfirmNewChip(true);
+				}
+			}
 
 			static void ConfirmNewChip(bool confirm)
 			{

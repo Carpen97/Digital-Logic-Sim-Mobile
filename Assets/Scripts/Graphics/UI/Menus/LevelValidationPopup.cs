@@ -397,28 +397,43 @@ namespace DLS.Graphics
 		static void DrawFirebaseButtons()
 		{
 			Vector2 buttonStart = UI.PrevBounds.CentreBottom + Vector2.down * 1f;
-			float buttonWidth = UI.Width * 0.28f;  // Further increased button width for better fit
+			float buttonWidth = UI.Width * 0.28f * 0.75f;  // Reduced button width to 75% of current size
 			float buttonHeight = ButtonHeight * 1.3f; // Increased button height for better proportions
-			float spacing = 1.8f; // Further increased spacing for better separation
+			float spacing = 1.8f * 0.5f; // Reduced spacing to half of current value
 
 			// Check if level is passed (all rows passed)
 			bool levelPassed = _rows.Count > 0 && _rows.All(r => r.Passed);
 			bool hasValidSelection = _selectedIndex >= 0 && _selectedIndex < _rows.Count;
 
-			// Calculate grid positions (2x2 grid) - ensure buttons fit within popup bounds
-			float totalWidth = (buttonWidth * 2) + spacing;
+			// Calculate grid positions (3 buttons per row)
+			float totalWidth = (buttonWidth * 3) + (spacing * 2);
 			float startX = UI.PrevBounds.Centre.x - totalWidth / 2f;
 			float startY = buttonStart.y;
 
-			// Top row buttons
-			Vector2 uploadPos = new Vector2(startX, startY);
-			Vector2 leaderboardPos = new Vector2(startX + buttonWidth + spacing, startY);
+			// Row 1: Apply Test, Upload Score, Save as Chip
+			Vector2 applyTestPos = new Vector2(startX, startY);
+			Vector2 uploadPos = new Vector2(startX + buttonWidth + spacing, startY);
+			Vector2 saveAsChipPos = new Vector2(startX + (buttonWidth + spacing) * 2, startY);
 
-			// Bottom row buttons  
-			Vector2 testInputPos = new Vector2(startX, startY - buttonHeight - spacing);
-			Vector2 okPos = new Vector2(startX + buttonWidth + spacing, startY - buttonHeight - spacing);
+			// Row 2: Levels, Leaderboard, Close
+			Vector2 levelsPos = new Vector2(startX, startY - buttonHeight - spacing);
+			Vector2 leaderboardPos = new Vector2(startX + buttonWidth + spacing, startY - buttonHeight - spacing);
+			Vector2 closePos = new Vector2(startX + (buttonWidth + spacing) * 2, startY - buttonHeight - spacing);
 
-			// Upload to Leaderboard button (top-left)
+			// Row 1: Apply Test button (left)
+			bool applyTestPressed = UI.Button(
+				"Apply Test",
+				MenuHelper.Theme.ButtonTheme,
+				applyTestPos,
+				new Vector2(buttonWidth, buttonHeight),
+				hasValidSelection, // Only enabled if a test is selected
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			// Row 1: Upload Score button (middle)
 			string uploadButtonText = _isUploading ? _uploadStatus : "Upload Score";
 			bool uploadPressed = UI.Button(
 				uploadButtonText,
@@ -432,7 +447,33 @@ namespace DLS.Graphics
 				Anchor.TopLeft
 			);
 
-			// Show Leaderboard button (top-right)
+			// Row 1: Save as Chip button (right)
+			bool saveAsChipPressed = UI.Button(
+				"Save as Chip",
+				MenuHelper.Theme.ButtonTheme,
+				saveAsChipPos,
+				new Vector2(buttonWidth, buttonHeight),
+				levelPassed, // Only enabled when level is completed
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			// Row 2: Levels button (left)
+			bool levelsPressed = UI.Button(
+				"Levels",
+				MenuHelper.Theme.ButtonTheme,
+				levelsPos,
+				new Vector2(buttonWidth, buttonHeight),
+				true,
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			// Row 2: Leaderboard button (middle)
 			bool leaderboardPressed = UI.Button(
 				"Leaderboard",
 				MenuHelper.Theme.ButtonTheme,
@@ -445,24 +486,11 @@ namespace DLS.Graphics
 				Anchor.TopLeft
 			);
 
-			// Test Input button (bottom-left)
-			bool testInputPressed = UI.Button(
-				"Apply Test",
-				MenuHelper.Theme.ButtonTheme,
-				testInputPos,
-				new Vector2(buttonWidth, buttonHeight),
-				hasValidSelection, // Only enabled if a test is selected
-				false,
-				false,
-				MenuHelper.Theme.ButtonTheme.buttonCols,
-				Anchor.TopLeft
-			);
-
-			// Close button (bottom-right)
-			bool okPressed = UI.Button(
+			// Row 2: Close button (right)
+			bool closePressed = UI.Button(
 				"Close",
 				MenuHelper.Theme.ButtonTheme,
-				okPos,
+				closePos,
 				new Vector2(buttonWidth, buttonHeight),
 				true,
 				false,
@@ -472,9 +500,27 @@ namespace DLS.Graphics
 			);
 
 			// Handle button presses
+			if (applyTestPressed && hasValidSelection)
+			{
+				ApplySelectedTestInputs();
+			}
+
 			if (uploadPressed && levelPassed && !_isUploading)
 			{
-				_ = UploadToLeaderboard();
+				// Show user name input popup instead of direct upload
+				UserNameInputPopup.Open(OnUserNameConfirmed, OnUserNameCancelled);
+			}
+
+			if (saveAsChipPressed && levelPassed)
+			{
+				// Open the chip save menu
+				UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipSave);
+			}
+
+			if (levelsPressed)
+			{
+				// Open the levels menu
+				UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
 			}
 
 			if (leaderboardPressed)
@@ -483,18 +529,26 @@ namespace DLS.Graphics
 				LeaderboardPopup.Open(levelId);
 			}
 
-			if (testInputPressed && hasValidSelection)
-			{
-				ApplySelectedTestInputs();
-			}
-
-			if (okPressed)
+			if (closePressed)
 			{
 				UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
 			}
 		}
 
-        static async System.Threading.Tasks.Task UploadToLeaderboard()
+        // ---------- User Name Input Callbacks ----------
+        static void OnUserNameConfirmed(string userName, bool shouldRemember)
+        {
+            // Start upload with user name
+            _ = UploadToLeaderboard(userName);
+        }
+        
+        static void OnUserNameCancelled()
+        {
+            // User cancelled, do nothing
+            Debug.Log("[LevelValidationPopup] User cancelled name input");
+        }
+        
+        static async System.Threading.Tasks.Task UploadToLeaderboard(string userName = null)
         {
             try
             {
@@ -551,7 +605,7 @@ namespace DLS.Graphics
                 {
                     try
                     {
-                        var uploadTask = LeaderboardService.SaveScoreAsync(levelId, score);
+                        var uploadTask = LeaderboardService.SaveScoreAsync(levelId, score, null, null);
                         var timeoutTask = Task.Delay(25000, uploadCts.Token);
                         await Task.WhenAny(uploadTask, timeoutTask);
                         if (timeoutTask.IsCompleted)

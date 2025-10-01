@@ -171,7 +171,7 @@ namespace DLS.Graphics
             // Score data
             string rankText = $"#{index + 1}";
             string scoreText = score.score.ToString();
-            string userText = TruncateUserId(score.userId);
+            string userText = GetDisplayUserName(score);
             string dateText = score.submittedAtUtc.ToString("MM/dd HH:mm");
 
             // Position elements (copied from LevelValidationPopup pattern)
@@ -188,6 +188,23 @@ namespace DLS.Graphics
         }
 
 
+        static string GetDisplayUserName(ScoreEntry score)
+        {
+            // Prefer userName if available, otherwise fall back to truncated userId
+            if (!string.IsNullOrEmpty(score.userName))
+            {
+                return TruncateUserName(score.userName);
+            }
+            return TruncateUserId(score.userId);
+        }
+        
+        static string TruncateUserName(string userName)
+        {
+            if (string.IsNullOrEmpty(userName)) return "Anonymous";
+            if (userName.Length <= 12) return userName;
+            return userName.Substring(0, 12) + "...";
+        }
+        
         static string TruncateUserId(string userId)
         {
             if (string.IsNullOrEmpty(userId)) return "anon";

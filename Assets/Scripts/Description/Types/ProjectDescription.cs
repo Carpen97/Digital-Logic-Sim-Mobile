@@ -37,6 +37,10 @@ namespace DLS.Description
 		public int Prefs_SimStepsPerClockTick;
 		public int Perfs_PinIndicators;
 		public bool Prefs_UseDragAndDropMode;
+		
+		// User name preferences for leaderboard uploads
+		public string Prefs_UserName;
+		public bool Prefs_RememberUserName;
 
 		// Stats
 		public ulong StepsRanSinceCreated;

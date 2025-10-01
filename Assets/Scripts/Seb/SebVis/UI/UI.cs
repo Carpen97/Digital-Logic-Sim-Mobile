@@ -500,12 +500,28 @@ namespace Seb.Vis.UI
 				}
 
 				#if UNITY_ANDROID || UNITY_IOS
-				if (keyboard != null &&
-					(keyboard.status == TouchScreenKeyboard.Status.Canceled || keyboard.status == TouchScreenKeyboard.Status.Done))
+				if (keyboard != null)
 				{
-					keyboard = null;
-					lastSyncedText = "";
-					keyboardWasClosedThisFrame = true;
+					try
+					{
+						if (keyboard.status == TouchScreenKeyboard.Status.Canceled || keyboard.status == TouchScreenKeyboard.Status.Done)
+						{
+							keyboard = null;
+							lastSyncedText = "";
+							keyboardWasClosedThisFrame = true;
+						}
+						else
+						{
+							keyboardWasClosedThisFrame = false;
+						}
+					}
+					catch (System.NullReferenceException)
+					{
+						// Keyboard became null between the null check and status access
+						keyboard = null;
+						lastSyncedText = "";
+						keyboardWasClosedThisFrame = true;
+					}
 				}
 				else
 				{

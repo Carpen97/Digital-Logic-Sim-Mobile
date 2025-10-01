@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 using DLS.Game;        // Project.ActiveProject
 using DLS.SaveSystem;  // SavePaths helpers
+using DLS.Description; // ChipDescription, Serializer
 
 namespace DLS.Levels
 {
@@ -13,6 +14,7 @@ namespace DLS.Levels
 		/// - best stars
 		/// - best NAND gate count (lowest)
 		/// - completedAt (ISO, optional)
+		/// - progressState (serialized chip state for work-in-progress)
 		/// Safe to call from anywhere; loads on first use.
 		/// </summary>
 	public static class LevelProgressService
@@ -25,15 +27,16 @@ namespace DLS.Levels
 			public List<Entry> levels = new();
 		}
 
-		[Serializable]
-		class Entry
-		{
-			public string id;
-			public bool completed;
-			public int stars;
-			public int bestParts = -1;      // -1 ⇒ unknown (now represents NAND gate count)
-			public string completedAt = ""; // ISO-8601 UTC
-		}
+	[Serializable]
+	class Entry
+	{
+		public string id;
+		public bool completed;
+		public int stars;
+		public int bestParts = -1;      // -1 ⇒ unknown (now represents NAND gate count)
+		public string completedAt = ""; // ISO-8601 UTC
+		public string progressState = ""; // Serialized chip state for level progress
+	}
 
 		/// <summary>Immutable snapshot returned to callers.</summary>
 		public struct Snapshot
@@ -126,6 +129,110 @@ namespace DLS.Levels
 			_map.Clear();
 			SaveNow();
 			OnProgressChanged?.Invoke();
+		}
+
+		/// <summary>
+		/// Save the current level progress state (chip placements, connections, etc.)
+		/// </summary>
+		public static void SaveLevelProgress(string levelId, DevChipInstance currentChip)
+		{
+			if (string.IsNullOrEmpty(levelId) || currentChip == null) return;
+
+			EnsureLoaded();
+			
+			try
+			{
+				// Create chip description from current state
+				var chipDescription = DescriptionCreator.CreateChipDescription(currentChip);
+				
+				// Serialize to JSON
+				var progressStateJson = Serializer.SerializeChipDescription(chipDescription);
+				
+				// Get or create entry
+				if (!_map.TryGetValue(levelId, out var entry))
+				{
+					entry = new Entry { id = levelId };
+					_map[levelId] = entry;
+				}
+				
+				// Update progress state
+				entry.progressState = progressStateJson;
+				
+				// Save to file
+				SaveNow();
+				
+				Debug.Log($"[LevelProgressService] Saved progress state for level {levelId}");
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"[LevelProgressService] Failed to save level progress: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Load the saved level progress state for a level
+		/// </summary>
+		public static ChipDescription LoadLevelProgress(string levelId)
+		{
+			if (string.IsNullOrEmpty(levelId)) return null;
+
+			EnsureLoaded();
+			
+			if (!_map.TryGetValue(levelId, out var entry) || string.IsNullOrEmpty(entry.progressState))
+			{
+				return null;
+			}
+			
+			try
+			{
+				// Deserialize from JSON
+				var chipDescription = Serializer.DeserializeChipDescription(entry.progressState);
+				Debug.Log($"[LevelProgressService] Loaded progress state for level {levelId}");
+				return chipDescription;
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"[LevelProgressService] Failed to load level progress: {ex.Message}");
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Check if a level has saved progress state
+		/// </summary>
+		public static bool HasLevelProgress(string levelId)
+		{
+			if (string.IsNullOrEmpty(levelId)) return false;
+			
+			EnsureLoaded();
+			return _map.TryGetValue(levelId, out var entry) && !string.IsNullOrEmpty(entry.progressState);
+		}
+
+		/// <summary>
+		/// Clear the progress state for a level (but keep completion stats)
+		/// </summary>
+		public static void ClearLevelProgress(string levelId)
+		{
+			if (string.IsNullOrEmpty(levelId)) return;
+			
+			EnsureLoaded();
+			if (_map.TryGetValue(levelId, out var entry))
+			{
+				entry.progressState = "";
+				SaveNow();
+				Debug.Log($"[LevelProgressService] Cleared progress state for level {levelId}");
+			}
+		}
+
+		/// <summary>
+		/// Force reload the progress cache from disk (useful when file is modified externally)
+		/// </summary>
+		public static void ForceReloadCache()
+		{
+			_loaded = false;
+			_loadedForProjectName = null;
+			_map.Clear();
+			Debug.Log("[LevelProgressService] Forced cache reload");
 		}
 
 		// ---- IO ----

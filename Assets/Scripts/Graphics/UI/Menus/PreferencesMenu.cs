@@ -304,6 +304,11 @@ namespace DLS.Graphics
 				
 				int.TryParse(clockSpeedInputFieldState.text, out int clockSpeed);
 				int.TryParse(freqState.text, out int targetSimTicksPerSecond);
+				
+				// Apply defaults for invalid values - use aggressive defaults to override wrong values
+				if (clockSpeed <= 0 || clockSpeed < 10) clockSpeed = 250;
+				if (targetSimTicksPerSecond <= 0 || targetSimTicksPerSecond < 100) targetSimTicksPerSecond = 1000;
+				
 				targetSimTicksPerSecond = Mathf.Max(1, targetSimTicksPerSecond);
 				if (project.targetTicksPerSecond != targetSimTicksPerSecond || project.simPaused != pauseSim) lastSimTickRateSetTime = Time.time;
 
@@ -420,9 +425,17 @@ namespace DLS.Graphics
 			UI.GetWheelSelectorState(ID_SimStatus).index = projDesc.Prefs_SimPaused ? 1 : 0;
 			UI.GetWheelSelectorState(ID_PinIndicators).index = projDesc.Perfs_PinIndicators;
 			UI.GetWheelSelectorState(ID_ControlScheme).index = projDesc.Prefs_UseDragAndDropMode ? 1 : 0;
-            // -- Input fields
-            UI.GetInputFieldState(ID_SimFrequencyField).SetText(projDesc.Prefs_SimTargetStepsPerSecond + "", false);
-			UI.GetInputFieldState(ID_ClockSpeedInput).SetText(projDesc.Prefs_SimStepsPerClockTick + "", false);
+            // -- Input fields with default value handling
+            int targetStepsPerSecond = projDesc.Prefs_SimTargetStepsPerSecond;
+            int stepsPerClockTick = projDesc.Prefs_SimStepsPerClockTick;
+            
+            // Apply defaults for invalid values (likely from older project versions)
+            // Use more aggressive defaults to override clearly wrong values
+            if (targetStepsPerSecond <= 0 || targetStepsPerSecond < 100) targetStepsPerSecond = 1000;
+            if (stepsPerClockTick <= 0 || stepsPerClockTick < 10) stepsPerClockTick = 250;
+            
+            UI.GetInputFieldState(ID_SimFrequencyField).SetText(targetStepsPerSecond + "", false);
+			UI.GetInputFieldState(ID_ClockSpeedInput).SetText(stepsPerClockTick + "", false);
 		}
 
 
