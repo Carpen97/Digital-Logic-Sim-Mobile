@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using DLS.Description;
+using DLS.Game.LevelsIntegration;
 using DLS.Graphics;
 using DLS.SaveSystem;
 using DLS.Simulation;
@@ -182,7 +183,7 @@ namespace DLS.Game
 		public bool AlwaysDrawDevPinNames => AlwaysDrawPinNames(description.Prefs_MainPinNamesDisplayMode);
 		public bool AlwaysDrawSubChipPinNames => AlwaysDrawPinNames(description.Prefs_ChipPinNamesDisplayMode);
 
-		bool AlwaysDrawPinNames(int prefIndex) => prefIndex == PreferencesMenu.DisplayMode_Always || (prefIndex == PreferencesMenu.DisplayMode_TabToggle && PinNameDisplayIsTabToggledOn);
+		bool AlwaysDrawPinNames(int prefIndex) => prefIndex == PreferencesMenu.DisplayMode_Always || (prefIndex == PreferencesMenu.DisplayMode_TabToggle && PinNameDisplayIsTabToggledOn) || (prefIndex == PreferencesMenu.DisplayMode_OnlyInLevel && LevelManager.Instance?.IsActive == true);
 
 		void HandleProjectInput()
 		{

@@ -68,7 +68,6 @@ Mobile Port (origin)
 | 019 | Server validation for submissions      | Open   | Cloud Function re-simulates solutions/scores to verify; flags "verified" entries and rejects impossible ones.                                                                                                                         |
 | 024 | Component grouping system              | Open   | Add support for grouping multiple components. Selecting multiple components shows a new UI button to create a group. Groups behave as single units for selection/deselection. Groups can also be saved and spawned, similar to chips. |
 | 026 | Perpendicular guide for straight lines | Open   | When straight line mode is toggled, draw a perpendicular guide line to assist alignment.                                                                                                                                              |
-| 031 | Show I/O pin names setting (levels)   | Open   | Add extra setting for "Show I/O pin names" that is only available and functional when working in levels. This setting should toggle the display of input/output pin names specifically for level gameplay to assist users in understanding level requirements. |
 
 ---
 
@@ -101,6 +100,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - 🔴 **MANDATORY: Git Commit Reminder** - **PM MUST proactively remind user to commit completed tickets with format: "Ticket XXX: Brief description"**
 
 ### **Current Status:**
-- **5 Open Tickets** available for selection
+- **4 Open Tickets** available for selection
 - **0 In Progress** tickets
 - **Project ready** for next instructions

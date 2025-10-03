@@ -21,17 +21,20 @@ namespace DLS.Graphics
 		public const int DisplayMode_Always = 0;
 		public const int DisplayMode_OnHover = 1;
 		public const int DisplayMode_TabToggle = 2;
+		public const int DisplayMode_OnlyInLevel = 3;
 
 		static readonly string[] PinDisplayOptions =
 		{
 			#if UNITY_ANDROID || UNITY_IOS
 			"On",
 			"Multi-Hover",
-			"Off"
+			"Off",
+			"Only in Level"
 			#else
 			"Always",
 			"On Hover",
-			"Tab to Toggle"
+			"Tab to Toggle",
+			"Only in Level"
 			#endif
 		};
 

@@ -13,6 +13,12 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📋 **Completed Tickets**
 
+### **Ticket 031** – Show I/O pin names setting (levels only)
+**Closed:** 2025-01-27  
+**Summary:** Successfully implemented "Show I/O pin names" setting that is only available and functional when working in levels. Added level-specific setting to preferences system that toggles display of input/output pin names specifically for level gameplay. Setting assists users in understanding level requirements and input/output connections. Integrated with existing settings framework with proper persistence and conditional display based on level vs project mode. Enhanced level UX with clear visual feedback when setting is active. All success criteria met with mobile-optimized implementation. ✅
+
+---
+
 ### **Ticket 030** – Upload complete solutions to Firebase
 **Closed:** 2025-01-27  
 **Summary:** Successfully implemented comprehensive solution upload and viewing system for Firebase. Created complete solution serialization including all chips, placements, connections, and chip definitions. Implemented solution viewing functionality with ViewingMode enum and proper state management. Added EditorLocalStorage.cs for testing without Firebase and EditorSolutionTester with complete workflow testing. Enhanced safety with comprehensive checks around solution creation, fixed Unity crashes when uploading with "Share Solution" enabled, and added debug logging. Successfully tested complete upload → view → load workflow in Editor with solution viewing displaying "Viewing: [SolutionName]". Ready for production with mobile testing and Firebase integration. ✅
@@ -110,9 +116,9 @@ This document contains a historical record of all completed tickets from the Dig
 ---
 
 ## 📊 **Statistics**
-- **Total Completed Tickets:** 17
+- **Total Completed Tickets:** 18
 - **Latest Completion:** 2025-01-27
-- **Most Recent:** Upload complete solutions to Firebase, Share solutions, User name for Firebase score uploads
+- **Most Recent:** Show I/O pin names setting (levels only)
 - **Key Achievements:** Community integration, Levels system, UI fixes, Performance optimizations, Mobile UX improvements, Library enhancements
 
 ---
