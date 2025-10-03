@@ -10,6 +10,7 @@ using Seb.Types;
 using Seb.Vis;
 using Seb.Vis.UI;
 using DLS.Game.LevelsIntegration; // For LevelManager.Instance.Current
+using DLS.Game; // For Project class
 using DLS.Online; // For Firebase testing
 using static DLS.Graphics.DrawSettings;
 
@@ -507,7 +508,7 @@ namespace DLS.Graphics
 
 			if (uploadPressed && levelPassed && !_isUploading)
 			{
-				// Show user name input popup instead of direct upload
+				// Show user name input popup for score upload
 				UserNameInputPopup.Open(OnUserNameConfirmed, OnUserNameCancelled);
 			}
 
@@ -536,10 +537,10 @@ namespace DLS.Graphics
 		}
 
         // ---------- User Name Input Callbacks ----------
-        static void OnUserNameConfirmed(string userName, bool shouldRemember)
+        static void OnUserNameConfirmed(string userName, bool shouldRemember, bool shareSolution)
         {
-            // Start upload with user name
-            _ = UploadToLeaderboard(userName);
+            // Start upload with user name and solution sharing preference
+            _ = UploadToLeaderboard(userName, shareSolution);
         }
         
         static void OnUserNameCancelled()
@@ -548,13 +549,23 @@ namespace DLS.Graphics
             Debug.Log("[LevelValidationPopup] User cancelled name input");
         }
         
-        static async System.Threading.Tasks.Task UploadToLeaderboard(string userName = null)
+        static async System.Threading.Tasks.Task UploadToLeaderboard(string userName = null, bool shareSolution = false)
         {
+            // Ultimate safety wrapper to prevent any crashes
             try
             {
                 _isUploading = true;
                 _uploadStatus = "Initializing...";
                 Debug.Log("[Leaderboard] Starting upload process...");
+                
+                // Simple approach: Disable solution sharing in Editor to prevent crashes
+                #if UNITY_EDITOR
+                if (shareSolution)
+                {
+                    Debug.Log("[Leaderboard] Editor mode - disabling solution sharing to prevent crashes");
+                    shareSolution = false;
+                }
+                #endif
                 
                 // Step 1: Initialize Firebase with timeout
                 _uploadStatus = "Connecting to Firebase...";
@@ -597,15 +608,57 @@ namespace DLS.Graphics
                 string levelId = GetCurrentLevelId();
                 Debug.Log($"[Leaderboard] Level ID: {levelId}");
                 
-                // Step 4: Upload score using LeaderboardService (has Editor bypasses)
+                // Step 4: Upload based on sharing preference
+                string completeSolutionId = null;
+                
+                if (shareSolution)
+                {
+                    _uploadStatus = "Creating complete solution...";
+                    Debug.Log("[Leaderboard] Step 4: Creating complete solution...");
+                    
+                    // Create complete solution with all custom chip definitions
+                    var completeSolution = SolutionSerializer.CreateCompleteSolutionFromCurrentProject(levelId, score, userName);
+                    Debug.Log($"[Leaderboard] Complete solution created with {completeSolution.CustomChipDefinitions.Count} custom chips");
+                    
+                    _uploadStatus = "Uploading complete solution...";
+                    Debug.Log("[Leaderboard] Step 5: Uploading complete solution...");
+                    
+                    using (var uploadCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                    {
+                        try
+                        {
+                            var uploadTask = LeaderboardService.SaveCompleteSolutionAsync(completeSolution, null);
+                            var timeoutTask = Task.Delay(60000, uploadCts.Token);
+                            await Task.WhenAny(uploadTask, timeoutTask);
+                            if (timeoutTask.IsCompleted)
+                            {
+                                throw new OperationCanceledException("Complete solution upload timed out");
+                            }
+                            completeSolutionId = await uploadTask;
+                            _uploadStatus = "Complete solution uploaded!";
+                            Debug.Log($"[Leaderboard] Complete solution uploaded successfully for level {levelId}!");
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            Debug.LogWarning("[Leaderboard] Complete solution upload timed out after 60 seconds");
+                            _uploadStatus = "Upload timeout - please try again";
+                            await System.Threading.Tasks.Task.Delay(2000);
+                            _isUploading = false;
+                            _uploadStatus = "";
+                            return;
+                        }
+                    }
+                }
+
+                // Step 5: Upload score (with or without complete solution)
                 _uploadStatus = "Uploading score...";
-                Debug.Log("[Leaderboard] Step 4: Uploading score...");
+                Debug.Log("[Leaderboard] Step 6: Uploading score...");
                 
                 using (var uploadCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(25)))
                 {
                     try
                     {
-                        var uploadTask = LeaderboardService.SaveScoreAsync(levelId, score, null, null);
+                        var uploadTask = LeaderboardService.SaveScoreAsync(levelId, score, null, null, userName, completeSolutionId);
                         var timeoutTask = Task.Delay(25000, uploadCts.Token);
                         await Task.WhenAny(uploadTask, timeoutTask);
                         if (timeoutTask.IsCompleted)
@@ -647,9 +700,9 @@ namespace DLS.Graphics
         
         static int CalculateLevelScore()
         {
-            // Simple scoring: lower is better (fewer steps = better score)
-            // You can implement more complex scoring logic here
-            return _rows.Count(r => r.Passed) * 10; // Example: 10 points per passed test
+            // Use the same scoring as displayed in UI: NAND gate count
+            // Lower is better (fewer NAND gates = better score)
+            return GetNandGateCount();
         }
         
         static string GetCurrentLevelId()

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using DLS.Online;
+using DLS.Game;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis;
@@ -18,6 +19,7 @@ namespace DLS.Graphics
         static List<ScoreEntry> _scores = new();
         static bool _isLoading = false;
         static string _errorMessage = "";
+        static int _selectedIndex = -1;
 
         // UI constants (copied from LevelValidationPopup)
         const float ListWidthFrac = 0.72f;
@@ -121,13 +123,50 @@ namespace DLS.Graphics
                     isDraggingScrollbar = sv.isDragging;
                 }
 
-                // --- Footer: Close button ---
-                float closeWidth = UI.Width * OkBtnWidthFrac;
-                float closeHeight = ButtonHeight * OkBtnHeightMul;
-                Vector2 buttonsTopLeft = UI.PrevBounds.CentreBottom + Vector2.left * closeWidth / 2f;
+                // --- Footer: View and Close buttons ---
+                float buttonWidth = UI.Width * OkBtnWidthFrac;
+                float buttonHeight = ButtonHeight * OkBtnHeightMul;
+                float buttonSpacing = 2f;
+                float totalWidth = (buttonWidth * 2) + buttonSpacing;
+                Vector2 buttonsStart = UI.PrevBounds.CentreBottom + Vector2.left * totalWidth / 2f;
 
-                var res = MenuHelper.DrawOKButton(buttonsTopLeft, closeWidth, closeHeight, true);
-                if (res == MenuHelper.CancelConfirmResult.Confirm) UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+                // View button (left)
+                Vector2 viewButtonPos = buttonsStart;
+                bool viewPressed = UI.Button(
+                    "View",
+                    MenuHelper.Theme.ButtonTheme,
+                    viewButtonPos,
+                    new Vector2(buttonWidth, buttonHeight),
+                    _selectedIndex >= 0 && _selectedIndex < _scores.Count,
+                    false,
+                    false,
+                    MenuHelper.Theme.ButtonTheme.buttonCols,
+                    Anchor.TopLeft
+                );
+
+                // Close button (right)
+                Vector2 closeButtonPos = buttonsStart + Vector2.right * (buttonWidth + buttonSpacing);
+                bool closePressed = UI.Button(
+                    "Close",
+                    MenuHelper.Theme.ButtonTheme,
+                    closeButtonPos,
+                    new Vector2(buttonWidth, buttonHeight),
+                    true,
+                    false,
+                    false,
+                    MenuHelper.Theme.ButtonTheme.buttonCols,
+                    Anchor.TopLeft
+                );
+
+                if (viewPressed && _selectedIndex >= 0 && _selectedIndex < _scores.Count)
+                {
+                    ViewSelectedSolution();
+                }
+
+                if (closePressed)
+                {
+                    UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+                }
             }
         }
 
@@ -162,9 +201,14 @@ namespace DLS.Graphics
             if (index < 0 || index >= _scores.Count) return;
 
             var score = _scores[index];
+            bool isSelected = index == _selectedIndex;
             
             // Row background (copied from LevelValidationPopup)
             Color rowCol = index % 2 == 0 ? ColHelper.MakeCol255(30, 30, 30) : ColHelper.MakeCol255(40, 40, 40);
+            if (isSelected)
+            {
+                rowCol = ColHelper.MakeCol255(60, 100, 60); // Highlight selected row
+            }
             Bounds2D rowBounds = new Bounds2D(rowTopLeft, rowTopLeft + Vector2.right * width + Vector2.down * RowHeight);
             UI.DrawPanel(rowBounds, rowCol);
 
@@ -185,6 +229,28 @@ namespace DLS.Graphics
             UI.DrawText(scoreText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TopLeft, Color.yellow);
             UI.DrawText(userText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, userPos, Anchor.TopLeft, Color.cyan);
             UI.DrawText(dateText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, datePos, Anchor.TopLeft, Color.gray);
+
+            // Add invisible button for row selection
+            if (!isLayoutPass)
+            {
+                bool rowPressed = UI.Button(
+                    "", // Empty text - we just want the click area
+                    MenuHelper.Theme.ButtonTheme,
+                    rowTopLeft,
+                    new Vector2(width, RowHeight),
+                    true,
+                    false,
+                    false,
+                    MenuHelper.Theme.ButtonTheme.buttonCols,
+                    Anchor.TopLeft,
+                    ignoreInputs: isDraggingScrollbar
+                );
+
+                if (rowPressed)
+                {
+                    _selectedIndex = index;
+                }
+            }
         }
 
 
@@ -210,6 +276,61 @@ namespace DLS.Graphics
             if (string.IsNullOrEmpty(userId)) return "anon";
             if (userId.Length <= 8) return userId;
             return userId.Substring(0, 8) + "...";
+        }
+
+        static async void ViewSelectedSolution()
+        {
+            if (_selectedIndex < 0 || _selectedIndex >= _scores.Count) return;
+
+            var selectedScore = _scores[_selectedIndex];
+            Debug.Log($"[Leaderboard] Viewing solution for score ID: {selectedScore.id}");
+            Debug.Log($"[Leaderboard] Selected score completeSolutionId: '{selectedScore.completeSolutionId}'");
+            Debug.Log($"[Leaderboard] Selected score userName: '{selectedScore.userName}'");
+            Debug.Log($"[Leaderboard] Selected score score: {selectedScore.score}");
+
+            try
+            {
+                // Check if this score has a complete solution
+                if (string.IsNullOrEmpty(selectedScore.completeSolutionId))
+                {
+                    Debug.LogWarning("[Leaderboard] No complete solution available for this score");
+                    return;
+                }
+
+                Debug.Log($"[Leaderboard] Getting complete solution {selectedScore.completeSolutionId}");
+                
+                // Try to load the complete solution from Firebase
+                var completeSolution = await LeaderboardService.GetCompleteSolutionAsync(selectedScore.completeSolutionId);
+                if (completeSolution == null)
+                {
+                    Debug.LogWarning("[Leaderboard] No complete solution found for this score");
+                    return;
+                }
+
+                // Load the solution into the current project
+                var project = Project.ActiveProject;
+                if (project == null)
+                {
+                    Debug.LogError("[Leaderboard] No active project to load solution into");
+                    return;
+                }
+
+                // Load the complete solution into the project
+                bool success = SolutionSerializer.LoadCompleteSolution(completeSolution, project.chipLibrary);
+                if (success)
+                {
+                    Debug.Log("[Leaderboard] Solution loaded successfully");
+                    UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+                }
+                else
+                {
+                    Debug.LogError("[Leaderboard] Failed to load solution into project");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Leaderboard] Error viewing solution: {ex.Message}");
+            }
         }
     }
 }

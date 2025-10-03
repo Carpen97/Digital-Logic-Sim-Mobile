@@ -16,6 +16,7 @@ namespace DLS.Online
     public static class LeaderboardService
     {
         private const string COLLECTION_NAME = "scores";
+        private const string COMPLETE_SOLUTIONS_COLLECTION = "completeSolutions";
 
         /// <summary>
         /// Save a score for a level. Optionally include screenshot and solution JSON.
@@ -24,18 +25,27 @@ namespace DLS.Online
         /// <param name="score">The score (lower is better)</param>
         /// <param name="optionalScreenshotPng">Optional screenshot as PNG bytes</param>
         /// <param name="optionalSolutionJson">Optional solution as JSON string</param>
+        /// <param name="userName">Optional user name for display</param>
+        /// <param name="completeSolutionId">Optional complete solution document ID</param>
         public static async Task SaveScoreAsync(string levelId, int score, 
-            byte[] optionalScreenshotPng = null, string optionalSolutionJson = null)
+            byte[] optionalScreenshotPng = null, string optionalSolutionJson = null, string userName = null, string completeSolutionId = null)
         {
             try
             {
                 Debug.Log($"[Leaderboard] Saving score for level {levelId}: {score}");
                 
-                // Skip Firebase operations in Editor to avoid crashes
+                // Use local storage in Editor for testing
                 #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - simulating score save for level {levelId} with score {score}");
+                Debug.Log($"[Leaderboard] Editor mode - using local storage for testing");
+                
+                // Initialize local storage if needed
+                EditorLocalStorage.Initialize();
+                
+                // Save to local storage
+                EditorLocalStorage.SaveScore(levelId, score, userName ?? "EditorUser", completeSolutionId);
+                
+                Debug.Log($"[Leaderboard] Score saved to local storage for level {levelId} with score {score}");
                 await Task.Delay(100); // Simulate network delay
-                Debug.Log("[Leaderboard] Score save simulated successfully in Editor");
                 return;
                 #else
                 
@@ -44,7 +54,7 @@ namespace DLS.Online
                 {
                     try
                     {
-                        await SaveScoreInternalAsync(levelId, score, optionalScreenshotPng, optionalSolutionJson, cts.Token);
+                        await SaveScoreInternalAsync(levelId, score, optionalScreenshotPng, optionalSolutionJson, userName, completeSolutionId, cts.Token);
                     }
                     catch (OperationCanceledException)
                     {
@@ -62,7 +72,7 @@ namespace DLS.Online
         }
         
         private static async Task SaveScoreInternalAsync(string levelId, int score, 
-            byte[] optionalScreenshotPng, string optionalSolutionJson, CancellationToken cancellationToken)
+            byte[] optionalScreenshotPng, string optionalSolutionJson, string userName, string completeSolutionId, CancellationToken cancellationToken)
         {
             try
             {
@@ -92,9 +102,16 @@ namespace DLS.Online
                 {
                     { "levelId", levelId },
                     { "userId", FirebaseBootstrap.UserId },
+                    { "userName", userName ?? "Anonymous" },
                     { "score", score },
                     { "submittedAt", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ") }
                 };
+
+                // Add complete solution ID if provided
+                if (!string.IsNullOrEmpty(completeSolutionId))
+                {
+                    data["completeSolutionId"] = completeSolutionId;
+                }
 
                 // Handle optional data
                 if (optionalScreenshotPng != null && optionalScreenshotPng.Length > 0)
@@ -143,40 +160,47 @@ namespace DLS.Online
             try
             {
                 Debug.Log($"[Leaderboard] Getting top {limit} scores for level {levelId}");
+                Debug.Log($"[Leaderboard] UNITY_EDITOR defined: #if UNITY_EDITOR");
 
-                // Skip Firebase operations in Editor to avoid crashes
+                // Use local storage in Editor for testing
                 #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - simulating score retrieval for level {levelId}");
-                await Task.Delay(100); // Simulate network delay
+                Debug.Log($"[Leaderboard] Editor mode - using local storage for score retrieval");
                 
-                // Return mock data for Editor
-                var mockScores = new List<ScoreEntry>
+                // Initialize local storage if needed
+                EditorLocalStorage.Initialize();
+                
+                // Get scores from local storage
+                var localScores = EditorLocalStorage.GetTopScores(levelId, limit);
+                var scoreEntries = new List<ScoreEntry>();
+                
+                foreach (var scoreData in localScores)
                 {
-                    new ScoreEntry
+                    var scoreDict = (Dictionary<string, object>)scoreData;
+                    
+                    // Debug: Log all keys in the score data
+                    Debug.Log($"[Leaderboard] Score data keys: {string.Join(", ", scoreDict.Keys)}");
+                    Debug.Log($"[Leaderboard] Score completeSolutionId: '{scoreDict["completeSolutionId"]?.ToString()}'");
+                    
+                    var scoreEntry = new ScoreEntry
                     {
-                        id = "mock_1",
-                        levelId = levelId,
-                        userId = "anon",
-                        score = 10,
-                        submittedAtUtc = DateTime.UtcNow.AddMinutes(-5),
+                        id = scoreDict["id"]?.ToString(),
+                        levelId = scoreDict["levelId"]?.ToString(),
+                        userId = scoreDict["userId"]?.ToString(),
+                        userName = scoreDict["userName"]?.ToString(),
+                        score = Convert.ToInt32(scoreDict["score"]),
+                        submittedAtUtc = DateTime.Parse(scoreDict["submittedAt"]?.ToString() ?? DateTime.UtcNow.ToString()),
                         solutionJsonPath = null,
-                        solutionImagePath = null
-                    },
-                    new ScoreEntry
-                    {
-                        id = "mock_2", 
-                        levelId = levelId,
-                        userId = "anon",
-                        score = 15,
-                        submittedAtUtc = DateTime.UtcNow.AddMinutes(-10),
-                        solutionJsonPath = null,
-                        solutionImagePath = null
-                    }
-                };
+                        solutionImagePath = null,
+                        completeSolutionId = scoreDict["completeSolutionId"]?.ToString()
+                    };
+                    scoreEntries.Add(scoreEntry);
+                }
                 
-                Debug.Log($"[Leaderboard] Returning {mockScores.Count} mock scores in Editor");
-                return mockScores;
+                Debug.Log($"[Leaderboard] Retrieved {scoreEntries.Count} scores from local storage");
+                await Task.Delay(100); // Simulate network delay
+                return scoreEntries;
                 #else
+                Debug.Log($"[Leaderboard] NOT Editor mode - using Firebase for score retrieval");
                 // Ensure Firebase is initialized
                 await FirebaseBootstrap.InitializeAsync();
                 if (!FirebaseBootstrap.IsInitialized)
@@ -211,10 +235,12 @@ namespace DLS.Online
                             id = doc.Id,
                             levelId = GetStringValue(data, "levelId"),
                             userId = GetStringValue(data, "userId"),
+                            userName = GetStringValue(data, "userName"),
                             score = GetIntValue(data, "score"),
                             submittedAtUtc = GetTimestampValue(data, "submittedAt"),
                             solutionJsonPath = GetStringValue(data, "solutionJsonPath"),
-                            solutionImagePath = GetStringValue(data, "solutionImagePath")
+                            solutionImagePath = GetStringValue(data, "solutionImagePath"),
+                            completeSolutionId = GetStringValue(data, "completeSolutionId")
                         };
 
                         scores.Add(scoreEntry);
@@ -285,6 +311,317 @@ namespace DLS.Online
                 Debug.LogWarning($"[Leaderboard] Failed to parse timestamp for {key}: {ex.Message}");
             }
             return DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Save a complete solution with all custom chip definitions for full reproducibility.
+        /// </summary>
+        /// <param name="solution">The complete solution to save</param>
+        /// <param name="optionalScreenshotPng">Optional screenshot as PNG bytes</param>
+        /// <returns>Task<string> representing the async operation, returns the document ID</returns>
+        public static async Task<string> SaveCompleteSolutionAsync(CompleteSolution solution, 
+            byte[] optionalScreenshotPng = null)
+        {
+            try
+            {
+                Debug.Log($"[Leaderboard] Saving complete solution for level {solution.LevelId}: {solution.Score}");
+                
+                // Use local storage in Editor for testing
+                #if UNITY_EDITOR
+                Debug.Log($"[Leaderboard] Editor mode - using local storage for complete solution");
+                
+                // Initialize local storage if needed
+                EditorLocalStorage.Initialize();
+                
+                // Save to local storage
+                var solutionId = EditorLocalStorage.SaveCompleteSolution(solution);
+                
+                Debug.Log($"[Leaderboard] Complete solution saved to local storage with ID: {solutionId}");
+                await Task.Delay(500); // Simulate network delay
+                return solutionId;
+                #else
+                
+                // Add timeout to the entire operation
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60))) // Longer timeout for complete solutions
+                {
+                    try
+                    {
+                        return await SaveCompleteSolutionInternalAsync(solution, optionalScreenshotPng, cts.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        Debug.LogWarning("[Leaderboard] SaveCompleteSolutionAsync timed out after 60 seconds");
+                        throw new TimeoutException("Complete solution save operation timed out");
+                    }
+                }
+                #endif
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Leaderboard] Failed to save complete solution: {ex.Message}");
+                throw;
+            }
+        }
+        
+        private static async Task<string> SaveCompleteSolutionInternalAsync(CompleteSolution solution, 
+            byte[] optionalScreenshotPng, CancellationToken cancellationToken)
+        {
+            try
+            {
+                Debug.Log($"[Leaderboard] Starting Firebase complete solution save process...");
+                
+                // Ensure Firebase is initialized
+                await FirebaseBootstrap.InitializeAsync();
+                if (!FirebaseBootstrap.IsInitialized)
+                {
+                    throw new InvalidOperationException("Firebase not initialized");
+                }
+
+                // Get Firestore instance
+                var db = FirebaseFirestore.DefaultInstance;
+                if (db == null)
+                {
+                    throw new InvalidOperationException("Firestore not available");
+                }
+
+                // Create document reference
+                var docRef = db.Collection(COMPLETE_SOLUTIONS_COLLECTION).Document();
+                string docId = docRef.Id;
+                Debug.Log($"[Leaderboard] Complete solution document ID: {docId}");
+
+                // Debug the solution before serialization
+                Debug.Log($"[Leaderboard] Solution details before serialization:");
+                Debug.Log($"[Leaderboard] - LevelId: {solution.LevelId}");
+                Debug.Log($"[Leaderboard] - UserId: {solution.UserId}");
+                Debug.Log($"[Leaderboard] - UserName: {solution.UserName}");
+                Debug.Log($"[Leaderboard] - Score: {solution.Score}");
+                Debug.Log($"[Leaderboard] - MainSolution: {(solution.MainSolution != null ? "exists" : "null")}");
+                Debug.Log($"[Leaderboard] - CustomChipDefinitions count: {(solution.CustomChipDefinitions?.Count ?? 0)}");
+                Debug.Log($"[Leaderboard] - Metadata: {(solution.Metadata != null ? "exists" : "null")}");
+                
+                // Serialize the complete solution
+                string solutionJson = SolutionSerializer.SerializeCompleteSolution(solution);
+                Debug.Log($"[Leaderboard] Serialized JSON length: {solutionJson.Length}");
+                Debug.Log($"[Leaderboard] First 200 chars of serialized JSON: {solutionJson.Substring(0, Math.Min(200, solutionJson.Length))}");
+                
+                // Prepare data for Firestore
+                var data = new Dictionary<string, object>
+                {
+                    { "levelId", solution.LevelId },
+                    { "userId", solution.UserId },
+                    { "userName", solution.UserName ?? "Anonymous" },
+                    { "score", solution.Score },
+                    { "submittedAt", solution.SubmittedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ") },
+                    { "solutionJson", solutionJson },
+                    { "metadata", new Dictionary<string, object>
+                        {
+                            { "nandGateCount", solution.Metadata.NandGateCount },
+                            { "totalComponents", solution.Metadata.TotalComponents },
+                            { "wireCount", solution.Metadata.WireCount },
+                            { "dlsVersion", solution.Metadata.DLSVersion },
+                            { "customChipNames", solution.Metadata.CustomChipNames },
+                            { "solutionSizeBytes", solution.Metadata.SolutionSizeBytes }
+                        }
+                    }
+                };
+
+                // Handle optional screenshot
+                if (optionalScreenshotPng != null && optionalScreenshotPng.Length > 0)
+                {
+                    string imagePath = $"screenshots/{solution.LevelId}/{docId}.png";
+                    data["solutionImagePath"] = imagePath;
+                }
+
+                Debug.Log($"[Leaderboard] Writing complete solution to Firestore with {data.Count} fields...");
+                
+                // Use a simple approach with timeout
+                var writeTask = docRef.SetAsync(data);
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
+                var completedTask = await Task.WhenAny(writeTask, timeoutTask);
+                
+                if (completedTask == timeoutTask)
+                {
+                    Debug.LogWarning("[Leaderboard] Complete solution Firestore write timed out after 30 seconds");
+                    throw new TimeoutException("Complete solution Firestore write operation timed out");
+                }
+                
+                await writeTask;
+                Debug.Log($"[Leaderboard] Successfully saved complete solution for level {solution.LevelId}");
+                return docId;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Leaderboard] Failed to save complete solution: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get complete solutions for a level, ordered by score (best first).
+        /// </summary>
+        /// <param name="levelId">The level identifier</param>
+        /// <param name="limit">Maximum number of solutions to return (default: 10)</param>
+        /// <returns>List of complete solutions</returns>
+        public static async Task<List<CompleteSolution>> GetCompleteSolutionsAsync(string levelId, int limit = 10)
+        {
+            try
+            {
+                Debug.Log($"[Leaderboard] Getting complete solutions for level {levelId}");
+
+                // Skip Firebase operations in Editor to avoid crashes
+                #if UNITY_EDITOR
+                Debug.Log($"[Leaderboard] Editor mode - simulating complete solution retrieval for level {levelId}");
+                await Task.Delay(100); // Simulate network delay
+                
+                // Return mock data for Editor
+                var mockSolutions = new List<CompleteSolution>();
+                return mockSolutions;
+                #else
+                
+                // Ensure Firebase is initialized
+                await FirebaseBootstrap.InitializeAsync();
+                if (!FirebaseBootstrap.IsInitialized)
+                {
+                    throw new InvalidOperationException("Firebase not initialized");
+                }
+
+                var db = FirebaseFirestore.DefaultInstance;
+                if (db == null)
+                {
+                    throw new InvalidOperationException("Firestore not available");
+                }
+
+                // Query complete solutions for the level, ordered by score ascending
+                var query = db.Collection(COMPLETE_SOLUTIONS_COLLECTION)
+                    .WhereEqualTo("levelId", levelId)
+                    .OrderBy("score")
+                    .Limit(limit);
+
+                var snapshot = await query.GetSnapshotAsync();
+
+                var solutions = new List<CompleteSolution>();
+
+                foreach (var doc in snapshot.Documents)
+                {
+                    try
+                    {
+                        var data = doc.ToDictionary();
+                        string solutionJson = GetStringValue(data, "solutionJson");
+                        
+                        if (!string.IsNullOrEmpty(solutionJson))
+                        {
+                            var solution = SolutionSerializer.DeserializeCompleteSolution(solutionJson);
+                            solutions.Add(solution);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"[Leaderboard] Failed to parse complete solution document {doc.Id}: {ex.Message}");
+                    }
+                }
+
+                Debug.Log($"[Leaderboard] Retrieved {solutions.Count} complete solutions for level {levelId}");
+                return solutions;
+                #endif
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Leaderboard] Failed to get complete solutions: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get a specific complete solution by document ID.
+        /// </summary>
+        /// <param name="solutionId">The solution document ID</param>
+        /// <returns>Complete solution or null if not found</returns>
+        public static async Task<CompleteSolution> GetCompleteSolutionAsync(string solutionId)
+        {
+            try
+            {
+                Debug.Log($"[Leaderboard] Getting complete solution {solutionId}");
+
+                // Use local storage in Editor for testing
+                #if UNITY_EDITOR
+                Debug.Log($"[Leaderboard] Editor mode - using local storage for complete solution retrieval");
+                
+                // Initialize local storage if needed
+                EditorLocalStorage.Initialize();
+                
+                // Load from local storage
+                var solution = EditorLocalStorage.GetCompleteSolution(solutionId);
+                
+                if (solution != null)
+                {
+                    Debug.Log($"[Leaderboard] Loaded solution from local storage: {solutionId}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[Leaderboard] Solution not found in local storage: {solutionId}");
+                }
+                
+                await Task.Delay(200); // Simulate network delay
+                return solution;
+                #else
+                
+                Debug.Log($"[Leaderboard] Running on device - attempting Firebase retrieval");
+                
+                // Ensure Firebase is initialized
+                await FirebaseBootstrap.InitializeAsync();
+                if (!FirebaseBootstrap.IsInitialized)
+                {
+                    Debug.LogError("[Leaderboard] Firebase not initialized");
+                    throw new InvalidOperationException("Firebase not initialized");
+                }
+
+                var db = FirebaseFirestore.DefaultInstance;
+                if (db == null)
+                {
+                    Debug.LogError("[Leaderboard] Firestore not available");
+                    throw new InvalidOperationException("Firestore not available");
+                }
+
+                Debug.Log($"[Leaderboard] Querying document {solutionId} from collection {COMPLETE_SOLUTIONS_COLLECTION}");
+                var docRef = db.Collection(COMPLETE_SOLUTIONS_COLLECTION).Document(solutionId);
+                var snapshot = await docRef.GetSnapshotAsync();
+
+                if (!snapshot.Exists)
+                {
+                    Debug.LogWarning($"[Leaderboard] Complete solution {solutionId} not found");
+                    return null;
+                }
+
+                Debug.Log($"[Leaderboard] Document exists, extracting data");
+                var data = snapshot.ToDictionary();
+                string solutionJson = GetStringValue(data, "solutionJson");
+                
+                if (string.IsNullOrEmpty(solutionJson))
+                {
+                    Debug.LogWarning($"[Leaderboard] Complete solution {solutionId} has no solution data");
+                    return null;
+                }
+
+                Debug.Log($"[Leaderboard] Found solution JSON, length: {solutionJson.Length}");
+                Debug.Log($"[Leaderboard] First 200 chars of JSON: {solutionJson.Substring(0, Math.Min(200, solutionJson.Length))}");
+
+                var solution = SolutionSerializer.DeserializeCompleteSolution(solutionJson);
+                if (solution == null)
+                {
+                    Debug.LogError("[Leaderboard] Deserialization returned null");
+                    return null;
+                }
+
+                Debug.Log($"[Leaderboard] Deserialized solution - LevelId: {solution.LevelId}, MainSolution: {(solution.MainSolution != null ? "exists" : "null")}");
+                return solution;
+                #endif
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Leaderboard] Failed to get complete solution {solutionId}: {ex.Message}");
+                Debug.LogError($"[Leaderboard] Stack trace: {ex.StackTrace}");
+                return null;
+            }
         }
     }
 }

@@ -153,6 +153,31 @@ namespace DLS.Game
 				if (chipViewStack.Count == 1) Simulator.useCaching = true; // Left View mode, so turn caching back on
 			}
 		}
+		
+		/// <summary>
+		/// Enter viewing mode for a solution (similar to Edit Tool → View)
+		/// </summary>
+		/// <param name="solutionChip">The chip to view</param>
+		public void EnterViewModeForSolution(DevChipInstance solutionChip)
+		{
+			if (solutionChip == null)
+			{
+				Debug.LogError("[Project] Cannot enter view mode - solution chip is null");
+				return;
+			}
+			
+			Debug.Log($"[Project] Entering view mode for solution: {solutionChip.ChipName}");
+			
+			// Disable caching while viewing so the solution shows properly
+			Simulator.useCaching = false;
+			SimChip.AbortCache();
+			
+			// Push the solution chip onto the view stack
+			chipViewStack.Push(solutionChip);
+			UpdateViewedChipsString();
+			
+			Debug.Log($"[Project] Now viewing: {viewedChipsString}");
+		}
 
 		public bool AlwaysDrawDevPinNames => AlwaysDrawPinNames(description.Prefs_MainPinNamesDisplayMode);
 		public bool AlwaysDrawSubChipPinNames => AlwaysDrawPinNames(description.Prefs_ChipPinNamesDisplayMode);

@@ -15,6 +15,13 @@ namespace DLS.Graphics
 		
 		public static void DrawLevelBanner()
 		{
+			// Safety check - should not be called if level is not active
+			if (LevelManager.Instance?.Current == null)
+			{
+				Debug.LogWarning("[LevelBannerUI] DrawLevelBanner called but no active level");
+				return;
+			}
+			
 			UI.DrawPanel(UI.TopLeft, new Vector2(UI.Width, InfoBarHeight*2.1f), new Color(0,0,0,0.5f), Anchor.TopLeft);
 			Bounds2D panelBounds = UI.PrevBounds;
 

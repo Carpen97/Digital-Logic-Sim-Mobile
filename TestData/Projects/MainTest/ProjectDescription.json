@@ -4,7 +4,7 @@
   "DLSVersion_EarliestCompatible": "2.0.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.2.0",
   "CreationTime": "2025-03-14T18:23:30.404+01:00",
-  "LastSaveTime": "2025-10-01T22:01:02.141+02:00",
+  "LastSaveTime": "2025-10-03T16:35:10.900+02:00",
   "Prefs_MainPinNamesDisplayMode": 2,
   "Prefs_ChipPinNamesDisplayMode": 2,
   "Prefs_GridDisplayMode": 1,
@@ -20,9 +20,9 @@
   "Prefs_UseDragAndDropMode": true,
   "Prefs_UserName": null,
   "Prefs_RememberUserName": false,
-  "StepsRanSinceCreated": 114649103,
+  "StepsRanSinceCreated": 118340954,
   "TimeSpentSinceCreated": {
-    "StartFrom": "3.08:03:01.8101434"
+    "StartFrom": "3.09:05:05.6595476"
   },
   "AllCustomChipNames":[
     "AND",

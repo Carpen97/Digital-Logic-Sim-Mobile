@@ -19,7 +19,9 @@ namespace DLS.Graphics
         static string _userName = "";
         static bool _rememberName = false;
         static bool _uploadAsAnonymous = false;
+        static bool _shareSolution = false;
         static string _validationMessage = "";
+        static bool _hasInitializedInput = false; // Track if input has been initialized
         
         // UI constants
         const float InputFieldHeight = 4f;
@@ -28,13 +30,14 @@ namespace DLS.Graphics
         static readonly UIHandle ID_UserNameInput = new("UserNameInput_Field");
         static readonly UIHandle ID_RememberNameCheckbox = new("UserNameInput_Remember");
         static readonly UIHandle ID_AnonymousCheckbox = new("UserNameInput_Anonymous");
+        static readonly UIHandle ID_ShareSolutionCheckbox = new("UserNameInput_ShareSolution");
         
         // Callback for when user confirms
-        static Action<string, bool> _onConfirm;
+        static Action<string, bool, bool> _onConfirm; // userName, shouldRemember, shareSolution
         static Action _onCancel;
         
         // ---------- Public API ----------
-        public static void Open(Action<string, bool> onConfirm, Action onCancel = null)
+        public static void Open(Action<string, bool, bool> onConfirm, Action onCancel = null)
         {
             _onConfirm = onConfirm;
             _onCancel = onCancel;
@@ -45,6 +48,8 @@ namespace DLS.Graphics
             // Reset state
             _validationMessage = "";
             _uploadAsAnonymous = false;
+            _shareSolution = false; // Reset share solution state
+            _hasInitializedInput = false; // Reset input initialization flag
             
             UIDrawer.SetActiveMenu(UIDrawer.MenuType.UserNameInput);
         }
@@ -95,13 +100,24 @@ namespace DLS.Graphics
             
             // Input field
             var inputState = UI.GetInputFieldState(ID_UserNameInput);
-            if (_uploadAsAnonymous)
+            
+            // Only initialize the input field once when the popup opens
+            if (!_hasInitializedInput)
             {
-                inputState.SetText("Anonymous", false);
+                if (_uploadAsAnonymous)
+                {
+                    inputState.SetText("Anonymous", false);
+                }
+                else if (!string.IsNullOrEmpty(_userName))
+                {
+                    inputState.SetText(_userName, false);
+                }
+                _hasInitializedInput = true;
             }
-            else if (string.IsNullOrEmpty(inputState.text) && !string.IsNullOrEmpty(_userName))
+            else if (_uploadAsAnonymous)
             {
-                inputState.SetText(_userName, false);
+                // Update text if anonymous checkbox is toggled
+                inputState.SetText("Anonymous", false);
             }
             
             // Draw input field
@@ -174,6 +190,25 @@ namespace DLS.Graphics
                     _rememberName = false; // Can't remember anonymous
                 }
             }
+            
+            // Share Solution checkbox
+            Vector2 shareSolutionPos = anonymousPos + Vector2.down * (checkboxSize + checkboxSpacing);
+            bool shareSolutionPressed = UI.Button(
+                _shareSolution ? "[X] Share Solution" : "[ ] Share Solution",
+                MenuHelper.Theme.ButtonTheme,
+                shareSolutionPos,
+                new Vector2(UI.Width * 0.5f, checkboxSize),
+                true,
+                false,
+                false,
+                MenuHelper.Theme.ButtonTheme.buttonCols,
+                Anchor.CentreTop
+            );
+            
+            if (shareSolutionPressed)
+            {
+                _shareSolution = !_shareSolution;
+            }
         }
         
         static void DrawValidationMessage()
@@ -237,7 +272,7 @@ namespace DLS.Graphics
             }
             
             // Confirm and return to level validation report
-            _onConfirm?.Invoke(userName, shouldRemember);
+            _onConfirm?.Invoke(userName, shouldRemember, _shareSolution);
             UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
         }
         

@@ -65,10 +65,10 @@ Mobile Port (origin)
 | 007 | Add iOS import/export support          | Open   | Currently project import/export works on Android. Implement equivalent functionality for iOS.                                                                                                                                         |
 | 012 | Add pin hitbox size setting            | Open   | Add a preference to adjust the hitbox size of pins for easier touch interaction.                                                                                                                                                      |
 | 013 | Add scrollbar size + buttons setting   | Open   | Add a setting to adjust scrollbar size and provide optional up/down buttons to assist navigation.                                                                                                                                     |
-| 018 | Share solutions (zip + ghost)          | Open   | Normalize & zip solution JSON, upload/download, and implement ghost playback viewer.                                                                                                                                                  |
 | 019 | Server validation for submissions      | Open   | Cloud Function re-simulates solutions/scores to verify; flags "verified" entries and rejects impossible ones.                                                                                                                         |
 | 024 | Component grouping system              | Open   | Add support for grouping multiple components. Selecting multiple components shows a new UI button to create a group. Groups behave as single units for selection/deselection. Groups can also be saved and spawned, similar to chips. |
 | 026 | Perpendicular guide for straight lines | Open   | When straight line mode is toggled, draw a perpendicular guide line to assist alignment.                                                                                                                                              |
+| 031 | Show I/O pin names setting (levels)   | Open   | Add extra setting for "Show I/O pin names" that is only available and functional when working in levels. This setting should toggle the display of input/output pin names specifically for level gameplay to assist users in understanding level requirements. |
 
 ---
 
@@ -101,6 +101,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - 🔴 **MANDATORY: Git Commit Reminder** - **PM MUST proactively remind user to commit completed tickets with format: "Ticket XXX: Brief description"**
 
 ### **Current Status:**
-- **7 Open Tickets** available for selection
+- **5 Open Tickets** available for selection
 - **0 In Progress** tickets
 - **Project ready** for next instructions

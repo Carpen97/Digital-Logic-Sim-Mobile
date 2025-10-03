@@ -16,6 +16,7 @@ namespace DLS.Online
         public DateTime submittedAtUtc;
         public string solutionJsonPath;   // Storage path, may be null
         public string solutionImagePath;  // Storage path, may be null
+        public string completeSolutionId; // Complete solution document ID, may be null
 
         public ScoreEntry()
         {
