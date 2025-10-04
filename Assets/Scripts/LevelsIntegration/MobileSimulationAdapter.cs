@@ -139,4 +139,81 @@ public sealed class MobileSimulationAdapter : ISimulationAdapter
 	}
 
 	public bool IsDesignCombinational() => true;
+
+	/// <summary>
+	/// Reset the circuit state for sequential circuit testing.
+	/// This ensures a clean state before running test sequences.
+	/// For SR-latches, this performs a proper initialization sequence.
+	/// </summary>
+	public void ResetCircuitState()
+	{
+		var ins = InputPinsArray;
+		if (ins.Length >= 2)
+		{
+			// Check if this is a D flip-flop (D, CLK inputs)
+			if (ins.Length == 2)
+			{
+				// D flip-flop initialization sequence
+				// Step 1: Set D=0, CLK=0 to establish known state
+				ins[0].Pin.PlayerInputState.SetFirstBit(false);  // D = 0
+				ins[1].Pin.PlayerInputState.SetFirstBit(false);  // CLK = 0
+				SettleWithin(3, out _); // Let it settle
+				
+				// Step 2: Apply clock edge to ensure Q=0
+				ins[0].Pin.PlayerInputState.SetFirstBit(false);  // D = 0
+				ins[1].Pin.PlayerInputState.SetFirstBit(true);   // CLK = 1
+				SettleWithin(3, out _); // Clock edge: Q should become 0
+				
+				// Step 3: Return to hold state
+				ins[0].Pin.PlayerInputState.SetFirstBit(false);  // D = 0
+				ins[1].Pin.PlayerInputState.SetFirstBit(false);  // CLK = 0
+				SettleWithin(5, out _); // Hold state: Q should remain 0
+			}
+			else
+			{
+				// SR-latch initialization sequence (existing logic)
+				// Step 1: Set both inputs to 1 (invalid state) to break any race conditions
+				ins[0].Pin.PlayerInputState.SetFirstBit(true);  // S = 1
+				ins[1].Pin.PlayerInputState.SetFirstBit(true);  // R = 1
+				SettleWithin(3, out _); // Let it settle in invalid state
+				
+				// Step 2: Set both inputs to 0 (hold state) to establish known state
+				ins[0].Pin.PlayerInputState.SetFirstBit(false); // S = 0
+				ins[1].Pin.PlayerInputState.SetFirstBit(false); // R = 0
+				SettleWithin(5, out _); // Let it settle in hold state
+			}
+		}
+		else
+		{
+			// Fallback for circuits with fewer than 2 inputs
+			foreach (var pin in ins)
+			{
+				pin.Pin.PlayerInputState.SetFirstBit(false);
+			}
+			SettleWithin(5, out _);
+		}
+	}
+
+	/// <summary>
+	/// Enhanced reset specifically for SR-latches.
+	/// Performs a complete initialization sequence to ensure consistent starting state.
+	/// </summary>
+	public void ResetSRLatchState()
+	{
+		var ins = InputPinsArray;
+		if (ins.Length < 2) return;
+		
+		// SR-latch initialization sequence:
+		// 1. Set S=1, R=0 (Set state) - forces Q=1, Qn=0
+		ins[0].Pin.PlayerInputState.SetFirstBit(true);   // S = 1
+		ins[1].Pin.PlayerInputState.SetFirstBit(false);  // R = 0
+		SettleWithin(3, out _);
+		
+		// 2. Set S=0, R=0 (Hold state) - maintains Q=1, Qn=0
+		ins[0].Pin.PlayerInputState.SetFirstBit(false);  // S = 0
+		ins[1].Pin.PlayerInputState.SetFirstBit(false);  // R = 0
+		SettleWithin(5, out _);
+		
+		// Now the latch is in a known state: Q=1, Qn=0
+	}
 }

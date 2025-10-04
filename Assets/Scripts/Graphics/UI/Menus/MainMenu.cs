@@ -646,12 +646,54 @@ namespace DLS.Graphics
 		static void DrawAboutScreen()
 		{
 			ButtonTheme theme = DrawSettings.ActiveUITheme.MainMenuButtonTheme;
+			
+			// Add a bounds scope for the logos
+			using (UI.BeginBoundsScope(true))
+			{
 			string about_text = 
 			"This project is based on Digital Logic Sim, created by Sebastian Lague.\n" +
 			"This mobile version was ported and adapted by David Carpenfelt to make it accessible on Android devices.\n\n" +
 			"If you need inspiration for how to play the game, check out Sebastian's YouTube playlist:\n";
 
 			UI.DrawText(about_text, theme.font, theme.fontSize*0.6f, UI.Centre + Vector2.up * 10, Anchor.Centre, Color.white);
+			
+			// Draw YouTube logo using PNG texture
+			Debug.Log($"[MainMenu] Attempting to load YouTube logo from: UI/Logos/YouTube");
+			// Try loading from the actual location - Assets/UI/Logos/
+			Texture2D youtubeLogo = Resources.Load<Texture2D>("UI/Logos/YouTube");
+			Debug.Log($"[MainMenu] YouTube Logo Loaded: {(youtubeLogo != null ? youtubeLogo.name : "NULL")}");
+			
+			// Debug: List all available resources
+			UnityEngine.Object[] allResources = Resources.LoadAll("UI/Logos");
+			Debug.Log($"[MainMenu] Available resources in UI/Logos: {allResources.Length}");
+			foreach (UnityEngine.Object obj in allResources)
+			{
+				Debug.Log($"[MainMenu] Found resource: {obj.name} ({obj.GetType().Name})");
+			}
+			
+			// Try alternative paths
+			Debug.Log($"[MainMenu] Trying alternative paths...");
+			Texture2D altYoutube = Resources.Load<Texture2D>("YouTube");
+			Debug.Log($"[MainMenu] Alternative YouTube path result: {(altYoutube != null ? altYoutube.name : "NULL")}");
+			
+			// Try loading from root Resources folder
+			UnityEngine.Object[] rootResources = Resources.LoadAll("");
+			Debug.Log($"[MainMenu] Root resources count: {rootResources.Length}");
+			foreach (UnityEngine.Object obj in rootResources)
+			{
+				if (obj.name.ToLower().Contains("youtube") || obj.name.ToLower().Contains("discord"))
+				{
+					Debug.Log($"[MainMenu] Found potential logo: {obj.name} ({obj.GetType().Name})");
+				}
+			}
+			if (youtubeLogo != null)
+			{
+				Vector2 youtubePos = UI.Centre + Vector2.up * 2;
+				Vector2 youtubeSize = new Vector2(3, 3);
+				Debug.Log($"[MainMenu] Drawing YouTube Logo at Pos: {youtubePos}, Size: {youtubeSize}");
+				UI.DrawTextureDirect(youtubePos, youtubeSize, youtubeLogo, Color.white);
+			}
+			
 			if (UI.Button("Link to YouTube", theme, UI.Centre + Vector2.up * 2, Vector2.zero, true, true, true, theme.buttonCols))
 			{
 				BackToMain();
@@ -662,6 +704,18 @@ namespace DLS.Graphics
 			"If you'd like to give feedback please visit this discord thread\n";
 
 			UI.DrawText(feedback_text, theme.font, theme.fontSize*0.6f, UI.CentreBottom + Vector2.up * 24, Anchor.Centre, Color.white);
+			
+			// Draw Discord logo using PNG texture
+			Texture2D discordLogo = Resources.Load<Texture2D>("UI/Logos/Discord");
+			Debug.Log($"[MainMenu] Discord Logo Loaded: {(discordLogo != null ? discordLogo.name : "NULL")}");
+			if (discordLogo != null)
+			{
+				Vector2 discordPos = UI.CentreBottom + Vector2.up * 18;
+				Vector2 discordSize = new Vector2(3, 3);
+				Debug.Log($"[MainMenu] Drawing Discord Logo at Pos: {discordPos}, Size: {discordSize}");
+				UI.DrawTextureDirect(discordPos, discordSize, discordLogo, Color.white);
+			}
+			
 			if (UI.Button("Link to Discord", theme, UI.CentreBottom + Vector2.up * 18, Vector2.zero, true, true, true, theme.buttonCols))
 			{
 				BackToMain();
@@ -673,7 +727,9 @@ namespace DLS.Graphics
 			{
 				BackToMain();
 			}
+			} // End bounds scope
 		}
+
 
 		static void DrawVersionInfo()
 		{

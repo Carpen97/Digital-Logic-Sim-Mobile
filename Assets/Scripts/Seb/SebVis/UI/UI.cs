@@ -1087,6 +1087,67 @@ namespace Seb.Vis.UI
 			Draw.Quad(CalculateCentre(canvasBottomLeft, canvasSize, Anchor.BottomLeft), canvasSize, col);
 		}
 
+		/// <summary>
+		/// Draws a texture directly using Unity's Graphics.DrawTexture, bypassing the compute buffer system.
+		/// This maintains the same coordinate system, scaling, and anchor logic as the existing UI system.
+		/// </summary>
+		public static void DrawTextureDirect(Vector2 pos, Vector2 size, Texture2D texture, Color tint, Anchor anchor = Anchor.Centre)
+		{
+			Debug.Log($"[UI.DrawTextureDirect] Called with pos: {pos}, size: {size}, texture: {(texture != null ? texture.name : "NULL")}, tint: {tint}");
+			
+			if (texture == null || size.x == 0 || size.y == 0) 
+			{
+				Debug.Log($"[UI.DrawTextureDirect] Early return - texture null: {texture == null}, size zero: {size.x == 0 || size.y == 0}");
+				return;
+			}
+
+			Vector2 centre = CalculateCentre(pos, size, anchor);
+			Debug.Log($"[UI.DrawTextureDirect] Calculated centre: {centre}");
+
+			(Vector2 centre, Vector2 size) ss = UIToScreenSpace(centre, size);
+			Debug.Log($"[UI.DrawTextureDirect] Screen space centre: {ss.centre}, size: {ss.size}");
+			
+			// Try a different approach - use OnGUI for texture rendering
+			Debug.Log($"[UI.DrawTextureDirect] Attempting OnGUI approach");
+			
+			// Store the texture data for OnGUI rendering
+			if (onGUIQueue == null)
+				onGUIQueue = new List<OnGUITextureData>();
+			
+			onGUIQueue.Add(new OnGUITextureData
+			{
+				rect = new Rect(ss.centre.x - ss.size.x/2, ss.centre.y - ss.size.y/2, ss.size.x, ss.size.y),
+				texture = texture,
+				tint = tint
+			});
+
+			OnFinishedDrawingUIElement(centre, size);
+		}
+		
+		// OnGUI texture rendering queue
+		private static List<OnGUITextureData> onGUIQueue;
+		
+		private struct OnGUITextureData
+		{
+			public Rect rect;
+			public Texture2D texture;
+			public Color tint;
+		}
+		
+		// This should be called from OnGUI
+		public static void RenderOnGUITextures()
+		{
+			if (onGUIQueue != null && onGUIQueue.Count > 0)
+			{
+				foreach (var data in onGUIQueue)
+				{
+					Debug.Log($"[UI.RenderOnGUITextures] Drawing texture at rect: {data.rect}");
+					GUI.DrawTexture(data.rect, data.texture, ScaleMode.StretchToFill, true, 0, data.tint, 0, 0);
+				}
+				onGUIQueue.Clear();
+			}
+		}
+
 		public static void DrawLetterboxes()
 		{
 			Vector2 canvasTopRight = canvasBottomLeft + canvasSize;

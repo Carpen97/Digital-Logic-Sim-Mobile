@@ -1,15 +1,18 @@
 using System.Collections.Generic;
 using DLS.Levels.Host;
 
-public sealed class MobilePaletteFilter : IPaletteFilter
+namespace DLS.Game.LevelsIntegration
 {
-	public void SetAllowedParts(IReadOnlyList<string> allowedPartIds)
+	public sealed class MobilePaletteFilter : IPaletteFilter
 	{
-		// TODO: filter hotbar/palette to allowed parts
-	}
+		public void SetAllowedParts(IReadOnlyList<string> allowedPartIds)
+		{
+			// TODO: filter hotbar/palette to allowed parts
+		}
 
-	public void ClearRestrictions()
-	{
-		// TODO: restore full palette
+		public void ClearRestrictions()
+		{
+			// TODO: restore full palette
+		}
 	}
 }

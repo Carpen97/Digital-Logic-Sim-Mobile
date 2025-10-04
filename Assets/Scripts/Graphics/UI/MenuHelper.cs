@@ -76,6 +76,29 @@ namespace DLS.Graphics
 			DrawText(text, bgBounds.CentreLeft + Vector2.right * textPadX, Anchor.TextCentreLeft, col, bold);
 			UI.OverridePreviousBounds(bgBounds);
 		}
+		public static void DrawTopLeftAlignTextWithBackground(string text, Vector2 pos, Vector2 size, Anchor anchor, Color col, Color bgCol, bool bold = false, float textPadX = 1, bool wrapText = false)
+		{
+			UI.DrawPanel(pos, size, bgCol, anchor);
+			Bounds2D bgBounds = UI.PrevBounds;
+			
+			if (wrapText)
+			{
+				// Calculate approximate characters per line based on panel width
+				float fontSize = Theme.FontSizeRegular;
+				float charWidth = fontSize * 0.6f; // Approximate character width
+				int maxCharsPerLine = Mathf.Max(1, Mathf.FloorToInt((size.x - textPadX * 2) / charWidth));
+				
+				// Apply text wrapping
+				string wrappedText = UI.LineBreakByCharCount(text, maxCharsPerLine);
+				DrawText(wrappedText, bgBounds.TopLeft + Vector2.right * textPadX + Vector2.down * textPadX * 4, Anchor.TextCentreLeft, col, bold);
+			}
+			else
+			{
+				DrawText(text, bgBounds.TopLeft + Vector2.right * textPadX + Vector2.down * textPadX * 4, Anchor.TextCentreLeft, col, bold);
+			}
+			
+			UI.OverridePreviousBounds(bgBounds);
+		}
 
 		public static void DrawBackgroundOverlay()
 		{

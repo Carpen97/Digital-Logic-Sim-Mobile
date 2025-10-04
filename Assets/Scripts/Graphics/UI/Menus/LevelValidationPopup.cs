@@ -19,14 +19,28 @@ namespace DLS.Graphics
 	public static class LevelValidationPopup
 	{
 		// ---------- Internal row model ----------
-		struct TestRow
-		{
-			public string Inputs;
-			public string Expected;
-			public string Got;       // Only reliable for failures (when provided in message)
-			public bool Passed;
-			public string Message;   // Failure message (e.g., "Expected X, got Y")
-		}
+	struct TestRow
+	{
+		public string Inputs;
+		public string Expected;
+		public string Got;       // Only reliable for failures (when provided in message)
+		public bool Passed;
+		public string Message;   // Failure message (e.g., "Expected X, got Y")
+		
+		// New fields for sequential circuits
+		public bool IsSequence;
+		public string SequenceName;
+		public List<SequenceStep> SequenceSteps;
+	}
+	
+	struct SequenceStep
+	{
+		public string Inputs;
+		public string Expected;
+		public string Got;
+		public bool Passed;
+		public bool IsClockEdge;
+	}
 
 		// ---------- Popup state ----------
 		static string _title = "";
@@ -36,10 +50,13 @@ namespace DLS.Graphics
 		// Scroll list data
 		static readonly List<TestRow> _rows = new();
 		static int _selectedIndex = -1;
+		
+		// Level type detection
+		static bool _isSequentialLevel = false;
 
 		// UI constants (tweak to match your other menus)
-		const float ListWidthFrac  = 0.72f;
-		const float ListHeightFrac = 0.40f;
+		const float ListWidthFrac  = 0.90f;  // Increased from 0.72f to 0.90f
+		const float ListHeightFrac = 0.5f;
 		const float RowHeight      = 4.2f;
 		const float OkBtnWidthFrac = 0.30f;
 		const float OkBtnHeightMul = 1.5f;
@@ -59,6 +76,9 @@ namespace DLS.Graphics
 			_rows.Clear();
 			_selectedIndex = -1;
 
+			// Detect if current level is sequential
+			_isSequentialLevel = LevelManager.Instance?.Current?.isSequential ?? false;
+
 			if (report == null)
 			{
 				_isSuccess = false;
@@ -71,69 +91,112 @@ namespace DLS.Graphics
 			_isSuccess = report.PassedAll;
 			_stars     = report.Stars;
 
-			// Title
-			_title = _isSuccess ? "All tests passed" : report.Failures.Count>1 ? $"{report.Failures.Count} tests failed" : $"1 test failed";
-
-			// Build a failure lookup keyed by the input vector so we can mark pass/fail per vector.
-			// If there can be duplicate input patterns, consider keying by (inputs,index).
-			var failByInputs = new Dictionary<string, CaseFail>();
-			if (report.Failures != null)
+			// Title - count sequences, not individual steps
+			if (_isSuccess)
 			{
-				foreach (var f in report.Failures)
+				_title = "All tests passed";
+			}
+			else
+			{
+				if (_isSequentialLevel)
 				{
-					// last one wins if duplicate keys; acceptable for UI purposes
-					failByInputs[f.Inputs] = f;
+					// For sequential levels, count unique sequences that failed
+					int failedSequences = _rows.Count(r => r.IsSequence && !r.Passed);
+					_title = failedSequences > 1 ? $"{failedSequences} tests failed" : "1 test failed";
+				}
+				else
+				{
+					// For combinational levels, count individual test vectors
+					_title = report.Failures.Count > 1 ? $"{report.Failures.Count} tests failed" : "1 test failed";
 				}
 			}
 
-			// Try to show ALL test vectors from the active level definition
-			// If the definition isn't available, fall back to just failures.
-			var def = LevelManager.Instance != null ? LevelManager.Instance.Current : null;
-			if (def != null && def.testVectors != null && def.testVectors.Length > 0)
+			// Handle data population based on level type
+			if (_isSequentialLevel)
 			{
-				foreach (var tv in def.testVectors)
+				// Sequential levels: Use AllTestResults and group by sequence name
+				if (report.AllTestResults != null && report.AllTestResults.Count > 0)
 				{
-					if (failByInputs.TryGetValue(tv.inputs, out var cf))
+					// Group results by sequence name
+					var sequenceGroups = report.AllTestResults.GroupBy(r => r.SequenceName);
+					
+					foreach (var group in sequenceGroups)
 					{
+						var sequenceSteps = new List<SequenceStep>();
+						bool sequencePassed = true;
+						
+						foreach (var result in group)
+						{
+							sequenceSteps.Add(new SequenceStep
+							{
+								Inputs = result.Inputs,
+								Expected = result.Expected,
+								Got = result.Actual,
+								Passed = result.Passed,
+								IsClockEdge = result.IsClockEdge
+							});
+							
+							if (!result.Passed)
+								sequencePassed = false;
+						}
+						
 						_rows.Add(new TestRow
 						{
-							Inputs   = tv.inputs,
-							Expected = tv.expected,
-							Got      = TryExtractGotValue(cf.Message),
-							Passed   = false,
-							Message  = cf.Message
+							Inputs = "", // Not used for sequences
+							Expected = "", // Not used for sequences
+							Got = "", // Not used for sequences
+							Passed = sequencePassed,
+							Message = sequencePassed ? "OK" : "Sequence failed",
+							IsSequence = true,
+							SequenceName = group.Key,
+							SequenceSteps = sequenceSteps
 						});
 					}
-					else
+				}
+				else
+				{
+					// Fallback for sequential levels
+					_rows.Add(new TestRow
 					{
-						// We don't know the actual "got" value for passing cases; we show expected and mark as passed.
-						_rows.Add(new TestRow
-						{
-							Inputs   = tv.inputs,
-							Expected = tv.expected,
-							Got      = "",          // unknown for passes
-							Passed   = true,
-							Message  = "OK"
-						});
-					}
+						Inputs = "-",
+						Expected = "-",
+						Got = "",
+						Passed = false,
+						Message = "No test results available"
+					});
 				}
 			}
 			else
 			{
-				// Fallback: we only know about failures
-				if (report.Failures != null && report.Failures.Count > 0)
+				// Combinational levels: Create individual test vector rows
+				if (report.AllTestResults != null && report.AllTestResults.Count > 0)
 				{
-					foreach (var f in report.Failures)
+					foreach (var result in report.AllTestResults)
 					{
 						_rows.Add(new TestRow
 						{
-							Inputs   = f.Inputs,
-							Expected = TryExtractExpectedValue(f.Message),
-							Got      = TryExtractGotValue(f.Message),
-							Passed   = false,
-							Message  = f.Message
+							Inputs = result.Inputs,
+							Expected = result.Expected,
+							Got = result.Actual,
+							Passed = result.Passed,
+							Message = result.Passed ? "OK" : $"Expected {result.Expected}, got {result.Actual}",
+							IsSequence = false,
+							SequenceName = "",
+							SequenceSteps = null
 						});
 					}
+				}
+				else
+				{
+					// Fallback for combinational levels
+					_rows.Add(new TestRow
+					{
+						Inputs = "-",
+						Expected = "-",
+						Got = "",
+						Passed = false,
+						Message = "No test results available"
+					});
 				}
 			}
 
@@ -203,54 +266,50 @@ namespace DLS.Graphics
 					UI.ModifyPanel(starsBG, Bounds2D.Grow(UI.PrevBounds, 1.2f), ColHelper.MakeCol(0.11f));
 				}
 
-				// --- Scrollable list of tests ---
-				float listW = UI.Width  * ListWidthFrac ;
-				float listH = UI.Height * ListHeightFrac;
-				Vector2 listSize = new(listW, listH);
-
+				// --- Layout based on level type ---
 				var theme = DrawSettings.ActiveUITheme;
 
-				ScrollBarState sv = UI.DrawScrollView(
-					ID_LevelValidationPopup,
-					UI.Centre,
-					listSize,
-					UILayoutHelper.DefaultSpacing,
-					Anchor.Centre,
-					theme.ScrollTheme,
-					DrawRowFunc,
-					_rows.Count
-				);
-				isDraggingScrollbar = sv.isDragging;
-
-				/*
-				// --- Selected row details (optional, compact) ---
-				if (_selectedIndex >= 0 && _selectedIndex < _rows.Count)
+				if (_isSequentialLevel)
 				{
-					var r = _rows[_selectedIndex];
-					var details = new StringBuilder();
-					details.AppendLine(r.Passed ? "Result: OK" : "Result: FAIL");
-					details.AppendLine($"Inputs:   {r.Inputs}");
-					details.AppendLine($"Expected: {r.Expected}");
-					if (!string.IsNullOrEmpty(r.Got)) details.AppendLine($"Got:      {r.Got}");
-					if (!string.IsNullOrEmpty(r.Message) && !r.Passed) details.AppendLine(r.Message);
+					// Sequential levels: Two-panel layout with 65:35 ratio
+					float panelSpacing = 2f;
+					float totalWidth = UI.Width * ListWidthFrac - panelSpacing;
+					float leftPanelW = totalWidth * 0.58f;  // 65% for left panel (info)
+					float rightPanelW = totalWidth * 0.40f; // 35% for right panel (test list)
+					float panelH = UI.Height * ListHeightFrac;
+					
+					Vector2 leftPanelSize = new(leftPanelW, panelH);
+					Vector2 rightPanelSize = new(rightPanelW, panelH);
 
-					// Place details just below the list
-					//Vector2 detailTopLeft = UI.PrevBounds.CentreBottom + new Vector2(-listW * 0.5f, -2.0f);
-					Vector2 detailTopLeft = UI.PrevBounds.TopRight + Vector2.right * 2f;
-					float detailHeight = Mathf.Min(UI.Height * 0.18f, 12f);
+					// --- Left panel: Info panel (larger) ---
+					Vector2 leftPanelPos = UI.Centre + new Vector2(-rightPanelW * 0.5f - panelSpacing * 0.5f, 0f) + Vector2.down * 1f;
+					DrawInfoPanel(leftPanelPos, leftPanelSize);
 
-					MenuHelper.DrawLeftAlignTextWithBackground(
-						details.ToString(),
-						detailTopLeft + new Vector2(listW / 2f, -detailHeight / 2f),
-						new Vector2(listW, detailHeight),
+					// --- Right panel: Scrollable list of tests (smaller) ---
+					Vector2 rightPanelPos = UI.Centre + new Vector2(leftPanelW * 0.5f + panelSpacing * 0.5f, 0f) + Vector2.down * 1f;
+					ScrollBarState sv = UI.DrawScrollView(
+						ID_LevelValidationPopup,
+						rightPanelPos,
+						rightPanelSize,
+						UILayoutHelper.DefaultSpacing,
 						Anchor.Centre,
-						Color.white,
-						ColHelper.MakeCol(0.08f),
-						bold: false,
-						textPadX: 1.0f
+						theme.ScrollTheme,
+						DrawRowFunc,
+						_rows.Count
 					);
+					isDraggingScrollbar = sv.isDragging;
 				}
-				*/
+				else
+				{
+					// Combinational levels: Single-panel layout with header
+					float panelW = UI.Width * ListWidthFrac;
+					float panelH = UI.Height * ListHeightFrac * 0.8f;
+					Vector2 panelSize = new(panelW, panelH);
+					Vector2 panelPos = UI.Centre + Vector2.down * 1f;
+
+					// Draw the single panel with header and scrollable content
+					DrawCombinationalPanel(panelPos, panelSize);
+				}
 
 				// --- Firebase Buttons (includes OK button in grid) ---
 				DrawFirebaseButtons();
@@ -268,18 +327,44 @@ namespace DLS.Graphics
 			var r = _rows[index];
 			bool selected = index == _selectedIndex;
 
-			// Compose a compact one-line label
-			// Example: "[OK]   0101  →  1110"
-			//          "[FAIL] 0101  →  1110  (Expected 1110, got 0110)"
+			if (_isSequentialLevel)
+			{
+				// Sequential levels: Use sequence-based drawing
+				if (r.IsSequence)
+				{
+					// Draw sequence as multi-line entry
+					DrawSequenceRow(rowTopLeft, width, r, selected, isLayoutPass);
+				}
+				else
+				{
+					// Draw regular combinational test row (fallback for sequential)
+					DrawCombinationalRow(rowTopLeft, width, r, selected, isLayoutPass);
+				}
+			}
+			else
+			{
+				// Combinational levels: Always use combinational row format
+				DrawCombinationalRow(rowTopLeft, width, r, selected, isLayoutPass);
+			}
+		}
+
+		static void DrawSequenceRow(Vector2 rowTopLeft, float width, TestRow r, bool selected, bool isLayoutPass)
+		{
+			// Create a compact summary of the sequence
 			string status = r.Passed ? "<color=#44ff44> [PASS]" : "<color=#ff2222> [FAIL]";
-			string arrow  = " → ";
-			string extra  = r.Passed ? "" : ComposeFailSuffix(r);
-
-			string label = $"{status} {r.Inputs}{arrow}{r.Expected}{extra}";
-
-			// Visually nudge text to feel centered
-			// const float nudgeLeft = -28f; // TODO: Implement visual nudge if needed
-
+			
+			// Count passed/failed steps
+			int passedSteps = r.SequenceSteps.Count(s => s.Passed);
+			int totalSteps = r.SequenceSteps.Count;
+			
+			string label = $"{status} {r.SequenceName}";
+			
+			// Truncate if too long
+			if (label.Length > 80)
+			{
+				label = label.Substring(0, 77) + "...";
+			}
+			
 			bool pressed = UI.Button(
 				label,
 				MenuHelper.Theme.ButtonTheme,
@@ -291,15 +376,101 @@ namespace DLS.Graphics
 				MenuHelper.Theme.ButtonTheme.buttonCols,
 				Anchor.TopLeft,
 				leftAlignText: true,
-				//textOffsetX: nudgeLeft,
 				ignoreInputs: isDraggingScrollbar
 			);
 
 			if (!isLayoutPass && pressed)
 			{
-				_selectedIndex = index;
+				_selectedIndex = Array.IndexOf(_rows.ToArray(), r);
 				RememberSelection();
 			}
+		}
+
+		static void DrawCombinationalRow(Vector2 rowTopLeft, float width, TestRow r, bool selected, bool isLayoutPass)
+		{
+			// For combinational levels, draw in table format: Pass | IN | OUT | EXPECTED
+			string status = r.Passed ? "PASS" : "FAIL";
+			string statusColor = r.Passed ? "<color=#44ff44>" : "<color=#ff2222>";
+			
+			// Convert binary strings to colored dots
+			string inputs = string.IsNullOrEmpty(r.Inputs) ? "-" : BinaryToColoredDots(r.Inputs);
+			string expected = string.IsNullOrEmpty(r.Expected) ? "-" : BinaryToColoredDots(r.Expected);
+			string got = string.IsNullOrEmpty(r.Got) ? "-" : BinaryToColoredDots(r.Got);
+			
+			// Fixed cell width of 6 spaces to match header
+			const int cellWidth = 6;
+			
+			// Create formatted row text with fixed-width cells
+			// Apply padding to the content, not the HTML tags
+			string statusText = $"{statusColor}{status}</color>";
+			string paddedStatus = statusText + new string(' ', Math.Max(0, cellWidth - status.Length));
+			string paddedInputs = inputs + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(inputs)));
+			string paddedGot = got + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(got)));
+			string paddedExpected = expected + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(expected)));
+			
+			string rowText = " " + paddedStatus + "| " + paddedInputs + "| " + paddedGot + "| " + paddedExpected;
+
+			bool pressed = UI.Button(
+				rowText,
+				MenuHelper.Theme.ButtonTheme,
+				rowTopLeft,
+				new Vector2(width, RowHeight),
+				/*enabled*/  true,
+				/*fitTextX*/ true,
+				/*fitTextY*/ false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft,
+				leftAlignText: true,
+				ignoreInputs: isDraggingScrollbar
+			);
+
+			if (!isLayoutPass && pressed)
+			{
+				_selectedIndex = Array.IndexOf(_rows.ToArray(), r);
+				RememberSelection();
+			}
+		}
+
+		/// <summary>
+		/// Calculates the visible length of a string, ignoring HTML color tags
+		/// </summary>
+		static int GetVisibleLength(string text)
+		{
+			if (string.IsNullOrEmpty(text)) return 0;
+			
+			// Remove HTML color tags to get actual visible length
+			string cleanText = System.Text.RegularExpressions.Regex.Replace(text, @"<color=#[^>]*>|</color>", "");
+			return cleanText.Length;
+		}
+
+		/// <summary>
+		/// Converts a binary string (e.g., "1010") to colored dot symbols using the game's state colors
+		/// </summary>
+		static string BinaryToColoredDots(string binary)
+		{
+			if (string.IsNullOrEmpty(binary)) return "-";
+			
+			// Use the game's state colors - index 0 is red for high, dark red for low
+			string result = "";
+			foreach (char bit in binary)
+			{
+				if (bit == '1')
+				{
+					// High state - use red color (index 0 from StateHighCol)
+					result += "<color=#f24d4f>●</color>";
+				}
+				else if (bit == '0')
+				{
+					// Low state - use dark red color (index 0 from StateLowCol)  
+					result += "<color=#331a1a>●</color>";
+				}
+				else
+				{
+					// Non-binary character, keep as-is
+					result += bit;
+				}
+			}
+			return result;
 		}
 
 		// ---------- Helpers ----------
@@ -309,6 +480,141 @@ namespace DLS.Graphics
 			// Currently no-op, but keeping it mirrors other menus and avoids null refs.
 		}
 
+		static void DrawCombinationalPanel(Vector2 panelPos, Vector2 panelSize)
+		{
+			// Draw panel background
+			Draw.ID panelID = UI.ReservePanel();
+			UI.ModifyPanel(
+				panelID,
+				new Bounds2D(panelPos - panelSize * 0.5f, panelPos + panelSize * 0.5f),
+				ColHelper.MakeCol(0.08f)
+			);
+
+			// Draw header row
+			Vector2 headerPos = panelPos - panelSize * 0.5f + new Vector2(1f, panelSize.y - 5f);
+			DrawCombinationalHeader(headerPos, panelSize);
+
+			// Draw scrollable content area (below header)
+			float headerHeight = RowHeight + 0.5f;
+			Vector2 contentPos = headerPos + Vector2.down;
+			Vector2 contentSize = new(panelSize.x - 2f, panelSize.y - headerHeight - 2f);
+
+			ScrollBarState sv = UI.DrawScrollView(
+				ID_LevelValidationPopup,
+				contentPos,
+				contentSize,
+				UILayoutHelper.DefaultSpacing,
+				Anchor.TopLeft,
+				DrawSettings.ActiveUITheme.ScrollTheme,
+				DrawRowFunc,
+				_rows.Count
+			);
+			isDraggingScrollbar = sv.isDragging;
+		}
+
+		static void DrawCombinationalHeader(Vector2 headerPos, Vector2 panelSize)
+		{
+			// Draw header background
+			Draw.ID headerID = UI.ReservePanel();
+			UI.ModifyPanel(
+				headerID,
+				new Bounds2D(headerPos, headerPos + new Vector2(panelSize.x - 2f, RowHeight)),
+				ColHelper.MakeCol(0.12f)
+			);
+
+			// Smaller cell width for better fit
+			const int cellWidth = 6;
+			
+			// Draw header text with fixed-width cells
+			Vector2 textPos = headerPos + new Vector2(-0.2f, RowHeight * 0.5f);
+			string headerText = $" RESULT".PadRight(cellWidth+2) + "| " + 
+			                   "IN".PadRight(cellWidth) + "| " + 
+			                   "OUT".PadRight(cellWidth) + "| " + 
+			                   "EXPECTED".PadRight(cellWidth);
+			
+			UI.DrawText(
+				headerText,
+				DrawSettings.ActiveUITheme.FontRegular,
+				DrawSettings.ActiveUITheme.FontSizeRegular,
+				textPos,
+				Anchor.TextCentreLeft,
+				Color.white
+			);
+		}
+
+		static void DrawInfoPanel(Vector2 panelPos, Vector2 panelSize)
+		{
+			// Draw info panel background
+			Draw.ID infoPanelID = UI.ReservePanel();
+			UI.ModifyPanel(
+				infoPanelID,
+				new Bounds2D(panelPos - panelSize * 0.5f, panelPos + panelSize * 0.5f),
+				ColHelper.MakeCol(0.08f)
+			);
+
+			// Draw info content - position closer to top of panel
+			Vector2 contentPos = panelPos - panelSize * 0.5f + new Vector2(1f, panelSize.y - 1f);
+			
+			if (_selectedIndex >= 0 && _selectedIndex < _rows.Count)
+			{
+				// Show selected test details
+				var r = _rows[_selectedIndex];
+				var details = new StringBuilder();
+				
+	
+					// Show sequence details with fixed cell width
+					const int cellWidth = 10;
+					details.AppendLine("  | Input    | Output   | Expected");
+					
+					foreach (var step in r.SequenceSteps)
+					{
+						string stepStatus = step.Passed ? "<color=#44ff44>✓</color>" : "<color=#ff2222>✗</color>";
+						string clockIndicator = step.IsClockEdge ? " [CLK]" : "";
+						
+						// Convert binary strings to colored dots
+						string inputs = string.IsNullOrEmpty(step.Inputs) ? "-" : " "+BinaryToColoredDots(step.Inputs);
+						string expected = string.IsNullOrEmpty(step.Expected) ? "-" : " "+BinaryToColoredDots(step.Expected);
+						string got = string.IsNullOrEmpty(step.Got) ? "-" : " "+BinaryToColoredDots(step.Got);
+						
+						// Apply fixed cell width padding
+						string paddedInputs = inputs + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(inputs)));
+						string paddedExpected = expected + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(expected)));
+						string paddedGot = got + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(got)));
+						
+						details.AppendLine($" {stepStatus}|{paddedInputs}|{paddedGot}|{paddedExpected}");
+					}
+				
+
+				MenuHelper.DrawTopLeftAlignTextWithBackground(
+					details.ToString(),
+					contentPos,
+					panelSize - new Vector2(2f, 2f),
+					Anchor.TopLeft,
+					Color.white,
+					ColHelper.MakeCol(0.0f), // Transparent background since panel already has one
+					bold: false,
+					textPadX: 0.5f
+				);
+			}
+			else
+			{
+				// Show default message when no test is selected
+				string defaultMessage = "Select a test from the\nlist to view details...";
+				
+				MenuHelper.DrawTopLeftAlignTextWithBackground(
+					defaultMessage,
+					contentPos,
+					panelSize - new Vector2(2f, 2f),
+					Anchor.TopLeft,
+					Color.gray,
+					ColHelper.MakeCol(0.0f), // Transparent background
+					bold: false,
+					textPadX: 0.5f
+				);
+			}
+		}
+
+
 		/// <summary>
 		/// Applies the selected test's inputs to the simulation and returns to the main simulation view.
 		/// </summary>
@@ -317,6 +623,13 @@ namespace DLS.Graphics
 			if (_selectedIndex < 0 || _selectedIndex >= _rows.Count) return;
 
 			var selectedRow = _rows[_selectedIndex];
+			
+			// Only apply inputs for combinational levels (sequential levels don't support this)
+			if (_isSequentialLevel)
+			{
+				Debug.Log("[LevelValidationPopup] Cannot apply test inputs for sequential levels");
+				return;
+			}
 			
 			try
 			{
@@ -405,10 +718,11 @@ namespace DLS.Graphics
 			// Check if level is passed (all rows passed)
 			bool levelPassed = _rows.Count > 0 && _rows.All(r => r.Passed);
 			bool hasValidSelection = _selectedIndex >= 0 && _selectedIndex < _rows.Count;
+			bool canApplyTest = hasValidSelection && !_isSequentialLevel; // Only allow for combinational levels
 
-			// Calculate grid positions (3 buttons per row)
+			// Calculate grid positions (3 buttons per row) - center relative to entire popup, not just scroll view
 			float totalWidth = (buttonWidth * 3) + (spacing * 2);
-			float startX = UI.PrevBounds.Centre.x - totalWidth / 2f;
+			float startX = UI.Centre.x - totalWidth / 2f;  // Center relative to entire popup
 			float startY = buttonStart.y;
 
 			// Row 1: Apply Test, Upload Score, Save as Chip
@@ -427,7 +741,7 @@ namespace DLS.Graphics
 				MenuHelper.Theme.ButtonTheme,
 				applyTestPos,
 				new Vector2(buttonWidth, buttonHeight),
-				hasValidSelection, // Only enabled if a test is selected
+				canApplyTest, // Only enabled for combinational levels with valid selection
 				false,
 				false,
 				MenuHelper.Theme.ButtonTheme.buttonCols,
@@ -501,7 +815,7 @@ namespace DLS.Graphics
 			);
 
 			// Handle button presses
-			if (applyTestPressed && hasValidSelection)
+			if (applyTestPressed && canApplyTest)
 			{
 				ApplySelectedTestInputs();
 			}

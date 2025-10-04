@@ -4,7 +4,7 @@
   "DLSVersion_EarliestCompatible": "2.0.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.2.0",
   "CreationTime": "2025-03-14T18:23:30.404+01:00",
-  "LastSaveTime": "2025-10-03T16:55:43.074+02:00",
+  "LastSaveTime": "2025-10-04T18:04:48.855+02:00",
   "Prefs_MainPinNamesDisplayMode": 3,
   "Prefs_ChipPinNamesDisplayMode": 2,
   "Prefs_GridDisplayMode": 1,
@@ -20,9 +20,9 @@
   "Prefs_UseDragAndDropMode": true,
   "Prefs_UserName": null,
   "Prefs_RememberUserName": false,
-  "StepsRanSinceCreated": 118538649,
+  "StepsRanSinceCreated": 148650274,
   "TimeSpentSinceCreated": {
-    "StartFrom": "3.09:08:34.0096176"
+    "StartFrom": "3.17:45:28.8994378"
   },
   "AllCustomChipNames":[
     "AND",
@@ -109,27 +109,27 @@
     },
     {
       "Chips":["BUS-1","BUS-4","BUS-8","BUS-16","BUS-32","BUS-128","BUS-2","BUS-6","BUS-5","BUS-7","BUS-9","BUS-31","BUS-37","BUS-12","BUS-13","BUS-21","BUS-23","BUS-17","BUS-56"],
-      "IsToggledOpen":true,
+      "IsToggledOpen":false,
       "Name":"BUS"
     },
     {
       "Chips":["REGISTER-4","REG-8"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"MEMORY"
     },
     {
       "Chips":["D-LATCH","FLIP-FLOP","OR-8","MEM-1","NOT-8","AND(8,1)","MUX-8","PC","BUF-8","ALU-8","DECODE-3","AND-3","CONTROL UNIT","TOGGLE","FLAGS","DISP-7","demo","7-SEGMENT DRIVER","DABBLE","LSB","LSHIFT-8","DOUBLE DABBLE","ALU","BUS BUFFER","MEM-256","REGISTER-8","XNOR","EQUALS-8","ADDER-4","DECODER-2","ADDER-8","ADDER","MEM-16","REGISTER-1","AND-8","RAM-256×8 (async)","ROM 256×16"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"KEEP"
     },
     {
       "Chips":["WIP2","RAM-sync","CONST"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"TEST"
     },
     {
       "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest","#AA","StatsTest","StatsTest1","StatsTest2","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8","DETECTOR","RTC","ConstTest"],
-      "IsToggledOpen":false,
+      "IsToggledOpen":true,
       "Name":"OTHER"
     }
   ],

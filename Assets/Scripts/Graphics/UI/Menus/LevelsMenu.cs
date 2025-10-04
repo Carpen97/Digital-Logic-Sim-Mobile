@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Seb.Vis;
 using Seb.Vis.UI;
@@ -8,34 +9,39 @@ using Seb.Helpers;
 using DLS.Levels; // LevelDefinition
 using DLS.Game;
 using DLS.Game.LevelsIntegration;   // UIDrawer / Project access
+using static DLS.Graphics.DrawSettings;
 
 namespace DLS.Graphics
 {
 	public static class LevelsMenu
 	{
 		// -------- Config --------
-		// Single pack file now:
-		// Assets/Resources/levels.json (no extension in Resources.Load)
 		const string LevelPackResourcePath = "levels";
 		const string PlayerPrefsKey_LastIndex = "LevelsMenu.LastIdx";
 
-		// --- Layout tuning (clean card) ---
-		const float ListWidth = 80f;
-		const float TitleOffsetY = -8f;
-		const float TitleSizeBoost = 4f;
-		const float ListHeight = 30f;
-		const float GapTitleToList = 20.00f;
-		const float GapListToBtns = 1.10f;
-		const float BtnWFrac = 0.4f;
-		const float BtnHMult = 0.95f;
+		// Panel layout constants
+		const float interPanelSpacing = 1.5f;
+		const float menuOffsetY = 1.13f;
+		const float levelsPanelWidthT = 0.45f;
+		const float selectionPanelWidthT = 0.45f;
+		const float previewWindowHeight = 18f;
 
 		// -------- ScrollView plumbing --------
-		static readonly UIHandle ID_LevelsScrollbar = new("LevelsMenu_Scrollbar");
-		static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc DrawLevelRowFunc = DrawLevelRow;
-		static bool isDraggingScrollbar;
+		static readonly UIHandle ID_LevelsScrollbar = new("LevelsMenu_LevelsScrollbar");
+		static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc drawLevelPackEntry = DrawLevelPackEntry;
+		static bool isScrolling;
 
 		// -------- Data --------
 		[Serializable] class DefsWrapper { public LevelDefinition[] levels; }
+		[Serializable] public class LocalLevelPack { public LevelPackChapter[] chapters; }
+		[Serializable] public class LevelPackChapter { public string chapterName; public List<LevelDefinition> levels; }
+
+		class LevelPackEntry
+		{
+			public string name;
+			public List<LevelDefinition> levels;
+			public bool isToggledOpen;
+		}
 
 		class LevelEntry
 		{
@@ -45,18 +51,27 @@ namespace DLS.Graphics
 			public LevelDefinition def;
 		}
 
-		static readonly List<LevelEntry> _levels = new();
-		static int _selectedIndex;
+		static readonly List<LevelPackEntry> _levelPacks = new();
+		static readonly List<LevelEntry> _allLevels = new();
+		static int _selectedLevelPackIndex = -1;
+		static int _selectedLevelIndex = -1;
 		public static bool _loaded;
 
 		// -------- Menu lifecycle hooks (UIDrawer) --------
 		public static void OnMenuOpened()
 		{
 			LoadPack(); // always reload so Play Mode edits are reflected
-			_selectedIndex = Mathf.Clamp(
-				PlayerPrefs.GetInt(PlayerPrefsKey_LastIndex, _selectedIndex),
-				0, Mathf.Max(0, _levels.Count - 1)
+			_selectedLevelPackIndex = Mathf.Clamp(
+				PlayerPrefs.GetInt(PlayerPrefsKey_LastIndex + "_Pack", _selectedLevelPackIndex),
+				0, Mathf.Max(0, _levelPacks.Count - 1)
 			);
+			_selectedLevelIndex = Mathf.Clamp(
+				PlayerPrefs.GetInt(PlayerPrefsKey_LastIndex + "_Level", _selectedLevelIndex),
+				0, Mathf.Max(0, _levelPacks.Count > 0 && _selectedLevelPackIndex >= 0 ? _levelPacks[_selectedLevelPackIndex].levels.Count - 1 : 0)
+			);
+			
+			// Update the selected level to populate _allLevels
+			UpdateSelectedLevel();
 		}
 
 		// -------- Draw --------
@@ -64,117 +79,258 @@ namespace DLS.Graphics
 		{
 			if (KeyboardShortcuts.CancelShortcutTriggered) { Close(); return; }
 
-			var theme = DrawSettings.ActiveUITheme;
-
 			MenuHelper.DrawBackgroundOverlay();
+			Vector2 panelEdgePadding = new(3.25f, 2.6f);
+
+			float panelWidthSum = UI.Width - interPanelSpacing - panelEdgePadding.x * 2;
+			float panelHeight = UI.Height - panelEdgePadding.y * 2;
+
+			Vector2 panelATopLeft = UI.TopLeft +Vector2.right * UI.Width * (0.5f-levelsPanelWidthT) + new Vector2(panelEdgePadding.x, -panelEdgePadding.y + menuOffsetY);
+			Vector2 panelSizeA = new(panelWidthSum * levelsPanelWidthT, panelHeight);
+			Vector2 panelBTopLeft = panelATopLeft + Vector2.right * (panelSizeA.x + interPanelSpacing);
+			Vector2 panelSizeB = new(panelWidthSum * selectionPanelWidthT, panelHeight);
+
+			isScrolling = UI.GetScrollbarState(ID_LevelsScrollbar).isDragging;
+
+			DrawLevelsPanel(panelATopLeft, panelSizeA);
+			DrawSelectionPanel(panelBTopLeft, panelSizeB);
+		}
+
+		static void DrawLevelsPanel(Vector2 topLeft, Vector2 size)
+		{
 			Draw.ID panelID = UI.ReservePanel();
+			Bounds2D panelBounds = Bounds2D.CreateFromTopLeftAndSize(topLeft, size);
+			DrawPanelHeader("LEVELS", topLeft, size.x);
 
-			using (UI.BeginBoundsScope(true))
+			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - UI.PrevBounds.Height));
+			Bounds2D panelContentBounds = Bounds2D.Shrink(panelBoundsMinusHeader, PanelUIPadding);
+
+			UI.DrawScrollView(ID_LevelsScrollbar, panelContentBounds.TopLeft, panelContentBounds.Size, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawLevelPackEntry, _levelPacks.Count);
+			MenuHelper.DrawReservedMenuPanel(panelID, panelBounds, false);
+		}
+
+		static void DrawSelectionPanel(Vector2 topLeft, Vector2 size)
+		{
+			Draw.ID panelID = UI.ReservePanel();
+			Bounds2D panelBounds = Bounds2D.CreateFromTopLeftAndSize(topLeft, size);
+			DrawPanelHeader("SELECTION", topLeft, size.x);
+
+			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - UI.PrevBounds.Height));
+			Bounds2D panelContentBounds = Bounds2D.Shrink(panelBoundsMinusHeader, PanelUIPadding);
+
+			// Draw preview window first
+			Vector2 bottomLeft = DrawLevelPreview(panelContentBounds);
+
+			// Always draw level name banner (even when nothing selected)
+			DrawLevelNameBanner(panelContentBounds, bottomLeft);
+
+			// Draw action buttons
+			DrawActionButtons(panelContentBounds);
+
+			MenuHelper.DrawReservedMenuPanel(panelID, panelBounds, false);
+		}
+
+		static void DrawPanelHeader(string text, Vector2 topLeft, float width)
+		{
+			Color textCol = ColHelper.MakeCol("#3CD168");
+			Color bgCol = ColHelper.MakeCol("#1D1D1D");
+			MenuHelper.DrawLeftAlignTextWithBackground(text, topLeft, new Vector2(width, 2.3f), Anchor.TopLeft, textCol, bgCol, true);
+		}
+
+		static void DrawLevelPackEntry(Vector2 topLeft, float width, int packIndex, bool isLayoutPass)
+		{
+			if (packIndex < 0 || packIndex >= _levelPacks.Count) return;
+
+			var pack = _levelPacks[packIndex];
+			bool packHighlighted = packIndex == _selectedLevelPackIndex;
+			ButtonTheme activePackTheme = GetButtonTheme(true, packHighlighted);
+
+			// Add arrow indicator for expandable packs
+			string displayName = pack.name;
+			if (pack.levels.Count > 0)
 			{
-				// ----- Title -----
-				UI.DrawText(
-					"LEVELS",
-					theme.FontBold,
-					theme.FontSizeRegular + TitleSizeBoost,
-					UI.CentreTop + Vector2.up * TitleOffsetY,
-					Anchor.TextCentre, Color.white
-				);
+				displayName = (pack.isToggledOpen ? "▼ " : "▶ ") + pack.name;
+			}
 
-				// Gap below title
-				Vector2 topLeft = UI.TopLeft + Vector2.right * 8f + Vector2.down * (DrawSettings.DefaultButtonSpacing * GapTitleToList);
+			bool packPressed = UI.Button(displayName, activePackTheme, topLeft, new Vector2(width, 2), true, false, false, activePackTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+			if (packPressed)
+			{
+				_selectedLevelPackIndex = packIndex;
+				_selectedLevelIndex = -1;
+				// Clear the preview when selecting a pack without a specific level
+				UpdateSelectedLevel();
+				// If holding control, select without toggling
+				if (!InputHelper.CtrlIsHeld) pack.isToggledOpen = !pack.isToggledOpen;
+			}
 
-				// ----- List region (fixed size) -----
-				Vector2 listSize = new(ListWidth, ListHeight);
+			const float nestedInset = 1.75f;
 
-				// Scroll view
-				ScrollBarState sv = UI.DrawScrollView(
-					ID_LevelsScrollbar,
-					UI.Centre,
-					listSize,
-					UILayoutHelper.DefaultSpacing,
-					Anchor.Centre,
-					theme.ScrollTheme,
-					DrawLevelRowFunc,
-					_levels.Count
-				);
-				isDraggingScrollbar = sv.isDragging;
+			if (pack.isToggledOpen)
+			{
+				for (int levelIndex = 0; levelIndex < pack.levels.Count; levelIndex++)
+				{
+					var level = pack.levels[levelIndex];
+					ButtonTheme activeLevelTheme = packIndex == _selectedLevelPackIndex && levelIndex == _selectedLevelIndex ? ActiveUITheme.ChipLibraryChipToggleOn : ActiveUITheme.ChipLibraryChipToggleOff;
+					Vector2 levelLabelPos = new(topLeft.x + nestedInset, UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
+					bool levelPressed = UI.Button(level.name, activeLevelTheme, levelLabelPos, new Vector2(width - nestedInset, 2), true, false, false, activeLevelTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+					if (levelPressed)
+					{
+						bool alreadySelected = _selectedLevelIndex == levelIndex && packHighlighted;
 
-				// ----- Buttons row -----
-				topLeft = UI.PrevBounds.BottomLeft + Vector2.down * (DrawSettings.DefaultButtonSpacing * GapListToBtns);
-
-				Vector2 btnSize = new(ListWidth * BtnWFrac, DrawSettings.SelectorWheelHeight * BtnHMult);
-				Vector2 playTopLeft = topLeft;
-				Vector2 exitTopLeft = new(topLeft.x + btnSize.x + 8f, topLeft.y);
-
-				bool canPlay = _levels.Count > 0;
-				bool pressedPlay = UI.Button("PLAY", MenuHelper.Theme.ButtonTheme, playTopLeft, btnSize,
-											 canPlay, true, false, MenuHelper.Theme.ButtonTheme.buttonCols, Anchor.TopLeft);
-				bool pressedExit = UI.Button("EXIT", MenuHelper.Theme.ButtonTheme, exitTopLeft, btnSize,
-											 true, true, false, MenuHelper.Theme.ButtonTheme.buttonCols, Anchor.TopLeft);
-
-				Bounds2D bounds = UI.GetCurrentBoundsScope();
-				MenuHelper.DrawReservedMenuPanel(panelID, bounds);
-
-				if (pressedPlay) PlaySelectedLevel();
-				if (pressedExit) Close();
+						if (alreadySelected) 
+						{
+							_selectedLevelIndex = -1;
+						}
+						else
+						{
+							_selectedLevelPackIndex = packIndex;
+							_selectedLevelIndex = levelIndex;
+							// Update the global level list for the selected level
+							UpdateSelectedLevel();
+						}
+					}
+				}
 			}
 		}
 
-		// Row renderer
-		static void DrawLevelRow(Vector2 rowTopLeft, float width, int index, bool isLayoutPass)
+		static Vector2 DrawLevelPreview(Bounds2D panelContentBounds)
 		{
-			if (_levels == null || _levels.Count == 0)
+			// Always draw preview window
+			const float previewWidth = 39;
+			const float previewHeight = previewWindowHeight;
+			const float margin = 0.4f;
+			// Position preview in top-right corner
+			Vector2 previewTopLeft = panelContentBounds.TopRight + Vector2.left * previewWidth + Vector2.down * margin;
+
+			// Draw preview background (always)
+			Color previewBgCol = new Color(0.1f, 0.1f, 0.1f, 0.95f);
+
+			Vector2 ret;
+			
+			// Check if we have a selected level
+			if (_allLevels.Count > 0)
 			{
-				if (index == 0 && !isLayoutPass)
+				var selectedLevel = _allLevels[0]; // Always use index 0 since _allLevels only contains the current selection
+				MenuHelper.DrawTopLeftAlignTextWithBackground(selectedLevel.description, previewTopLeft, new Vector2(previewWidth, previewHeight), Anchor.TopLeft, Color.white, previewBgCol, true, 1f, true);
+				ret = UI.PrevBounds.BottomLeft;
+				return ret;
+			}
+			else
+			{
+				// No level selected - show empty preview
+				MenuHelper.DrawLeftAlignTextWithBackground("", previewTopLeft, new Vector2(previewWidth, previewHeight), Anchor.TopLeft, Color.white, previewBgCol, true);
+				ret = UI.PrevBounds.BottomLeft;
+				return ret;
+			}
+		}
+
+		static void DrawLevelNameBanner(Bounds2D panelContentBounds, Vector2 previewBottomLeft)
+		{
+			Vector2 bannerPos = previewBottomLeft + Vector2.down * (1.5f); // Normal spacing
+			Vector2 bannerSize = new(panelContentBounds.Width, 2f);
+
+			// Red banner like in Library menu
+			Color bannerCol = new Color(0.8f, 0.2f, 0.2f, 1f); // Red color
+			Color textCol = Color.white;
+			
+			string bannerText = "No Level Selected";
+			
+			if (_allLevels.Count > 0)
+			{
+				var selectedLevel = _allLevels[0]; // Always use index 0 since _allLevels only contains the current selection
+				bannerText = selectedLevel.name;
+			}
+			
+			MenuHelper.DrawCentredTextWithBackground(bannerText, bannerPos, bannerSize, Anchor.TopLeft, textCol, bannerCol);
+		}
+
+		static void DrawActionButtons(Bounds2D panelContentBounds)
+		{
+			// Position buttons to flow naturally after the banner
+			//Vector2 buttonPos = UI.PrevBounds.BottomLeft + Vector2.down * 1.5f; // After preview + banner + spacing
+			Vector2 buttonPos = panelContentBounds.CentreBottom + Vector2.up * (3 * 5f) ;
+			Vector2 buttonSize = new(panelContentBounds.Width * 0.9f, 4f); // Double height, wider
+			const float buttonSpacing = 1f; // Normal spacing between buttons
+
+			bool canPlay = _allLevels.Count > 0;
+			
+			// Center buttons horizontally
+			Vector2 centeredButtonPos = new(panelContentBounds.Centre.x, buttonPos.y);
+			
+			bool pressedPlay = UI.Button("PLAY", ActiveUITheme.ButtonTheme, centeredButtonPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+			
+			Vector2 leaderboardPos = centeredButtonPos + Vector2.down * (buttonSize.y + buttonSpacing);
+			bool pressedLeaderboard = UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+			
+			Vector2 exitPos = leaderboardPos + Vector2.down * (buttonSize.y + buttonSpacing);
+			bool pressedExit = UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+
+			if (pressedPlay) PlaySelectedLevel();
+			if (pressedLeaderboard) OpenLeaderboard();
+			if (pressedExit) Close();
+		}
+
+		static ButtonTheme GetButtonTheme(bool isLevelPack, bool isSelected) =>
+			isLevelPack
+				? isSelected ? ActiveUITheme.ChipLibraryCollectionToggleOn : ActiveUITheme.ChipLibraryCollectionToggleOff
+				: isSelected
+					? ActiveUITheme.ChipLibraryChipToggleOn
+					: ActiveUITheme.ChipLibraryChipToggleOff;
+
+		static void UpdateSelectedLevel()
+		{
+			// Clear the all levels list and repopulate with the selected level
+			_allLevels.Clear();
+			
+			if (_selectedLevelPackIndex >= 0 && _selectedLevelPackIndex < _levelPacks.Count && 
+				_selectedLevelIndex >= 0 && _selectedLevelIndex < _levelPacks[_selectedLevelPackIndex].levels.Count)
+			{
+				var selectedLevelDef = _levelPacks[_selectedLevelPackIndex].levels[_selectedLevelIndex];
+				_allLevels.Add(new LevelEntry
 				{
-					UI.Button("<no levels found>", MenuHelper.Theme.ButtonTheme,
-						rowTopLeft, new Vector2(width, DrawSettings.SelectorWheelHeight),
-						false, true, false, MenuHelper.Theme.ButtonTheme.buttonCols, Anchor.TopLeft, ignoreInputs: true);
-				}
-				return;
+					id = selectedLevelDef.id,
+					name = selectedLevelDef.name,
+					description = selectedLevelDef.description,
+					def = selectedLevelDef
+				});
 			}
-			if (index < 0 || index >= _levels.Count) return;
+		}
 
-			var l = _levels[index];
-			bool selected = index == _selectedIndex;
-
-			var progress = DLS.Levels.LevelProgressService.Get(l.id);
-
-			const float nudgeLeft = -14f;
-			const float FixedRowHeight = 4.2f;
-
-			string name = l.name;
-			int totalLength = 20;
-			string centered = name.PadLeft(((totalLength - name.Length) / 2) + name.Length).PadRight(totalLength);
-			string colorCode = progress.Completed ? "<color=#22aa22>" : "";
-			centered = colorCode + centered;
-
-			bool pressed = UI.Button(
-				centered ?? $"Level {index + 1}",
-				MenuHelper.Theme.ButtonTheme,
-				rowTopLeft,
-				new Vector2(width, FixedRowHeight),
-				true,
-				true,
-				false,
-				MenuHelper.Theme.ButtonTheme.buttonCols,
-				Anchor.TopLeft,
-				leftAlignText: false,
-				textOffsetX: nudgeLeft,
-				ignoreInputs: isDraggingScrollbar
-			);
-
-			if (!isLayoutPass && pressed)
+		static void OpenLeaderboard()
+		{
+			// Get the current level ID for the leaderboard
+			string levelId = GetCurrentLevelId();
+			LeaderboardPopup.Open(levelId);
+		}
+		
+		static string GetCurrentLevelId()
+		{
+			// Get the current level ID from the selected level
+			if (_allLevels.Count > 0)
 			{
-				_selectedIndex = index;
-				RememberSelection();
+				var selectedLevel = _allLevels[0]; // Always use index 0 since _allLevels only contains the current selection
+				
+				// Use the actual level definition properties
+				if (!string.IsNullOrEmpty(selectedLevel.name))
+				{
+					return selectedLevel.name;
+				}
+				
+				if (!string.IsNullOrEmpty(selectedLevel.id))
+				{
+					return selectedLevel.id;
+				}
 			}
+			
+			// Fallback
+			return "Unknown Level";
 		}
 
 		// -------- Load pack --------
 		static void LoadPack()
 		{
-			_levels.Clear();
+			_levelPacks.Clear();
+			_allLevels.Clear();
 
 			var packAsset = Resources.Load<TextAsset>(LevelPackResourcePath);
 			if (packAsset == null)
@@ -187,23 +343,30 @@ namespace DLS.Graphics
 			// Try: LevelPack (with chapters)
 			try
 			{
-				var pack = JsonUtility.FromJson<DLS.Levels.LocalLevelPack>(packAsset.text);
+				var pack = JsonUtility.FromJson<LocalLevelPack>(packAsset.text);
 				if (pack != null && pack.chapters != null && pack.chapters.Length > 0)
 				{
 					foreach (var ch in pack.chapters)
 					{
 						if (ch?.levels == null) continue;
-						for (int i = 0; i < ch.levels.Count; i++)
+						
+						var levelPack = new LevelPackEntry
 						{
-							var def = ch.levels[i];
+							name = ch.chapterName, // Use chapterName from JSON
+							levels = new List<LevelDefinition>(),
+							isToggledOpen = false
+						};
+						
+						foreach (var def in ch.levels)
+						{
 							if (def == null || string.IsNullOrEmpty(def.id)) continue;
-							_levels.Add(new LevelEntry
-							{
-								id = def.id,
-								name = string.IsNullOrEmpty(def.name) ? def.id : def.name,
-								description = def.description,
-								def = def
-							});
+							levelPack.levels.Add(def);
+						}
+						
+						if (levelPack.levels.Count > 0)
+						{
+							_levelPacks.Add(levelPack);
+							Debug.Log($"[LevelsMenu] Added level pack: {levelPack.name} with {levelPack.levels.Count} levels");
 						}
 					}
 					_loaded = true;
@@ -221,16 +384,23 @@ namespace DLS.Graphics
 				var defsWrapper = JsonUtility.FromJson<DefsWrapper>(packAsset.text);
 				if (defsWrapper?.levels != null && defsWrapper.levels.Length > 0)
 				{
+					var defaultPack = new LevelPackEntry
+					{
+						name = "All Levels",
+						levels = new List<LevelDefinition>(),
+						isToggledOpen = false
+					};
+					
 					foreach (var def in defsWrapper.levels)
 					{
 						if (def == null || string.IsNullOrEmpty(def.id)) continue;
-						_levels.Add(new LevelEntry
-						{
-							id = def.id,
-							name = string.IsNullOrEmpty(def.name) ? def.id : def.name,
-							description = def.description,
-							def = def
-						});
+						defaultPack.levels.Add(def);
+					}
+					
+					if (defaultPack.levels.Count > 0)
+					{
+						_levelPacks.Add(defaultPack);
+						Debug.Log($"[LevelsMenu] Added default level pack (wrapper): {defaultPack.name} with {defaultPack.levels.Count} levels");
 					}
 					_loaded = true;
 					return;
@@ -247,16 +417,23 @@ namespace DLS.Graphics
 				var arr = JsonHelper.FromJson<LevelDefinition>(packAsset.text);
 				if (arr != null && arr.Length > 0)
 				{
+					var defaultPack = new LevelPackEntry
+					{
+						name = "All Levels",
+						levels = new List<LevelDefinition>(),
+						isToggledOpen = false
+					};
+					
 					foreach (var def in arr)
 					{
 						if (def == null || string.IsNullOrEmpty(def.id)) continue;
-						_levels.Add(new LevelEntry
-						{
-							id = def.id,
-							name = string.IsNullOrEmpty(def.name) ? def.id : def.name,
-							description = def.description,
-							def = def
-						});
+						defaultPack.levels.Add(def);
+					}
+					
+					if (defaultPack.levels.Count > 0)
+					{
+						_levelPacks.Add(defaultPack);
+						Debug.Log($"[LevelsMenu] Added default level pack (array): {defaultPack.name} with {defaultPack.levels.Count} levels");
 					}
 					_loaded = true;
 					return;
@@ -273,16 +450,16 @@ namespace DLS.Graphics
 		// -------- Play flow --------
 		static void PlaySelectedLevel()
 		{
-			if (_levels.Count == 0)
+			if (_selectedLevelPackIndex < 0 || _selectedLevelPackIndex >= _levelPacks.Count ||
+				_selectedLevelIndex < 0 || _selectedLevelIndex >= _levelPacks[_selectedLevelPackIndex].levels.Count)
 			{
-				Debug.LogWarning("[LevelsMenu] No levels to play.");
+				Debug.LogWarning("[LevelsMenu] No level selected to play.");
 				return;
 			}
 
-			var entry = _levels[Mathf.Clamp(_selectedIndex, 0, _levels.Count - 1)];
-			var def = entry.def;
+			var selectedLevelDef = _levelPacks[_selectedLevelPackIndex].levels[_selectedLevelIndex];
 
-			if (def == null)
+			if (selectedLevelDef == null)
 			{
 				Debug.LogError("[LevelsMenu] Selected LevelDefinition is null.");
 				return;
@@ -318,15 +495,15 @@ namespace DLS.Graphics
 						runner.SaveCurrentProgress();
 					}
 					
-					runner.StartLevel(def);
-					Debug.Log($"[LevelsMenu] Started level: id={def.id}, name={def.name}, inputs={def.inputCount}, outputs={def.outputCount}, vectors={(def.testVectors == null ? -1 : def.testVectors.Length)}");
+					runner.StartLevel(selectedLevelDef);
+					Debug.Log($"[LevelsMenu] Started level: id={selectedLevelDef.id}, name={selectedLevelDef.name}, inputs={selectedLevelDef.inputCount}, outputs={selectedLevelDef.outputCount}, vectors={(selectedLevelDef.testVectors == null ? -1 : selectedLevelDef.testVectors.Length)}");
 					Close();
 				}
 				else if (option == 2) // Continue without Saving
 				{
 					// Start new level without saving current progress
-					runner.StartLevel(def);
-					Debug.Log($"[LevelsMenu] Started level: id={def.id}, name={def.name}, inputs={def.inputCount}, outputs={def.outputCount}, vectors={(def.testVectors == null ? -1 : def.testVectors.Length)}");
+					runner.StartLevel(selectedLevelDef);
+					Debug.Log($"[LevelsMenu] Started level: id={selectedLevelDef.id}, name={selectedLevelDef.name}, inputs={selectedLevelDef.inputCount}, outputs={selectedLevelDef.outputCount}, vectors={(selectedLevelDef.testVectors == null ? -1 : selectedLevelDef.testVectors.Length)}");
 					Close();
 				}
 			}
@@ -344,13 +521,16 @@ namespace DLS.Graphics
 		// -------- Utilities --------
 		static void Close()
 		{
+			PlayerPrefs.SetInt(PlayerPrefsKey_LastIndex + "_Pack", _selectedLevelPackIndex);
+			PlayerPrefs.SetInt(PlayerPrefsKey_LastIndex + "_Level", _selectedLevelIndex);
 			PlayerPrefs.Save();
 			UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
 		}
 
 		static void RememberSelection()
 		{
-			PlayerPrefs.SetInt(PlayerPrefsKey_LastIndex, _selectedIndex);
+			PlayerPrefs.SetInt(PlayerPrefsKey_LastIndex + "_Pack", _selectedLevelPackIndex);
+			PlayerPrefs.SetInt(PlayerPrefsKey_LastIndex + "_Level", _selectedLevelIndex);
 		}
 
 		// Unity’s JsonUtility can’t parse top-level arrays; helper wraps/unwraps.

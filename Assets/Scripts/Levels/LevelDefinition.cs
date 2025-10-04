@@ -1,0 +1,42 @@
+using System;
+using UnityEngine;
+
+namespace DLS.Levels
+{
+	[Serializable]
+	public sealed class LevelDefinition
+	{
+		public string id;
+		public string chapterId;
+		public string name;
+		public string description;
+		public int inputCount;
+		public int outputCount;
+		public System.Collections.Generic.List<string> inputLabels;
+		public System.Collections.Generic.List<string> outputLabels;
+		
+		// Enhanced test data structures
+		[Serializable] public struct TestVector { 
+			public string inputs; 
+			public string expected; 
+			public int settleSteps;
+			public bool isClockEdge;
+		}
+		public TestVector[] testVectors;
+		
+		// New sequential circuit support
+		public bool isSequential = false;
+		public int clockInputIndex = -1;  // Which input is the clock (if any)
+		public int settleStepsPerVector = 2;  // How many steps to settle per vector
+		public int maxSequenceSteps = 100;
+		public bool requireStableOutputs = true;
+		
+		[Serializable] public struct TestSequence { 
+			public string name;  // e.g., "Reset sequence", "Count up sequence"
+			public TestVector[] vectors;  // Sequence of input/output pairs
+		}
+		public TestSequence[] testSequences;
+		
+		public System.Collections.Generic.List<string> hints;
+	}
+}

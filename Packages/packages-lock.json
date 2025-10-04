@@ -58,12 +58,6 @@
       },
       "url": "https://packages.unity.com"
     },
-    "com.yourorg.dls-levels": {
-      "version": "file:../dls-levels",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
-    },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
       "depth": 0,

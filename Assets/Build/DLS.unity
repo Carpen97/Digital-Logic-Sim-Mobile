@@ -1785,7 +1785,7 @@ GameObject:
   - component: {fileID: 1236299436}
   - component: {fileID: 1236299435}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: TestScoreInjector
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -86,6 +86,12 @@ namespace DLS.Game
 			if (songTestMode) SongTest();
 			else Main.Update();
 		}
+		
+		void OnGUI()
+		{
+			// Render queued textures using OnGUI
+			UI.RenderOnGUITextures();
+		}
 
 		void SongTest()
 		{
