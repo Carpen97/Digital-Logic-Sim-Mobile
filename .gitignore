@@ -52,6 +52,7 @@ ExportedObj/
 # Firebase large files that exceed GitHub's 100MB limit
 Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_2_0.so
 Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_2_0.bundle
+Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_2_0.dll
 
 # Mobile build artifacts
 *.apk
@@ -101,34 +102,32 @@ crashlytics-build.properties
 /.idea
 /.vsconfig
 
-# Ignore CMake and ninja build artifacts
+# CMake and ninja build artifacts
 CMakeFiles/
 CMakeCache.txt
 *.cmake
 *.ninja
-*.txt
-*.bin
 compile_commands.json
-
-#IDK
 .ninja_deps
 .ninja_log
 
-# Ignore random build output
+# Build output and temporary files
 _utmp/
 build-android/
-*.json
-
-# Ignore platform-tools temp
-platform-tools/
-
 user.keystore
 Scripts.zip
 Scripts.zip.meta
 DLS.Unity
-DLS_IOS/
 
+# Backup folders (comprehensive)
+*_BackUpThisFolder_ButDontShipItWithYourGame/
+*BackUpThisFolder_ButDontShipItWithYourGame/
+Digital-Logic-Sim-Mobile_BackUpThisFolder_ButDontShipItWithYourGame/
 
-Digital-Logic-Sim-Mobile_BackUpThisFolder_ButDontShipItWithYourGame/*
-
+# Archive files
 *.zip
+*.rar
+*.7z
+
+# Platform-specific build outputs
+platform-tools/
