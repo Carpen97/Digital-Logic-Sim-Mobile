@@ -70,17 +70,17 @@ namespace DLS.Graphics
             // Dimmed backdrop (same as other popups)
             MenuHelper.DrawBackgroundOverlay();
 
-            using (UI.BeginBoundsScope(true))
+            using (Seb.Vis.UI.UI.BeginBoundsScope(true))
             {
-                Draw.ID panelBG = UI.ReservePanel();
-                Draw.ID titleBG = UI.ReservePanel();
+                Draw.ID panelBG = Seb.Vis.UI.UI.ReservePanel();
+                Draw.ID titleBG = Seb.Vis.UI.UI.ReservePanel();
 
                 // --- Title banner ---
-                Vector2 titlePos = UI.CentreTop + Vector2.down * 8f;
+                Vector2 titlePos = Seb.Vis.UI.UI.CentreTop + Vector2.down * 8f;
                 string title = $"Leaderboard - {_levelId}";
                 Color headerCol = ColHelper.MakeCol255(44, 92, 62);
-                UI.DrawText(title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
-                UI.ModifyPanel(titleBG, Bounds2D.Grow(UI.PrevBounds, 3f), Color.clear);
+                Seb.Vis.UI.UI.DrawText(title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
+                Seb.Vis.UI.UI.ModifyPanel(titleBG, Bounds2D.Grow(Seb.Vis.UI.UI.PrevBounds, 3f), Color.clear);
 
                 // --- Status row ---
                 {
@@ -91,8 +91,8 @@ namespace DLS.Graphics
                                      !string.IsNullOrEmpty(_errorMessage) ? Color.red :
                                      _scores.Count == 0 ? Color.gray : ColHelper.MakeCol255(245, 212, 67);
 
-                    Vector2 statusPos = UI.PrevBounds.CentreBottom + new Vector2(0f, -1.4f);
-                    UI.DrawText(statusStr, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, statusPos, Anchor.TextCentre, statusCol);
+                    Vector2 statusPos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + new Vector2(0f, -1.4f);
+                    Seb.Vis.UI.UI.DrawText(statusStr, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, statusPos, Anchor.TextCentre, statusCol);
                 }
 
                 // --- Table header ---
@@ -104,15 +104,15 @@ namespace DLS.Graphics
                 // --- Scrollable list of scores ---
                 if (!_isLoading && string.IsNullOrEmpty(_errorMessage) && _scores.Count > 0)
                 {
-                    float listW = UI.Width * ListWidthFrac;
-                    float listH = UI.Height * ListHeightFrac;
+                    float listW = Seb.Vis.UI.UI.Width * ListWidthFrac;
+                    float listH = Seb.Vis.UI.UI.Height * ListHeightFrac;
                     Vector2 listSize = new(listW, listH);
 
                     var theme = DrawSettings.ActiveUITheme;
 
-                    ScrollBarState sv = UI.DrawScrollView(
+                    ScrollBarState sv = Seb.Vis.UI.UI.DrawScrollView(
                         ID_LeaderboardPopup,
-                        UI.Centre + Vector2.down*2f,
+                        Seb.Vis.UI.UI.Centre + Vector2.down*2f,
                         listSize,
                         UILayoutHelper.DefaultSpacing,
                         Anchor.Centre,
@@ -124,15 +124,15 @@ namespace DLS.Graphics
                 }
 
                 // --- Footer: View and Close buttons ---
-                float buttonWidth = UI.Width * OkBtnWidthFrac;
+                float buttonWidth = Seb.Vis.UI.UI.Width * OkBtnWidthFrac;
                 float buttonHeight = ButtonHeight * OkBtnHeightMul;
                 float buttonSpacing = 2f;
                 float totalWidth = (buttonWidth * 2) + buttonSpacing;
-                Vector2 buttonsStart = UI.PrevBounds.CentreBottom + Vector2.left * totalWidth / 2f;
+                Vector2 buttonsStart = Seb.Vis.UI.UI.PrevBounds.CentreBottom + Vector2.left * totalWidth / 2f;
 
                 // View button (left)
                 Vector2 viewButtonPos = buttonsStart;
-                bool viewPressed = UI.Button(
+                bool viewPressed = Seb.Vis.UI.UI.Button(
                     "View",
                     MenuHelper.Theme.ButtonTheme,
                     viewButtonPos,
@@ -146,7 +146,7 @@ namespace DLS.Graphics
 
                 // Close button (right)
                 Vector2 closeButtonPos = buttonsStart + Vector2.right * (buttonWidth + buttonSpacing);
-                bool closePressed = UI.Button(
+                bool closePressed = Seb.Vis.UI.UI.Button(
                     "Close",
                     MenuHelper.Theme.ButtonTheme,
                     closeButtonPos,
@@ -173,15 +173,15 @@ namespace DLS.Graphics
         static void DrawTableHeader()
         {
             // Calculate header position (above the scrollable list)
-            float listW = UI.Width * ListWidthFrac;
-            Vector2 headerStart = UI.Centre + Vector2.up * UI.Height * ListHeightFrac * 0.6f ;
+            float listW = Seb.Vis.UI.UI.Width * ListWidthFrac;
+            Vector2 headerStart = Seb.Vis.UI.UI.Centre + Vector2.up * Seb.Vis.UI.UI.Height * ListHeightFrac * 0.6f ;
             
             // Header background
             Bounds2D headerBounds = new Bounds2D(
                 headerStart + Vector2.left * (listW * 0.5f),
                 headerStart + Vector2.right * (listW * 0.5f) + Vector2.down * RowHeight * 0.7f
             );
-            UI.DrawPanel(headerBounds, ColHelper.MakeCol255(50, 50, 50));
+            Seb.Vis.UI.UI.DrawPanel(headerBounds, ColHelper.MakeCol255(50, 50, 50));
             
             // Header text positions (matching the row layout you fixed)
             Vector2 rankPos = headerBounds.Min + Vector2.right * 0.5f + Vector2.up * (headerBounds.Height * 0.3f);
@@ -190,10 +190,10 @@ namespace DLS.Graphics
             Vector2 datePos = headerBounds.Min + Vector2.right * 55f + Vector2.up * (headerBounds.Height * 0.3f);
             
             // Draw header text
-            UI.DrawText("Rank", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, rankPos, Anchor.TopLeft, Color.white);
-            UI.DrawText("Score", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TopLeft, Color.yellow);
-            UI.DrawText("User", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, userPos, Anchor.TopLeft, Color.cyan);
-            UI.DrawText("Date", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, datePos, Anchor.TopLeft, Color.gray);
+            Seb.Vis.UI.UI.DrawText("Rank", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, rankPos, Anchor.TopLeft, Color.white);
+            Seb.Vis.UI.UI.DrawText("Score", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TopLeft, Color.yellow);
+            Seb.Vis.UI.UI.DrawText("User", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, userPos, Anchor.TopLeft, Color.cyan);
+            Seb.Vis.UI.UI.DrawText("Date", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, datePos, Anchor.TopLeft, Color.gray);
         }
 
         static void DrawRow(Vector2 rowTopLeft, float width, int index, bool isLayoutPass)
@@ -210,7 +210,7 @@ namespace DLS.Graphics
                 rowCol = ColHelper.MakeCol255(60, 100, 60); // Highlight selected row
             }
             Bounds2D rowBounds = new Bounds2D(rowTopLeft, rowTopLeft + Vector2.right * width + Vector2.down * RowHeight);
-            UI.DrawPanel(rowBounds, rowCol);
+            Seb.Vis.UI.UI.DrawPanel(rowBounds, rowCol);
 
             // Score data
             string rankText = $"#{index + 1}";
@@ -225,15 +225,15 @@ namespace DLS.Graphics
             Vector2 datePos = rowBounds.Min + Vector2.right * 50f + Vector2.up * (rowBounds.Height * 0.5f);
 
             // Draw text (copied from LevelValidationPopup pattern)
-            UI.DrawText(rankText, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, rankPos, Anchor.TopLeft, Color.white);
-            UI.DrawText(scoreText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TopLeft, Color.yellow);
-            UI.DrawText(userText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, userPos, Anchor.TopLeft, Color.cyan);
-            UI.DrawText(dateText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, datePos, Anchor.TopLeft, Color.gray);
+            Seb.Vis.UI.UI.DrawText(rankText, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, rankPos, Anchor.TopLeft, Color.white);
+            Seb.Vis.UI.UI.DrawText(scoreText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TopLeft, Color.yellow);
+            Seb.Vis.UI.UI.DrawText(userText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, userPos, Anchor.TopLeft, Color.cyan);
+            Seb.Vis.UI.UI.DrawText(dateText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, datePos, Anchor.TopLeft, Color.gray);
 
             // Add invisible button for row selection
             if (!isLayoutPass)
             {
-                bool rowPressed = UI.Button(
+                bool rowPressed = Seb.Vis.UI.UI.Button(
                     "", // Empty text - we just want the click area
                     MenuHelper.Theme.ButtonTheme,
                     rowTopLeft,

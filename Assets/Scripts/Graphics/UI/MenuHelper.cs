@@ -29,9 +29,9 @@ namespace DLS.Graphics
 		public static Vector2 DrawLabelSectionOfLabelInputPair(Vector2 topLeft, Vector2 size, string label, Color labelCol, bool drawBackground)
 		{
 			const float pad = 1;
-			if (drawBackground) UI.DrawPanel(topLeft, size, Color.red * 0.1f, Anchor.TopLeft);
+			if (drawBackground) Seb.Vis.UI.UI.DrawPanel(topLeft, size, Color.red * 0.1f, Anchor.TopLeft);
 			Vector2 centreLeft = topLeft + Vector2.down * size.y / 2;
-			UI.DrawText(label, Theme.FontRegular, Theme.FontSizeRegular, centreLeft + Vector2.right * pad, Anchor.TextCentreLeft, labelCol);
+			Seb.Vis.UI.UI.DrawText(label, Theme.FontRegular, Theme.FontSizeRegular, centreLeft + Vector2.right * pad, Anchor.TextCentreLeft, labelCol);
 			Vector2 centreRight = centreLeft + Vector2.right * size.x;
 			return centreRight;
 		}
@@ -39,8 +39,8 @@ namespace DLS.Graphics
 		public static int LabeledOptionsWheel(string label, Color labelCol, Vector2 topLeft, Vector2 size, UIHandle id, string[] wheelOptions, float wheelWidth, bool drawBackground = false)
 		{
 			Vector2 centreRight = DrawLabelSectionOfLabelInputPair(topLeft, size, label, labelCol, drawBackground);
-			int wheelIndex = UI.WheelSelector(id, wheelOptions, centreRight, new Vector2(wheelWidth, size.y), Theme.OptionsWheel, Anchor.CentreRight);
-			UI.OverridePreviousBounds(Bounds2D.CreateFromTopLeftAndSize(topLeft, size));
+			int wheelIndex = Seb.Vis.UI.UI.WheelSelector(id, wheelOptions, centreRight, new Vector2(wheelWidth, size.y), Theme.OptionsWheel, Anchor.CentreRight);
+			Seb.Vis.UI.UI.OverridePreviousBounds(Bounds2D.CreateFromTopLeftAndSize(topLeft, size));
 			return wheelIndex;
 		}
 
@@ -50,36 +50,36 @@ namespace DLS.Graphics
 			inputFieldTheme.fontSize = Theme.FontSizeRegular;
 
 			Vector2 centreRight = DrawLabelSectionOfLabelInputPair(topLeft, size, label, labelCol, drawBackground);
-			InputFieldState state = UI.InputField(id, inputFieldTheme, centreRight, new Vector2(inputFieldWidth, size.y), string.Empty, Anchor.CentreRight, 1, validation);
-			UI.OverridePreviousBounds(Bounds2D.CreateFromTopLeftAndSize(topLeft, size));
+			InputFieldState state = Seb.Vis.UI.UI.InputField(id, inputFieldTheme, centreRight, new Vector2(inputFieldWidth, size.y), string.Empty, Anchor.CentreRight, 1, validation);
+			Seb.Vis.UI.UI.OverridePreviousBounds(Bounds2D.CreateFromTopLeftAndSize(topLeft, size));
 			return state;
 		}
 
 		public static void DrawText(string text, Vector2 pos, Anchor anchor, Color col, bool bold = false)
 		{
 			FontType font = bold ? Theme.FontBold : Theme.FontRegular;
-			UI.DrawText(text, font, Theme.FontSizeRegular, pos, anchor, col);
+			Seb.Vis.UI.UI.DrawText(text, font, Theme.FontSizeRegular, pos, anchor, col);
 		}
 
 		public static void DrawCentredTextWithBackground(string text, Vector2 pos, Vector2 size, Anchor anchor, Color col, Color bgCol, bool bold = false)
 		{
-			UI.DrawPanel(pos, size, bgCol, anchor);
-			Bounds2D bgBounds = UI.PrevBounds;
+			Seb.Vis.UI.UI.DrawPanel(pos, size, bgCol, anchor);
+			Bounds2D bgBounds = Seb.Vis.UI.UI.PrevBounds;
 			DrawText(text, bgBounds.Centre, Anchor.TextFirstLineCentre, col, bold);
-			UI.OverridePreviousBounds(bgBounds);
+			Seb.Vis.UI.UI.OverridePreviousBounds(bgBounds);
 		}
 
 		public static void DrawLeftAlignTextWithBackground(string text, Vector2 pos, Vector2 size, Anchor anchor, Color col, Color bgCol, bool bold = false, float textPadX = 1)
 		{
-			UI.DrawPanel(pos, size, bgCol, anchor);
-			Bounds2D bgBounds = UI.PrevBounds;
+			Seb.Vis.UI.UI.DrawPanel(pos, size, bgCol, anchor);
+			Bounds2D bgBounds = Seb.Vis.UI.UI.PrevBounds;
 			DrawText(text, bgBounds.CentreLeft + Vector2.right * textPadX, Anchor.TextCentreLeft, col, bold);
-			UI.OverridePreviousBounds(bgBounds);
+			Seb.Vis.UI.UI.OverridePreviousBounds(bgBounds);
 		}
 		public static void DrawTopLeftAlignTextWithBackground(string text, Vector2 pos, Vector2 size, Anchor anchor, Color col, Color bgCol, bool bold = false, float textPadX = 1, bool wrapText = false)
 		{
-			UI.DrawPanel(pos, size, bgCol, anchor);
-			Bounds2D bgBounds = UI.PrevBounds;
+			Seb.Vis.UI.UI.DrawPanel(pos, size, bgCol, anchor);
+			Bounds2D bgBounds = Seb.Vis.UI.UI.PrevBounds;
 			
 			if (wrapText)
 			{
@@ -89,7 +89,7 @@ namespace DLS.Graphics
 				int maxCharsPerLine = Mathf.Max(1, Mathf.FloorToInt((size.x - textPadX * 2) / charWidth));
 				
 				// Apply text wrapping
-				string wrappedText = UI.LineBreakByCharCount(text, maxCharsPerLine);
+				string wrappedText = Seb.Vis.UI.UI.LineBreakByCharCount(text, maxCharsPerLine);
 				DrawText(wrappedText, bgBounds.TopLeft + Vector2.right * textPadX + Vector2.down * textPadX * 4, Anchor.TextCentreLeft, col, bold);
 			}
 			else
@@ -97,27 +97,27 @@ namespace DLS.Graphics
 				DrawText(text, bgBounds.TopLeft + Vector2.right * textPadX + Vector2.down * textPadX * 4, Anchor.TextCentreLeft, col, bold);
 			}
 			
-			UI.OverridePreviousBounds(bgBounds);
+			Seb.Vis.UI.UI.OverridePreviousBounds(bgBounds);
 		}
 
 		public static void DrawBackgroundOverlay()
 		{
-			UI.DrawFullscreenPanel(Theme.MenuBackgroundOverlayCol);
+			Seb.Vis.UI.UI.DrawFullscreenPanel(Theme.MenuBackgroundOverlayCol);
 		}
 
 		public static void DrawReservedMenuPanel(Draw.ID panelID, Bounds2D contentBounds, bool pad = true)
 		{
 			if (pad) contentBounds = Bounds2D.Grow(contentBounds, PanelUIPadding);
-			UI.ModifyPanel(panelID, contentBounds, Theme.MenuPanelCol);
+			Seb.Vis.UI.UI.ModifyPanel(panelID, contentBounds, Theme.MenuPanelCol);
 
 
 			Color outlineCol = ColHelper.MakeCol(0.26f);
 			float outlineWidth = 0.05f;
 
-			UI.DrawLine(contentBounds.BottomLeft, contentBounds.TopLeft, outlineWidth, outlineCol);
-			UI.DrawLine(contentBounds.TopLeft, contentBounds.TopRight, outlineWidth, outlineCol);
-			UI.DrawLine(contentBounds.BottomRight, contentBounds.TopRight, outlineWidth, outlineCol);
-			UI.DrawLine(contentBounds.BottomRight, contentBounds.BottomLeft, outlineWidth, outlineCol);
+			Seb.Vis.UI.UI.DrawLine(contentBounds.BottomLeft, contentBounds.TopLeft, outlineWidth, outlineCol);
+			Seb.Vis.UI.UI.DrawLine(contentBounds.TopLeft, contentBounds.TopRight, outlineWidth, outlineCol);
+			Seb.Vis.UI.UI.DrawLine(contentBounds.BottomRight, contentBounds.TopRight, outlineWidth, outlineCol);
+			Seb.Vis.UI.UI.DrawLine(contentBounds.BottomRight, contentBounds.BottomLeft, outlineWidth, outlineCol);
 		}
 
 		public static int DrawButtonPair(string nameA, string nameB, Vector2 topLeft, float width, bool addVerticalPadding, bool interactableA = true, bool interactableB = true, bool ignoreInputs = false)
@@ -130,7 +130,7 @@ namespace DLS.Graphics
 			ButtonGroupInteractableStates[0] = interactableA;
 			ButtonGroupInteractableStates[1] = interactableB;
 
-			int buttonIndex = UI.HorizontalButtonGroup(ButtonGroupNames.AsSpan(0, 2), ButtonGroupInteractableStates.AsSpan(0, 2), Theme.ButtonTheme, topLeft, new Vector2(width, ButtonHeight * 1.5f), DefaultButtonSpacing, 0, Anchor.TopLeft, ignoreInputs: ignoreInputs);
+			int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(ButtonGroupNames.AsSpan(0, 2), ButtonGroupInteractableStates.AsSpan(0, 2), Theme.ButtonTheme, topLeft, new Vector2(width, ButtonHeight * 1.5f), DefaultButtonSpacing, 0, Anchor.TopLeft, ignoreInputs: ignoreInputs);
 			return buttonIndex;
 		}
 
@@ -145,7 +145,7 @@ namespace DLS.Graphics
 			ButtonGroupInteractableStates[1] = interactableB;
 			ButtonGroupInteractableStates[2] = interactableC;
 
-			int buttonIndex = UI.HorizontalButtonGroup(ButtonGroupNames.AsSpan(0, 3), ButtonGroupInteractableStates.AsSpan(0, 3), Theme.ButtonTheme, topLeft, new Vector2(width, ButtonHeight), DefaultButtonSpacing, 0, Anchor.TopLeft, ignoreInputs: ignoreInputs);
+			int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(ButtonGroupNames.AsSpan(0, 3), ButtonGroupInteractableStates.AsSpan(0, 3), Theme.ButtonTheme, topLeft, new Vector2(width, ButtonHeight), DefaultButtonSpacing, 0, Anchor.TopLeft, ignoreInputs: ignoreInputs);
 			return buttonIndex;
 		}
 
@@ -157,7 +157,7 @@ namespace DLS.Graphics
 
 			CancelConfirmInteractableState[CancelIndex] = canCancel;
 			CancelConfirmInteractableState[ConfirmIndex] = canConfirm;
-			int buttonIndex = UI.HorizontalButtonGroup(CancelConfirmButtonNames, CancelConfirmInteractableState, Theme.ButtonTheme, topLeft, width, DefaultButtonSpacing, 0, Anchor.TopLeft);
+			int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(CancelConfirmButtonNames, CancelConfirmInteractableState, Theme.ButtonTheme, topLeft, width, DefaultButtonSpacing, 0, Anchor.TopLeft);
 
 			if (useKeyboardShortcuts)
 			{
@@ -189,7 +189,7 @@ namespace DLS.Graphics
 			ButtonGroupNames[0] = label;
 			ButtonGroupInteractableStates[0] = interactable;
 
-			int index = UI.HorizontalButtonGroup(
+			int index = Seb.Vis.UI.UI.HorizontalButtonGroup(
 				ButtonGroupNames.AsSpan(0, 1),
 				ButtonGroupInteractableStates.AsSpan(0, 1),
 				Theme.ButtonTheme,

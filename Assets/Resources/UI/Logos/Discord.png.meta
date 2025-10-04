@@ -160,7 +160,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Discord_0: -1658927225162452868
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

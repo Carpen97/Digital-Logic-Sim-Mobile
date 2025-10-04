@@ -36,52 +36,52 @@ namespace DLS.Graphics
 		{
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 			MenuHelper.DrawBackgroundOverlay();
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 
 			const int inputTextPad = 1;
 			Color labelCol = Color.white;
 			Color headerCol = new(0.46f, 1, 0.54f);
-			Vector2 topLeft = UI.Centre + new Vector2(-menuWidth / 2, verticalOffset);
+			Vector2 topLeft = Seb.Vis.UI.UI.Centre + new Vector2(-menuWidth / 2, verticalOffset);
 			Vector2 labelPosCurr = topLeft;
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 				// Draw stats
 				Vector2 srscLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, srscLabel, labelCol * 0.75f, true);
-				UI.DrawPanel(srscLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(Project.ActiveProject.description.StepsRanSinceCreated.ToString(), theme.FontBold, theme.FontSizeRegular, srscLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(srscLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText(Project.ActiveProject.description.StepsRanSinceCreated.ToString(), theme.FontBold, theme.FontSizeRegular, srscLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				AddSpacing();
 
 				Vector2 tsscLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, tsscLabel, labelCol * 0.75f, true);
-				UI.DrawPanel(tsscLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(FormatTime(Project.ActiveProject.description.TimeSpentSinceCreated.Elapsed), theme.FontBold, theme.FontSizeRegular, tsscLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(tsscLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText(FormatTime(Project.ActiveProject.description.TimeSpentSinceCreated.Elapsed), theme.FontBold, theme.FontSizeRegular, tsscLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				AddSpacing();
 
 				Vector2 createdOnLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, createdOnLabel, labelCol * 0.75f, true);
-				UI.DrawPanel(createdOnLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(FormatTime(Project.ActiveProject.description.CreationTime), theme.FontBold, theme.FontSizeRegular, createdOnLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(createdOnLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText(FormatTime(Project.ActiveProject.description.CreationTime), theme.FontBold, theme.FontSizeRegular, createdOnLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				AddSpacing();
 
 				Vector2 chipsLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, chipsLabel, labelCol * 0.75f, true);
-				UI.DrawPanel(chipsLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(Project.ActiveProject.chipLibrary.allChips.Count.ToString(), theme.FontBold, theme.FontSizeRegular, chipsLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(chipsLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText(Project.ActiveProject.chipLibrary.allChips.Count.ToString(), theme.FontBold, theme.FontSizeRegular, chipsLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				AddSpacing();
 
 				Vector2 chipsUsedLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, chipsUsedLabel, labelCol * 0.75f, true);
-				UI.DrawPanel(chipsUsedLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(chipsUsed.ToString(), theme.FontBold, theme.FontSizeRegular, chipsUsedLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(chipsUsedLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText(chipsUsed.ToString(), theme.FontBold, theme.FontSizeRegular, chipsUsedLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				AddSpacing();
 
 				Vector2 chipsUsedTotalLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, chipsUsedTotalLabel, labelCol * 0.75f, true);
-				UI.DrawPanel(chipsUsedTotalLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(totalChipsUsed.ToString(), theme.FontBold, theme.FontSizeRegular, chipsUsedTotalLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(chipsUsedTotalLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText(totalChipsUsed.ToString(), theme.FontBold, theme.FontSizeRegular, chipsUsedTotalLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 
 				// Draw close
-				Vector2 buttonTopLeft = new(50, UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));
-				bool result = UI.Button("CLOSE", MenuHelper.Theme.ButtonTheme, buttonTopLeft, new Vector2(menuWidth / 1.118f, 0));
+				Vector2 buttonTopLeft = new(50, Seb.Vis.UI.UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));
+				bool result = Seb.Vis.UI.UI.Button("CLOSE", MenuHelper.Theme.ButtonTheme, buttonTopLeft, new Vector2(menuWidth / 1.118f, 0));
 
 				// Draw menu background
-				Bounds2D menuBounds = UI.GetCurrentBoundsScope();
+				Bounds2D menuBounds = Seb.Vis.UI.UI.GetCurrentBoundsScope();
 				MenuHelper.DrawReservedMenuPanel(panelID, menuBounds);
 
 				// Close

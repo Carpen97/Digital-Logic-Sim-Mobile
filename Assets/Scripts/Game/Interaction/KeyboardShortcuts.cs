@@ -20,6 +20,7 @@ namespace DLS.Game
 		public static bool QuitToMainMenuShortcutTriggered => CtrlShortcutTriggered(KeyCode.Q);
 		public static bool SearchShortcutTriggered => CtrlShortcutTriggered(KeyCode.F);
 		public static bool SpecialChipsShortcutTriggered => CtrlShortcutTriggered(KeyCode.B);
+		public static bool LevelsShortcutTriggered => CtrlShortcutTriggered(KeyCode.E);
 
 		// ---- Misc shortcuts ----
 		public static bool DuplicateShortcutTriggered => MultiModeHeld && InputHelper.IsKeyDownThisFrame(KeyCode.D);

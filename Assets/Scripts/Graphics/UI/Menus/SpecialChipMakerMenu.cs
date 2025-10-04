@@ -59,14 +59,14 @@ namespace DLS.Graphics
 
         public static void DrawMenu()
         {
-            UI.DrawFullscreenPanel(ActiveUITheme.MenuBackgroundOverlayCol);
+            Seb.Vis.UI.UI.DrawFullscreenPanel(ActiveUITheme.MenuBackgroundOverlayCol);
 
             UIThemeDLS theme = ActiveUITheme;
             InputFieldTheme inputTheme = ActiveUITheme.ChipNameInputField;
-            Draw.ID panelID = UI.ReservePanel();
+            Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 
             const float headerSpacing = 1.5f;
-            Vector2 topLeft = UI.Centre + new Vector2(-menuWidth / 2, verticalOffset);
+            Vector2 topLeft = Seb.Vis.UI.UI.Centre + new Vector2(-menuWidth / 2, verticalOffset);
             Vector2 labelPosCurr = topLeft;
             Color labelCol = Color.white;
             Color headerCol = new(0.46f, 1, 0.54f);
@@ -74,7 +74,7 @@ namespace DLS.Graphics
             Color doneCol = new(128, 128, 0);
 
 
-            using (UI.BeginBoundsScope(true))
+            using (Seb.Vis.UI.UI.BeginBoundsScope(true))
             {
                 DrawHeader("SPECIAL CHIPS:");
                 int mainPinNamesMode = DrawNextWheel("Special chip type:", SpecialChipTypes, ID_SpecialChipTypes);
@@ -91,8 +91,8 @@ namespace DLS.Graphics
                 AddSpacing();
                 DrawDoneSection(displayDone);
 
-                Vector2 buttonTopLeft = new(labelPosCurr.x, UI.PrevBounds.Bottom - 2f);
-                int addOrClose = UI.VerticalButtonGroup(new[] { "Add special chip", "Save", "Close" }, new[] {canAddChip && !displayDone, !saved, true },
+                Vector2 buttonTopLeft = new(labelPosCurr.x, Seb.Vis.UI.UI.PrevBounds.Bottom - 2f);
+                int addOrClose = Seb.Vis.UI.UI.VerticalButtonGroup(new[] { "Add special chip", "Save", "Close" }, new[] {canAddChip && !displayDone, !saved, true },
                 ActiveUITheme.ButtonTheme, buttonTopLeft + (menuWidth / 2) * Vector2.right, entrySize, false, false, entrySpacing);
 
                 if(mainPinNamesMode == OPTION_PIN && canAddChip && addOrClose == 0)
@@ -119,7 +119,7 @@ namespace DLS.Graphics
                     UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
                 }
 
-                MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
+                MenuHelper.DrawReservedMenuPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope());
             }
             
             if(KeyboardShortcuts.CancelShortcutTriggered)
@@ -182,7 +182,7 @@ namespace DLS.Graphics
             void DrawDoneSection(bool done) {
                 if(!done) { return; }
                 AddHeaderSpacing();
-                UI.DrawText("DONE !", theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, doneCol);
+                Seb.Vis.UI.UI.DrawText("DONE !", theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, doneCol);
                 AddHeaderSpacing();
 
             }
@@ -190,11 +190,11 @@ namespace DLS.Graphics
             void DrawErrorSection(string reason)
             {
                 AddHeaderSpacing();
-                UI.DrawText("ERROR", theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, errorCol);
+                Seb.Vis.UI.UI.DrawText("ERROR", theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, errorCol);
                 AddHeaderSpacing();
 
                 AddTextSpacing();
-                UI.DrawText("   "+reason, theme.FontRegular, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, errorCol);
+                Seb.Vis.UI.UI.DrawText("   "+reason, theme.FontRegular, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, errorCol);
                 AddTextSpacing();
 
 
@@ -210,7 +210,7 @@ namespace DLS.Graphics
             void DrawHeader(string text)
             {
                 AddHeaderSpacing();
-                UI.DrawText(text, theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, headerCol);
+                Seb.Vis.UI.UI.DrawText(text, theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, headerCol);
                 AddHeaderSpacing();
             }
 

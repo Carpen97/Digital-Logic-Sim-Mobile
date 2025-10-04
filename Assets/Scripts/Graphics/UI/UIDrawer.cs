@@ -47,7 +47,7 @@ namespace DLS.Graphics
 		{
 			NotifyIfActiveMenuChanged();
 
-			using (UI.CreateFixedAspectUIScope(drawLetterbox: true))
+			using (Seb.Vis.UI.UI.CreateFixedAspectUIScope(drawLetterbox: true))
 			{
 				if (ActiveMenu is MenuType.MainMenu)
 				{
@@ -59,7 +59,7 @@ namespace DLS.Graphics
 				}
 			}
 
-			InteractionState.MouseIsOverUI = UI.IsMouseOverUIThisFrame;
+			InteractionState.MouseIsOverUI = Seb.Vis.UI.UI.IsMouseOverUIThisFrame;
 		}
 
 		static void DrawAppMenus()
@@ -165,7 +165,7 @@ namespace DLS.Graphics
 			SetActiveMenu(MenuType.None);
 			activeMenuOld = MenuType.None;
 			ContextMenu.Reset();
-			UI.ResetAllStates();
+			Seb.Vis.UI.UI.ResetAllStates();
 			BottomBarUI.Reset();
 			ChipSaveMenu.Reset();
 			RomEditMenu.Reset();

@@ -156,15 +156,15 @@ namespace DLS.Graphics
 				BackToMain();
 			}
 
-			UI.DrawFullscreenPanel(ColHelper.MakeCol255(47, 47, 53));
+			Seb.Vis.UI.UI.DrawFullscreenPanel(ColHelper.MakeCol255(47, 47, 53));
 			const string title = "DIGITAL LOGIC SIM";
 			const float titleFontSize = 11.5f;
 			const float titleHeight = 24;
 			const float shaddowOffset = -0.33f;
 			Color shadowCol = ColHelper.MakeCol255(87, 94, 230);
 
-			UI.DrawText(title, FontType.Born2bSporty, titleFontSize, UI.Centre + Vector2.up * (titleHeight + shaddowOffset), Anchor.CentreTop, shadowCol);
-			UI.DrawText(title, FontType.Born2bSporty, titleFontSize, UI.Centre + Vector2.up * titleHeight, Anchor.CentreTop, Color.white);
+			Seb.Vis.UI.UI.DrawText(title, FontType.Born2bSporty, titleFontSize, Seb.Vis.UI.UI.Centre + Vector2.up * (titleHeight + shaddowOffset), Anchor.CentreTop, shadowCol);
+			Seb.Vis.UI.UI.DrawText(title, FontType.Born2bSporty, titleFontSize, Seb.Vis.UI.UI.Centre + Vector2.up * titleHeight, Anchor.CentreTop, Color.white);
 			DrawVersionInfo();
 
 			switch (activeMenuScreen)
@@ -218,10 +218,10 @@ namespace DLS.Graphics
 
 			#if UNITY_ANDROID || UNITY_IOS
 			float buttonWidth = 40;
-			int buttonIndex = UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, UI.Centre + Vector2.up * 8, new Vector2(buttonWidth, 0.5f), false, true, 1);
+			int buttonIndex = Seb.Vis.UI.UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, Seb.Vis.UI.UI.Centre + Vector2.up * 8, new Vector2(buttonWidth, 0.5f), false, true, 1);
 			#else
 			float buttonWidth = 15;
-			int buttonIndex = UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, UI.Centre + Vector2.up * 6, new Vector2(buttonWidth, 0), false, true, 1);
+			int buttonIndex = Seb.Vis.UI.UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, Seb.Vis.UI.UI.Centre + Vector2.up * 6, new Vector2(buttonWidth, 0), false, true, 1);
 			#endif
 
 			if (buttonIndex == 0 || KeyboardShortcuts.MainMenu_NewProjectShortcutTriggered) // New project
@@ -262,7 +262,7 @@ namespace DLS.Graphics
 			const int exportButtonIndex = 6;
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
-			Vector2 pos = UI.Centre + new Vector2(0, -1);
+			Vector2 pos = Seb.Vis.UI.UI.Centre + new Vector2(0, -1);
 			#if UNITY_ANDROID || UNITY_IOS
 			Vector2 size = new(80, 32);
 			#else
@@ -270,7 +270,7 @@ namespace DLS.Graphics
 			#endif
 
 
-			UI.DrawScrollView(ID_ProjectsScrollView, pos, size, Anchor.Centre, theme.ScrollTheme, loadProjectScrollViewDrawer);
+			Seb.Vis.UI.UI.DrawScrollView(ID_ProjectsScrollView, pos, size, Anchor.Centre, theme.ScrollTheme, loadProjectScrollViewDrawer);
 			ButtonTheme buttonTheme = DrawSettings.ActiveUITheme.MainMenuButtonTheme;
 
 			bool projectSelected = selectedProjectIndex >= 0 && selectedProjectIndex < allProjectDescriptions.Length;
@@ -287,13 +287,13 @@ namespace DLS.Graphics
 				openProjectButtonStates[i] = buttonEnabled;
 			}
 
-			Vector2 buttonRegionPos = UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
-			int buttonIndex = UI.HorizontalButtonGroup(openProjectButtonNames, openProjectButtonStates, buttonTheme, buttonRegionPos, UI.PrevBounds.Width, UILayoutHelper.DefaultSpacing, 0, Anchor.TopLeft);
+			Vector2 buttonRegionPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
+			int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(openProjectButtonNames, openProjectButtonStates, buttonTheme, buttonRegionPos, Seb.Vis.UI.UI.PrevBounds.Width, UILayoutHelper.DefaultSpacing, 0, Anchor.TopLeft);
 
 			if (projectSelected && !compatibleProject)
 			{
-				Vector2 errorMessagePos = UI.PrevBounds.BottomLeft + Vector2.down * (DrawSettings.DefaultButtonSpacing * 2);
-				UI.DrawText(projectCompatibilities[selectedProjectIndex].message, buttonTheme.font, buttonTheme.fontSize, errorMessagePos, Anchor.TopLeft, Color.yellow);
+				Vector2 errorMessagePos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * (DrawSettings.DefaultButtonSpacing * 2);
+				Seb.Vis.UI.UI.DrawText(projectCompatibilities[selectedProjectIndex].message, buttonTheme.font, buttonTheme.fontSize, errorMessagePos, Anchor.TopLeft, Color.yellow);
 			}
 
 			// ---- Handle button input ----
@@ -329,12 +329,12 @@ namespace DLS.Graphics
 				ButtonTheme buttonTheme = selected ? DrawSettings.ActiveUITheme.ProjectSelectionButtonSelected : DrawSettings.ActiveUITheme.ProjectSelectionButton;
 				if (!projectCompatibilities[i].compatible) buttonTheme.textCols.normal.a = 0.5f;
 
-				if (UI.Button(desc.ProjectName, buttonTheme, topLeft, new Vector2(width, 0), enabled, false, true, buttonTheme.buttonCols,  Anchor.TopLeft))
+				if (Seb.Vis.UI.UI.Button(desc.ProjectName, buttonTheme, topLeft, new Vector2(width, 0), enabled, false, true, buttonTheme.buttonCols,  Anchor.TopLeft))
 				{
 					selectedProjectIndex = i;
 				}
 
-				topLeft = UI.PrevBounds.BottomLeft + Vector2.down * spacing;
+				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * spacing;
 			}
 		}
 
@@ -370,7 +370,7 @@ namespace DLS.Graphics
 
 		static void BackToMain()
 		{
-			UI.GetInputFieldState(ID_ProjectNameInput).ClearText();
+			Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectNameInput).ClearText();
 			activeMenuScreen = MenuScreen.Main;
 			activePopup = PopupKind.None;
 		}
@@ -378,21 +378,23 @@ namespace DLS.Graphics
 
 		static void OnSettingsMenuOpened()
 		{
-			// Automatically select whichever resolution option is closest to current window size
-//			WheelSelectorState resolutionWheelState = UI.GetWheelSelectorState(ID_DisplayResolutionWheel);
-			//int closestMatchError = int.MaxValue;
-			//for (int i = 0; i < Resolutions.Length; i++)
-			//{
-				//int matchError = Mathf.Min(Mathf.Abs(Screen.width - Resolutions[i].x), Mathf.Abs(Screen.height - Resolutions[i].y));
-				//if (matchError < closestMatchError)
-				//{
-					//closestMatchError = matchError;
-					//resolutionWheelState.index = i;
-				//}
-			//}
+			#if !UNITY_ANDROID && !UNITY_IOS
+			// Desktop: Automatically select whichever resolution option is closest to current window size
+			WheelSelectorState resolutionWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_DisplayResolutionWheel);
+			int closestMatchError = int.MaxValue;
+			for (int i = 0; i < Resolutions.Length; i++)
+			{
+				int matchError = Mathf.Min(Mathf.Abs(Screen.width - Resolutions[i].x), Mathf.Abs(Screen.height - Resolutions[i].y));
+				if (matchError < closestMatchError)
+				{
+					closestMatchError = matchError;
+					resolutionWheelState.index = i;
+				}
+			}
+			#endif
 
 			// Automatically set curr fullscreen mode
-			WheelSelectorState fullscreenWheelState = UI.GetWheelSelectorState(ID_FullscreenWheel);
+			WheelSelectorState fullscreenWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_FullscreenWheel);
 			for (int i = 0; i < FullScreenModes.Length; i++)
 			{
 				if (Screen.fullScreenMode == FullScreenModes[i])
@@ -402,16 +404,18 @@ namespace DLS.Graphics
 				}
 			}
 
+			#if UNITY_ANDROID || UNITY_IOS
 			// Automatically set curr orientation mode
-			WheelSelectorState orientationWheelState = UI.GetWheelSelectorState(ID_Orientation);
+			WheelSelectorState orientationWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_Orientation);
 			if(Screen.orientation == ScreenOrientation.LandscapeLeft){
 				orientationWheelState.index= 0;
 			}else{
 				orientationWheelState.index= 1;
 			}
 
-			WheelSelectorState UIScalingWheelState = UI.GetWheelSelectorState(ID_UIScaling);
+			WheelSelectorState UIScalingWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_UIScaling);
 			UIScalingWheelState.index = EditedAppSettings.UIScaling;
+			#endif
 		}
 
 		static void DrawSettingsScreen()
@@ -424,18 +428,18 @@ namespace DLS.Graphics
 			regionWidth = 70;
 			wheelSize = new(40, 3.5f);
 			#endif
-			float labelOriginLeft = UI.Centre.x - regionWidth / 2;
-			float elementOriginRight = UI.Centre.x + regionWidth / 2;
-			Vector2 pos = new(labelOriginLeft, UI.Centre.y+10);
-			using (UI.BeginBoundsScope(true))
+			float labelOriginLeft = Seb.Vis.UI.UI.Centre.x - regionWidth / 2;
+			float elementOriginRight = Seb.Vis.UI.UI.Centre.x + regionWidth / 2;
+			Vector2 pos = new(labelOriginLeft, Seb.Vis.UI.UI.Centre.y+10);
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				Draw.ID backgroundPanelID = UI.ReservePanel();
+				Draw.ID backgroundPanelID = Seb.Vis.UI.UI.ReservePanel();
 
 				// -- Resolution --
 				bool resEnabled = !EditedAppSettings.AutoResolution; //EditedAppSettings.fullscreenMode == FullScreenMode.Windowed;
-				//UI.DrawText("Resolution", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				//Seb.Vis.UI.UI.DrawText("Resolution", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				//string[] resNames = resEnabled ? ResolutionNames : FullScreenResName;
-				//int resIndex = UI.WheelSelector(ID_DisplayResolutionWheel, resNames, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
+				//int resIndex = Seb.Vis.UI.UI.WheelSelector(ID_DisplayResolutionWheel, resNames, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
 				//EditedAppSettings.ResolutionX = Resolutions[resIndex].x;
 				//EditedAppSettings.ResolutionY = Resolutions[resIndex].y;
 
@@ -444,8 +448,8 @@ namespace DLS.Graphics
 
 				//#if !(UNITY_ANDROID || UNITY_IOS)
 				// -- Full screen --
-				UI.DrawText("Fullscreen", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
-				int fullScreenSettingIndex = UI.WheelSelector(ID_FullscreenWheel, SettingsWheelFullScreenOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText("Fullscreen", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				int fullScreenSettingIndex = Seb.Vis.UI.UI.WheelSelector(ID_FullscreenWheel, SettingsWheelFullScreenOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				if (fullScreenSettingIndex == 0){
 					EditedAppSettings.AutoResolution = true;
 					EditedAppSettings.fullscreenMode = FullScreenModes[1];
@@ -455,46 +459,58 @@ namespace DLS.Graphics
 				}
 				//#endif
 
+				#if UNITY_ANDROID || UNITY_IOS
 				pos += Vector2.down * 4;
-				UI.DrawText("Width", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				Seb.Vis.UI.UI.DrawText("Width", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				string[] widthOptions = resEnabled ? WidthNames : WidthName;
-				int widthIndex = UI.WheelSelector(ID_DisplayWidthWheel, widthOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
+				int widthIndex = Seb.Vis.UI.UI.WheelSelector(ID_DisplayWidthWheel, widthOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
 				EditedAppSettings.ResolutionX = WidthOptions[widthIndex];
 
 				pos += Vector2.down * 4;
-				UI.DrawText("Height", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				Seb.Vis.UI.UI.DrawText("Height", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				string[] heightOptions = resEnabled ? HeightNames : HeightName;
-				int heightIndex = UI.WheelSelector(ID_DisplayHeightWheel, heightOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
+				int heightIndex = Seb.Vis.UI.UI.WheelSelector(ID_DisplayHeightWheel, heightOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
 				EditedAppSettings.ResolutionY = HeightOptions[heightIndex];
+				#else
+				// Desktop: Single Resolution setting like original PC version
+				pos += Vector2.down * 4;
+				Seb.Vis.UI.UI.DrawText("Resolution", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				string[] resNames = resEnabled ? ResolutionNames : FullScreenResName;
+				int resIndex = Seb.Vis.UI.UI.WheelSelector(ID_DisplayResolutionWheel, resNames, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
+				EditedAppSettings.ResolutionX = Resolutions[resIndex].x;
+				EditedAppSettings.ResolutionY = Resolutions[resIndex].y;
+				#endif
 
 				// -- Vsync --
 				pos += Vector2.down * 4;
-				UI.DrawText("VSync", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
-				int vsyncSetting = UI.WheelSelector(EditedAppSettings.VSyncEnabled ? 1 : 0, SettingsWheelVSyncOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText("VSync", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				int vsyncSetting = Seb.Vis.UI.UI.WheelSelector(EditedAppSettings.VSyncEnabled ? 1 : 0, SettingsWheelVSyncOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				EditedAppSettings.VSyncEnabled = vsyncSetting == 1;
 
+				#if UNITY_ANDROID || UNITY_IOS
 				pos += Vector2.down * 4;
-				UI.DrawText("Orientation", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
-				int orientation = UI.WheelSelector(ID_Orientation, SettingsWheelOrientationOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText("Orientation", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				int orientation = Seb.Vis.UI.UI.WheelSelector(ID_Orientation, SettingsWheelOrientationOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				EditedAppSettings.orientationIsLeftLandscape = orientation==0;
 
 				pos += Vector2.down * 4;
-				UI.DrawText("Hotbar scrolling", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
-				EditedAppSettings.showScrollingButtons = UI.WheelSelector(ID_ShowScrollButtons, SettingsWheelBottomBarScrollingOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText("Hotbar scrolling", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				EditedAppSettings.showScrollingButtons = Seb.Vis.UI.UI.WheelSelector(ID_ShowScrollButtons, SettingsWheelBottomBarScrollingOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				
 				pos += Vector2.down * 4;
-				UI.DrawText("UI Scaling", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
-				EditedAppSettings.UIScaling = UI.WheelSelector(ID_UIScaling, SettingsWheelUIScalingOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText("UI Scaling", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				EditedAppSettings.UIScaling = Seb.Vis.UI.UI.WheelSelector(ID_UIScaling, SettingsWheelUIScalingOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
+				#endif
 				
 				// Background panel
-				UI.ModifyPanel(backgroundPanelID, UI.GetCurrentBoundsScope().Centre, UI.GetCurrentBoundsScope().Size + Vector2.one * 3, ColHelper.MakeCol255(37, 37, 43));
+				Seb.Vis.UI.UI.ModifyPanel(backgroundPanelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 3, ColHelper.MakeCol255(37, 37, 43));
 			}
 
-			Vector2 buttonPos = UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
+			Vector2 buttonPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
 			settingsButtonGroupStates[0] = true;
 			settingsButtonGroupStates[1] = true;
 
-			int buttonIndex = UI.HorizontalButtonGroup(settingsButtonGroupNames, settingsButtonGroupStates, theme.MainMenuButtonTheme, buttonPos, UI.PrevBounds.Width, UILayoutHelper.DefaultSpacing, 0, Anchor.TopLeft);
+			int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(settingsButtonGroupNames, settingsButtonGroupStates, theme.MainMenuButtonTheme, buttonPos, Seb.Vis.UI.UI.PrevBounds.Width, UILayoutHelper.DefaultSpacing, 0, Anchor.TopLeft);
 
 			if (buttonIndex == 0)
 			{
@@ -512,21 +528,21 @@ namespace DLS.Graphics
 		{
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
-			UI.StartNewLayer();
-			UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				Draw.ID panelID = UI.ReservePanel();
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 
 				InputFieldTheme inputTheme = theme.ChipNameInputField;
 
-				Vector2 charSize = UI.CalculateTextSize("M", inputTheme.fontSize, inputTheme.font);
+				Vector2 charSize = Seb.Vis.UI.UI.CalculateTextSize("M", inputTheme.fontSize, inputTheme.font);
 				Vector2 padding = new(2, 2);
 				Vector2 inputFieldSize = new Vector2(charSize.x * MaxProjectNameLength, charSize.y) + padding * 2;
 
 
-				InputFieldState state = UI.InputField(ID_ProjectNameInput, inputTheme, UI.Centre, inputFieldSize, "", Anchor.Centre, padding.x, projectNameValidator, true);
+				InputFieldState state = Seb.Vis.UI.UI.InputField(ID_ProjectNameInput, inputTheme, Seb.Vis.UI.UI.Centre, inputFieldSize, "", Anchor.Centre, padding.x, projectNameValidator, true);
 
 				string projectName = state.text;
 				bool validProjectName = !string.IsNullOrWhiteSpace(projectName) && SaveUtils.ValidFileName(projectName);
@@ -539,12 +555,12 @@ namespace DLS.Graphics
 				bool canCreateProject = validProjectName && !projectNameAlreadyExists;
 
 				Vector2 buttonsRegionSize = new(inputFieldSize.x, 5);
-				Vector2 buttonsRegionCentre = UILayoutHelper.CalculateCentre(UI.PrevBounds.BottomLeft, buttonsRegionSize, Anchor.TopLeft);
+				Vector2 buttonsRegionCentre = UILayoutHelper.CalculateCentre(Seb.Vis.UI.UI.PrevBounds.BottomLeft, buttonsRegionSize, Anchor.TopLeft);
 				(Vector2 size, Vector2 centre) layoutCancel = UILayoutHelper.HorizontalLayout(2, 0, buttonsRegionCentre, buttonsRegionSize);
 				(Vector2 size, Vector2 centre) layoutConfirm = UILayoutHelper.HorizontalLayout(2, 1, buttonsRegionCentre, buttonsRegionSize);
 
-				bool cancelButton = UI.Button("CANCEL", theme.MainMenuButtonTheme, layoutCancel.centre, new Vector2(layoutCancel.size.x, 0), true, false, true, theme.ButtonTheme.buttonCols);
-				bool confirmButton = UI.Button("CONFIRM", theme.MainMenuButtonTheme, layoutConfirm.centre, new Vector2(layoutConfirm.size.x, 0), canCreateProject, false, true,theme.ButtonTheme.buttonCols);
+				bool cancelButton = Seb.Vis.UI.UI.Button("CANCEL", theme.MainMenuButtonTheme, layoutCancel.centre, new Vector2(layoutCancel.size.x, 0), true, false, true, theme.ButtonTheme.buttonCols);
+				bool confirmButton = Seb.Vis.UI.UI.Button("CONFIRM", theme.MainMenuButtonTheme, layoutConfirm.centre, new Vector2(layoutConfirm.size.x, 0), canCreateProject, false, true,theme.ButtonTheme.buttonCols);
 
 				if (cancelButton || KeyboardShortcuts.CancelShortcutTriggered)
 				{
@@ -560,7 +576,7 @@ namespace DLS.Graphics
 					OnNamePopupConfirmed(kind, projectName);
 				}
 
-				UI.ModifyPanel(panelID, UI.GetCurrentBoundsScope().Centre, UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
 			}
 		}
 
@@ -573,7 +589,7 @@ namespace DLS.Graphics
 
 				RefreshLoadedProjects();
 				selectedProjectIndex = 0; // the modified project will now be at top of list
-				UI.GetScrollbarState(ID_ProjectsScrollView).scrollY = 0; // scroll to top so selection is visible
+				Seb.Vis.UI.UI.GetScrollbarState(ID_ProjectsScrollView).scrollY = 0; // scroll to top so selection is visible
 			}
 			else if (kind is PopupKind.NamePopup_NewProject)
 			{
@@ -584,18 +600,18 @@ namespace DLS.Graphics
 		{
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
-			UI.StartNewLayer();
-			UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				Draw.ID panelID = UI.ReservePanel();
-				UI.DrawText("Project name already exist. Are you sure you want to overwrite?", theme.FontRegular, theme.FontSizeRegular, UI.Centre, Anchor.Centre, Color.yellow);
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+				Seb.Vis.UI.UI.DrawText("Project name already exist. Are you sure you want to overwrite?", theme.FontRegular, theme.FontSizeRegular, Seb.Vis.UI.UI.Centre, Anchor.Centre, Color.yellow);
 
-				Vector2 buttonRegionTopLeft = UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
-				float buttonRegionWidth = UI.PrevBounds.Width;
-				int buttonIndex = UI.HorizontalButtonGroup(new[] { "CANCEL", "OVERWRITE" }, theme.MainMenuButtonTheme, buttonRegionTopLeft, buttonRegionWidth, DrawSettings.HorizontalButtonSpacing, 0, Anchor.TopLeft);
-				UI.ModifyPanel(panelID, UI.GetCurrentBoundsScope().Centre, UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+				Vector2 buttonRegionTopLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
+				float buttonRegionWidth = Seb.Vis.UI.UI.PrevBounds.Width;
+				int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "OVERWRITE" }, theme.MainMenuButtonTheme, buttonRegionTopLeft, buttonRegionWidth, DrawSettings.HorizontalButtonSpacing, 0, Anchor.TopLeft);
+				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
 
 				if (buttonIndex == 0) // Cancel
 				{
@@ -616,18 +632,18 @@ namespace DLS.Graphics
 		{
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
-			UI.StartNewLayer();
-			UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				Draw.ID panelID = UI.ReservePanel();
-				UI.DrawText("Are you sure you want to delete this project?", theme.FontRegular, theme.FontSizeRegular, UI.Centre, Anchor.Centre, Color.yellow);
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+				Seb.Vis.UI.UI.DrawText("Are you sure you want to delete this project?", theme.FontRegular, theme.FontSizeRegular, Seb.Vis.UI.UI.Centre, Anchor.Centre, Color.yellow);
 
-				Vector2 buttonRegionTopLeft = UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
-				float buttonRegionWidth = UI.PrevBounds.Width;
-				int buttonIndex = UI.HorizontalButtonGroup(new[] { "CANCEL", "DELETE" }, theme.MainMenuButtonTheme, buttonRegionTopLeft, buttonRegionWidth, DrawSettings.HorizontalButtonSpacing, 0, Anchor.TopLeft);
-				UI.ModifyPanel(panelID, UI.GetCurrentBoundsScope().Centre, UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+				Vector2 buttonRegionTopLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
+				float buttonRegionWidth = Seb.Vis.UI.UI.PrevBounds.Width;
+				int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "DELETE" }, theme.MainMenuButtonTheme, buttonRegionTopLeft, buttonRegionWidth, DrawSettings.HorizontalButtonSpacing, 0, Anchor.TopLeft);
+				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
 
 				if (buttonIndex == 0) // Cancel
 				{
@@ -648,14 +664,14 @@ namespace DLS.Graphics
 			ButtonTheme theme = DrawSettings.ActiveUITheme.MainMenuButtonTheme;
 			
 			// Add a bounds scope for the logos
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 			string about_text = 
 			"This project is based on Digital Logic Sim, created by Sebastian Lague.\n" +
 			"This mobile version was ported and adapted by David Carpenfelt to make it accessible on Android devices.\n\n" +
 			"If you need inspiration for how to play the game, check out Sebastian's YouTube playlist:\n";
 
-			UI.DrawText(about_text, theme.font, theme.fontSize*0.6f, UI.Centre + Vector2.up * 10, Anchor.Centre, Color.white);
+			Seb.Vis.UI.UI.DrawText(about_text, theme.font, theme.fontSize*0.6f, Seb.Vis.UI.UI.Centre + Vector2.up * 10, Anchor.Centre, Color.white);
 			
 			// Draw YouTube logo using PNG texture
 			Debug.Log($"[MainMenu] Attempting to load YouTube logo from: UI/Logos/YouTube");
@@ -688,13 +704,13 @@ namespace DLS.Graphics
 			}
 			if (youtubeLogo != null)
 			{
-				Vector2 youtubePos = UI.Centre + Vector2.up * 2;
+				Vector2 youtubePos = Seb.Vis.UI.UI.Centre + Vector2.up * 2;
 				Vector2 youtubeSize = new Vector2(3, 3);
 				Debug.Log($"[MainMenu] Drawing YouTube Logo at Pos: {youtubePos}, Size: {youtubeSize}");
-				UI.DrawTextureDirect(youtubePos, youtubeSize, youtubeLogo, Color.white);
+				Seb.Vis.UI.UI.DrawTextureDirect(youtubePos, youtubeSize, youtubeLogo, Color.white);
 			}
 			
-			if (UI.Button("Link to YouTube", theme, UI.Centre + Vector2.up * 2, Vector2.zero, true, true, true, theme.buttonCols))
+			if (Seb.Vis.UI.UI.Button("Link to YouTube", theme, Seb.Vis.UI.UI.Centre + Vector2.up * 2, Vector2.zero, true, true, true, theme.buttonCols))
 			{
 				BackToMain();
 				Application.OpenURL("https://www.youtube.com/watch?v=QZwneRb-zqA&list=PLFt_AvWsXl0dPhqVsKt1Ni_46ARyiCGSq");
@@ -703,27 +719,27 @@ namespace DLS.Graphics
 			string feedback_text = 
 			"If you'd like to give feedback please visit this discord thread\n";
 
-			UI.DrawText(feedback_text, theme.font, theme.fontSize*0.6f, UI.CentreBottom + Vector2.up * 24, Anchor.Centre, Color.white);
+			Seb.Vis.UI.UI.DrawText(feedback_text, theme.font, theme.fontSize*0.6f, Seb.Vis.UI.UI.CentreBottom + Vector2.up * 24, Anchor.Centre, Color.white);
 			
 			// Draw Discord logo using PNG texture
 			Texture2D discordLogo = Resources.Load<Texture2D>("UI/Logos/Discord");
 			Debug.Log($"[MainMenu] Discord Logo Loaded: {(discordLogo != null ? discordLogo.name : "NULL")}");
 			if (discordLogo != null)
 			{
-				Vector2 discordPos = UI.CentreBottom + Vector2.up * 18;
+				Vector2 discordPos = Seb.Vis.UI.UI.CentreBottom + Vector2.up * 18;
 				Vector2 discordSize = new Vector2(3, 3);
 				Debug.Log($"[MainMenu] Drawing Discord Logo at Pos: {discordPos}, Size: {discordSize}");
-				UI.DrawTextureDirect(discordPos, discordSize, discordLogo, Color.white);
+				Seb.Vis.UI.UI.DrawTextureDirect(discordPos, discordSize, discordLogo, Color.white);
 			}
 			
-			if (UI.Button("Link to Discord", theme, UI.CentreBottom + Vector2.up * 18, Vector2.zero, true, true, true, theme.buttonCols))
+			if (Seb.Vis.UI.UI.Button("Link to Discord", theme, Seb.Vis.UI.UI.CentreBottom + Vector2.up * 18, Vector2.zero, true, true, true, theme.buttonCols))
 			{
 				BackToMain();
 				Application.OpenURL("https://discord.com/channels/1361307968276136007/1366859789711315106");
 
 			}
 
-			if (UI.Button("Back", theme, UI.CentreBottom + Vector2.up * 10, Vector2.zero, true, true, true, theme.buttonCols))
+			if (Seb.Vis.UI.UI.Button("Back", theme, Seb.Vis.UI.UI.CentreBottom + Vector2.up * 10, Vector2.zero, true, true, true, theme.buttonCols))
 			{
 				BackToMain();
 			}
@@ -734,24 +750,24 @@ namespace DLS.Graphics
 		static void DrawVersionInfo()
 		{
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
-			UI.DrawPanel(UI.BottomLeft, new Vector2(UI.Width, 4), ColHelper.MakeCol255(37, 37, 43), Anchor.BottomLeft);
+			Seb.Vis.UI.UI.DrawPanel(Seb.Vis.UI.UI.BottomLeft, new Vector2(Seb.Vis.UI.UI.Width, 4), ColHelper.MakeCol255(37, 37, 43), Anchor.BottomLeft);
 
 			float pad = 1;
 			Color col = new(1, 1, 1, 0.5f);
 			Color modColor = new(0.98f, 0.76f, 0.26f);
 			Color mobileColor = new(0.26f, 0.76f, 0.98f);
 
-            Vector2 versionPos = UI.PrevBounds.CentreLeft + Vector2.right * pad;
-			Vector2 datePos = UI.PrevBounds.CentreRight + Vector2.left * pad;
-			Vector2 moddedPos = UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.right * pad*8.7f;
-			Vector2 mobilePos = UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.left * pad*9.9f;
+            Vector2 versionPos = Seb.Vis.UI.UI.PrevBounds.CentreLeft + Vector2.right * pad;
+			Vector2 datePos = Seb.Vis.UI.UI.PrevBounds.CentreRight + Vector2.left * pad;
+			Vector2 moddedPos = Seb.Vis.UI.UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.right * pad*8.7f;
+			Vector2 mobilePos = Seb.Vis.UI.UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.left * pad*9.9f;
 
-			UI.DrawText(authorString, theme.FontRegular, theme.FontSizeRegular, versionPos, Anchor.TextCentreLeft, col);
-			UI.DrawText(versionString, theme.FontRegular, theme.FontSizeRegular, datePos, Anchor.TextCentreRight, col);
+			Seb.Vis.UI.UI.DrawText(authorString, theme.FontRegular, theme.FontSizeRegular, versionPos, Anchor.TextCentreLeft, col);
+			Seb.Vis.UI.UI.DrawText(versionString, theme.FontRegular, theme.FontSizeRegular, datePos, Anchor.TextCentreRight, col);
 			if (activeMenuScreen == MenuScreen.Main)
 			{
-            	UI.DrawText(moddedString, theme.FontRegular, theme.FontSizeRegular, moddedPos, Anchor.TextCentreLeft, modColor);
-            	UI.DrawText(mobileString, theme.FontRegular, theme.FontSizeRegular, mobilePos, Anchor.TextCentreRight, mobileColor);
+            	Seb.Vis.UI.UI.DrawText(moddedString, theme.FontRegular, theme.FontSizeRegular, moddedPos, Anchor.TextCentreLeft, modColor);
+            	Seb.Vis.UI.UI.DrawText(mobileString, theme.FontRegular, theme.FontSizeRegular, mobilePos, Anchor.TextCentreRight, mobileColor);
 			}
         }
         static string ResolutionToString(Vector2Int r) => $"{r.x} x {r.y}";

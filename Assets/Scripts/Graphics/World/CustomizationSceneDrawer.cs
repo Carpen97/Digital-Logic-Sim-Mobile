@@ -8,6 +8,7 @@ using UnityEngine;
 using System.Linq;
 using Seb.Vis.UI;
 using System.Collections.Generic;
+using DLS.Graphics.UI;
 
 namespace DLS.Graphics
 {
@@ -88,10 +89,12 @@ namespace DLS.Graphics
 
 			displayInteractState = DisplayInteractState.Placing;
 			displayMoveMouseOffset = Vector2.zero;
-			MobileUIController.Instance.ShowPlacementButtons(
+			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+			MobileUIControllerWrapper.ShowPlacementButtons(
 				confirmPlacement,
 				cancelPlacement
 			);
+			#endif
 		}
 
 		public static void OnCustomizationMenuClosed()
@@ -160,7 +163,9 @@ namespace DLS.Graphics
 					displayInteractState = DisplayInteractState.None;
 				}
 			}
-			MobileUIController.Instance.HidePlacementButtons();
+			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+			MobileUIControllerWrapper.HidePlacementButtons();
+			#endif
 		}
 
 		static void HandleDisplayMovement()
@@ -222,7 +227,9 @@ namespace DLS.Graphics
 				ChipSaveMenu.ActiveCustomizeChip.Displays.Add(SelectedDisplay);
 			SelectedDisplay = null;
 			displayInteractState = DisplayInteractState.None;
-			MobileUIController.Instance.HidePlacementButtons();
+			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+			MobileUIControllerWrapper.HidePlacementButtons();
+			#endif
 		}
 
 		static void cancelPlacement(){
@@ -230,7 +237,9 @@ namespace DLS.Graphics
 				SelectedDisplay.Desc.Position = displayPosInitial;
 			SelectedDisplay = null;
 			displayInteractState = DisplayInteractState.None;
-			MobileUIController.Instance.HidePlacementButtons();
+			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+			MobileUIControllerWrapper.HidePlacementButtons();
+			#endif
 		}
 
 		static void HandleDeleteDisplayUnderMouse()
@@ -288,10 +297,12 @@ namespace DLS.Graphics
 							mouseDownPos = InputHelper.MousePosWorld;
 
 							if(IsResizingChip) return;
-							MobileUIController.Instance.ShowPlacementButtons(
+							#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+							MobileUIControllerWrapper.ShowPlacementButtons(
 								confirmPlacement,
 								cancelPlacement
 							);
+							#endif
 
 							return; // exit now that a display has been selected
 						}
@@ -507,7 +518,7 @@ namespace DLS.Graphics
                             if (!ChipCustomizationMenu.isCustomLayout)
                             {
                                 ChipCustomizationMenu.isCustomLayout = true;
-                                UI.GetWheelSelectorState(ChipCustomizationMenu.ID_LayoutOptions).index = 1;
+                                Seb.Vis.UI.UI.GetWheelSelectorState(ChipCustomizationMenu.ID_LayoutOptions).index = 1;
                                 ChipSaveMenu.ActiveCustomizeChip.SetCustomLayout(true);
                             }
                         }

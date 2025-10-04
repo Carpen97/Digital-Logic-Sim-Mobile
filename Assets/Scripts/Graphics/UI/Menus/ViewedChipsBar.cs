@@ -12,19 +12,19 @@ namespace DLS.Graphics
 
 		public static void DrawViewedChipsBanner(Project project, bool simPausedBannerIsActive)
 		{
-			Vector2 topLeft = UI.TopLeft;
+			Vector2 topLeft = Seb.Vis.UI.UI.TopLeft;
 			if (simPausedBannerIsActive) topLeft += Vector2.down * InfoBarHeight;
 
-			UI.DrawPanel(topLeft, new Vector2(UI.Width, InfoBarHeight), ActiveUITheme.InfoBarCol, Anchor.TopLeft);
+			Seb.Vis.UI.UI.DrawPanel(topLeft, new Vector2(Seb.Vis.UI.UI.Width, InfoBarHeight), ActiveUITheme.InfoBarCol, Anchor.TopLeft);
 
 
 			Vector2 pos = new(pad, topLeft.y - InfoBarHeight / 2);
-			UI.DrawText(project.viewedChipsString, ActiveUITheme.FontBold, ActiveUITheme.ButtonTheme.fontSize, pos, Anchor.TextCentreLeft, Color.white);
+			Seb.Vis.UI.UI.DrawText(project.viewedChipsString, ActiveUITheme.FontBold, ActiveUITheme.ButtonTheme.fontSize, pos, Anchor.TextCentreLeft, Color.white);
 
 			// Back button
 			Vector2 buttonSize = new(8, InfoBarHeight - pad);
-			Vector2 buttonCentreRight = new(UI.Width - pad, pos.y);
-			bool backButtonPressed = UI.Button("Back", ActiveUITheme.ChipButton, buttonCentreRight, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreRight);
+			Vector2 buttonCentreRight = new(Seb.Vis.UI.UI.Width - pad, pos.y);
+			bool backButtonPressed = Seb.Vis.UI.UI.Button("Back", ActiveUITheme.ChipButton, buttonCentreRight, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreRight);
 
 			if (backButtonPressed || KeyboardShortcuts.CancelShortcutTriggered)
 			{

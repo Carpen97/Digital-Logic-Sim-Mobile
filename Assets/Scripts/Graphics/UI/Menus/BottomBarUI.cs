@@ -2,6 +2,7 @@ using System;
 using DLS.Description;
 using DLS.Game;
 using DLS.Game.LevelsIntegration;
+using DLS.SaveSystem;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis;
@@ -49,7 +50,7 @@ namespace DLS.Graphics
 			$"LIBRARY      {shortcutTextCol}Ctrl+L",
 			$"STATS        {shortcutTextCol}Ctrl+T", // Ctrl+'T' from the T in Stats
 			$"PREFS        {shortcutTextCol}Ctrl+P",
-			$"LEVELS       {shortcutTextCol}",          // <-- added (no shortcut yet)
+			$"LEVELS       {shortcutTextCol}Ctrl+E",
 			$"QUIT         {shortcutTextCol}Ctrl+Q"
 		};
 		#endif
@@ -111,9 +112,9 @@ namespace DLS.Graphics
 
 			Vector2 pos = new(buttonSpacing, barHeight + buttonSpacing);
 			Vector2 size = new(menuWidth*1.3f, buttonHeight*1f);;
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 				for (int i = menuButtonNames.Length - 1; i >= 0; i--)
 				{
@@ -126,16 +127,16 @@ namespace DLS.Graphics
 						text = text.Replace("SAVE CHIP", "SAVE").Replace("Save Chip", "Save");
 					}
 					
-					if (UI.Button(text, theme, pos, size, buttonEnabled, false, false, theme.buttonCols, Anchor.BottomLeft))
+					if (Seb.Vis.UI.UI.Button(text, theme, pos, size, buttonEnabled, false, false, theme.buttonCols, Anchor.BottomLeft))
 					{
 						ButtonPressed(i);
 					}
 
-					pos = UI.PrevBounds.TopLeft;
+					pos = Seb.Vis.UI.UI.PrevBounds.TopLeft;
 				}
 
-				Bounds2D uiBounds = UI.GetCurrentBoundsScope();
-				UI.ModifyPanel(panelID, uiBounds.Centre, uiBounds.Size + Vector2.one * (buttonSpacing * 2), Color.white);
+				Bounds2D uiBounds = Seb.Vis.UI.UI.GetCurrentBoundsScope();
+				Seb.Vis.UI.UI.ModifyPanel(panelID, uiBounds.Centre, uiBounds.Size + Vector2.one * (buttonSpacing * 2), Color.white);
 			}
 
 			// Close if clicked nothing or pressed esc
@@ -168,8 +169,8 @@ namespace DLS.Graphics
 
 		static void DrawBottomBar(Project project)
 		{
-			Bounds2D bounds_UISpace = new(Vector2.zero, new Vector2(UI.Width, barHeight));
-			barBounds_ScreenSpace = UI.UIToScreenSpace(bounds_UISpace);
+			Bounds2D bounds_UISpace = new(Vector2.zero, new Vector2(Seb.Vis.UI.UI.Width, barHeight));
+			barBounds_ScreenSpace = Seb.Vis.UI.UI.UIToScreenSpace(bounds_UISpace);
 
 			bool inOtherMenu = !(UIDrawer.ActiveMenu is UIDrawer.MenuType.BottomBarMenuPopup or UIDrawer.MenuType.None);
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
@@ -183,9 +184,9 @@ namespace DLS.Graphics
 				activeCollection = null;
 			}
 
-			UI.DrawPanel(bounds_UISpace, theme.StarredBarCol);
-			float chipButtonsRegionStartX = UI.PrevBounds.Right + buttonSpacing;
-			float chipButtonRegionWidth = UI.Width - chipButtonsRegionStartX;
+			Seb.Vis.UI.UI.DrawPanel(bounds_UISpace, theme.StarredBarCol);
+			float chipButtonsRegionStartX = Seb.Vis.UI.UI.PrevBounds.Right + buttonSpacing;
+			float chipButtonRegionWidth = Seb.Vis.UI.UI.Width - chipButtonsRegionStartX;
 
 			// Menu toggle button
 			Vector2 menuButtonPos = new(buttonSpacing, padY);
@@ -193,32 +194,35 @@ namespace DLS.Graphics
 			bool menuButtonEnabled = !inOtherMenu;
 
 			Vector2 scrollButtonSize = new(scrollButtonWidth, buttonHeight);
-			float scrollAmount = 15f; // Adjust as needed for responsiveness
 
-			if (UI.Button("MENU", theme.MenuButtonTheme, menuButtonPos, menuButtonSize, menuButtonEnabled, true, false, theme.ButtonTheme.buttonCols, Anchor.BottomLeft, ignoreInputs: ignoreInputs))
+			if (Seb.Vis.UI.UI.Button("MENU", theme.MenuButtonTheme, menuButtonPos, menuButtonSize, menuButtonEnabled, true, false, theme.ButtonTheme.buttonCols, Anchor.BottomLeft, ignoreInputs: ignoreInputs))
 			{
 				UIDrawer.ToggleBottomPopupMenu();
 				toggleMenuFrame = Time.frameCount;
 			}
 
+
+			#if UNITY_ANDROID || UNITY_IOS
 			if(showScrollingButtons!=2){
+				float scrollAmount = 15f; // Adjust as needed for responsiveness
 				if(showScrollingButtons == 1) scrollAmount *= -1; //invert
-				Vector2 leftButtonPos = new Vector2(UI.PrevBounds.Right + buttonSpacing, padY);
-				if (UI.Button("←", theme.MenuButtonTheme, leftButtonPos, scrollButtonSize, true, true, false,theme.ButtonTheme.buttonCols, Anchor.BottomLeft))
+				Vector2 leftButtonPos = new Vector2(Seb.Vis.UI.UI.PrevBounds.Right + buttonSpacing, padY);
+				if (Seb.Vis.UI.UI.Button("←", theme.MenuButtonTheme, leftButtonPos, scrollButtonSize, true, true, false,theme.ButtonTheme.buttonCols, Anchor.BottomLeft))
 				{
 					scrollX = Mathf.Clamp(scrollX - scrollAmount, Mathf.Min(0, chipButtonRegionWidth - chipBarTotalWidthLastFrame), 0);
 				}
-				Vector2 rightButtonPos = new Vector2(UI.PrevBounds.Right + buttonSpacing, padY);
-				if (UI.Button("→", theme.MenuButtonTheme, rightButtonPos, scrollButtonSize, true, true, false, theme.ButtonTheme.buttonCols, Anchor.BottomLeft))
+				Vector2 rightButtonPos = new Vector2(Seb.Vis.UI.UI.PrevBounds.Right + buttonSpacing, padY);
+				if (Seb.Vis.UI.UI.Button("→", theme.MenuButtonTheme, rightButtonPos, scrollButtonSize, true, true, false, theme.ButtonTheme.buttonCols, Anchor.BottomLeft))
 				{
 					scrollX = Mathf.Clamp(scrollX + scrollAmount, Mathf.Min(0, chipButtonRegionWidth - chipBarTotalWidthLastFrame), 0);
 				}
 			}
+			#endif
 
 			// Chips
 			ButtonTheme buttonTheme = theme.ChipButton;
 
-			using (UI.CreateMaskScopeMinMax(new Vector2(UI.PrevBounds.Right + buttonSpacing, 0), new Vector2(UI.Width, barHeight)))
+			using (Seb.Vis.UI.UI.CreateMaskScopeMinMax(new Vector2(Seb.Vis.UI.UI.PrevBounds.Right + buttonSpacing, 0), new Vector2(Seb.Vis.UI.UI.Width, barHeight)))
 			{
 				bool chipButtonsEnabled = !inOtherMenu && project.CanEditViewedChip;
 
@@ -230,13 +234,13 @@ namespace DLS.Graphics
 					if (InputHelper.IsMouseDownThisFrame(MouseButton.Middle))
 					{
 						isDraggingChipBar = true;
-						mouseDragPrev = UI.ScreenToUISpace(InputHelper.MousePos).x;
+						mouseDragPrev = Seb.Vis.UI.UI.ScreenToUISpace(InputHelper.MousePos).x;
 					}
 				}
 
 				if (isDraggingChipBar)
 				{
-					float mouseDragNew = UI.ScreenToUISpace(InputHelper.MousePos).x;
+					float mouseDragNew = Seb.Vis.UI.UI.ScreenToUISpace(InputHelper.MousePos).x;
 					scrollX += mouseDragNew - mouseDragPrev;
 					mouseDragPrev = mouseDragNew;
 					if (InputHelper.IsMouseUpThisFrame(MouseButton.Middle))
@@ -246,8 +250,8 @@ namespace DLS.Graphics
 				}
 
 				// -- Draw --
-				chipButtonsRegionStartX = UI.PrevBounds.Right + buttonSpacing;
-				chipButtonRegionWidth = UI.Width - chipButtonsRegionStartX;
+				chipButtonsRegionStartX = Seb.Vis.UI.UI.PrevBounds.Right + buttonSpacing;
+				chipButtonRegionWidth = Seb.Vis.UI.UI.Width - chipButtonsRegionStartX;
 
 				scrollX = Mathf.Clamp(scrollX, Mathf.Min(0, chipButtonRegionWidth - chipBarTotalWidthLastFrame), 0);
 				float buttonPosX = chipButtonsRegionStartX + scrollX;
@@ -275,7 +279,7 @@ namespace DLS.Graphics
 					bool canAdd = starred.IsCollection || project.ViewedChip.CanAddSubchip(buttonName);
 
 
-					if (UI.Button(buttonName, buttonTheme, buttonPos, buttonSize, chipButtonsEnabled && canAdd, true, false, theme.ButtonTheme.buttonCols, Anchor.BottomLeft, textOffsetX: textOffsetX, ignoreInputs: ignoreInputs))
+					if (Seb.Vis.UI.UI.Button(buttonName, buttonTheme, buttonPos, buttonSize, chipButtonsEnabled && canAdd, true, false, theme.ButtonTheme.buttonCols, Anchor.BottomLeft, textOffsetX: textOffsetX, ignoreInputs: ignoreInputs))
 					{
 						if (starred.IsCollection)
 						{
@@ -289,7 +293,7 @@ namespace DLS.Graphics
 							// Open collection in popup
 							else
 							{
-								collectionPopupBottomLeft = new Vector2(UI.PrevBounds.Left, barHeight);
+								collectionPopupBottomLeft = new Vector2(Seb.Vis.UI.UI.PrevBounds.Left, barHeight);
 								activeCollection = newActiveCollection == activeCollection ? null : newActiveCollection;
 								collectionInteractFrame = Time.frameCount;
 								closeActiveCollectionMultiModeExit = false;
@@ -301,17 +305,17 @@ namespace DLS.Graphics
 							activeCollection = null;
 						}
 					}
-					else if (isRightClick && UI.MouseInsideBounds(UI.PrevBounds))
+					else if (isRightClick && Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds))
 					{
 						ContextMenu.OpenBottomBarContextMenu(starred.Name, starred.IsCollection, false);
 					}
 
 
-					buttonPosX += UI.PrevBounds.Width + buttonSpacing;
+					buttonPosX += Seb.Vis.UI.UI.PrevBounds.Width + buttonSpacing;
 				}
 
 				// Record total width of all buttons to be used as scroll bounds for the next frame
-				chipBarTotalWidthLastFrame = UI.PrevBounds.Right - firstButtonLeft + buttonSpacing;
+				chipBarTotalWidthLastFrame = Seb.Vis.UI.UI.PrevBounds.Right - firstButtonLeft + buttonSpacing;
 			}
 
 
@@ -329,7 +333,7 @@ namespace DLS.Graphics
 			int firstButtonIndex = activeCollection.Chips.Count - 1;
 			int pressedIndex = -1;
 			Vector2 layoutOrigin = collectionPopupBottomLeft + new Vector2(0, 0);
-			bool expandLeft = layoutOrigin.x > UI.HalfWidth;
+			bool expandLeft = layoutOrigin.x > Seb.Vis.UI.UI.HalfWidth;
 			bool isFirstPartial = true;
 			bool openedContextMenu = false;
 
@@ -339,7 +343,7 @@ namespace DLS.Graphics
 				int numButtonsToDraw = 0;
 
 				// Layout pass: calculate draw bounds (stop before going past top of screen)
-				using (UI.BeginBoundsScope(draw: false))
+				using (Seb.Vis.UI.UI.BeginBoundsScope(draw: false))
 				{
 					Vector2 buttonLayoutPos = layoutOrigin;
 
@@ -349,13 +353,13 @@ namespace DLS.Graphics
 						ChipDescription desc;
 						project.chipLibrary.TryGetChipDescription(chipName, out desc);
 						//if (ShouldHideChipInLevel(desc)) continue;
-						UI.Button(chipName, DrawSettings.ActiveUITheme.ChipButton, buttonLayoutPos, new Vector2(0, buttonHeight), false, true, false, DrawSettings.ActiveUITheme.ChipButton.buttonCols, Anchor.BottomLeft, false, 0);
-						buttonLayoutPos = UI.PrevBounds.TopLeft + Vector2.up * buttonSpacing;
+						Seb.Vis.UI.UI.Button(chipName, DrawSettings.ActiveUITheme.ChipButton, buttonLayoutPos, new Vector2(0, buttonHeight), false, true, false, DrawSettings.ActiveUITheme.ChipButton.buttonCols, Anchor.BottomLeft, false, 0);
+						buttonLayoutPos = Seb.Vis.UI.UI.PrevBounds.TopLeft + Vector2.up * buttonSpacing;
 
 						// Stop if approaching top of screen (we'll draw the rest of the collection starting on a new line)
-						if (buttonLayoutPos.y > UI.Height - 0.1f) break;
+						if (buttonLayoutPos.y > Seb.Vis.UI.UI.Height - 0.1f) break;
 
-						collectionBounds = UI.GetCurrentBoundsScope();
+						collectionBounds = Seb.Vis.UI.UI.GetCurrentBoundsScope();
 						numButtonsToDraw++;
 					}
 				}
@@ -374,7 +378,7 @@ namespace DLS.Graphics
 				// Draw the collections (or as much as fit vertically), as well as a background panel
 				Bounds2D panelBounds = Bounds2D.Grow(collectionBounds, buttonSpacing * 2);
 				panelBounds = new Bounds2D(new Vector2(panelBounds.Min.x, barHeight), panelBounds.Max);
-				UI.DrawPanel(panelBounds, theme.StarredBarCol);
+				Seb.Vis.UI.UI.DrawPanel(panelBounds, theme.StarredBarCol);
 				int buttonIndex = DrawCollectionsPopupPartial(collectionBounds.BottomLeft, collectionBounds.Width, firstButtonIndex, numButtonsToDraw, ref openedContextMenu, project);
 				if (buttonIndex != -1) pressedIndex = buttonIndex;
 
@@ -420,17 +424,17 @@ namespace DLS.Graphics
 				string chipName = activeCollection.Chips[i];
 				project.chipLibrary.TryGetChipDescription(chipName, out var desc);
 				bool enabled = viewedChip.CanAddSubchip(chipName) && !ShouldHideChipInLevel(desc);
-				if (UI.Button(chipName, theme, bottomLeftCurr, new Vector2(maxWidth, buttonHeight), enabled, false, false, theme.buttonCols, Anchor.BottomLeft, true, offsetX, ignoreInputs))
+				if (Seb.Vis.UI.UI.Button(chipName, theme, bottomLeftCurr, new Vector2(maxWidth, buttonHeight), enabled, false, false, theme.buttonCols, Anchor.BottomLeft, true, offsetX, ignoreInputs))
 				{
 					pressedIndex = i;
 				}
-				else if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && UI.MouseInsideBounds(UI.PrevBounds))
+				else if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds))
 				{
 					ContextMenu.OpenBottomBarContextMenu(chipName, false, true);
 					openedContextMenu = true;
 				}
 
-				bottomLeftCurr = UI.PrevBounds.TopLeft + Vector2.up * buttonSpacing;
+				bottomLeftCurr = Seb.Vis.UI.UI.PrevBounds.TopLeft + Vector2.up * buttonSpacing;
 			}
 
 			return pressedIndex;
@@ -551,6 +555,7 @@ namespace DLS.Graphics
 
 			if (KeyboardShortcuts.StatsShortcutTriggered) OpenStatsMenu();
 			if (KeyboardShortcuts.PreferencesShortcutTriggered) OpenPreferencesMenu();
+			if (KeyboardShortcuts.LevelsShortcutTriggered) OpenLevelsMenu();
 			if (KeyboardShortcuts.QuitToMainMenuShortcutTriggered) ExitToMainMenu();
 			if (KeyboardShortcuts.SpecialChipsShortcutTriggered) OpenAddSpecialMenu();
 		}
@@ -562,5 +567,6 @@ namespace DLS.Graphics
 			isDraggingChipBar = false;
 			activeCollection = null;
 		}
+
 	}
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DLS.Graphics;
+using DLS.Graphics.UI;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis.UI;
@@ -199,7 +200,7 @@ namespace DLS.Game
 				if (TouchInputHelper.Instance != null &&
 					TouchInputHelper.Instance.Dragging &&
 					Project.ActiveProject.controller.SelectedElements.Count == 0 &&
-					!MobileUIController.Instance.isBoxSelectToolActive
+					!MobileUIControllerWrapper.IsBoxSelectToolActive
 				)
 				{
 					if (!isTouchPanning)

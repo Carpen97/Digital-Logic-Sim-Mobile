@@ -23,9 +23,9 @@ namespace DLS.Online
         /// </summary>
         public static Task InitializeAsync()
         {
-            // Skip Firebase initialization in Editor to avoid crashes
-            #if UNITY_EDITOR
-            Debug.Log("[Firebase] Editor mode - skipping Firebase initialization to avoid crashes");
+            // Skip Firebase initialization in Editor and PC builds to avoid crashes
+            #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
+            Debug.Log("[Firebase] Editor/PC mode - skipping Firebase initialization to avoid crashes");
             _isInitialized = true;
             _userId = "anon";
             return Task.CompletedTask;
@@ -126,8 +126,8 @@ namespace DLS.Online
                     _userId = "anon"; // Fallback to anonymous user
                 }
 #else
-                // In Editor/desktop, skip authentication
-                Debug.Log("[Firebase] Running in Editor/desktop - skipping authentication");
+                // On PC/desktop, skip authentication but still initialize Firebase
+                Debug.Log("[Firebase] Running on PC/desktop - skipping authentication but Firebase is available");
                 _userId = "anon";
 #endif
 

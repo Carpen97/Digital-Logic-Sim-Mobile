@@ -34,15 +34,15 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Saving score for level {levelId}: {score}");
                 
-                // Use local storage in Editor for testing
-                #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - using local storage for testing");
+                // Use local storage in Editor and PC builds for testing
+                #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
+                Debug.Log($"[Leaderboard] Editor/PC mode - using local storage for testing");
                 
                 // Initialize local storage if needed
                 EditorLocalStorage.Initialize();
                 
                 // Save to local storage
-                EditorLocalStorage.SaveScore(levelId, score, userName ?? "EditorUser", completeSolutionId);
+                EditorLocalStorage.SaveScore(levelId, score, userName ?? "PCUser", completeSolutionId);
                 
                 Debug.Log($"[Leaderboard] Score saved to local storage for level {levelId} with score {score}");
                 await Task.Delay(100); // Simulate network delay
@@ -162,9 +162,9 @@ namespace DLS.Online
                 Debug.Log($"[Leaderboard] Getting top {limit} scores for level {levelId}");
                 Debug.Log($"[Leaderboard] UNITY_EDITOR defined: #if UNITY_EDITOR");
 
-                // Use local storage in Editor for testing
-                #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - using local storage for score retrieval");
+                // Use local storage in Editor and PC builds for testing
+                #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
+                Debug.Log($"[Leaderboard] Editor/PC mode - using local storage for score retrieval");
                 
                 // Initialize local storage if needed
                 EditorLocalStorage.Initialize();
@@ -326,9 +326,9 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Saving complete solution for level {solution.LevelId}: {solution.Score}");
                 
-                // Use local storage in Editor for testing
-                #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - using local storage for complete solution");
+                // Use local storage in Editor and PC builds for testing
+                #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
+                Debug.Log($"[Leaderboard] Editor/PC mode - using local storage for complete solution");
                 
                 // Initialize local storage if needed
                 EditorLocalStorage.Initialize();
@@ -468,9 +468,9 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Getting complete solutions for level {levelId}");
 
-                // Skip Firebase operations in Editor to avoid crashes
-                #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - simulating complete solution retrieval for level {levelId}");
+                // Skip Firebase operations in Editor and PC builds to avoid crashes
+                #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
+                Debug.Log($"[Leaderboard] Editor/PC mode - simulating complete solution retrieval for level {levelId}");
                 await Task.Delay(100); // Simulate network delay
                 
                 // Return mock data for Editor
@@ -542,9 +542,9 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Getting complete solution {solutionId}");
 
-                // Use local storage in Editor for testing
-                #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - using local storage for complete solution retrieval");
+                // Use local storage in Editor and PC builds for testing
+                #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
+                Debug.Log($"[Leaderboard] Editor/PC mode - using local storage for complete solution retrieval");
                 
                 // Initialize local storage if needed
                 EditorLocalStorage.Initialize();

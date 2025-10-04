@@ -48,6 +48,21 @@ public class MobileUIController : MonoBehaviour
 
 	private void Awake()
 	{
+		#if !UNITY_ANDROID && !UNITY_IOS
+		// Disable the parent Canvas GameObject on desktop platforms
+		if (transform.parent != null)
+		{
+			transform.parent.gameObject.SetActive(false);
+			Debug.Log("[MobileUIController] Disabled parent Canvas on desktop platform");
+		}
+		else
+		{
+			// Fallback: if for some reason there's no parent, just disable this GameObject
+			gameObject.SetActive(false);
+			Debug.Log("[MobileUIController] Disabled on desktop platform (no parent Canvas)");
+		}
+		return; // Exit Awake early for desktop platforms
+		#else
 		if (Instance == null)
 		{
 			Instance = this;
@@ -55,11 +70,24 @@ public class MobileUIController : MonoBehaviour
 			wrenchImage = wrenchTool.GetComponent<Image>();
 			boxSelectImage = boxSelectTool.GetComponent<Image>();
 			hintImage = hintTool.GetComponent<Image>();
+			
+			// Apply Squiggles Theme immediately
+			if (IconThemeManager.Instance?.CurrentTheme != null)
+			{
+				ApplyTheme(IconThemeManager.Instance.CurrentTheme);
+			}
+			else
+			{
+				// Fallback: Force Squiggles Theme sprites directly
+				Debug.LogWarning("[MobileUIController] IconThemeManager not found, applying Squiggles Theme directly");
+				ApplySquigglesThemeDirectly();
+			}
 		}
 		else
 		{
 			Destroy(gameObject); // Prevent multiple MobileUIControllers
 		}
+		#endif
 
 
 	}
@@ -136,6 +164,12 @@ public class MobileUIController : MonoBehaviour
 
 	public void ApplyTheme(IconThemeSO theme)
 	{
+		// Always use Squiggles Theme - theme swapping removed
+		if (IconThemeManager.Instance?.CurrentTheme != null)
+		{
+			theme = IconThemeManager.Instance.CurrentTheme;
+		}
+		
 		// Set normal state sprites
 		wrenchTool.GetComponent<Image>().sprite = theme.wrenchIcon;
 		boxSelectTool.GetComponent<Image>().sprite = theme.boxSelectIcon;
@@ -149,8 +183,7 @@ public class MobileUIController : MonoBehaviour
 		copyTool.GetComponent<Image>().sprite = theme.copyIcon;
 		validateButton.GetComponent<Image>().sprite = theme.playIcon;	// reuse the checkmark
 
-
-		Debug.Log($"Applied Theme: {theme.name}");
+		Debug.Log($"Applied Squiggles Theme: {theme.name}");
 		var buttons = new (GameObject go, Sprite toggled)[]
 		{
 			(wrenchTool, theme.wrenchIconToggled),
@@ -182,7 +215,55 @@ public class MobileUIController : MonoBehaviour
 				button.transition = Selectable.Transition.ColorTint;
 			}
 		}
+	}
 
+	private void ApplySquigglesThemeDirectly()
+	{
+		// Try multiple approaches to find SquigglesTheme
+		IconThemeSO squigglesTheme = null;
+		
+		// Method 1: Try IconThemeManager
+		if (IconThemeManager.Instance?.CurrentTheme != null)
+		{
+			squigglesTheme = IconThemeManager.Instance.CurrentTheme;
+			Debug.Log("[MobileUIController] Found SquigglesTheme from IconThemeManager");
+		}
+		
+		// Method 2: Try Resources folder
+		if (squigglesTheme == null)
+		{
+			squigglesTheme = Resources.Load<IconThemeSO>("SquigglesTheme");
+			if (squigglesTheme != null)
+			{
+				Debug.Log("[MobileUIController] Found SquigglesTheme from Resources");
+			}
+		}
+		
+		// Method 3: Try to find any IconThemeSO with "Squiggles" in the name
+		if (squigglesTheme == null)
+		{
+			var allThemes = Resources.FindObjectsOfTypeAll<IconThemeSO>();
+			foreach (var theme in allThemes)
+			{
+				if (theme.name.ToLower().Contains("squiggles"))
+				{
+					squigglesTheme = theme;
+					Debug.Log($"[MobileUIController] Found SquigglesTheme: {theme.name}");
+					break;
+				}
+			}
+		}
+		
+		// Apply the theme if found
+		if (squigglesTheme != null)
+		{
+			ApplyTheme(squigglesTheme);
+			Debug.Log("[MobileUIController] Successfully applied SquigglesTheme");
+		}
+		else
+		{
+			Debug.LogError("[MobileUIController] Could not find SquigglesTheme anywhere - buttons will use old sprites");
+		}
 	}
 
 	public void HideAll(){

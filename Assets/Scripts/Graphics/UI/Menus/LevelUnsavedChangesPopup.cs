@@ -26,46 +26,46 @@ namespace DLS.Graphics
 				: "The current level has unsaved changes.\nAre you sure you want to continue?";
 			
 			Color textCol = new(1, 0.4f, 0.45f);
-			Vector2 textPos = UI.Centre + Vector2.up * 5;
+			Vector2 textPos = Seb.Vis.UI.UI.Centre + Vector2.up * 5;
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				Draw.ID panelID = UI.ReservePanel();
-				Draw.ID textBGPanelID = UI.ReservePanel();
-				UI.DrawText(text, DrawSettings.ActiveUITheme.FontRegular, DrawSettings.ActiveUITheme.FontSizeRegular, textPos, Anchor.TextCentre, textCol);
-				UI.ModifyPanel(textBGPanelID, Bounds2D.Grow(UI.PrevBounds, 1.5f), ColHelper.MakeCol(0.11f));
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+				Draw.ID textBGPanelID = Seb.Vis.UI.UI.ReservePanel();
+				Seb.Vis.UI.UI.DrawText(text, DrawSettings.ActiveUITheme.FontRegular, DrawSettings.ActiveUITheme.FontSizeRegular, textPos, Anchor.TextCentre, textCol);
+				Seb.Vis.UI.UI.ModifyPanel(textBGPanelID, Bounds2D.Grow(Seb.Vis.UI.UI.PrevBounds, 1.5f), ColHelper.MakeCol(0.11f));
 
-				Vector2 topLeft = UI.PrevBounds.BottomLeft + Vector2.down * 1;
+				Vector2 topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 1;
 				
-				// Draw 3 buttons vertically: Cancel, Save and Continue, Continue without Saving
-				Vector2 buttonSize = new Vector2(UI.PrevBounds.Width, DrawSettings.ButtonHeight * 1.6f);
+				// Draw 3 buttons vertically: Save and Continue, Continue without Saving, Cancel
+				Vector2 buttonSize = new Vector2(Seb.Vis.UI.UI.PrevBounds.Width, DrawSettings.ButtonHeight * 1.6f);
 				float buttonSpacing = DrawSettings.DefaultButtonSpacing;
 				
-				// Cancel button
-				Vector2 cancelButtonPos = topLeft;
-				if (UI.Button("CANCEL", DrawSettings.ActiveUITheme.ButtonTheme, cancelButtonPos, buttonSize, true, false, false, DrawSettings.ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft))
-				{
-					UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
-					onClosedCallback?.Invoke(0); // Cancel
-				}
-				
 				// Save and Continue button
-				Vector2 saveButtonPos = UI.PrevBounds.BottomLeft + Vector2.down * buttonSpacing;
-				if (UI.Button("SAVE AND CONTINUE", DrawSettings.ActiveUITheme.ButtonTheme, saveButtonPos, buttonSize, true, false, false, DrawSettings.ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft))
+				Vector2 saveButtonPos = topLeft;
+				if (Seb.Vis.UI.UI.Button("SAVE AND CONTINUE", DrawSettings.ActiveUITheme.ButtonTheme, saveButtonPos, buttonSize, true, false, false, DrawSettings.ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft))
 				{
 					UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
 					onClosedCallback?.Invoke(1); // Save and continue
 				}
 				
 				// Continue without Saving button
-				Vector2 continueButtonPos = UI.PrevBounds.BottomLeft + Vector2.down * buttonSpacing;
-				if (UI.Button("CONTINUE WITHOUT SAVING", DrawSettings.ActiveUITheme.ButtonTheme, continueButtonPos, buttonSize, true, false, false, DrawSettings.ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft))
+				Vector2 continueButtonPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * buttonSpacing;
+				if (Seb.Vis.UI.UI.Button("CONTINUE WITHOUT SAVING", DrawSettings.ActiveUITheme.ButtonTheme, continueButtonPos, buttonSize, true, false, false, DrawSettings.ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft))
 				{
 					UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
 					onClosedCallback?.Invoke(2); // Continue without saving
 				}
+				
+				// Cancel button (moved to bottom)
+				Vector2 cancelButtonPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * buttonSpacing;
+				if (Seb.Vis.UI.UI.Button("CANCEL", DrawSettings.ActiveUITheme.ButtonTheme, cancelButtonPos, buttonSize, true, false, false, DrawSettings.ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft))
+				{
+					UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+					onClosedCallback?.Invoke(0); // Cancel
+				}
 
-				MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
+				MenuHelper.DrawReservedMenuPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope());
 			}
 		}
 

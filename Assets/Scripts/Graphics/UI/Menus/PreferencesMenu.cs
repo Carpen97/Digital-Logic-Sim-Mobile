@@ -84,18 +84,7 @@ namespace DLS.Graphics
 			#endif
 		};
 
-		static readonly string[] UIThemeOptions =
-		{
-			#if UNITY_ANDROID || UNITY_IOS
-			"Theme 1",
-			"Squiggles",
-			#else
-			"Theme 1",
-			"Squiggles",
-			"Dark",
-			"Light"
-			#endif
-		};
+		// UI Theme options removed - only Squiggles Theme is used
 
 		static readonly string[] SimulationStatusOptions =
 		{
@@ -126,7 +115,7 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_GridDisplay = new("PREFS_GridDisplay");
 		static readonly UIHandle ID_WireCurvatureDisplay = new("PREFS_WireCurvatureDisplay");
 		static readonly UIHandle ID_MultiWireLayoutAlgorithm = new("PREFS_MultiWireLayoutAlgorithm");
-		static readonly UIHandle ID_UIThemeDisplay = new("PREFS_UIThemeDisplay");
+		// UIThemeDisplay handle removed - only Squiggles Theme is used
 		static readonly UIHandle ID_Snapping = new("PREFS_Snapping");
 		static readonly UIHandle ID_StraightWires = new("PREFS_StraightWires");
 		static readonly UIHandle ID_SimStatus = new("PREFS_SimStatus");
@@ -143,11 +132,9 @@ namespace DLS.Graphics
 		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string showGridLabel = "Show grid";
 		static readonly string wireCurvatureLabel = "Wire curvature";
-		static readonly string UIThemeLabel = "UI Theme";
 		#else
 		static readonly string showGridLabel = "Show grid" + CreateShortcutString("Ctrl+G");
 		static readonly string wireCurvatureLabel = "Wire curvature";
-		static readonly string UIThemeLabel = "UI Theme";
 		#endif
 		static readonly string simStatusLabel = "Sim Status" + CreateShortcutString("Ctrl+Space");
 		static readonly Func<string, bool> integerInputValidator = ValidateIntegerInput;
@@ -231,17 +218,17 @@ namespace DLS.Graphics
 
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 			MenuHelper.DrawBackgroundOverlay();
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 			UpdateSimSpeedString(project);
 
 			const int inputTextPad = 1;
 			const float headerSpacing = 2.5f; // Increased from 1.5f to make header rows bigger
 			Color labelCol = Color.white;
 			Color headerCol = new(0.46f, 1, 0.54f);
-			Vector2 topLeft = UI.Centre + new Vector2(-menuWidth / 2, verticalOffset);
+			Vector2 topLeft = Seb.Vis.UI.UI.Centre + new Vector2(-menuWidth / 2, verticalOffset);
 			Vector2 labelPosCurr = topLeft;
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 				// --- Draw settings ---
 				DrawCollapsibleHeader("DISPLAY:", ID_DisplaySection, IsDisplaySectionExpanded, ToggleDisplaySection);
@@ -252,7 +239,7 @@ namespace DLS.Graphics
 					DrawNextWheel(showGridLabel, GridDisplayOptions, ID_GridDisplay);
 					DrawNextWheel(wireCurvatureLabel, WireCurvatureOptions, ID_WireCurvatureDisplay);
 					DrawNextWheel("Multi-wire layout", MultiWireLayoutAlgorithmOptions, ID_MultiWireLayoutAlgorithm);
-					DrawNextWheel(UIThemeLabel, UIThemeOptions, ID_UIThemeDisplay);
+					// UI Theme option removed - only Squiggles Theme is used
 				}
 
 				DrawCollapsibleHeader("EDITING:", ID_EditingSection, IsEditingSectionExpanded, ToggleEditingSection);
@@ -275,35 +262,35 @@ namespace DLS.Graphics
 					AddSpacing();
 					// Draw current simulation speed
 					Vector2 tickLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, "Steps per second (current)", labelCol * 0.75f, true);
-					UI.DrawPanel(tickLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-					UI.DrawText(currentSimSpeedString, theme.FontBold, theme.FontSizeRegular, tickLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, currentSimSpeedStringColour);
+					Seb.Vis.UI.UI.DrawPanel(tickLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+					Seb.Vis.UI.UI.DrawText(currentSimSpeedString, theme.FontBold, theme.FontSizeRegular, tickLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, currentSimSpeedStringColour);
 				}
 
 				// Draw cancel/confirm buttons
-				Vector2 buttonTopLeft = new(labelPosCurr.x, UI.PrevBounds.Bottom);
+				Vector2 buttonTopLeft = new(labelPosCurr.x, Seb.Vis.UI.UI.PrevBounds.Bottom);
 				MenuHelper.CancelConfirmResult result = MenuHelper.DrawCancelConfirmButtons(buttonTopLeft, menuWidth, true);
 
 				// Draw menu background
-				Bounds2D menuBounds = UI.GetCurrentBoundsScope();
+				Bounds2D menuBounds = Seb.Vis.UI.UI.GetCurrentBoundsScope();
 				MenuHelper.DrawReservedMenuPanel(panelID, menuBounds);
 
 				// ---- Handle changes ----
 				// Get values from expanded sections only
-				int mainPinNamesMode = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_MainPinNames).index : project.description.Prefs_MainPinNamesDisplayMode;
-				int chipPinNamesMode = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_ChipPinNames).index : project.description.Prefs_ChipPinNamesDisplayMode;
-				int gridDisplayMode = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_GridDisplay).index : project.description.Prefs_GridDisplayMode;
-				int wireDisplayMode = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_WireCurvatureDisplay).index : project.description.Prefs_WireCurvatureMode;
-				int multiWireLayoutAlgorithm = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_MultiWireLayoutAlgorithm).index : project.description.Prefs_MultiWireLayoutAlgorithm;
-				int UIThemeMode = IsDisplaySectionExpanded() ? UI.GetWheelSelectorState(ID_UIThemeDisplay).index : project.description.Prefs_UIThemeMode;
+				int mainPinNamesMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_MainPinNames).index : project.description.Prefs_MainPinNamesDisplayMode;
+				int chipPinNamesMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_ChipPinNames).index : project.description.Prefs_ChipPinNamesDisplayMode;
+				int gridDisplayMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_GridDisplay).index : project.description.Prefs_GridDisplayMode;
+				int wireDisplayMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_WireCurvatureDisplay).index : project.description.Prefs_WireCurvatureMode;
+				int multiWireLayoutAlgorithm = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_MultiWireLayoutAlgorithm).index : project.description.Prefs_MultiWireLayoutAlgorithm;
+				// UIThemeMode removed - only Squiggles Theme is used
 				
-				int pinIndicatorsMode = IsEditingSectionExpanded() ? UI.GetWheelSelectorState(ID_PinIndicators).index : project.description.Perfs_PinIndicators;
-				int snappingMode = IsEditingSectionExpanded() ? UI.GetWheelSelectorState(ID_Snapping).index : project.description.Prefs_Snapping;
-				int straightWireMode = IsEditingSectionExpanded() ? UI.GetWheelSelectorState(ID_StraightWires).index : project.description.Prefs_StraightWires;
-				int controlSchemeMode = IsEditingSectionExpanded() ? UI.GetWheelSelectorState(ID_ControlScheme).index : (project.description.Prefs_UseDragAndDropMode ? 1 : 0);
+				int pinIndicatorsMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_PinIndicators).index : project.description.Perfs_PinIndicators;
+				int snappingMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_Snapping).index : project.description.Prefs_Snapping;
+				int straightWireMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_StraightWires).index : project.description.Prefs_StraightWires;
+				int controlSchemeMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_ControlScheme).index : (project.description.Prefs_UseDragAndDropMode ? 1 : 0);
 				
-				bool pauseSim = IsSimulationSectionExpanded() ? (UI.GetWheelSelectorState(ID_SimStatus).index == 1) : project.description.Prefs_SimPaused;
-				InputFieldState clockSpeedInputFieldState = IsSimulationSectionExpanded() ? UI.GetInputFieldState(ID_ClockSpeedInput) : new InputFieldState();
-				InputFieldState freqState = IsSimulationSectionExpanded() ? UI.GetInputFieldState(ID_SimFrequencyField) : new InputFieldState();
+				bool pauseSim = IsSimulationSectionExpanded() ? (Seb.Vis.UI.UI.GetWheelSelectorState(ID_SimStatus).index == 1) : project.description.Prefs_SimPaused;
+				InputFieldState clockSpeedInputFieldState = IsSimulationSectionExpanded() ? Seb.Vis.UI.UI.GetInputFieldState(ID_ClockSpeedInput) : new InputFieldState();
+				InputFieldState freqState = IsSimulationSectionExpanded() ? Seb.Vis.UI.UI.GetInputFieldState(ID_SimFrequencyField) : new InputFieldState();
 				
 				int.TryParse(clockSpeedInputFieldState.text, out int clockSpeed);
 				int.TryParse(freqState.text, out int targetSimTicksPerSecond);
@@ -321,7 +308,7 @@ namespace DLS.Graphics
 				project.description.Prefs_GridDisplayMode = gridDisplayMode;
 				project.description.Prefs_WireCurvatureMode = wireDisplayMode;
 				project.description.Prefs_MultiWireLayoutAlgorithm = multiWireLayoutAlgorithm;
-				project.description.Prefs_UIThemeMode = UIThemeMode;
+				// UIThemeMode assignment removed - only Squiggles Theme is used
 				project.description.Prefs_Snapping = snappingMode;
 				project.description.Prefs_StraightWires = straightWireMode;
 				project.description.Prefs_SimTargetStepsPerSecond = targetSimTicksPerSecond;
@@ -362,14 +349,14 @@ namespace DLS.Graphics
 				AddHeaderSpacing();
 				
 				// Draw header text
-				UI.DrawText(text, theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, headerCol);
+				Seb.Vis.UI.UI.DrawText(text, theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, headerCol);
 				
 				// Draw toggle button to the right (much bigger for easier tapping)
 				Vector2 toggleButtonPos = new Vector2(labelPosCurr.x + menuWidth - 8.0f, labelPosCurr.y);
 				Vector2 toggleButtonSize = new Vector2(7.5f, 2.0f); // Even bigger buttons
 				string toggleText = isExpanded() ? "−" : "+";
 				
-				if (UI.Button(toggleText, theme.MenuButtonTheme, toggleButtonPos, toggleButtonSize, true, true, false, theme.ButtonTheme.buttonCols, Anchor.CentreLeft))
+				if (Seb.Vis.UI.UI.Button(toggleText, theme.MenuButtonTheme, toggleButtonPos, toggleButtonSize, true, true, false, theme.ButtonTheme.buttonCols, Anchor.CentreLeft))
 				{
 					toggleAction();
 				}
@@ -409,25 +396,25 @@ namespace DLS.Graphics
 
 			ProjectDescription projDesc = Project.ActiveProject.description;
 
-			UI.GetWheelSelectorState(ID_MainPinNames).index = projDesc.Prefs_MainPinNamesDisplayMode;
-			UI.GetWheelSelectorState(ID_ChipPinNames).index = projDesc.Prefs_ChipPinNamesDisplayMode;
-			UI.GetWheelSelectorState(ID_GridDisplay).index = projDesc.Prefs_GridDisplayMode;
-			UI.GetWheelSelectorState(ID_WireCurvatureDisplay).index = projDesc.Prefs_WireCurvatureMode;
-			UI.GetWheelSelectorState(ID_MultiWireLayoutAlgorithm).index = projDesc.Prefs_MultiWireLayoutAlgorithm;
-			UI.GetWheelSelectorState(ID_UIThemeDisplay).index = projDesc.Prefs_UIThemeMode;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_MainPinNames).index = projDesc.Prefs_MainPinNamesDisplayMode;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_ChipPinNames).index = projDesc.Prefs_ChipPinNamesDisplayMode;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_GridDisplay).index = projDesc.Prefs_GridDisplayMode;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_WireCurvatureDisplay).index = projDesc.Prefs_WireCurvatureMode;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_MultiWireLayoutAlgorithm).index = projDesc.Prefs_MultiWireLayoutAlgorithm;
+			// UIThemeDisplay initialization removed - only Squiggles Theme is used
 	
 			// 🛠 Clamp snapping and straight wire mode indexes
 			#if UNITY_ANDROID || UNITY_IOS
-			UI.GetWheelSelectorState(ID_Snapping).index = Mathf.Clamp(projDesc.Prefs_Snapping, 0, SnappingOptions.Length - 1);
-			UI.GetWheelSelectorState(ID_StraightWires).index = Mathf.Clamp(projDesc.Prefs_StraightWires, 0, StraightWireOptions.Length - 1);
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_Snapping).index = Mathf.Clamp(projDesc.Prefs_Snapping, 0, SnappingOptions.Length - 1);
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_StraightWires).index = Mathf.Clamp(projDesc.Prefs_StraightWires, 0, StraightWireOptions.Length - 1);
 			#else
-			UI.GetWheelSelectorState(ID_Snapping).index = projDesc.Prefs_Snapping;
-			UI.GetWheelSelectorState(ID_StraightWires).index = projDesc.Prefs_StraightWires;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_Snapping).index = projDesc.Prefs_Snapping;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_StraightWires).index = projDesc.Prefs_StraightWires;
 			#endif
 	
-			UI.GetWheelSelectorState(ID_SimStatus).index = projDesc.Prefs_SimPaused ? 1 : 0;
-			UI.GetWheelSelectorState(ID_PinIndicators).index = projDesc.Perfs_PinIndicators;
-			UI.GetWheelSelectorState(ID_ControlScheme).index = projDesc.Prefs_UseDragAndDropMode ? 1 : 0;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_SimStatus).index = projDesc.Prefs_SimPaused ? 1 : 0;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_PinIndicators).index = projDesc.Perfs_PinIndicators;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_ControlScheme).index = projDesc.Prefs_UseDragAndDropMode ? 1 : 0;
             // -- Input fields with default value handling
             int targetStepsPerSecond = projDesc.Prefs_SimTargetStepsPerSecond;
             int stepsPerClockTick = projDesc.Prefs_SimStepsPerClockTick;
@@ -437,8 +424,8 @@ namespace DLS.Graphics
             if (targetStepsPerSecond <= 0 || targetStepsPerSecond < 100) targetStepsPerSecond = 1000;
             if (stepsPerClockTick <= 0 || stepsPerClockTick < 10) stepsPerClockTick = 250;
             
-            UI.GetInputFieldState(ID_SimFrequencyField).SetText(targetStepsPerSecond + "", false);
-			UI.GetInputFieldState(ID_ClockSpeedInput).SetText(stepsPerClockTick + "", false);
+            Seb.Vis.UI.UI.GetInputFieldState(ID_SimFrequencyField).SetText(targetStepsPerSecond + "", false);
+			Seb.Vis.UI.UI.GetInputFieldState(ID_ClockSpeedInput).SetText(stepsPerClockTick + "", false);
 		}
 
 
@@ -515,7 +502,7 @@ namespace DLS.Graphics
 		static string CreateShortcutString(string s) => "";
 		#else
 
-		static string CreateShortcutString(string s) => UI.CreateColouredText("  " +s, new Color(1, 1, 1, 0.3f));
+		static string CreateShortcutString(string s) => Seb.Vis.UI.UI.CreateColouredText("  " +s, new Color(1, 1, 1, 0.3f));
 		#endif
 	}
 }

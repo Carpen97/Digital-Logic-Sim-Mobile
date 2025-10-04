@@ -18,25 +18,25 @@ namespace DLS.Graphics
 		public static void DrawMenu()
 		{
 			MenuHelper.DrawBackgroundOverlay();
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
-			Vector2 pos = UI.Centre + Vector2.up * (UI.HalfHeight * 0.25f);
+			Vector2 pos = Seb.Vis.UI.UI.Centre + Vector2.up * (Seb.Vis.UI.UI.HalfHeight * 0.25f);
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				UI.DrawText("Pulse Width (ticks)", theme.FontBold, theme.FontSizeRegular, pos, Anchor.TextCentre, Color.white * 0.8f);
+				Seb.Vis.UI.UI.DrawText("Pulse Width (ticks)", theme.FontBold, theme.FontSizeRegular, pos, Anchor.TextCentre, Color.white * 0.8f);
 
 				InputFieldTheme inputFieldTheme = DrawSettings.ActiveUITheme.ChipNameInputField;
 				inputFieldTheme.fontSize = DrawSettings.ActiveUITheme.FontSizeRegular;
 
 				Vector2 size = new(5.6f, DrawSettings.SelectorWheelHeight);
-				Vector2 inputPos = UI.PrevBounds.CentreBottom + Vector2.down * DrawSettings.VerticalButtonSpacing;
-				InputFieldState state = UI.InputField(ID_PulseWidthInput, inputFieldTheme, inputPos, size, string.Empty, Anchor.CentreTop, 1, integerInputValidator, forceFocus: true);
+				Vector2 inputPos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + Vector2.down * DrawSettings.VerticalButtonSpacing;
+				InputFieldState state = Seb.Vis.UI.UI.InputField(ID_PulseWidthInput, inputFieldTheme, inputPos, size, string.Empty, Anchor.CentreTop, 1, integerInputValidator, forceFocus: true);
 				uint.TryParse(state.text, out pulseWidth);
 
-				MenuHelper.CancelConfirmResult result = MenuHelper.DrawCancelConfirmButtons(UI.GetCurrentBoundsScope().BottomLeft, UI.GetCurrentBoundsScope().Width, true);
-				MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
+				MenuHelper.CancelConfirmResult result = MenuHelper.DrawCancelConfirmButtons(Seb.Vis.UI.UI.GetCurrentBoundsScope().BottomLeft, Seb.Vis.UI.UI.GetCurrentBoundsScope().Width, true);
+				MenuHelper.DrawReservedMenuPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope());
 
 				if (result == MenuHelper.CancelConfirmResult.Cancel)
 				{
@@ -54,7 +54,7 @@ namespace DLS.Graphics
 		{
 			pulseChip = (SubChipInstance)ContextMenu.interactionContext;
 			pulseWidth = pulseChip.InternalData[0];
-			UI.GetInputFieldState(ID_PulseWidthInput).SetText(pulseWidth.ToString());
+			Seb.Vis.UI.UI.GetInputFieldState(ID_PulseWidthInput).SetText(pulseWidth.ToString());
 		}
 
 		public static bool ValidatePulseWidthInput(string s)

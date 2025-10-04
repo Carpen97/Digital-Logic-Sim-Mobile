@@ -19,11 +19,19 @@ namespace DLS.Description
 				ResolutionX = 1920,
 				ResolutionY = 1080,
 				fullscreenMode = FullScreenMode.Windowed,
-				orientationIsLeftLandscape = false,
 				VSyncEnabled = true,
+				#if UNITY_ANDROID || UNITY_IOS
+				orientationIsLeftLandscape = false,
 				showScrollingButtons = 0,
 				UIScaling = 1,
 				AutoResolution = true
+				#else
+				// Desktop defaults - these fields are not used on desktop
+				orientationIsLeftLandscape = false,
+				showScrollingButtons = 0,
+				UIScaling = 1,
+				AutoResolution = false
+				#endif
 			};
 	}
 }

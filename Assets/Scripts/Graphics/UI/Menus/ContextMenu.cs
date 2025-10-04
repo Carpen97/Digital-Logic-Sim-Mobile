@@ -9,6 +9,7 @@ using Seb.Types;
 using Seb.Vis;
 using Seb.Vis.UI;
 using UnityEngine;
+using DLS.Graphics.UI;
 
 namespace DLS.Graphics
 {
@@ -165,7 +166,7 @@ namespace DLS.Graphics
 		{
 			// Open menu input
 			#if UNITY_ANDROID || UNITY_IOS
-			if (MobileUIController.Instance.isWrenchToolActive && TouchInputHelper.TouchTapDown() &&!TouchInputHelper.Instance.isPressingUI)
+			if (MobileUIControllerWrapper.IsWrenchToolActive && TouchInputHelper.TouchTapDown() &&!TouchInputHelper.Instance.isPressingUI)
 			#else
 			if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && !KeyboardShortcuts.CameraActionKeyHeld && !InteractionState.MouseIsOverUI)
 			#endif
@@ -180,8 +181,9 @@ namespace DLS.Graphics
 
 				if (openSubChipContextMenu || openDevPinContextMenu || openWireContextMenu || openSubchipOutputPinContextMenu)
 				{
-
-					MobileUIController.Instance.OnWrenchButtonPress();
+					#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+					MobileUIControllerWrapper.OnWrenchButtonPress();
+					#endif
 					interactionContextName = string.Empty;
 					interactionContext = hoverElement;
 					string headerName = string.Empty;
@@ -281,7 +283,7 @@ namespace DLS.Graphics
 
 		static void SetContextMenuOpen(string header)
 		{
-			mouseOpenMenuPos = UI.ScreenToUISpace(InputHelper.MousePos);
+			mouseOpenMenuPos = Seb.Vis.UI.UI.ScreenToUISpace(InputHelper.MousePos);
 			contextMenuHeader = header.PadRight(pad);
 			IsOpen = true;
 		}
@@ -300,23 +302,23 @@ namespace DLS.Graphics
 			float menuWidthHeader = Draw.CalculateTextBoundsSize(contextMenuHeader, theme.fontSize, theme.font).x + 1;
 			menuWidth = Mathf.Max(menuWidth, menuWidthHeader);
 
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 			#if UNITY_ANDROID || UNITY_IOS
 			Vector2 buttonSize = new(menuWidth, 2*2);
 			#else
 			Vector2 buttonSize = new(menuWidth, 2);
 			#endif
 			Vector2 pos = mouseOpenMenuPos;
-			if (pos.x + menuWidth > UI.Width)
+			if (pos.x + menuWidth > Seb.Vis.UI.UI.Width)
 			{
-				pos.x = UI.Width - menuWidth;
+				pos.x = Seb.Vis.UI.UI.Width - menuWidth;
 			}
 
-			bool expandDown = pos.y >= UI.Height * 0.35f;
+			bool expandDown = pos.y >= Seb.Vis.UI.UI.Height * 0.35f;
 			float dirY = expandDown ? -1 : 1;
 			Anchor anchor = expandDown ? Anchor.TopLeft : Anchor.BottomLeft;
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 				for (int i = 0; i < menuEntries.Length; i++)
 				{
@@ -328,12 +330,12 @@ namespace DLS.Graphics
 					if (entry.Text == menuDividerString)
 					{
 						pos.y += 0.5f * dirY;
-						UI.DrawPanel(pos, new Vector2(menuWidth, 0.15f), ColHelper.MakeCol(0.6f), Anchor.CentreLeft);
+						Seb.Vis.UI.UI.DrawPanel(pos, new Vector2(menuWidth, 0.15f), ColHelper.MakeCol(0.6f), Anchor.CentreLeft);
 						pos.y += 0.5f * dirY;
 					}
 					else
 					{
-						if (UI.Button(entry.Text, theme, pos, buttonSize, entry.IsEnabled(), false, false, theme.buttonCols, anchor, true, textOffsetX))
+						if (Seb.Vis.UI.UI.Button(entry.Text, theme, pos, buttonSize, entry.IsEnabled(), false, false, theme.buttonCols, anchor, true, textOffsetX))
 						{
 							entry.OnPress();
 						}
@@ -344,16 +346,16 @@ namespace DLS.Graphics
 					if (index == 0 && !expandDown) DrawHeader();
 				}
 
-				Bounds2D bounds = UI.GetCurrentBoundsScope();
+				Bounds2D bounds = Seb.Vis.UI.UI.GetCurrentBoundsScope();
 				Vector2 menuSize = new(menuWidth, bounds.Height);
-				UI.ModifyPanel(panelID, bounds.Centre, menuSize + Vector2.one * 0.5f, ColHelper.MakeCol(0.91f));
+				Seb.Vis.UI.UI.ModifyPanel(panelID, bounds.Centre, menuSize + Vector2.one * 0.5f, ColHelper.MakeCol(0.91f));
 			}
 
-			wasMouseOverMenu = UI.MouseInsideBounds(UI.PrevBounds);
+			wasMouseOverMenu = Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds);
 
 			void DrawHeader()
 			{
-				UI.Button(contextMenuHeader, headerTheme, pos, buttonSize, false, false, false,headerTheme.buttonCols, anchor, true, textOffsetX);
+				Seb.Vis.UI.UI.Button(contextMenuHeader, headerTheme, pos, buttonSize, false, false, false,headerTheme.buttonCols, anchor, true, textOffsetX);
 				pos.y += buttonSize.y * dirY;
 			}
 		}

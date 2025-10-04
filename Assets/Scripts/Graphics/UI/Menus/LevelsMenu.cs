@@ -82,15 +82,15 @@ namespace DLS.Graphics
 			MenuHelper.DrawBackgroundOverlay();
 			Vector2 panelEdgePadding = new(3.25f, 2.6f);
 
-			float panelWidthSum = UI.Width - interPanelSpacing - panelEdgePadding.x * 2;
-			float panelHeight = UI.Height - panelEdgePadding.y * 2;
+			float panelWidthSum = Seb.Vis.UI.UI.Width - interPanelSpacing - panelEdgePadding.x * 2;
+			float panelHeight = Seb.Vis.UI.UI.Height - panelEdgePadding.y * 2;
 
-			Vector2 panelATopLeft = UI.TopLeft +Vector2.right * UI.Width * (0.5f-levelsPanelWidthT) + new Vector2(panelEdgePadding.x, -panelEdgePadding.y + menuOffsetY);
+			Vector2 panelATopLeft = Seb.Vis.UI.UI.TopLeft +Vector2.right * Seb.Vis.UI.UI.Width * (0.5f-levelsPanelWidthT) + new Vector2(panelEdgePadding.x, -panelEdgePadding.y + menuOffsetY);
 			Vector2 panelSizeA = new(panelWidthSum * levelsPanelWidthT, panelHeight);
 			Vector2 panelBTopLeft = panelATopLeft + Vector2.right * (panelSizeA.x + interPanelSpacing);
 			Vector2 panelSizeB = new(panelWidthSum * selectionPanelWidthT, panelHeight);
 
-			isScrolling = UI.GetScrollbarState(ID_LevelsScrollbar).isDragging;
+			isScrolling = Seb.Vis.UI.UI.GetScrollbarState(ID_LevelsScrollbar).isDragging;
 
 			DrawLevelsPanel(panelATopLeft, panelSizeA);
 			DrawSelectionPanel(panelBTopLeft, panelSizeB);
@@ -98,24 +98,24 @@ namespace DLS.Graphics
 
 		static void DrawLevelsPanel(Vector2 topLeft, Vector2 size)
 		{
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 			Bounds2D panelBounds = Bounds2D.CreateFromTopLeftAndSize(topLeft, size);
 			DrawPanelHeader("LEVELS", topLeft, size.x);
 
-			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - UI.PrevBounds.Height));
+			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(Seb.Vis.UI.UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - Seb.Vis.UI.UI.PrevBounds.Height));
 			Bounds2D panelContentBounds = Bounds2D.Shrink(panelBoundsMinusHeader, PanelUIPadding);
 
-			UI.DrawScrollView(ID_LevelsScrollbar, panelContentBounds.TopLeft, panelContentBounds.Size, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawLevelPackEntry, _levelPacks.Count);
+			Seb.Vis.UI.UI.DrawScrollView(ID_LevelsScrollbar, panelContentBounds.TopLeft, panelContentBounds.Size, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawLevelPackEntry, _levelPacks.Count);
 			MenuHelper.DrawReservedMenuPanel(panelID, panelBounds, false);
 		}
 
 		static void DrawSelectionPanel(Vector2 topLeft, Vector2 size)
 		{
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 			Bounds2D panelBounds = Bounds2D.CreateFromTopLeftAndSize(topLeft, size);
 			DrawPanelHeader("SELECTION", topLeft, size.x);
 
-			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - UI.PrevBounds.Height));
+			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(Seb.Vis.UI.UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - Seb.Vis.UI.UI.PrevBounds.Height));
 			Bounds2D panelContentBounds = Bounds2D.Shrink(panelBoundsMinusHeader, PanelUIPadding);
 
 			// Draw preview window first
@@ -152,7 +152,7 @@ namespace DLS.Graphics
 				displayName = (pack.isToggledOpen ? "▼ " : "▶ ") + pack.name;
 			}
 
-			bool packPressed = UI.Button(displayName, activePackTheme, topLeft, new Vector2(width, 2), true, false, false, activePackTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+			bool packPressed = Seb.Vis.UI.UI.Button(displayName, activePackTheme, topLeft, new Vector2(width, 2), true, false, false, activePackTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 			if (packPressed)
 			{
 				_selectedLevelPackIndex = packIndex;
@@ -171,8 +171,16 @@ namespace DLS.Graphics
 				{
 					var level = pack.levels[levelIndex];
 					ButtonTheme activeLevelTheme = packIndex == _selectedLevelPackIndex && levelIndex == _selectedLevelIndex ? ActiveUITheme.ChipLibraryChipToggleOn : ActiveUITheme.ChipLibraryChipToggleOff;
-					Vector2 levelLabelPos = new(topLeft.x + nestedInset, UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
-					bool levelPressed = UI.Button(level.name, activeLevelTheme, levelLabelPos, new Vector2(width - nestedInset, 2), true, false, false, activeLevelTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+					Vector2 levelLabelPos = new(topLeft.x + nestedInset, Seb.Vis.UI.UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
+					
+					// Add green tickmark if level is completed
+					string levelDisplayName = level.name;
+					if (IsLevelCompleted(level.id))
+					{
+						levelDisplayName += " ✓";
+					}
+					
+					bool levelPressed = Seb.Vis.UI.UI.Button(levelDisplayName, activeLevelTheme, levelLabelPos, new Vector2(width - nestedInset, 2), true, false, false, activeLevelTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 					if (levelPressed)
 					{
 						bool alreadySelected = _selectedLevelIndex == levelIndex && packHighlighted;
@@ -212,14 +220,14 @@ namespace DLS.Graphics
 			{
 				var selectedLevel = _allLevels[0]; // Always use index 0 since _allLevels only contains the current selection
 				MenuHelper.DrawTopLeftAlignTextWithBackground(selectedLevel.description, previewTopLeft, new Vector2(previewWidth, previewHeight), Anchor.TopLeft, Color.white, previewBgCol, true, 1f, true);
-				ret = UI.PrevBounds.BottomLeft;
+				ret = Seb.Vis.UI.UI.PrevBounds.BottomLeft;
 				return ret;
 			}
 			else
 			{
 				// No level selected - show empty preview
 				MenuHelper.DrawLeftAlignTextWithBackground("", previewTopLeft, new Vector2(previewWidth, previewHeight), Anchor.TopLeft, Color.white, previewBgCol, true);
-				ret = UI.PrevBounds.BottomLeft;
+				ret = Seb.Vis.UI.UI.PrevBounds.BottomLeft;
 				return ret;
 			}
 		}
@@ -229,7 +237,7 @@ namespace DLS.Graphics
 			Vector2 bannerPos = previewBottomLeft + Vector2.down * (1.5f); // Normal spacing
 			Vector2 bannerSize = new(panelContentBounds.Width, 2f);
 
-			// Red banner like in Library menu
+			// Default red banner color
 			Color bannerCol = new Color(0.8f, 0.2f, 0.2f, 1f); // Red color
 			Color textCol = Color.white;
 			
@@ -239,6 +247,12 @@ namespace DLS.Graphics
 			{
 				var selectedLevel = _allLevels[0]; // Always use index 0 since _allLevels only contains the current selection
 				bannerText = selectedLevel.name;
+				
+				// Change banner color to green if level is completed
+				if (IsLevelCompleted(selectedLevel.id))
+				{
+					bannerCol = new Color(0.2f, 0.8f, 0.2f, 1f); // Green color
+				}
 			}
 			
 			MenuHelper.DrawCentredTextWithBackground(bannerText, bannerPos, bannerSize, Anchor.TopLeft, textCol, bannerCol);
@@ -247,7 +261,7 @@ namespace DLS.Graphics
 		static void DrawActionButtons(Bounds2D panelContentBounds)
 		{
 			// Position buttons to flow naturally after the banner
-			//Vector2 buttonPos = UI.PrevBounds.BottomLeft + Vector2.down * 1.5f; // After preview + banner + spacing
+			//Vector2 buttonPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 1.5f; // After preview + banner + spacing
 			Vector2 buttonPos = panelContentBounds.CentreBottom + Vector2.up * (3 * 5f) ;
 			Vector2 buttonSize = new(panelContentBounds.Width * 0.9f, 4f); // Double height, wider
 			const float buttonSpacing = 1f; // Normal spacing between buttons
@@ -257,13 +271,13 @@ namespace DLS.Graphics
 			// Center buttons horizontally
 			Vector2 centeredButtonPos = new(panelContentBounds.Centre.x, buttonPos.y);
 			
-			bool pressedPlay = UI.Button("PLAY", ActiveUITheme.ButtonTheme, centeredButtonPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+			bool pressedPlay = Seb.Vis.UI.UI.Button("PLAY", ActiveUITheme.ButtonTheme, centeredButtonPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 			
 			Vector2 leaderboardPos = centeredButtonPos + Vector2.down * (buttonSize.y + buttonSpacing);
-			bool pressedLeaderboard = UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+			bool pressedLeaderboard = Seb.Vis.UI.UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 			
 			Vector2 exitPos = leaderboardPos + Vector2.down * (buttonSize.y + buttonSpacing);
-			bool pressedExit = UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+			bool pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 
 			if (pressedPlay) PlaySelectedLevel();
 			if (pressedLeaderboard) OpenLeaderboard();
@@ -531,6 +545,25 @@ namespace DLS.Graphics
 		{
 			PlayerPrefs.SetInt(PlayerPrefsKey_LastIndex + "_Pack", _selectedLevelPackIndex);
 			PlayerPrefs.SetInt(PlayerPrefsKey_LastIndex + "_Level", _selectedLevelIndex);
+		}
+
+		/// <summary>
+		/// Check if a level has been completed using LevelProgressService
+		/// </summary>
+		static bool IsLevelCompleted(string levelId)
+		{
+			if (string.IsNullOrEmpty(levelId)) return false;
+			
+			try
+			{
+				var progress = LevelProgressService.Get(levelId);
+				return progress.Completed;
+			}
+			catch (Exception ex)
+			{
+				Debug.LogWarning($"[LevelsMenu] Failed to check completion for level {levelId}: {ex.Message}");
+				return false;
+			}
 		}
 
 		// Unity’s JsonUtility can’t parse top-level arrays; helper wraps/unwraps.

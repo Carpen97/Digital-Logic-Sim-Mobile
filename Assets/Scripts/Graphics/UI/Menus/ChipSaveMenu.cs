@@ -51,7 +51,7 @@ namespace DLS.Graphics
 		{
 			const float textPad = 2;
 			InputFieldTheme inputTheme = DrawSettings.ActiveUITheme.ChipNameInputField;
-			Vector2 inputFieldSize = UI.CalculateTextSize(MaxLengthChipName, inputTheme.fontSize, inputTheme.font) + new Vector2(textPad * 2, 3);
+			Vector2 inputFieldSize = Seb.Vis.UI.UI.CalculateTextSize(MaxLengthChipName, inputTheme.fontSize, inputTheme.font) + new Vector2(textPad * 2, 3);
 			return (inputFieldSize, textPad);
 		}
 
@@ -63,22 +63,22 @@ namespace DLS.Graphics
 			InputFieldTheme inputTheme = DrawSettings.ActiveUITheme.ChipNameInputField;
 			InputFieldState inputFieldState;
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				Draw.ID panelID = UI.ReservePanel();
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 
 				// -- Chip name input field --
 				(Vector2 inputFieldSize, float inputFieldTextPad) = GetTextInputSize();
-				inputFieldState = UI.InputField(ID_ChipNameField, inputTheme, new Vector2(50, 33), inputFieldSize, "Name", Anchor.Centre, inputFieldTextPad, chipNameValidator, true);
+				inputFieldState = Seb.Vis.UI.UI.InputField(ID_ChipNameField, inputTheme, new Vector2(50, 33), inputFieldSize, "Name", Anchor.Centre, inputFieldTextPad, chipNameValidator, true);
 
-				Vector2 buttonTopLeft = UI.PrevBounds.BottomLeft + Vector2.down * (DrawSettings.DefaultButtonSpacing * 2);
+				Vector2 buttonTopLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * (DrawSettings.DefaultButtonSpacing * 2);
 				bool renaming = Project.ActiveProject.ChipHasBeenSavedBefore && !ChipDescription.NameMatch(inputFieldState.text, Project.ActiveProject.ViewedChip.LastSavedDescription.Name);
 
 				bool saveButtonEnabled = IsValidSaveName(inputFieldState.text);
 				ButtonGroupInteractStates[SaveButtonIndex] = saveButtonEnabled;
 				ButtonGroupInteractStates[SaveAsButtonIndex] = saveButtonEnabled;
 				string[] buttonGroupNames = renaming ? CancelRenameSaveButtonNames : CancelSaveButtonNames;
-				int buttonIndex = UI.HorizontalButtonGroup(buttonGroupNames, ButtonGroupInteractStates, theme.ButtonTheme, buttonTopLeft, UI.PrevBounds.Width, DrawSettings.DefaultButtonSpacing, 0, Anchor.TopLeft);
+				int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(buttonGroupNames, ButtonGroupInteractStates, theme.ButtonTheme, buttonTopLeft, Seb.Vis.UI.UI.PrevBounds.Width, DrawSettings.DefaultButtonSpacing, 0, Anchor.TopLeft);
 				bool confirmShortcut = !renaming && KeyboardShortcuts.ConfirmShortcutTriggered;
 
 				if (buttonIndex == CancelButtonIndex || KeyboardShortcuts.CancelShortcutTriggered)
@@ -98,7 +98,7 @@ namespace DLS.Graphics
 					Save(Project.SaveMode.SaveAs);
 				}
 
-				Bounds2D uiBounds = UI.GetCurrentBoundsScope();
+				Bounds2D uiBounds = Seb.Vis.UI.UI.GetCurrentBoundsScope();
 				MenuHelper.DrawReservedMenuPanel(panelID, uiBounds);
 
 				// Update customization state
@@ -305,7 +305,7 @@ namespace DLS.Graphics
 		static void InitUIFromDescription(ChipDescription chipDesc)
 		{
 			// Set input field to current chip name
-			InputFieldState inputFieldState = UI.GetInputFieldState(ID_ChipNameField);
+			InputFieldState inputFieldState = Seb.Vis.UI.UI.GetInputFieldState(ID_ChipNameField);
 			inputFieldState.SetText(chipDesc.Name);
 		}
 

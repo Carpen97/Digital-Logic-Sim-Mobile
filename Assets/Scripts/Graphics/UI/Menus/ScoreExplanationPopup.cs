@@ -25,17 +25,17 @@ namespace DLS.Graphics
 			// Dimmed backdrop (same as other popups)
 			MenuHelper.DrawBackgroundOverlay();
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				Draw.ID panelBG = UI.ReservePanel();
-				Draw.ID titleBG = UI.ReservePanel();
+				Draw.ID panelBG = Seb.Vis.UI.UI.ReservePanel();
+				Draw.ID titleBG = Seb.Vis.UI.UI.ReservePanel();
 
 				// --- Title banner ---
-				Vector2 titlePos = UI.CentreTop + Vector2.down * 8f;
+				Vector2 titlePos = Seb.Vis.UI.UI.CentreTop + Vector2.down * 8f;
 				string title = "Score Explanation";
 				Color headerCol = ColHelper.MakeCol255(44, 92, 62);
-				UI.DrawText(title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
-				//UI.ModifyPanel(titleBG, Bounds2D.Grow(UI.PrevBounds, 3f), Color.clear);
+				Seb.Vis.UI.UI.DrawText(title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
+				//Seb.Vis.UI.UI.ModifyPanel(titleBG, Bounds2D.Grow(Seb.Vis.UI.UI.PrevBounds, 3f), Color.clear);
 
 				// Content text (shorter, more concise version)
 				string contentText = @"Your score is calculated based on the number of NAND gates 
@@ -48,19 +48,19 @@ used in your solution.
 NAND gates are fundamental building blocks that can be used
 to create any other logic gate.";
 
-				Vector2 textPos = UI.PrevBounds.CentreBottom + Vector2.down * 5f;
-				UI.DrawText(contentText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, textPos, Anchor.CentreTop, Color.white);
+				Vector2 textPos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + Vector2.down * 5f;
+				Seb.Vis.UI.UI.DrawText(contentText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, textPos, Anchor.CentreTop, Color.white);
 
 				// --- Footer: Close button ---
-				float closeWidth = UI.Width * OkBtnWidthFrac;
+				float closeWidth = Seb.Vis.UI.UI.Width * OkBtnWidthFrac;
 				float closeHeight = ButtonHeight * OkBtnHeightMul;
-				Vector2 buttonsTopLeft = UI.PrevBounds.CentreBottom + Vector2.left * closeWidth / 2f;
+				Vector2 buttonsTopLeft = Seb.Vis.UI.UI.PrevBounds.CentreBottom + Vector2.left * closeWidth / 2f;
 
 				var res = MenuHelper.DrawOKButton(buttonsTopLeft, closeWidth, closeHeight, true);
 				if (res == MenuHelper.CancelConfirmResult.Confirm) UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
 
 				// Panel BG spanning everything drawn in this scope
-				MenuHelper.DrawReservedMenuPanel(panelBG, UI.GetCurrentBoundsScope());
+				MenuHelper.DrawReservedMenuPanel(panelBG, Seb.Vis.UI.UI.GetCurrentBoundsScope());
 			}
 		}
 	}

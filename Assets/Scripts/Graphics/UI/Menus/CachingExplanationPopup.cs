@@ -25,16 +25,16 @@ namespace DLS.Graphics
 			// Dimmed backdrop (same as other popups)
 			MenuHelper.DrawBackgroundOverlay();
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				Draw.ID panelBG = UI.ReservePanel();
-				Draw.ID titleBG = UI.ReservePanel();
+				Draw.ID panelBG = Seb.Vis.UI.UI.ReservePanel();
+				Draw.ID titleBG = Seb.Vis.UI.UI.ReservePanel();
 
 				// --- Title banner ---
-				Vector2 titlePos = UI.CentreTop + Vector2.down * 8f;
+				Vector2 titlePos = Seb.Vis.UI.UI.CentreTop + Vector2.down * 8f;
 				string title = "Chip Caching Explained";
 				Color headerCol = ColHelper.MakeCol255(44, 92, 62);
-				UI.DrawText(title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
+				Seb.Vis.UI.UI.DrawText(title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
 
 				// Content text explaining caching
 				string contentText = @"Chip caching is a performance optimization technique that
@@ -55,13 +55,13 @@ The trade-off is memory usage - each possible input
 combination requires storage space.";
 
 				// Draw content text
-				Vector2 contentPos = UI.Centre + Vector2.up * 2f;
-				UI.DrawText(contentText, ActiveUITheme.FontRegular, UIThemeLibrary.FontSizeSmall, contentPos, Anchor.TextCentre, Color.white);
+				Vector2 contentPos = Seb.Vis.UI.UI.Centre + Vector2.up * 2f;
+				Seb.Vis.UI.UI.DrawText(contentText, ActiveUITheme.FontRegular, UIThemeLibrary.FontSizeSmall, contentPos, Anchor.TextCentre, Color.white);
 
 				// --- OK button ---
-				Vector2 okBtnPos = UI.CentreBottom + Vector2.up * 8f;
-				Vector2 okBtnSize = new Vector2(UI.Width * OkBtnWidthFrac, ButtonHeight * OkBtnHeightMul);
-				bool okPressed = UI.Button("OK", ActiveUITheme.ButtonTheme, okBtnPos, okBtnSize, true, true, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.Centre);
+				Vector2 okBtnPos = Seb.Vis.UI.UI.CentreBottom + Vector2.up * 8f;
+				Vector2 okBtnSize = new Vector2(Seb.Vis.UI.UI.Width * OkBtnWidthFrac, ButtonHeight * OkBtnHeightMul);
+				bool okPressed = Seb.Vis.UI.UI.Button("OK", ActiveUITheme.ButtonTheme, okBtnPos, okBtnSize, true, true, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.Centre);
 
 				if (okPressed)
 				{
@@ -69,8 +69,8 @@ combination requires storage space.";
 				}
 
 				// Draw main panel background
-				Bounds2D panelBounds = UI.GetCurrentBoundsScope();
-				UI.ModifyPanel(panelBG, panelBounds, ActiveUITheme.MenuPanelCol);
+				Bounds2D panelBounds = Seb.Vis.UI.UI.GetCurrentBoundsScope();
+				Seb.Vis.UI.UI.ModifyPanel(panelBG, panelBounds, ActiveUITheme.MenuPanelCol);
 			}
 		}
 	}

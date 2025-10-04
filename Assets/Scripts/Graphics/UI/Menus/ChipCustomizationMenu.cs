@@ -75,7 +75,7 @@ namespace DLS.Graphics
 			// Left panel for main customization options - hide during display interactions
 			if (!IsMovingOrScalingDisplay())
 			{
-				UI.DrawPanel(UI.TopLeft, new Vector2(width, UI.Height), theme.MenuPanelCol, Anchor.TopLeft);
+				Seb.Vis.UI.UI.DrawPanel(Seb.Vis.UI.UI.TopLeft, new Vector2(width, Seb.Vis.UI.UI.Height), theme.MenuPanelCol, Anchor.TopLeft);
 			}
 			
 			// Right panel for displays list (collapsible) - hide during any display interaction
@@ -84,35 +84,35 @@ namespace DLS.Graphics
 				if (rightPanelExpanded)
 				{
 					// Full panel when expanded
-					UI.DrawPanel(UI.TopRight, new Vector2(width, UI.Height), theme.MenuPanelCol, Anchor.TopRight);
+					Seb.Vis.UI.UI.DrawPanel(Seb.Vis.UI.UI.TopRight, new Vector2(width, Seb.Vis.UI.UI.Height), theme.MenuPanelCol, Anchor.TopRight);
 					
 					// ---- Displays UI in right panel ----
 					Color labelCol = ColHelper.Darken(theme.MenuPanelCol, 0.01f);
-					Vector2 rightLabelPos = UI.TopRight + Vector2.down * pad;
+					Vector2 rightLabelPos = Seb.Vis.UI.UI.TopRight + Vector2.down * pad;
 					
 					// Make the header text itself clickable to minimize (reasonable width)
-					if (UI.Button("COMPONENTS -", theme.ButtonTheme, rightLabelPos, new Vector2(8, DrawSettings.ButtonHeight * 0.8f), true, true, false, theme.ButtonTheme.buttonCols, Anchor.TopRight))
+					if (Seb.Vis.UI.UI.Button("COMPONENTS -", theme.ButtonTheme, rightLabelPos, new Vector2(8, DrawSettings.ButtonHeight * 0.8f), true, true, false, theme.ButtonTheme.buttonCols, Anchor.TopRight))
 					{
 						rightPanelExpanded = false;
 					}
 
 					// Calculate full height scroll view - from below header to bottom of panel
 					float headerHeight = DrawSettings.ButtonHeight * 0.8f + pad;
-					float availableHeight = UI.Height - headerHeight - pad; // Full panel height minus header and bottom padding
+					float availableHeight = Seb.Vis.UI.UI.Height - headerHeight - pad; // Full panel height minus header and bottom padding
 					float scrollViewSpacing = UILayoutHelper.DefaultSpacing;
 					
 					// Position scroll view below the header
-					Vector2 scrollViewPos = new Vector2(UI.Width - width + pad, rightLabelPos.y - headerHeight);
-					UI.DrawScrollView(ID_DisplaysScrollView, scrollViewPos, new Vector2(pw, availableHeight), scrollViewSpacing, Anchor.TopLeft, theme.ScrollTheme, drawDisplayScrollEntry, subChipsWithDisplays.Length);
+					Vector2 scrollViewPos = new Vector2(Seb.Vis.UI.UI.Width - width + pad, rightLabelPos.y - headerHeight);
+					Seb.Vis.UI.UI.DrawScrollView(ID_DisplaysScrollView, scrollViewPos, new Vector2(pw, availableHeight), scrollViewSpacing, Anchor.TopLeft, theme.ScrollTheme, drawDisplayScrollEntry, subChipsWithDisplays.Length);
 				}
 				else
 				{
 					// Minimized button in top right corner (reasonable width)
-					Vector2 minimizedButtonPos = UI.TopRight + Vector2.down * pad;
+					Vector2 minimizedButtonPos = Seb.Vis.UI.UI.TopRight + Vector2.down * pad;
 					Vector2 minimizedButtonSize = new Vector2(8, DrawSettings.ButtonHeight * 0.8f); // Reasonable width
 					string minimizedButtonText = "COMPONENTS +";
 					
-					if (UI.Button(minimizedButtonText, theme.ButtonTheme, minimizedButtonPos, minimizedButtonSize, true, true, false, theme.ButtonTheme.buttonCols, Anchor.TopRight))
+					if (Seb.Vis.UI.UI.Button(minimizedButtonText, theme.ButtonTheme, minimizedButtonPos, minimizedButtonSize, true, true, false, theme.ButtonTheme.buttonCols, Anchor.TopRight))
 					{
 						rightPanelExpanded = true;
 					}
@@ -120,17 +120,17 @@ namespace DLS.Graphics
 			}
 
             // ---- Cancel/confirm buttons ----
-            int cancelConfirmButtonIndex = MenuHelper.DrawButtonPair("CANCEL", "CONFIRM", UI.BottomLeft + Vector2.down * pad, pw, false);
+            int cancelConfirmButtonIndex = MenuHelper.DrawButtonPair("CANCEL", "CONFIRM", Seb.Vis.UI.UI.BottomLeft + Vector2.down * pad, pw, false);
 
 			// Only show left panel content when not interacting with displays
 			if (!IsMovingOrScalingDisplay())
 			{
 				// ---- Chip name UI ----
 			theme.OptionsWheel.OverrideFontSize(2f);
-			int nameDisplayMode = UI.WheelSelector(ID_NameDisplayOptions, nameDisplayOptions, UI.TopLeft + Vector2.down * pad, new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
+			int nameDisplayMode = Seb.Vis.UI.UI.WheelSelector(ID_NameDisplayOptions, nameDisplayOptions, Seb.Vis.UI.UI.TopLeft + Vector2.down * pad, new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
 			ChipSaveMenu.ActiveCustomizeDescription.NameLocation = (NameDisplayLocation)nameDisplayMode;
             // ---- Chip layout UI ----
-            int layoutMode = UI.WheelSelector(ID_LayoutOptions, layoutOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
+            int layoutMode = Seb.Vis.UI.UI.WheelSelector(ID_LayoutOptions, layoutOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
             if (layoutMode == 0 && isCustomLayout)
             {
                 // Switch to default layout
@@ -168,11 +168,11 @@ namespace DLS.Graphics
             }
 
 				// ---- Chip colour UI ----
-				Color newCol = UI.DrawColourPicker(ID_ColourPicker, NextPos(), pw, Anchor.TopLeft);
+				Color newCol = Seb.Vis.UI.UI.DrawColourPicker(ID_ColourPicker, NextPos(), pw, Anchor.TopLeft);
 			InputFieldTheme inputTheme = MenuHelper.Theme.ChipNameInputField;
 			inputTheme.fontSize = MenuHelper.Theme.FontSizeRegular;
 
-			InputFieldState hexColInput = UI.InputField(ID_ColourHexInput, inputTheme, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight), "#", Anchor.TopLeft, 1, hexStringInputValidator);
+			InputFieldState hexColInput = Seb.Vis.UI.UI.InputField(ID_ColourHexInput, inputTheme, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight), "#", Anchor.TopLeft, 1, hexStringInputValidator);
 
 			if (newCol != ChipSaveMenu.ActiveCustomizeDescription.Colour)
 			{
@@ -185,45 +185,45 @@ namespace DLS.Graphics
 			}
 
 			// ---- Chip caching UI ----
-			UI.DrawText("Chip Caching:", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeDefault, NextPos(1), Anchor.TopLeft, Color.white);
+			Seb.Vis.UI.UI.DrawText("Chip Caching:", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeDefault, NextPos(1), Anchor.TopLeft, Color.white);
 			SimChip chip = Project.ActiveProject.ViewedChip.SimChip;
 			if (chip.IsCombinational())
 			{
 				int numberOfInputBits = chip.CalculateNumberOfInputBits();
 				if (numberOfInputBits <= SimChip.MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING)
 				{
-					UI.DrawText("This chip is being cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					Seb.Vis.UI.UI.DrawText("This chip is being cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
 				}
 				else if (numberOfInputBits <= SimChip.MAX_NUM_INPUT_BITS_WHEN_USER_CACHING)
 				{
-					int shouldBeCachedNum = UI.WheelSelector(ID_CachingOptions, cachingOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
+					int shouldBeCachedNum = Seb.Vis.UI.UI.WheelSelector(ID_CachingOptions, cachingOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
 					bool shouldBeCached = false;
 					if (shouldBeCachedNum == 1) shouldBeCached = true;
 					ChipSaveMenu.ActiveCustomizeDescription.ShouldBeCached = shouldBeCached;
-					UI.DrawText("WARNING: Caching chips", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-					UI.DrawText("with many input bits", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-					UI.DrawText("significantly increases", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-					UI.DrawText("the time required to", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-					UI.DrawText("create the cache and", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-					UI.DrawText("may also increase", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-					UI.DrawText("memory consumption!", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					Seb.Vis.UI.UI.DrawText("WARNING: Caching chips", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					Seb.Vis.UI.UI.DrawText("with many input bits", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					Seb.Vis.UI.UI.DrawText("significantly increases", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					Seb.Vis.UI.UI.DrawText("the time required to", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					Seb.Vis.UI.UI.DrawText("create the cache and", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					Seb.Vis.UI.UI.DrawText("may also increase", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					Seb.Vis.UI.UI.DrawText("memory consumption!", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
 				}
 				else
 				{
-					UI.DrawText("This chip has too many input bits to be cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					Seb.Vis.UI.UI.DrawText("This chip has too many input bits to be cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
 				}
 			}
 			else
 			{
-				UI.DrawText("Non-combinational chips", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
-				UI.DrawText("can not be cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+				Seb.Vis.UI.UI.DrawText("Non-combinational chips", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+				Seb.Vis.UI.UI.DrawText("can not be cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
 			}
 
 			// Add info button after caching content with proper spacing and centering
 			Vector2 infoButtonPos = NextPos(1); // Add extra padding above
-			infoButtonPos.x = UI.TopLeft.x + width / 2f; // Center horizontally in the left panel
+			infoButtonPos.x = Seb.Vis.UI.UI.TopLeft.x + width / 2f; // Center horizontally in the left panel
 			Vector2 infoButtonSize = new Vector2(DrawSettings.ButtonHeight * 1.5f, DrawSettings.ButtonHeight * 0.8f);
-			bool infoButtonPressed = UI.Button(
+			bool infoButtonPressed = Seb.Vis.UI.UI.Button(
 				"info",
 				theme.ButtonTheme,
 				infoButtonPos,
@@ -243,13 +243,13 @@ namespace DLS.Graphics
 			// ---- Displays UI moved to right panel ----
 
 			// ---- Cancel/confirm buttons positioned at bottom of left panel ----
-			Vector2 buttonPos = UI.BottomLeft + Vector2.up * (DrawSettings.ButtonHeight * 2 + pad * 2);
+			Vector2 buttonPos = Seb.Vis.UI.UI.BottomLeft + Vector2.up * (DrawSettings.ButtonHeight * 2 + pad * 2);
 			cancelConfirmButtonIndex = MenuHelper.DrawButtonPair("CANCEL", "CONFIRM", buttonPos, pw, false);
 			}
 
 			Vector2 NextPos(float extraPadding = 0)
 			{
-				return UI.PrevBounds.BottomLeft + Vector2.down * (pad + extraPadding);
+				return Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * (pad + extraPadding);
 			}
 
 			// Cancel
@@ -287,7 +287,7 @@ namespace DLS.Graphics
 			}
 
 			// Display selected, start placement
-			if (UI.Button(displayName, theme.ButtonTheme, pos, new Vector2(width, 0), enabled, false, true, theme.ButtonTheme.buttonCols, Anchor.TopLeft))
+			if (Seb.Vis.UI.UI.Button(displayName, theme.ButtonTheme, pos, new Vector2(width, 0), enabled, false, true, theme.ButtonTheme.buttonCols, Anchor.TopLeft))
 			{
 				SubChipDescription subChipDesc = new(chipDesc.Name, subChipsWithDisplays[i].ID, string.Empty, Vector2.zero, null);
 				SubChipInstance instance = new(chipDesc, subChipDesc);
@@ -304,16 +304,16 @@ namespace DLS.Graphics
 		static void InitUIFromChipDescription()
 		{
 			// Init col picker to chip colour
-			ColourPickerState chipColourPickerState = UI.GetColourPickerState(ID_ColourPicker);
+			ColourPickerState chipColourPickerState = Seb.Vis.UI.UI.GetColourPickerState(ID_ColourPicker);
 			Color.RGBToHSV(ChipSaveMenu.ActiveCustomizeDescription.Colour, out chipColourPickerState.hue, out chipColourPickerState.sat, out chipColourPickerState.val);
 			UpdateChipColHexStringFromColour(chipColourPickerState.GetRGB());
 
 			// Init name display mode
-			WheelSelectorState nameDisplayWheelState = UI.GetWheelSelectorState(ID_NameDisplayOptions);
+			WheelSelectorState nameDisplayWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_NameDisplayOptions);
 			nameDisplayWheelState.index = (int)ChipSaveMenu.ActiveCustomizeDescription.NameLocation;
 
 			// Init cache setting
-			WheelSelectorState cacheSettingWheelState = UI.GetWheelSelectorState(ID_CachingOptions);
+			WheelSelectorState cacheSettingWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_CachingOptions);
 			bool cacheBool = ChipSaveMenu.ActiveCustomizeDescription.ShouldBeCached;
 			int cacheInt = 0;
 			if (cacheBool) cacheInt = 1;
@@ -322,7 +322,7 @@ namespace DLS.Graphics
             // Init layout mode by checking if any pins have custom positions
             isCustomLayout = Project.ActiveProject.ViewedChip.HasCustomLayout;
 
-            WheelSelectorState layoutWheelState = UI.GetWheelSelectorState(ID_LayoutOptions);
+            WheelSelectorState layoutWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_LayoutOptions);
             layoutWheelState.index = isCustomLayout ? 1 : 0;
     }
 
@@ -356,7 +356,7 @@ namespace DLS.Graphics
 		{
 			int colInt = (byte)(col.r * 255) << 16 | (byte)(col.g * 255) << 8 | (byte)(col.b * 255);
 			colHexCodeString = "#" + $"{colInt:X6}";
-			UI.GetInputFieldState(ID_ColourHexInput).SetText(colHexCodeString, false);
+			Seb.Vis.UI.UI.GetInputFieldState(ID_ColourHexInput).SetText(colHexCodeString, false);
 		}
 
 		static void UpdateChipColFromHexString(string hexString)
@@ -367,7 +367,7 @@ namespace DLS.Graphics
 
 			if (ColHelper.TryParseHexCode(hexString, out Color col))
 			{
-				UI.GetColourPickerState(ID_ColourPicker).SetRGB(col);
+				Seb.Vis.UI.UI.GetColourPickerState(ID_ColourPicker).SetRGB(col);
 				ChipSaveMenu.ActiveCustomizeDescription.Colour = col;
 			}
 		}

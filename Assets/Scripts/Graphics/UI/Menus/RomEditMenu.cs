@@ -48,10 +48,10 @@ namespace DLS.Graphics
 			MenuHelper.DrawBackgroundOverlay();
 
 			// ---- Draw ROM contents ----
-			scrollViewBounds = Bounds2D.CreateFromCentreAndSize(UI.Centre + Vector2.left * leftAdjustmentOfScrollView, new Vector2(UI.Width * 0.4f, UI.Height * 0.8f));
+			scrollViewBounds = Bounds2D.CreateFromCentreAndSize(Seb.Vis.UI.UI.Centre + Vector2.left * leftAdjustmentOfScrollView, new Vector2(Seb.Vis.UI.UI.Width * 0.4f, Seb.Vis.UI.UI.Height * 0.8f));
 
 			ScrollViewTheme scrollTheme = DrawSettings.ActiveUITheme.ScrollTheme;
-			UI.DrawScrollView(ID_scrollbar, scrollViewBounds.TopLeft, scrollViewBounds.Size, 0, Anchor.TopLeft, scrollTheme, scrollViewDrawElementFunc, RowCount);
+			Seb.Vis.UI.UI.DrawScrollView(ID_scrollbar, scrollViewBounds.TopLeft, scrollViewBounds.Size, 0, Anchor.TopLeft, scrollTheme, scrollViewDrawElementFunc, RowCount);
 
 
 			if (focusedRowIndex >= 0)
@@ -68,32 +68,32 @@ namespace DLS.Graphics
 					{
 						OnFieldLostFocus(focusedRowIndex);
 						int nextFocusedRowIndex = focusedRowIndex + (goPrevLine ? -1 : 1);
-						UI.GetInputFieldState(IDS_inputRow[nextFocusedRowIndex]).SetFocus(true);
+						Seb.Vis.UI.UI.GetInputFieldState(IDS_inputRow[nextFocusedRowIndex]).SetFocus(true);
 						focusedRowIndex = nextFocusedRowIndex;
 					}
 				}
 			}
 
 			// --- Draw side panel with buttons ----
-			Vector2 sidePanelSize = new(UI.Width * 0.3f, UI.Height * 0.8f);
-			Vector2 sidePanelTopLeft = scrollViewBounds.TopRight + Vector2.right * (UI.Width * 0.05f);
-			Draw.ID sidePanelID = UI.ReservePanel();
+			Vector2 sidePanelSize = new(Seb.Vis.UI.UI.Width * 0.3f, Seb.Vis.UI.UI.Height * 0.8f);
+			Vector2 sidePanelTopLeft = scrollViewBounds.TopRight + Vector2.right * (Seb.Vis.UI.UI.Width * 0.05f);
+			Draw.ID sidePanelID = Seb.Vis.UI.UI.ReservePanel();
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 				const float buttonSpacing = 0.75f;
 
 				// Display mode
-				DataDisplayMode modeNew = (DataDisplayMode)UI.WheelSelector(ID_DataDisplayMode, DataDisplayOptions, sidePanelTopLeft, new Vector2(sidePanelSize.x, DrawSettings.SelectorWheelHeight), MenuHelper.Theme.OptionsWheel, Anchor.TopLeft);
-				Vector2 buttonTopleft = new(sidePanelTopLeft.x, UI.PrevBounds.Bottom - buttonSpacing);
+				DataDisplayMode modeNew = (DataDisplayMode)Seb.Vis.UI.UI.WheelSelector(ID_DataDisplayMode, DataDisplayOptions, sidePanelTopLeft, new Vector2(sidePanelSize.x, DrawSettings.SelectorWheelHeight), MenuHelper.Theme.OptionsWheel, Anchor.TopLeft);
+				Vector2 buttonTopleft = new(sidePanelTopLeft.x, Seb.Vis.UI.UI.PrevBounds.Bottom - buttonSpacing);
 
 				int copyPasteButtonIndex = MenuHelper.DrawButtonPair("COPY ALL", "PASTE ALL", buttonTopleft, sidePanelSize.x, false);
-				buttonTopleft = UI.PrevBounds.BottomLeft + Vector2.down * buttonSpacing;
-				bool clearAll = UI.Button("CLEAR ALL", MenuHelper.Theme.ButtonTheme, buttonTopleft, new Vector2(sidePanelSize.x, 0), true, false, true, MenuHelper.Theme.ButtonTheme.buttonCols, Anchor.TopLeft);
-				buttonTopleft = UI.PrevBounds.BottomLeft + Vector2.down * (buttonSpacing * 2f);
+				buttonTopleft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * buttonSpacing;
+				bool clearAll = Seb.Vis.UI.UI.Button("CLEAR ALL", MenuHelper.Theme.ButtonTheme, buttonTopleft, new Vector2(sidePanelSize.x, 0), true, false, true, MenuHelper.Theme.ButtonTheme.buttonCols, Anchor.TopLeft);
+				buttonTopleft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * (buttonSpacing * 2f);
 				MenuHelper.CancelConfirmResult result = MenuHelper.DrawCancelConfirmButtons(buttonTopleft, sidePanelSize.x, false, false);
 
-				MenuHelper.DrawReservedMenuPanel(sidePanelID, UI.GetCurrentBoundsScope());
+				MenuHelper.DrawReservedMenuPanel(sidePanelID, Seb.Vis.UI.UI.GetCurrentBoundsScope());
 
 				// ---- Handle button inputs ----
 				if (copyPasteButtonIndex == 0) CopyAll();
@@ -122,7 +122,7 @@ namespace DLS.Graphics
 		{
 			if (rowIndex < 0) return;
 
-			InputFieldState inputFieldOld = UI.GetInputFieldState(IDS_inputRow[rowIndex]);
+			InputFieldState inputFieldOld = Seb.Vis.UI.UI.GetInputFieldState(IDS_inputRow[rowIndex]);
 			inputFieldOld.SetText(AutoFormatInputString(inputFieldOld.text), focus: false);
 		}
 
@@ -151,7 +151,7 @@ namespace DLS.Graphics
 			StringBuilder sb = new();
 			for (int i = 0; i < IDS_inputRow.Length; i++)
 			{
-				InputFieldState state = UI.GetInputFieldState(IDS_inputRow[i]);
+				InputFieldState state = Seb.Vis.UI.UI.GetInputFieldState(IDS_inputRow[i]);
 				sb.AppendLine(state.text);
 			}
 
@@ -164,7 +164,7 @@ namespace DLS.Graphics
 			for (int i = 0; i < Mathf.Min(IDS_inputRow.Length, pasteStrings.Length); i++)
 			{
 				string pasteString = AutoFormatInputString(pasteStrings[i]);
-				InputFieldState state = UI.GetInputFieldState(IDS_inputRow[i]);
+				InputFieldState state = Seb.Vis.UI.UI.GetInputFieldState(IDS_inputRow[i]);
 				state.SetText(pasteString, state.focused);
 			}
 		}
@@ -173,7 +173,7 @@ namespace DLS.Graphics
 		{
 			for (int i = 0; i < IDS_inputRow.Length; i++)
 			{
-				InputFieldState state = UI.GetInputFieldState(IDS_inputRow[i]);
+				InputFieldState state = Seb.Vis.UI.UI.GetInputFieldState(IDS_inputRow[i]);
 				state.SetText("0", state.focused);
 			}
 		}
@@ -182,7 +182,7 @@ namespace DLS.Graphics
 		{
 			for (int i = 0; i < IDS_inputRow.Length; i++)
 			{
-				InputFieldState state = UI.GetInputFieldState(IDS_inputRow[i]);
+				InputFieldState state = Seb.Vis.UI.UI.GetInputFieldState(IDS_inputRow[i]);
 				TryParseDisplayStringToUInt(state.text, modeCurr, ActiveRomDataBitCount, out uint uintValue);
 				state.SetText(UIntToDisplayString(uintValue, modeNew, ActiveRomDataBitCount), false);
 			}
@@ -289,7 +289,7 @@ namespace DLS.Graphics
 		{
 			for (int i = 0; i < RowCount; i++)
 			{
-				string displayString = UI.GetInputFieldState(IDS_inputRow[i]).text;
+				string displayString = Seb.Vis.UI.UI.GetInputFieldState(IDS_inputRow[i]).text;
 				TryParseDisplayStringToUInt(displayString, dataDisplayMode, ActiveRomDataBitCount, out uint newValue);
 				romChip.InternalData[i] = newValue;
 			}
@@ -305,7 +305,7 @@ namespace DLS.Graphics
 			if (entryBounds.Overlaps(scrollViewBounds) && !isLayoutPass) // don't bother with draw stuff if outside of scroll view / in layout pass
 			{
 				UIHandle inputFieldID = IDS_inputRow[index];
-				InputFieldState inputFieldState = UI.GetInputFieldState(inputFieldID);
+				InputFieldState inputFieldState = Seb.Vis.UI.UI.GetInputFieldState(inputFieldID);
 
 				// Alternating colour for each row
 				Color col = index % 2 == 0 ? ColHelper.MakeCol(0.17f) : ColHelper.MakeCol(0.13f);
@@ -327,15 +327,15 @@ namespace DLS.Graphics
 				inputTheme.focusBorderCol = Color.clear;
 
 
-				UI.InputField(inputFieldID, inputTheme, topLeft, panelSize, "0", Anchor.TopLeft, 7, inputStringValidator);
+				Seb.Vis.UI.UI.InputField(inputFieldID, inputTheme, topLeft, panelSize, "0", Anchor.TopLeft, 7, inputStringValidator);
 
 				// Draw line index
 				Color lineNumCol = inputFieldState.focused ? new Color(0.53f, 0.8f, 0.57f) : ColHelper.MakeCol(0.32f);
-				UI.DrawText(rowNumberStrings[index], MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular, entryBounds.CentreLeft + Vector2.right * textPad, Anchor.TextCentreLeft, lineNumCol);
+				Seb.Vis.UI.UI.DrawText(rowNumberStrings[index], MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular, entryBounds.CentreLeft + Vector2.right * textPad, Anchor.TextCentreLeft, lineNumCol);
 			}
 
 			// Set bounding box of scroll list element 
-			UI.OverridePreviousBounds(entryBounds);
+			Seb.Vis.UI.UI.OverridePreviousBounds(entryBounds);
 		}
 
 		public static void OnMenuOpened()
@@ -351,14 +351,14 @@ namespace DLS.Graphics
 			focusedRowIndex = 0;
 			IDS_inputRow = new UIHandle[RowCount];
 			rowNumberStrings = new string[RowCount];
-			dataDisplayMode = (DataDisplayMode)UI.GetWheelSelectorState(ID_DataDisplayMode).index;
+			dataDisplayMode = (DataDisplayMode)Seb.Vis.UI.UI.GetWheelSelectorState(ID_DataDisplayMode).index;
 
 			int lineNumberPadLength = RowCount.ToString().Length;
 
 			for (int i = 0; i < IDS_inputRow.Length; i++)
 			{
 				IDS_inputRow[i] = new UIHandle("ROM_rowInputField", i);
-				InputFieldState state = UI.GetInputFieldState(IDS_inputRow[i]);
+				InputFieldState state = Seb.Vis.UI.UI.GetInputFieldState(IDS_inputRow[i]);
 
 				string displayString = UIntToDisplayString(romChip.InternalData[i], dataDisplayMode, ActiveRomDataBitCount);
 				state.SetText(displayString, i == focusedRowIndex);

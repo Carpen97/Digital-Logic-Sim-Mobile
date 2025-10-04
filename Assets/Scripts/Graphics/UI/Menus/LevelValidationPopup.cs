@@ -221,17 +221,17 @@ namespace DLS.Graphics
 			// Dimmed backdrop (same as other popups)
 			MenuHelper.DrawBackgroundOverlay();
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				Draw.ID panelBG  = UI.ReservePanel();
-				Draw.ID titleBG  = UI.ReservePanel();
-				Draw.ID starsBG  = UI.ReservePanel();
+				Draw.ID panelBG  = Seb.Vis.UI.UI.ReservePanel();
+				Draw.ID titleBG  = Seb.Vis.UI.UI.ReservePanel();
+				Draw.ID starsBG  = Seb.Vis.UI.UI.ReservePanel();
 
 				// --- Title banner ---
-				Vector2 titlePos = UI.CentreTop + Vector2.down * 8f;
+				Vector2 titlePos = Seb.Vis.UI.UI.CentreTop + Vector2.down * 8f;
 				Color headerCol = _isSuccess ? ColHelper.MakeCol255(44, 92, 62) : ColHelper.MakeCol255(155, 44, 44);
-				UI.DrawText(_title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
-				UI.ModifyPanel(titleBG, Bounds2D.Grow(UI.PrevBounds, 3f), Color.clear);
+				Seb.Vis.UI.UI.DrawText(_title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
+				Seb.Vis.UI.UI.ModifyPanel(titleBG, Bounds2D.Grow(Seb.Vis.UI.UI.PrevBounds, 3f), Color.clear);
 
 				// --- Score display with info button ---
 				{
@@ -239,14 +239,14 @@ namespace DLS.Graphics
 					string scoreStr = $"Score: {nandCount}";
 					Color starsCol = _isSuccess ? ColHelper.MakeCol255(245, 212, 67) : Color.white;
 
-					Vector2 scorePos = UI.PrevBounds.CentreBottom + new Vector2(0f, -1.4f);
+					Vector2 scorePos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + new Vector2(0f, -1.4f);
 					
 					// Draw score text first
-					UI.DrawText(scoreStr, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TextCentre, starsCol);
+					Seb.Vis.UI.UI.DrawText(scoreStr, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TextCentre, starsCol);
 
 					// Draw small info button to the right of the score text
-					Vector2 infoButtonPos = scorePos + Vector2.right * (UI.Width * 0.25f);
-					bool infoButtonPressed = UI.Button(
+					Vector2 infoButtonPos = scorePos + Vector2.right * (Seb.Vis.UI.UI.Width * 0.25f);
+					bool infoButtonPressed = Seb.Vis.UI.UI.Button(
 						"info",
 						MenuHelper.Theme.ButtonTheme,
 						infoButtonPos,
@@ -263,7 +263,7 @@ namespace DLS.Graphics
 						ScoreExplanationPopup.Open();
 					}
 
-					UI.ModifyPanel(starsBG, Bounds2D.Grow(UI.PrevBounds, 1.2f), ColHelper.MakeCol(0.11f));
+					Seb.Vis.UI.UI.ModifyPanel(starsBG, Bounds2D.Grow(Seb.Vis.UI.UI.PrevBounds, 1.2f), ColHelper.MakeCol(0.11f));
 				}
 
 				// --- Layout based on level type ---
@@ -273,21 +273,21 @@ namespace DLS.Graphics
 				{
 					// Sequential levels: Two-panel layout with 65:35 ratio
 					float panelSpacing = 2f;
-					float totalWidth = UI.Width * ListWidthFrac - panelSpacing;
+					float totalWidth = Seb.Vis.UI.UI.Width * ListWidthFrac - panelSpacing;
 					float leftPanelW = totalWidth * 0.58f;  // 65% for left panel (info)
 					float rightPanelW = totalWidth * 0.40f; // 35% for right panel (test list)
-					float panelH = UI.Height * ListHeightFrac;
+					float panelH = Seb.Vis.UI.UI.Height * ListHeightFrac;
 					
 					Vector2 leftPanelSize = new(leftPanelW, panelH);
 					Vector2 rightPanelSize = new(rightPanelW, panelH);
 
 					// --- Left panel: Info panel (larger) ---
-					Vector2 leftPanelPos = UI.Centre + new Vector2(-rightPanelW * 0.5f - panelSpacing * 0.5f, 0f) + Vector2.down * 1f;
+					Vector2 leftPanelPos = Seb.Vis.UI.UI.Centre + new Vector2(-rightPanelW * 0.5f - panelSpacing * 0.5f, 0f) + Vector2.down * 1f;
 					DrawInfoPanel(leftPanelPos, leftPanelSize);
 
 					// --- Right panel: Scrollable list of tests (smaller) ---
-					Vector2 rightPanelPos = UI.Centre + new Vector2(leftPanelW * 0.5f + panelSpacing * 0.5f, 0f) + Vector2.down * 1f;
-					ScrollBarState sv = UI.DrawScrollView(
+					Vector2 rightPanelPos = Seb.Vis.UI.UI.Centre + new Vector2(leftPanelW * 0.5f + panelSpacing * 0.5f, 0f) + Vector2.down * 1f;
+					ScrollBarState sv = Seb.Vis.UI.UI.DrawScrollView(
 						ID_LevelValidationPopup,
 						rightPanelPos,
 						rightPanelSize,
@@ -302,10 +302,10 @@ namespace DLS.Graphics
 				else
 				{
 					// Combinational levels: Single-panel layout with header
-					float panelW = UI.Width * ListWidthFrac;
-					float panelH = UI.Height * ListHeightFrac * 0.8f;
+					float panelW = Seb.Vis.UI.UI.Width * ListWidthFrac;
+					float panelH = Seb.Vis.UI.UI.Height * ListHeightFrac * 0.8f;
 					Vector2 panelSize = new(panelW, panelH);
-					Vector2 panelPos = UI.Centre + Vector2.down * 1f;
+					Vector2 panelPos = Seb.Vis.UI.UI.Centre + Vector2.down * 1f;
 
 					// Draw the single panel with header and scrollable content
 					DrawCombinationalPanel(panelPos, panelSize);
@@ -315,7 +315,7 @@ namespace DLS.Graphics
 				DrawFirebaseButtons();
 
 				// Panel BG spanning everything drawn in this scope
-				MenuHelper.DrawReservedMenuPanel(panelBG, UI.GetCurrentBoundsScope());
+				MenuHelper.DrawReservedMenuPanel(panelBG, Seb.Vis.UI.UI.GetCurrentBoundsScope());
 			}
 		}
 
@@ -365,7 +365,7 @@ namespace DLS.Graphics
 				label = label.Substring(0, 77) + "...";
 			}
 			
-			bool pressed = UI.Button(
+			bool pressed = Seb.Vis.UI.UI.Button(
 				label,
 				MenuHelper.Theme.ButtonTheme,
 				rowTopLeft,
@@ -410,7 +410,7 @@ namespace DLS.Graphics
 			
 			string rowText = " " + paddedStatus + "| " + paddedInputs + "| " + paddedGot + "| " + paddedExpected;
 
-			bool pressed = UI.Button(
+			bool pressed = Seb.Vis.UI.UI.Button(
 				rowText,
 				MenuHelper.Theme.ButtonTheme,
 				rowTopLeft,
@@ -483,8 +483,8 @@ namespace DLS.Graphics
 		static void DrawCombinationalPanel(Vector2 panelPos, Vector2 panelSize)
 		{
 			// Draw panel background
-			Draw.ID panelID = UI.ReservePanel();
-			UI.ModifyPanel(
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+			Seb.Vis.UI.UI.ModifyPanel(
 				panelID,
 				new Bounds2D(panelPos - panelSize * 0.5f, panelPos + panelSize * 0.5f),
 				ColHelper.MakeCol(0.08f)
@@ -499,7 +499,7 @@ namespace DLS.Graphics
 			Vector2 contentPos = headerPos + Vector2.down;
 			Vector2 contentSize = new(panelSize.x - 2f, panelSize.y - headerHeight - 2f);
 
-			ScrollBarState sv = UI.DrawScrollView(
+			ScrollBarState sv = Seb.Vis.UI.UI.DrawScrollView(
 				ID_LevelValidationPopup,
 				contentPos,
 				contentSize,
@@ -515,8 +515,8 @@ namespace DLS.Graphics
 		static void DrawCombinationalHeader(Vector2 headerPos, Vector2 panelSize)
 		{
 			// Draw header background
-			Draw.ID headerID = UI.ReservePanel();
-			UI.ModifyPanel(
+			Draw.ID headerID = Seb.Vis.UI.UI.ReservePanel();
+			Seb.Vis.UI.UI.ModifyPanel(
 				headerID,
 				new Bounds2D(headerPos, headerPos + new Vector2(panelSize.x - 2f, RowHeight)),
 				ColHelper.MakeCol(0.12f)
@@ -532,7 +532,7 @@ namespace DLS.Graphics
 			                   "OUT".PadRight(cellWidth) + "| " + 
 			                   "EXPECTED".PadRight(cellWidth);
 			
-			UI.DrawText(
+			Seb.Vis.UI.UI.DrawText(
 				headerText,
 				DrawSettings.ActiveUITheme.FontRegular,
 				DrawSettings.ActiveUITheme.FontSizeRegular,
@@ -545,8 +545,8 @@ namespace DLS.Graphics
 		static void DrawInfoPanel(Vector2 panelPos, Vector2 panelSize)
 		{
 			// Draw info panel background
-			Draw.ID infoPanelID = UI.ReservePanel();
-			UI.ModifyPanel(
+			Draw.ID infoPanelID = Seb.Vis.UI.UI.ReservePanel();
+			Seb.Vis.UI.UI.ModifyPanel(
 				infoPanelID,
 				new Bounds2D(panelPos - panelSize * 0.5f, panelPos + panelSize * 0.5f),
 				ColHelper.MakeCol(0.08f)
@@ -710,8 +710,8 @@ namespace DLS.Graphics
 		// ---------- Firebase Buttons ----------
 		static void DrawFirebaseButtons()
 		{
-			Vector2 buttonStart = UI.PrevBounds.CentreBottom + Vector2.down * 1f;
-			float buttonWidth = UI.Width * 0.28f * 0.75f;  // Reduced button width to 75% of current size
+			Vector2 buttonStart = Seb.Vis.UI.UI.PrevBounds.CentreBottom + Vector2.down * 1f;
+			float buttonWidth = Seb.Vis.UI.UI.Width * 0.28f * 0.75f;  // Reduced button width to 75% of current size
 			float buttonHeight = ButtonHeight * 1.3f; // Increased button height for better proportions
 			float spacing = 1.8f * 0.5f; // Reduced spacing to half of current value
 
@@ -722,7 +722,7 @@ namespace DLS.Graphics
 
 			// Calculate grid positions (3 buttons per row) - center relative to entire popup, not just scroll view
 			float totalWidth = (buttonWidth * 3) + (spacing * 2);
-			float startX = UI.Centre.x - totalWidth / 2f;  // Center relative to entire popup
+			float startX = Seb.Vis.UI.UI.Centre.x - totalWidth / 2f;  // Center relative to entire popup
 			float startY = buttonStart.y;
 
 			// Row 1: Apply Test, Upload Score, Save as Chip
@@ -736,7 +736,7 @@ namespace DLS.Graphics
 			Vector2 closePos = new Vector2(startX + (buttonWidth + spacing) * 2, startY - buttonHeight - spacing);
 
 			// Row 1: Apply Test button (left)
-			bool applyTestPressed = UI.Button(
+			bool applyTestPressed = Seb.Vis.UI.UI.Button(
 				"Apply Test",
 				MenuHelper.Theme.ButtonTheme,
 				applyTestPos,
@@ -750,7 +750,7 @@ namespace DLS.Graphics
 
 			// Row 1: Upload Score button (middle)
 			string uploadButtonText = _isUploading ? _uploadStatus : "Upload Score";
-			bool uploadPressed = UI.Button(
+			bool uploadPressed = Seb.Vis.UI.UI.Button(
 				uploadButtonText,
 				MenuHelper.Theme.ButtonTheme,
 				uploadPos,
@@ -763,7 +763,7 @@ namespace DLS.Graphics
 			);
 
 			// Row 1: Save as Chip button (right)
-			bool saveAsChipPressed = UI.Button(
+			bool saveAsChipPressed = Seb.Vis.UI.UI.Button(
 				"Save as Chip",
 				MenuHelper.Theme.ButtonTheme,
 				saveAsChipPos,
@@ -776,7 +776,7 @@ namespace DLS.Graphics
 			);
 
 			// Row 2: Levels button (left)
-			bool levelsPressed = UI.Button(
+			bool levelsPressed = Seb.Vis.UI.UI.Button(
 				"Levels",
 				MenuHelper.Theme.ButtonTheme,
 				levelsPos,
@@ -789,7 +789,7 @@ namespace DLS.Graphics
 			);
 
 			// Row 2: Leaderboard button (middle)
-			bool leaderboardPressed = UI.Button(
+			bool leaderboardPressed = Seb.Vis.UI.UI.Button(
 				"Leaderboard",
 				MenuHelper.Theme.ButtonTheme,
 				leaderboardPos,
@@ -802,7 +802,7 @@ namespace DLS.Graphics
 			);
 
 			// Row 2: Close button (right)
-			bool closePressed = UI.Button(
+			bool closePressed = Seb.Vis.UI.UI.Button(
 				"Close",
 				MenuHelper.Theme.ButtonTheme,
 				closePos,

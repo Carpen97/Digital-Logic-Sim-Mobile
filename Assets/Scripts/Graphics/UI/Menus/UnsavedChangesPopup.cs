@@ -17,19 +17,19 @@ namespace DLS.Graphics
 
 			string text = "The current chip has unsaved changes.\nAre you sure you want to continue?";
 			Color textCol = new(1, 0.4f, 0.45f);
-			Vector2 textPos = UI.Centre + Vector2.up * 5;
+			Vector2 textPos = Seb.Vis.UI.UI.Centre + Vector2.up * 5;
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				Draw.ID panelID = UI.ReservePanel();
-				Draw.ID textBGPanelID = UI.ReservePanel();
-				UI.DrawText(text, DrawSettings.ActiveUITheme.FontRegular, DrawSettings.ActiveUITheme.FontSizeRegular, textPos, Anchor.TextCentre, textCol);
-				UI.ModifyPanel(textBGPanelID, Bounds2D.Grow(UI.PrevBounds, 1.5f), ColHelper.MakeCol(0.11f));
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+				Draw.ID textBGPanelID = Seb.Vis.UI.UI.ReservePanel();
+				Seb.Vis.UI.UI.DrawText(text, DrawSettings.ActiveUITheme.FontRegular, DrawSettings.ActiveUITheme.FontSizeRegular, textPos, Anchor.TextCentre, textCol);
+				Seb.Vis.UI.UI.ModifyPanel(textBGPanelID, Bounds2D.Grow(Seb.Vis.UI.UI.PrevBounds, 1.5f), ColHelper.MakeCol(0.11f));
 
-				Vector2 topLeft = UI.PrevBounds.BottomLeft + Vector2.down * 1;
-				MenuHelper.CancelConfirmResult button = MenuHelper.DrawCancelConfirmButtons(topLeft, UI.PrevBounds.Width, false);
+				Vector2 topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 1;
+				MenuHelper.CancelConfirmResult button = MenuHelper.DrawCancelConfirmButtons(topLeft, Seb.Vis.UI.UI.PrevBounds.Width, false);
 
-				MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
+				MenuHelper.DrawReservedMenuPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope());
 
 				if (button == MenuHelper.CancelConfirmResult.Cancel) // cancel
 				{

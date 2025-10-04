@@ -15,12 +15,12 @@ namespace DLS.Graphics
 		public static void DrawMenu()
 		{
 			MenuHelper.DrawBackgroundOverlay();
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
-			Vector2 pos = UI.Centre + Vector2.up * (UI.HalfHeight * 0.25f);
+			Vector2 pos = Seb.Vis.UI.UI.Centre + Vector2.up * (Seb.Vis.UI.UI.HalfHeight * 0.25f);
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 				if (InputHelper.AnyKeyOrMouseDownThisFrame && !string.IsNullOrEmpty(InputHelper.InputStringThisFrame))
 				{
@@ -31,13 +31,13 @@ namespace DLS.Graphics
 					}
 				}
 
-				UI.DrawText("Press a key to rebind\n (alphanumeric only)", theme.FontBold, theme.FontSizeRegular, pos, Anchor.TextCentre, Color.white * 0.8f);
+				Seb.Vis.UI.UI.DrawText("Press a key to rebind\n (alphanumeric only)", theme.FontBold, theme.FontSizeRegular, pos, Anchor.TextCentre, Color.white * 0.8f);
 
-				UI.DrawPanel(UI.PrevBounds.CentreBottom + Vector2.down, Vector2.one * 3.5f, new Color(0.1f, 0.1f, 0.1f), Anchor.CentreTop);
-				UI.DrawText(chosenKey, theme.FontBold, theme.FontSizeRegular * 1.5f, UI.PrevBounds.Centre, Anchor.TextCentre, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(Seb.Vis.UI.UI.PrevBounds.CentreBottom + Vector2.down, Vector2.one * 3.5f, new Color(0.1f, 0.1f, 0.1f), Anchor.CentreTop);
+				Seb.Vis.UI.UI.DrawText(chosenKey, theme.FontBold, theme.FontSizeRegular * 1.5f, Seb.Vis.UI.UI.PrevBounds.Centre, Anchor.TextCentre, Color.white);
 
-				MenuHelper.CancelConfirmResult result = MenuHelper.DrawCancelConfirmButtons(UI.GetCurrentBoundsScope().BottomLeft, UI.GetCurrentBoundsScope().Width, true);
-				MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
+				MenuHelper.CancelConfirmResult result = MenuHelper.DrawCancelConfirmButtons(Seb.Vis.UI.UI.GetCurrentBoundsScope().BottomLeft, Seb.Vis.UI.UI.GetCurrentBoundsScope().Width, true);
+				MenuHelper.DrawReservedMenuPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope());
 
 				if (result == MenuHelper.CancelConfirmResult.Cancel)
 				{

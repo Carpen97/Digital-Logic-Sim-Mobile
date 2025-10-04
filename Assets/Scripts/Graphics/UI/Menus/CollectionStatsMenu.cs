@@ -31,27 +31,27 @@ namespace DLS.Graphics
 		{
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 			MenuHelper.DrawBackgroundOverlay();
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 
 			const int inputTextPad = 1;
 			Color labelCol = Color.white;
 			Color headerCol = new(0.46f, 1, 0.54f);
-			Vector2 topLeft = UI.Centre + new Vector2(-menuWidth / 2, verticalOffset);
+			Vector2 topLeft = Seb.Vis.UI.UI.Centre + new Vector2(-menuWidth / 2, verticalOffset);
 			Vector2 labelPosCurr = topLeft;
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 				// Draw stats
 				Vector2 numOfChipsLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, numOfChipsLabel, labelCol * 0.75f, true);
-				UI.DrawPanel(numOfChipsLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(numOfChipsInCollection.ToString(), theme.FontBold, theme.FontSizeRegular, numOfChipsLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(numOfChipsLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
+				Seb.Vis.UI.UI.DrawText(numOfChipsInCollection.ToString(), theme.FontBold, theme.FontSizeRegular, numOfChipsLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 
 				// Draw close
-				Vector2 buttonTopLeft = new(50, UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));
-				bool result = UI.Button("CLOSE", MenuHelper.Theme.ButtonTheme, buttonTopLeft, new Vector2(menuWidth / 1.118f, 0));
+				Vector2 buttonTopLeft = new(50, Seb.Vis.UI.UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));
+				bool result = Seb.Vis.UI.UI.Button("CLOSE", MenuHelper.Theme.ButtonTheme, buttonTopLeft, new Vector2(menuWidth / 1.118f, 0));
 
 				// Draw menu background
-				Bounds2D menuBounds = UI.GetCurrentBoundsScope();
+				Bounds2D menuBounds = Seb.Vis.UI.UI.GetCurrentBoundsScope();
 				MenuHelper.DrawReservedMenuPanel(panelID, menuBounds);
 
 				// Close

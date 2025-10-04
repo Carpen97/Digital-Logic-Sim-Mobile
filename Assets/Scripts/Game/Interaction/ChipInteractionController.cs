@@ -7,12 +7,23 @@ using Seb.Helpers;
 using UnityEngine;
 using System;
 using UnityEditor;
+using DLS.Graphics.UI;
 
 namespace DLS.Game
 {
 	public class ChipInteractionController
 	{
 		public readonly Project project;
+		
+		// Helper method to safely access MobileUIController
+		private static bool IsMobileUIControllerAvailable()
+		{
+			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+			return MobileUIControllerWrapper.IsWrenchToolActive;
+			#else
+			return false;
+			#endif
+		}
 
 		// ---- Control scheme settings ----
 		public bool UseDragAndDropMode => project.description.Prefs_UseDragAndDropMode;
@@ -265,7 +276,7 @@ namespace DLS.Game
 			if(Input.touchCount == 1){
 				Touch touch = Input.GetTouch(0);
 				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) || InteractionState.MouseIsOverUI) return;
-				if (MobileUIController.Instance.isWrenchToolActive) return;
+				if (MobileUIControllerWrapper.IsWrenchToolActive) return;
 			
 				if(touch.phase == TouchPhase.Began){
 					HandleSingleTap();
@@ -282,7 +293,7 @@ namespace DLS.Game
 			if (IsCreatingSelectionBox)
 			{
 				IsCreatingSelectionBox = false;
-				MobileUIController.Instance.OnBoxSelectToolPress();
+				MobileUIControllerWrapper.OnBoxSelectToolPress();
 
 				float selectionBoxArea = Mathf.Abs(SelectionBoxSize.x * SelectionBoxSize.y);
 				if (selectionBoxArea > 0.000001f)
@@ -553,7 +564,7 @@ namespace DLS.Game
 					if (TryFinishPlacingWire())
 					{
 						CancelPlacingItems();
-						MobileUIController.Instance.HidePlacementButtons();
+						MobileUIControllerWrapper.HidePlacementButtons();
 					}
 					else if (CanAddWirePoint())
 					{
@@ -567,7 +578,7 @@ namespace DLS.Game
 						StartMovingSelectedItems();
 					}
 				}
-			}else if(MobileUIController.Instance.isWrenchToolActive){
+			}else if(MobileUIControllerWrapper.IsWrenchToolActive){
 				SelectionBoxStartPos = TouchInputHelper.Instance.TouchWorldPosition;
 			}
 			else
@@ -578,10 +589,12 @@ namespace DLS.Game
 
 					WireInstance.ConnectionInfo connectionInfo = new() { pin = pin };
 					StartPlacingWire(connectionInfo);
-					MobileUIController.Instance.ShowAddWireButtons(
+					#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+					MobileUIControllerWrapper.ShowAddWireButtons(
 						TryAddWirePoint,
 						CancelPlacingItems
 					);
+					#endif
 				}else if(InteractionState.ElementUnderMouse!= null && InteractionState.ElementUnderMouse.ToString() == "DLS.Game.InteractionState+UnspecifiedInteractableElement")
 				{
 					if(wireToEdit!=null)
@@ -615,10 +628,12 @@ namespace DLS.Game
 					{
 						WireInstance.ConnectionInfo connectionInfo = CreateWireToWireConnectionInfo(wire, wire.SourcePin);
 						StartPlacingWire(connectionInfo);
-						MobileUIController.Instance.ShowAddWireButtons(
+						#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+						MobileUIControllerWrapper.ShowAddWireButtons(
 							TryAddWirePoint,
 							CancelPlacingItems
 						);
+						#endif
 					}
 				}
 				// Tapped on selectable element: select it and prepare to start moving current selection
@@ -631,14 +646,16 @@ namespace DLS.Game
 					// Only show placement buttons in drag and lock mode
 					if (!UseDragAndDropMode)
 					{
-						MobileUIController.Instance.ShowPlacementButtons(
+						#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+						MobileUIControllerWrapper.ShowPlacementButtons(
 							FinishMovingElements,
 							CancelMovingSelectedItems
 						);
+						#endif
 					}
 				}else if (InteractionState.ElementUnderMouse == null && !IsPlacingElementOrCreatingWire && !IsMovingSelection){
 					// Tapped on free space
-					if(MobileUIController.Instance.isBoxSelectToolActive)
+					if(MobileUIControllerWrapper.IsBoxSelectToolActive)
 						IsCreatingSelectionBox = true;
 					else if (SelectedElements.Count>0)
 					{
@@ -669,10 +686,12 @@ namespace DLS.Game
 
 		void TryAddWirePoint(){
 			WireToPlace.AddWirePoint(WireToPlace.GetWirePoint(WireToPlace.WirePointCount-1));
-			MobileUIController.Instance.ShowAddWireButtons(
+			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+			MobileUIControllerWrapper.ShowAddWireButtons(
 				TryAddWirePoint,
 				CancelPlacingItems
 			);
+			#endif
 		}
 
 		void HandleLeftMouseDown()
@@ -817,7 +836,9 @@ namespace DLS.Game
 			if (clearSelection && !UseDragAndDropMode)
 			{
 				ClearSelection();
-				MobileUIController.Instance.HidePlacementButtons();
+				#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+				MobileUIControllerWrapper.HidePlacementButtons();
+				#endif
 			}
 			#endif
 		}
@@ -862,7 +883,9 @@ namespace DLS.Game
 			}
 
 			#if UNITY_ANDROID || UNITY_IOS
-				MobileUIController.Instance.HidePlacementButtons();
+				#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+				MobileUIControllerWrapper.HidePlacementButtons();
+				#endif
 			#endif
 		}
 
@@ -872,13 +895,15 @@ namespace DLS.Game
 			if (wireToEdit == wire) ExitWireEditMode();
 			else {
 				wireToEdit = wire;
-				MobileUIController.Instance.ShowPlacementButtons(
+				#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+				MobileUIControllerWrapper.ShowPlacementButtons(
 					FinishEditingWires,
 					DeleteCurrentWireToEditPoint
 				);
-				//MobileUIController.Instance.ShowCancelButton(
+				#endif
+				//#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITORMobileUIControllerWrapper.ShowCancelButton(
 					//DeleteCurrentWireToEditPoint
-				//);
+				//);#endif
 			}
 			#else
 			if (wireToEdit == wire) ExitWireEditMode();
@@ -911,7 +936,9 @@ namespace DLS.Game
 			isMovingWireEditPoint = false;
 			wireEditPointIndex = -1;
 			wireEditPointSelectedIndex = -1;
-			MobileUIController.Instance.HidePlacementButtons();
+			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+			MobileUIControllerWrapper.HidePlacementButtons();
+			#endif
 		}
 
 		void HandleLeftMouseUp()
@@ -978,11 +1005,7 @@ namespace DLS.Game
 
 		void UpdatePositionsToMouse()
 		{
-			#if UNITY_ANDROID || UNITY_IOS
-			Vector2 mousePos = TouchInputHelper.TouchPositionWorld();
-			#else
 			Vector2 mousePos = InputHelper.MousePosWorld;
-			#endif
 			bool snapToGrid = project.ShouldSnapToGrid;
 
 			if (IsCreatingWire)
@@ -991,7 +1014,6 @@ namespace DLS.Game
 			}
 			else if (IsMovingSelection || isPlacingNewElements)
 			{
-				Debug.Log("is Moving Selection");
 				Vector2 moveOffset = mousePos - moveElementMouseStartPos;
 
 				for (int i = 0; i < SelectedElements.Count; i++)
@@ -1108,14 +1130,19 @@ namespace DLS.Game
 			// Only show placement buttons in drag and lock mode
 			if (!UseDragAndDropMode)
 			{
-				MobileUIController.Instance.ShowPlacementButtons(
+				#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+				MobileUIControllerWrapper.ShowPlacementButtons(
 					FinishPlacingNewElements,
 					CancelPlacingItems
 				);
+				#endif
 			}
 			if(!isDuplicationOnMobileCall){
 				moveElementMouseStartPos = InputHelper.MousePosWorld;
 			}
+			#else
+			// Desktop platforms - always set the mouse start position
+			moveElementMouseStartPos = InputHelper.MousePosWorld;
 			#endif
 
 			foreach (IMoveable moveableElement in SelectedElements)
@@ -1189,10 +1216,12 @@ namespace DLS.Game
 			// Only show placement buttons in drag and lock mode
 			if (!UseDragAndDropMode)
 			{
-				MobileUIController.Instance.ShowPlacementButtons(
+				#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+				MobileUIControllerWrapper.ShowPlacementButtons(
 					FinishPlacingNewElements,
 					CancelPlacingItems
 				);
+				#endif
 			}
 			#endif
 			IMoveable elementToPlace = CreateElementFromChipDescription(chipDescription);
@@ -1355,7 +1384,11 @@ namespace DLS.Game
 
 			IsMovingSelection = false;
 
-			MobileUIController.Instance.HidePlacementButtons();
+			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+
+			MobileUIControllerWrapper.HidePlacementButtons();
+
+			#endif
 		}
 
 		void OnFinishedPlacingItems() => OnFinishedOrCancelledPlacingItems();
@@ -1396,7 +1429,11 @@ namespace DLS.Game
 
 			OnFinishedOrCancelledPlacingItems();
 
-			MobileUIController.Instance.HidePlacementButtons();
+			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+
+			MobileUIControllerWrapper.HidePlacementButtons();
+
+			#endif
 		}
 
 

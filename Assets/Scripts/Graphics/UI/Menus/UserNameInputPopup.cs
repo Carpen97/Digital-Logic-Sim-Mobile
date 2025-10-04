@@ -59,21 +59,21 @@ namespace DLS.Graphics
             // Dimmed backdrop (same as other popups)
             MenuHelper.DrawBackgroundOverlay();
             
-            using (UI.BeginBoundsScope(true))
+            using (Seb.Vis.UI.UI.BeginBoundsScope(true))
             {
-                Draw.ID panelBG = UI.ReservePanel();
-                Draw.ID titleBG = UI.ReservePanel();
+                Draw.ID panelBG = Seb.Vis.UI.UI.ReservePanel();
+                Draw.ID titleBG = Seb.Vis.UI.UI.ReservePanel();
                 
                 // --- Title banner ---
-                Vector2 titlePos = UI.CentreTop + Vector2.down * 8f;
+                Vector2 titlePos = Seb.Vis.UI.UI.CentreTop + Vector2.down * 8f;
                 Color headerCol = ColHelper.MakeCol255(44, 92, 62);
-                UI.DrawText("Enter Your Name", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
-                UI.ModifyPanel(titleBG, Bounds2D.Grow(UI.PrevBounds, 3f), Color.clear);
+                Seb.Vis.UI.UI.DrawText("Enter Your Name", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
+                Seb.Vis.UI.UI.ModifyPanel(titleBG, Bounds2D.Grow(Seb.Vis.UI.UI.PrevBounds, 3f), Color.clear);
                 
                 // --- Subtitle ---
-                Vector2 subtitlePos = UI.PrevBounds.CentreBottom + new Vector2(0f, -1.4f);
+                Vector2 subtitlePos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + new Vector2(0f, -1.4f);
                 Color subtitleCol = ColHelper.MakeCol255(200, 200, 200);
-                UI.DrawText("Your name will appear on the leaderboard", ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, subtitlePos, Anchor.TextCentre, subtitleCol);
+                Seb.Vis.UI.UI.DrawText("Your name will appear on the leaderboard", ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, subtitlePos, Anchor.TextCentre, subtitleCol);
                 
                 // --- Input field ---
                 DrawInputField();
@@ -88,18 +88,18 @@ namespace DLS.Graphics
                 DrawButtons();
                 
                 // Panel background
-                MenuHelper.DrawReservedMenuPanel(panelBG, UI.GetCurrentBoundsScope());
+                MenuHelper.DrawReservedMenuPanel(panelBG, Seb.Vis.UI.UI.GetCurrentBoundsScope());
             }
         }
         
         // ---------- UI Drawing ----------
         static void DrawInputField()
         {
-            Vector2 inputPos = UI.PrevBounds.CentreBottom + new Vector2(0f, -3f);
-            Vector2 inputSize = new Vector2(UI.Width * 0.6f, InputFieldHeight);
+            Vector2 inputPos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + new Vector2(0f, -3f);
+            Vector2 inputSize = new Vector2(Seb.Vis.UI.UI.Width * 0.6f, InputFieldHeight);
             
             // Input field
-            var inputState = UI.GetInputFieldState(ID_UserNameInput);
+            var inputState = Seb.Vis.UI.UI.GetInputFieldState(ID_UserNameInput);
             
             // Only initialize the input field once when the popup opens
             if (!_hasInitializedInput)
@@ -124,7 +124,7 @@ namespace DLS.Graphics
             var inputTheme = MenuHelper.Theme.ChipNameInputField;
             inputTheme.fontSize = ActiveUITheme.FontSizeRegular;
             
-            UI.InputField(
+            Seb.Vis.UI.UI.InputField(
                 ID_UserNameInput,
                 inputTheme,
                 inputPos,
@@ -139,23 +139,23 @@ namespace DLS.Graphics
             // Disable input when anonymous is selected
             if (_uploadAsAnonymous)
             {
-                UI.DrawPanel(inputPos, inputSize, new Color(0, 0, 0, 0.3f), Anchor.Centre);
+                Seb.Vis.UI.UI.DrawPanel(inputPos, inputSize, new Color(0, 0, 0, 0.3f), Anchor.Centre);
             }
         }
         
         static void DrawCheckboxes()
         {
-            Vector2 checkboxStart = UI.PrevBounds.CentreBottom + new Vector2(0f, -6f);
+            Vector2 checkboxStart = Seb.Vis.UI.UI.PrevBounds.CentreBottom + new Vector2(0f, -6f);
             float checkboxSize = 2.5f;
             float checkboxSpacing = 1.5f;
             
             // Remember name checkbox
             Vector2 rememberPos = checkboxStart;
-            bool rememberPressed = UI.Button(
+            bool rememberPressed = Seb.Vis.UI.UI.Button(
                 _rememberName ? "[X] Remember my name" : "[ ] Remember my name",
                 MenuHelper.Theme.ButtonTheme,
                 rememberPos,
-                new Vector2(UI.Width * 0.5f, checkboxSize),
+                new Vector2(Seb.Vis.UI.UI.Width * 0.5f, checkboxSize),
                 true,
                 false,
                 false,
@@ -170,11 +170,11 @@ namespace DLS.Graphics
             
             // Anonymous checkbox
             Vector2 anonymousPos = rememberPos + Vector2.down * (checkboxSize + checkboxSpacing);
-            bool anonymousPressed = UI.Button(
+            bool anonymousPressed = Seb.Vis.UI.UI.Button(
                 _uploadAsAnonymous ? "[X] Upload as Anonymous" : "[ ] Upload as Anonymous",
                 MenuHelper.Theme.ButtonTheme,
                 anonymousPos,
-                new Vector2(UI.Width * 0.5f, checkboxSize),
+                new Vector2(Seb.Vis.UI.UI.Width * 0.5f, checkboxSize),
                 true,
                 false,
                 false,
@@ -193,11 +193,11 @@ namespace DLS.Graphics
             
             // Share Solution checkbox
             Vector2 shareSolutionPos = anonymousPos + Vector2.down * (checkboxSize + checkboxSpacing);
-            bool shareSolutionPressed = UI.Button(
+            bool shareSolutionPressed = Seb.Vis.UI.UI.Button(
                 _shareSolution ? "[X] Share Solution" : "[ ] Share Solution",
                 MenuHelper.Theme.ButtonTheme,
                 shareSolutionPos,
-                new Vector2(UI.Width * 0.5f, checkboxSize),
+                new Vector2(Seb.Vis.UI.UI.Width * 0.5f, checkboxSize),
                 true,
                 false,
                 false,
@@ -215,18 +215,18 @@ namespace DLS.Graphics
         {
             if (string.IsNullOrEmpty(_validationMessage)) return;
             
-            Vector2 messagePos = UI.PrevBounds.CentreBottom + new Vector2(0f, -1.4f);
+            Vector2 messagePos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + new Vector2(0f, -1.4f);
             Color messageCol = _validationMessage.Contains("✓") ? ColHelper.MakeCol255(100, 255, 100) : ColHelper.MakeCol255(255, 100, 100);
             
-            UI.DrawText(_validationMessage, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, messagePos, Anchor.TextCentre, messageCol);
+            Seb.Vis.UI.UI.DrawText(_validationMessage, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, messagePos, Anchor.TextCentre, messageCol);
         }
         
         static void DrawButtons()
         {
-            Vector2 buttonStart = UI.PrevBounds.CentreBottom + new Vector2(-UI.Width*0.3f, -2f);
+            Vector2 buttonStart = Seb.Vis.UI.UI.PrevBounds.CentreBottom + new Vector2(-Seb.Vis.UI.UI.Width*0.3f, -2f);
             
             // Use the same button pattern as other menus
-            MenuHelper.CancelConfirmResult result = MenuHelper.DrawCancelConfirmButtons(buttonStart, UI.Width * 0.6f, true);
+            MenuHelper.CancelConfirmResult result = MenuHelper.DrawCancelConfirmButtons(buttonStart, Seb.Vis.UI.UI.Width * 0.6f, true);
             
             // Handle button presses
             if (result == MenuHelper.CancelConfirmResult.Cancel)
@@ -253,7 +253,7 @@ namespace DLS.Graphics
             }
             else
             {
-                var inputState = UI.GetInputFieldState(ID_UserNameInput);
+                var inputState = Seb.Vis.UI.UI.GetInputFieldState(ID_UserNameInput);
                 userName = inputState.text?.Trim() ?? "";
                 shouldRemember = _rememberName;
             }

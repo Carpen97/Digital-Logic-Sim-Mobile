@@ -29,7 +29,7 @@ namespace DLS.Description
 		public int Prefs_GridDisplayMode;
 		public int Prefs_WireCurvatureMode;
 		public int Prefs_MultiWireLayoutAlgorithm;
-		public int Prefs_UIThemeMode;
+		// Prefs_UIThemeMode removed - only Squiggles Theme is used
 		public int Prefs_Snapping;
 		public int Prefs_StraightWires;
 		public bool Prefs_SimPaused;

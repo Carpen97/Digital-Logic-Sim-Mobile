@@ -30,29 +30,29 @@ namespace DLS.Graphics
 		public static void DrawMenu()
 		{
 			MenuHelper.DrawBackgroundOverlay();
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 				InputFieldTheme inputTheme = MenuHelper.Theme.ChipNameInputField;
 				(Vector2 inputFieldSize, float inputFieldTextPad) = ChipSaveMenu.GetTextInputSize();
 				inputFieldSize.x += 6f;
 
-				float height = UI.Height * 0.93f;
+				float height = Seb.Vis.UI.UI.Height * 0.93f;
 				float width = inputFieldSize.x;
-				Vector2 topLeft = new(UI.Centre.x - width / 2, height);
+				Vector2 topLeft = new(Seb.Vis.UI.UI.Centre.x - width / 2, height);
 
 				// Draw search bar
-				UI.InputField(ID_SearchInput, inputTheme, topLeft, inputFieldSize, string.Empty, Anchor.TopLeft, inputFieldTextPad, searchStringValidator, true);
-				topLeft = UI.PrevBounds.BottomLeft + Vector2.down * 2;
+				Seb.Vis.UI.UI.InputField(ID_SearchInput, inputTheme, topLeft, inputFieldSize, string.Empty, Anchor.TopLeft, inputFieldTextPad, searchStringValidator, true);
+				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 2;
 
 				// Draw scroll view (reduced height to make room for exit button)
-				ScrollBarState scrollState = UI.DrawScrollView(ID_Scrollbar, topLeft, new Vector2(width, UI.Height * 0.6f), UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawChipSearchEntry, filteredChipNames.Length);
+				ScrollBarState scrollState = Seb.Vis.UI.UI.DrawScrollView(ID_Scrollbar, topLeft, new Vector2(width, Seb.Vis.UI.UI.Height * 0.6f), UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawChipSearchEntry, filteredChipNames.Length);
 				isDraggingScrollbar = scrollState.isDragging;
 
 				// Draw exit button at the bottom
-				Vector2 exitButtonTopLeft = UI.PrevBounds.BottomLeft + Vector2.down * 1;
-				MenuHelper.CancelConfirmResult exitResult = MenuHelper.DrawOKButton(exitButtonTopLeft, UI.PrevBounds.Width, ButtonHeight, false, true, "EXIT", true, false);
+				Vector2 exitButtonTopLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 1;
+				MenuHelper.CancelConfirmResult exitResult = MenuHelper.DrawOKButton(exitButtonTopLeft, Seb.Vis.UI.UI.PrevBounds.Width, ButtonHeight, false, true, "EXIT", true, false);
 
 				if (exitResult == MenuHelper.CancelConfirmResult.Confirm)
 				{
@@ -60,7 +60,7 @@ namespace DLS.Graphics
 				}
 
 				// Draw background panel
-				MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
+				MenuHelper.DrawReservedMenuPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope());
 			}
 
 			// ---- keyboard shortcuts ----
@@ -92,7 +92,7 @@ namespace DLS.Graphics
 		static void DrawChipSearchEntry(Vector2 topLeft, float width, int index, bool isLayoutPass)
 		{
 			Bounds2D entryBounds = Bounds2D.CreateFromTopLeftAndSize(topLeft, new Vector2(width, ButtonHeight));
-			bool offscreen = entryBounds.Top < 0 || entryBounds.Bottom > UI.Height;
+			bool offscreen = entryBounds.Top < 0 || entryBounds.Bottom > Seb.Vis.UI.UI.Height;
 
 			if (!isLayoutPass && !offscreen)
 			{
@@ -101,7 +101,7 @@ namespace DLS.Graphics
 
 				// Draw chip name (drawn as non-interactive button)
 				ButtonTheme nameTheme = ActiveUITheme.ChipLibraryChipToggleOn;
-				UI.Button(chipName, nameTheme, topLeft, new Vector2(nameWidth, ButtonHeight), true, false, false,nameTheme.buttonCols, Anchor.TopLeft, true, 1, true);
+				Seb.Vis.UI.UI.Button(chipName, nameTheme, topLeft, new Vector2(nameWidth, ButtonHeight), true, false, false,nameTheme.buttonCols, Anchor.TopLeft, true, 1, true);
 
 				// Draw buttons
 				Vector2 buttonsTopLeft = topLeft + Vector2.right * (nameWidth + DefaultButtonSpacing);
@@ -123,7 +123,7 @@ namespace DLS.Graphics
 			}
 
 			// Override bounds so can skip drawing if offscreen or in layout pass
-			UI.OverridePreviousBounds(entryBounds);
+			Seb.Vis.UI.UI.OverridePreviousBounds(entryBounds);
 		}
 
 		static void CreateFilteredChipsList(string searchString)
@@ -195,7 +195,7 @@ namespace DLS.Graphics
 		public static void OnMenuOpened()
 		{
 			menuOpenedFrame = Time.frameCount;
-			InputFieldState inputField = UI.GetInputFieldState(ID_SearchInput);
+			InputFieldState inputField = Seb.Vis.UI.UI.GetInputFieldState(ID_SearchInput);
 			inputField.ClearText();
 
 			allChipNames = Project.ActiveProject.chipLibrary.allChips.Select(c => c.Name).ToArray();

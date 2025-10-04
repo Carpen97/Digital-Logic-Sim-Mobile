@@ -85,21 +85,21 @@ namespace DLS.Graphics
 			const float collectionPanelWidthT = 0.35f;
 			const float selectedPanelWidthT = 1 - (starredPanelWidthT + collectionPanelWidthT);
 
-			float panelWidthSum = UI.Width - interPanelSpacing * 2 - panelEdgePadding.x * 2;
-			float panelHeight = UI.Height - panelEdgePadding.y * 2;
+			float panelWidthSum = Seb.Vis.UI.UI.Width - interPanelSpacing * 2 - panelEdgePadding.x * 2;
+			float panelHeight = Seb.Vis.UI.UI.Height - panelEdgePadding.y * 2;
 
-			Vector2 panelATopLeft = UI.TopLeft + new Vector2(panelEdgePadding.x, -panelEdgePadding.y + menuOffsetY);
+			Vector2 panelATopLeft = Seb.Vis.UI.UI.TopLeft + new Vector2(panelEdgePadding.x, -panelEdgePadding.y + menuOffsetY);
 			Vector2 panelSizeA = new(panelWidthSum * starredPanelWidthT, panelHeight);
 			Vector2 panelBTopLeft = panelATopLeft + Vector2.right * (panelSizeA.x + interPanelSpacing);
 			Vector2 panelSizeB = new(panelWidthSum * collectionPanelWidthT, panelHeight);
 			Vector2 panelCTopLeft = panelBTopLeft + Vector2.right * (panelSizeB.x + interPanelSpacing);
 			Vector2 panelSizeC = new(panelWidthSum * selectedPanelWidthT, panelHeight);
 
-			isScrolling = UI.GetScrollbarState(ID_CollectionsScrollbar).isDragging || UI.GetScrollbarState(ID_StarredScrollbar).isDragging;
+			isScrolling = Seb.Vis.UI.UI.GetScrollbarState(ID_CollectionsScrollbar).isDragging || Seb.Vis.UI.UI.GetScrollbarState(ID_StarredScrollbar).isDragging;
 
 			bool popupHasFocus = creatingNewCollection || renamingCollection || isConfirmingChipDeletion || isConfirmingCollectionDeletion;
 
-			using (UI.BeginDisabledScope(popupHasFocus))
+			using (Seb.Vis.UI.UI.BeginDisabledScope(popupHasFocus))
 			{
 				DrawStarredPanel(panelATopLeft, panelSizeA);
 				DrawCollectionsPanel(panelBTopLeft, panelSizeB);
@@ -134,11 +134,11 @@ namespace DLS.Graphics
 
 		static void DrawStarredPanel(Vector2 topLeft, Vector2 size)
 		{
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 			Bounds2D panelBounds = Bounds2D.CreateFromTopLeftAndSize(topLeft, size);
 			DrawPanelHeader("STARRED", topLeft, size.x);
 
-			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - UI.PrevBounds.Height));
+			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(Seb.Vis.UI.UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - Seb.Vis.UI.UI.PrevBounds.Height));
 			Bounds2D panelContentBounds = Bounds2D.Shrink(panelBoundsMinusHeader, PanelUIPadding);
 
 			// Reserve space for the button at the bottom
@@ -149,7 +149,7 @@ namespace DLS.Graphics
 			Vector2 buttonTopLeft = panelContentBounds.BottomLeft + Vector2.up * (buttonHeight + buttonMargin*3);
 
 			// Draw scrollable starred list
-			UI.DrawScrollView(ID_StarredScrollbar, panelContentBounds.TopLeft, scrollViewSize, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawStarredEntry, project.description.StarredList.Count);
+			Seb.Vis.UI.UI.DrawScrollView(ID_StarredScrollbar, panelContentBounds.TopLeft, scrollViewSize, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawStarredEntry, project.description.StarredList.Count);
 
 			// Draw ADD TO STARRED button at the bottom
 			// Check if we have something selected to star/unstar
@@ -182,7 +182,7 @@ namespace DLS.Graphics
 					buttonText = "UNSTAR";
 				}
 
-				bool buttonPressed = UI.Button(buttonText, ActiveUITheme.ButtonTheme, buttonTopLeft, buttonArea, true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
+				bool buttonPressed = Seb.Vis.UI.UI.Button(buttonText, ActiveUITheme.ButtonTheme, buttonTopLeft, buttonArea, true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
 				
 				if (buttonPressed)
 				{
@@ -217,7 +217,7 @@ namespace DLS.Graphics
 			interactableStates_starredList[0] = index < project.description.StarredList.Count - 1; // can move down
 			interactableStates_starredList[1] = index > 0; // can move up
 
-			bool entryPressed = UI.Button(starredItem.Name, theme, topLeft, new Vector2(width, 2), true, false, false, theme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+			bool entryPressed = Seb.Vis.UI.UI.Button(starredItem.Name, theme, topLeft, new Vector2(width, 2), true, false, false, theme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 			if (entryPressed)
 			{
 				selectedStarredItemIndex = index;
@@ -228,13 +228,13 @@ namespace DLS.Graphics
 
 		static void DrawCollectionsPanel(Vector2 topLeft, Vector2 size)
 		{
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 			Bounds2D panelBounds = Bounds2D.CreateFromTopLeftAndSize(topLeft, size);
 			DrawPanelHeader("COLLECTIONS", topLeft, size.x);
-			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - UI.PrevBounds.Height));
+			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(Seb.Vis.UI.UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - Seb.Vis.UI.UI.PrevBounds.Height));
 			Bounds2D panelContentBounds = Bounds2D.Shrink(panelBoundsMinusHeader, PanelUIPadding);
 
-			UI.DrawScrollView(ID_CollectionsScrollbar, panelContentBounds.TopLeft, panelContentBounds.Size, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawCollectionEntry, collections.Count);
+			Seb.Vis.UI.UI.DrawScrollView(ID_CollectionsScrollbar, panelContentBounds.TopLeft, panelContentBounds.Size, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawCollectionEntry, collections.Count);
 			MenuHelper.DrawReservedMenuPanel(panelID, panelBounds, false);
 		}
 
@@ -246,7 +246,7 @@ namespace DLS.Graphics
 			bool collectionHighlighted = collectionIndex == selectedCollectionIndex;
 			ButtonTheme activeCollectionTheme = GetButtonTheme(true, collectionHighlighted);
 
-			bool collectionPressed = UI.Button(label, activeCollectionTheme, topLeft, new Vector2(width, 2), true, false, false, activeCollectionTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+			bool collectionPressed = Seb.Vis.UI.UI.Button(label, activeCollectionTheme, topLeft, new Vector2(width, 2), true, false, false, activeCollectionTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 			if (collectionPressed)
 			{
 				selectedCollectionIndex = collectionIndex;
@@ -265,8 +265,8 @@ namespace DLS.Graphics
 				{
 					string chipName = collection.Chips[chipIndex];
 					ButtonTheme activeChipTheme = collectionIndex == selectedCollectionIndex && chipIndex == selectedChipInCollectionIndex ? ActiveUITheme.ChipLibraryChipToggleOn : ActiveUITheme.ChipLibraryChipToggleOff;
-					Vector2 chipLabelPos = new(topLeft.x + nestedInset, UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
-					bool chipPressed = UI.Button(chipName, activeChipTheme, chipLabelPos, new Vector2(width - nestedInset, 2), true, false, false,activeChipTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+					Vector2 chipLabelPos = new(topLeft.x + nestedInset, Seb.Vis.UI.UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
+					bool chipPressed = Seb.Vis.UI.UI.Button(chipName, activeChipTheme, chipLabelPos, new Vector2(width - nestedInset, 2), true, false, false,activeChipTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 					if (chipPressed)
 					{
 						bool alreadySelected = selectedChipInCollectionIndex == chipIndex && collectionHighlighted;
@@ -287,10 +287,10 @@ namespace DLS.Graphics
 
 		static void DrawSelectedItemPanel(Vector2 topLeft, Vector2 size)
 		{
-			Draw.ID panelID = UI.ReservePanel();
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 			Bounds2D panelBounds = Bounds2D.CreateFromTopLeftAndSize(topLeft, size);
 			DrawPanelHeader("PREVIEW", topLeft, size.x);
-			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - UI.PrevBounds.Height));
+			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(Seb.Vis.UI.UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - Seb.Vis.UI.UI.PrevBounds.Height));
 			Bounds2D panelContentBounds = Bounds2D.Shrink(panelBoundsMinusHeader, PanelUIPadding);
 			topLeft = panelContentBounds.TopLeft;
 			
@@ -303,7 +303,7 @@ namespace DLS.Graphics
 			bool hasStarredItemSelected = selectedStarredItemIndex != -1;
 
 			// Always draw preview window (even when empty)
-			using (UI.BeginBoundsScope(true))
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 				// ---- Draw Chip Preview First (Top Element) ----
 				DrawChipPreview(panelContentBounds, hasChipSelected, hasStarredItemSelected);
@@ -418,7 +418,7 @@ namespace DLS.Graphics
 
 						if (buttonIndexEditCollection == 0) // Rename collection
 						{
-							UI.GetInputFieldState(ID_NameInput).ClearText();
+							Seb.Vis.UI.UI.GetInputFieldState(ID_NameInput).ClearText();
 							renamingCollection = true;
 						}
 						else if (buttonIndexEditCollection == 1) // Delete collection
@@ -427,7 +427,7 @@ namespace DLS.Graphics
 							else
 							{
 								deleteConfirmMessage = $"Are you sure you want to delete this collection? The chips inside of it will be moved to \"{defaultOtherChipsCollectionName}\".";
-								deleteConfirmMessage = UI.LineBreakByCharCount(deleteConfirmMessage, deleteMessageMaxCharsPerLine);
+								deleteConfirmMessage = Seb.Vis.UI.UI.LineBreakByCharCount(deleteConfirmMessage, deleteMessageMaxCharsPerLine);
 								deleteConfirmMessageCol = deleteColWarningMedium;
 								isConfirmingCollectionDeletion = true;
 							}
@@ -472,47 +472,47 @@ namespace DLS.Graphics
 						}
 					}
 
-					topLeft = UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
+					topLeft = Seb.Vis.UI.UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
 				}
 				else
 				{
 					// When nothing is selected, add some spacing to maintain constant height
 					topLeft.y -= 50f; // Add space to maintain constant total height
 					
-					topLeft = UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
+					topLeft = Seb.Vis.UI.UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
 				}
 			}
 
 			if (!(isConfirmingChipDeletion || isConfirmingCollectionDeletion))
 			{
-				using (UI.BeginBoundsScope(true))
+				using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 				{
-					panelID = UI.ReservePanel();
+					panelID = Seb.Vis.UI.UI.ReservePanel();
 
 					// New collection button
 					if (!renamingCollection)
 					{
-						bool createNew = UI.Button("NEW COLLECTION", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
+						bool createNew = Seb.Vis.UI.UI.Button("NEW COLLECTION", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
 						if (createNew) creatingNewCollection = true;
 						if (!creatingNewCollection)
 						{
-							topLeft += Vector2.down * (UI.PrevBounds.Height + DefaultButtonSpacing * 1);
-							bool exit = UI.Button("EXIT LIBRARY", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
+							topLeft += Vector2.down * (Seb.Vis.UI.UI.PrevBounds.Height + DefaultButtonSpacing * 1);
+							bool exit = Seb.Vis.UI.UI.Button("EXIT LIBRARY", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
 							if (exit) ExitLibrary();
 						}
 
-						topLeft += Vector2.down * (UI.PrevBounds.Height + DefaultButtonSpacing * 2);
+						topLeft += Vector2.down * (Seb.Vis.UI.UI.PrevBounds.Height + DefaultButtonSpacing * 2);
 					}
 
 					// New collection / rename collection input field
 					if (creatingNewCollection || renamingCollection)
 					{
-						using (UI.BeginDisabledScope(false))
+						using (Seb.Vis.UI.UI.BeginDisabledScope(false))
 						{
 							InputFieldTheme inputTheme = MenuHelper.Theme.ChipNameInputField;
 							inputTheme.fontSize = MenuHelper.Theme.FontSizeRegular;
-							InputFieldState nameField = UI.InputField(ID_NameInput, inputTheme, topLeft, new Vector2(panelContentBounds.Width, 2.5f), string.Empty, Anchor.TopLeft, 1, ValidateCollectionNameInput, true);
-							int button_cancelConfirm = MenuHelper.DrawButtonPair("CANCEL", renamingCollection ? "RENAME" : "CREATE", UI.PrevBounds.BottomLeft, panelContentBounds.Width, true, true, IsValidCollectionName(nameField.text));
+							InputFieldState nameField = Seb.Vis.UI.UI.InputField(ID_NameInput, inputTheme, topLeft, new Vector2(panelContentBounds.Width, 2.5f), string.Empty, Anchor.TopLeft, 1, ValidateCollectionNameInput, true);
+							int button_cancelConfirm = MenuHelper.DrawButtonPair("CANCEL", renamingCollection ? "RENAME" : "CREATE", Seb.Vis.UI.UI.PrevBounds.BottomLeft, panelContentBounds.Width, true, true, IsValidCollectionName(nameField.text));
 							if (button_cancelConfirm == 0)
 							{
 								nameField.ClearText();
@@ -541,7 +541,7 @@ namespace DLS.Graphics
 						}
 					}
 
-					topLeft = UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
+					topLeft = Seb.Vis.UI.UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
 				}
 
             }
@@ -549,13 +549,13 @@ namespace DLS.Graphics
             // Delete confirmation
             if (isConfirmingChipDeletion || isConfirmingCollectionDeletion)
 			{
-				using (UI.BeginBoundsScope(true))
+				using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 				{
-					using (UI.BeginDisabledScope(false))
+					using (Seb.Vis.UI.UI.BeginDisabledScope(false))
 					{
-						panelID = UI.ReservePanel();
-						UI.DrawText(deleteConfirmMessage, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, topLeft, Anchor.TopLeft, deleteConfirmMessageCol);
-						topLeft += Vector2.down * (UI.PrevBounds.Height + DefaultButtonSpacing * 3f);
+						panelID = Seb.Vis.UI.UI.ReservePanel();
+						Seb.Vis.UI.UI.DrawText(deleteConfirmMessage, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, topLeft, Anchor.TopLeft, deleteConfirmMessageCol);
+						topLeft += Vector2.down * (Seb.Vis.UI.UI.PrevBounds.Height + DefaultButtonSpacing * 3f);
 						int button_cancelConfirm = MenuHelper.DrawButtonPair("CANCEL", "DELETE", topLeft, panelContentBounds.Width, false);
 
 						if (button_cancelConfirm == 0) // cancel delete
@@ -598,13 +598,13 @@ namespace DLS.Graphics
 			static void DrawHeader(string text, Color bgCol, Color textCol, ref Vector2 topLeft, float width, float spacingBelow = DefaultButtonSpacing)
 			{
 				MenuHelper.DrawCentredTextWithBackground(text, topLeft, new Vector2(width, 2), Anchor.TopLeft, textCol, bgCol);
-				topLeft += Vector2.down * (UI.PrevBounds.Height + spacingBelow);
+				topLeft += Vector2.down * (Seb.Vis.UI.UI.PrevBounds.Height + spacingBelow);
 			}
 
 		static int DrawHorizontalButtonGroup(string[] names, bool[] interactionStates, ref Vector2 topLeft, float width, float verticalSpacing = DefaultButtonSpacing)
 		{
-			int buttonIndex = UI.HorizontalButtonGroup(names, interactionStates, ActiveUITheme.ButtonTheme, topLeft, width, DefaultButtonSpacing, 0, Anchor.TopLeft);
-			topLeft.y -= UI.PrevBounds.Height + verticalSpacing;
+			int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(names, interactionStates, ActiveUITheme.ButtonTheme, topLeft, width, DefaultButtonSpacing, 0, Anchor.TopLeft);
+			topLeft.y -= Seb.Vis.UI.UI.PrevBounds.Height + verticalSpacing;
 			return buttonIndex;
 		}
 
@@ -846,7 +846,7 @@ namespace DLS.Graphics
 			if (parentNames.Count == 0) message += "It is not used anywhere.";
 			else message += CreateChipInUseWarningMessage(parentNames);
 
-			string formattedMessage = UI.LineBreakByCharCount(message, deleteMessageMaxCharsPerLine);
+			string formattedMessage = Seb.Vis.UI.UI.LineBreakByCharCount(message, deleteMessageMaxCharsPerLine);
 			return (formattedMessage, warn);
 
 			string CreateChipInUseWarningMessage(List<string> chipsUsingCurrentChip)
@@ -1042,21 +1042,21 @@ namespace DLS.Graphics
 		{
 			Vector2 scaledSize = size * scale;
 			Debug.Log($"Drawing chip body at {pos} with size {scaledSize} and color {chipCol}");
-			UI.DrawPanel(pos, scaledSize, chipCol, Anchor.Centre);
+			Seb.Vis.UI.UI.DrawPanel(pos, scaledSize, chipCol, Anchor.Centre);
 		}
 
 		static void UI_DrawChipOutline(Vector2 pos, Vector2 size, Color outlineCol, float scale)
 		{
 			Vector2 scaledSize = size * scale;
 			Vector2 outlineSize = scaledSize + Vector2.one * (DrawSettings.ChipOutlineWidth * scale);
-			UI.DrawPanel(pos, outlineSize, outlineCol, Anchor.Centre);
+			Seb.Vis.UI.UI.DrawPanel(pos, outlineSize, outlineCol, Anchor.Centre);
 		}
 
 		static void UI_DrawChipPin(Vector2 pos, Color pinCol, float scale)
 		{
 			float pinRadius = DrawSettings.PinRadius * scale;
 			Debug.Log($"UI_DrawChipPin: pos={pos}, radius={pinRadius}, col={pinCol}");
-			UI.DrawPoint(pos, pinRadius, pinCol);
+			Seb.Vis.UI.UI.DrawPoint(pos, pinRadius, pinCol);
 		}
 
 		static void UI_DrawPreviewPin(PinDescription pinDesc, Vector2 pinPos, float scale)
@@ -1078,7 +1078,7 @@ namespace DLS.Graphics
 			float pinRadius = DrawSettings.PinRadius * scale;
 			Color pinCol = ActiveTheme.PinCol;
 			
-			UI.DrawPoint(pinPos, pinRadius, pinCol);
+			Seb.Vis.UI.UI.DrawPoint(pinPos, pinRadius, pinCol);
 		}
 
 		static void DrawMultiBitPinPreview(PinDescription pinDesc, Vector2 pinPos, float scale)
@@ -1091,7 +1091,7 @@ namespace DLS.Graphics
 			Vector2 pinSize = isHorizontal ? new Vector2(pinHeight, pinWidth) : new Vector2(pinWidth, pinHeight);
 			
 			Color pinCol = ActiveTheme.PinCol;
-			UI.DrawQuad(pinPos, pinSize, pinCol);
+			Seb.Vis.UI.UI.DrawQuad(pinPos, pinSize, pinCol);
 			
 			// Draw pin size indicator for large pins (like in game)
 			if (pinDesc.BitCount >= 64)
@@ -1100,7 +1100,7 @@ namespace DLS.Graphics
 				// Use actual facing direction based on pin face
 				Vector2 facingDir = pinFace == 1 ? Vector2.right : pinFace == 3 ? Vector2.left : 
 				                   pinFace == 2 ? Vector2.down : Vector2.up;
-				UI.DrawQuad(pinPos + facingDir * 0.25f * pinWidth, depthIndicatorSize, ActiveTheme.PinSizeIndicatorColors[pinDesc.BitCount.GetTier()]);
+				Seb.Vis.UI.UI.DrawQuad(pinPos + facingDir * 0.25f * pinWidth, depthIndicatorSize, ActiveTheme.PinSizeIndicatorColors[pinDesc.BitCount.GetTier()]);
 			}
 		}
 
@@ -1108,9 +1108,9 @@ namespace DLS.Graphics
 		{
 			Debug.Log($"DrawChipPreviewPins called: {chipDesc.Name}, HasCustomLayout={chipDesc.HasCustomLayout}, InputPins={chipDesc.InputPins?.Length ?? 0}, OutputPins={chipDesc.OutputPins?.Length ?? 0}");
 			
-			// Scale pin radius by the same factor as the chip, but divide by 2 since UI.DrawPoint doubles it
+			// Scale pin radius by the same factor as the chip, but divide by 2 since Seb.Vis.UI.UI.DrawPoint doubles it
 			Color pinCol = ActiveTheme.PinCol;
-			float pinRadius = (DrawSettings.PinRadius * scale) / 2f; // UI.DrawPoint doubles the radius internally
+			float pinRadius = (DrawSettings.PinRadius * scale) / 2f; // Seb.Vis.UI.UI.DrawPoint doubles the radius internally
 
 			// For built-in chips without custom layout, simulate the automatic pin layout
 			if (!chipDesc.HasCustomLayout)
@@ -1259,7 +1259,7 @@ namespace DLS.Graphics
 			if (bitCount == PinBitCount.Bit1)
 			{
 				Debug.Log($"Drawing 1-bit {(isOutput ? "output" : "input")} pin at {pinPos} with radius {pinRadius}");
-				UI.DrawPoint(pinPos, pinRadius, pinCol);
+				Seb.Vis.UI.UI.DrawPoint(pinPos, pinRadius, pinCol);
 			}
 			else
 			{
@@ -1269,7 +1269,7 @@ namespace DLS.Graphics
 				float pinHeight = SubChipInstance.PinHeightFromBitCount(bitCount) * scale;
 				Vector2 pinSize = new Vector2(pinWidth, pinHeight);
 				Debug.Log($"Drawing multi-bit {(isOutput ? "output" : "input")} pin at {pinPos} with size {pinSize}");
-				UI.DrawQuad(pinPos, pinSize, pinCol);
+				Seb.Vis.UI.UI.DrawQuad(pinPos, pinSize, pinCol);
 			}
 		}
 
@@ -1288,10 +1288,10 @@ namespace DLS.Graphics
 				textPos.y += chipSize.y * 0.5f + fontSize * 0.5f;
 				// Draw background band for top text
 				Vector2 bandSize = new Vector2(chipSize.x + 1f, fontSize + 0.5f);
-				UI.DrawPanel(textPos, bandSize, chipCol, Anchor.Centre);
+				Seb.Vis.UI.UI.DrawPanel(textPos, bandSize, chipCol, Anchor.Centre);
 			}
 
-			UI.DrawText(chipDesc.Name, FontType.JetbrainsMonoRegular, fontSize, textPos, Anchor.Centre, textCol);
+			Seb.Vis.UI.UI.DrawText(chipDesc.Name, FontType.JetbrainsMonoRegular, fontSize, textPos, Anchor.Centre, textCol);
 		}
 
 		static void DrawChipPreviewDisplays(ChipDescription chipDesc, Vector2 chipPos, Vector2 chipSize, float scale)
@@ -1348,8 +1348,8 @@ namespace DLS.Graphics
 			// 3. Draw the appropriate display type
 			
 			// Placeholder: draw a cyan panel to indicate custom chip
-			UI.DrawPanel(displayPos, Vector2.one * displayScale, Color.cyan, Anchor.Centre);
-			UI.DrawText("CUSTOM", FontType.JetbrainsMonoRegular, displayScale * 0.3f, displayPos, Anchor.Centre, Color.white);
+			Seb.Vis.UI.UI.DrawPanel(displayPos, Vector2.one * displayScale, Color.cyan, Anchor.Centre);
+			Seb.Vis.UI.UI.DrawText("CUSTOM", FontType.JetbrainsMonoRegular, displayScale * 0.3f, displayPos, Anchor.Centre, Color.white);
 		}
 
 		static void DrawDevPinStyleDisplay(ChipDescription chipDesc, Vector2 chipPos, Vector2 chipSize, float scale)
@@ -1409,9 +1409,9 @@ namespace DLS.Graphics
 				Color stateCol = Color.red; // Default state color for preview
 				
 				// Draw outline
-				UI.DrawPoint(stateDisplayPos, radius + DrawSettings.DevPinStateDisplayOutline * scale, Color.black);
+				Seb.Vis.UI.UI.DrawPoint(stateDisplayPos, radius + DrawSettings.DevPinStateDisplayOutline * scale, Color.black);
 				// Draw main circle
-				UI.DrawPoint(stateDisplayPos, radius, stateCol);
+				Seb.Vis.UI.UI.DrawPoint(stateDisplayPos, radius, stateCol);
 			}
 			else
 			{
@@ -1423,7 +1423,7 @@ namespace DLS.Graphics
 				Vector2 gridSize = new Vector2(gridDim.x, gridDim.y) * squareSize + Vector2.one * (DrawSettings.DevPinStateDisplayOutline * scale);
 				
 				// Draw black background rectangle
-				UI.DrawPanel(stateDisplayPos, gridSize, Color.black, Anchor.Centre);
+				Seb.Vis.UI.UI.DrawPanel(stateDisplayPos, gridSize, Color.black, Anchor.Centre);
 				
 				// Draw individual squares within the rectangle
 				Vector2 topLeft = new Vector2(stateDisplayPos.x - gridSize.x / 2, stateDisplayPos.y + gridSize.y / 2);
@@ -1439,7 +1439,7 @@ namespace DLS.Graphics
 						Color stateCol = Color.red; // Default state color for preview
 						
 						// Draw square
-						UI.DrawQuad(pos, squareDrawSize, stateCol, Anchor.Centre);
+						Seb.Vis.UI.UI.DrawQuad(pos, squareDrawSize, stateCol, Anchor.Centre);
 						currBitIndex--;
 					}
 				}
@@ -1449,14 +1449,14 @@ namespace DLS.Graphics
 			// Use the same logic as the game: circle for 1-bit, rectangle for multi-bit
 			if (bitCount == 1)
 			{
-				UI.DrawPoint(pinPos, pinRadius, Color.black);
+				Seb.Vis.UI.UI.DrawPoint(pinPos, pinRadius, Color.black);
 			}
 			else
 			{
 				// Multi-bit pin: draw rectangle like the game
 				bool isHorizontal = false;
 				Vector2 multiBitPinSize = isHorizontal ? new Vector2(pinHeight, pinWidth) : new Vector2(pinWidth, pinHeight);
-				UI.DrawQuad(pinPos, multiBitPinSize, Color.black, Anchor.Centre);
+				Seb.Vis.UI.UI.DrawQuad(pinPos, multiBitPinSize, Color.black, Anchor.Centre);
 			}
 			
 			// Note: Handle removed from preview as it's overkill for a preview display
@@ -1498,33 +1498,33 @@ namespace DLS.Graphics
 			else if (chipType == ChipType.DisplayRGBTouch)
 			{
 				// Draw RGB Touch display (simplified - just show a colored square with touch indicator)
-				UI.DrawPanel(displayPos, Vector2.one * displayScale, Color.gray, Anchor.Centre);
+				Seb.Vis.UI.UI.DrawPanel(displayPos, Vector2.one * displayScale, Color.gray, Anchor.Centre);
 				// Add a small indicator for touch capability
-				UI.DrawCircle(displayPos + Vector2.one * displayScale * 0.3f, displayScale * 0.1f, Color.yellow, Anchor.Centre);
+				Seb.Vis.UI.UI.DrawCircle(displayPos + Vector2.one * displayScale * 0.3f, displayScale * 0.1f, Color.yellow, Anchor.Centre);
 			}
 			else if (chipType == ChipType.Button)
 			{
 				// Draw button display (dark gray button)
-				UI.DrawPanel(displayPos, Vector2.one * displayScale, new Color(0.2f, 0.2f, 0.2f), Anchor.Centre);
-				UI.DrawText("BUTTON", FontType.JetbrainsMonoRegular, displayScale * 0.2f, displayPos, Anchor.Centre, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(displayPos, Vector2.one * displayScale, new Color(0.2f, 0.2f, 0.2f), Anchor.Centre);
+				Seb.Vis.UI.UI.DrawText("BUTTON", FontType.JetbrainsMonoRegular, displayScale * 0.2f, displayPos, Anchor.Centre, Color.white);
 			}
 			else if (chipType == ChipType.Toggle)
 			{
 				// Draw toggle display (blue toggle switch)
-				UI.DrawPanel(displayPos, Vector2.one * displayScale, new Color(0.3f, 0.5f, 0.8f), Anchor.Centre);
-				UI.DrawText("TOGGLE", FontType.JetbrainsMonoRegular, displayScale * 0.2f, displayPos, Anchor.Centre, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(displayPos, Vector2.one * displayScale, new Color(0.3f, 0.5f, 0.8f), Anchor.Centre);
+				Seb.Vis.UI.UI.DrawText("TOGGLE", FontType.JetbrainsMonoRegular, displayScale * 0.2f, displayPos, Anchor.Centre, Color.white);
 			}
 			else if (chipType == ChipType.In_Pin)
 			{
 				// Draw input pin display (dark gray button-like)
-				UI.DrawPanel(displayPos, Vector2.one * displayScale, new Color(0.2f, 0.2f, 0.2f), Anchor.Centre);
-				UI.DrawText("IN", FontType.JetbrainsMonoRegular, displayScale * 0.3f, displayPos, Anchor.Centre, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(displayPos, Vector2.one * displayScale, new Color(0.2f, 0.2f, 0.2f), Anchor.Centre);
+				Seb.Vis.UI.UI.DrawText("IN", FontType.JetbrainsMonoRegular, displayScale * 0.3f, displayPos, Anchor.Centre, Color.white);
 			}
 			else if (chipType == ChipType.Out_Pin)
 			{
 				// Draw output pin display (dark gray button-like)
-				UI.DrawPanel(displayPos, Vector2.one * displayScale, new Color(0.2f, 0.2f, 0.2f), Anchor.Centre);
-				UI.DrawText("OUT", FontType.JetbrainsMonoRegular, displayScale * 0.3f, displayPos, Anchor.Centre, Color.white);
+				Seb.Vis.UI.UI.DrawPanel(displayPos, Vector2.one * displayScale, new Color(0.2f, 0.2f, 0.2f), Anchor.Centre);
+				Seb.Vis.UI.UI.DrawText("OUT", FontType.JetbrainsMonoRegular, displayScale * 0.3f, displayPos, Anchor.Centre, Color.white);
 			}
 			// Add other display types as needed
 		}
@@ -1537,7 +1537,7 @@ namespace DLS.Graphics
 			const float pixelSizeT = 0.925f;
 			
 			// Draw background
-			UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
+			Seb.Vis.UI.UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
 			
 			float size = scale * borderFrac;
 			Vector2 bottomLeft = centre - Vector2.one * size / 2;
@@ -1572,7 +1572,7 @@ namespace DLS.Graphics
 			const float pixelSizeT = 0.925f;
 			
 			// Draw background
-			UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
+			Seb.Vis.UI.UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
 			
 			float size = scale * borderFrac;
 			Vector2 bottomLeft = centre - Vector2.one * size / 2;
@@ -1591,7 +1591,7 @@ namespace DLS.Graphics
 					Color pixelColor = new Color(r, g, b, 1f);
 					
 					Vector2 pos = bottomLeft + Vector2.one * pixelSize / 2 + Vector2.right * (pixelSize * x) + Vector2.up * (pixelSize * y);
-					UI.DrawQuad(pos, pixelDrawSize, pixelColor, Anchor.Centre);
+					Seb.Vis.UI.UI.DrawQuad(pos, pixelDrawSize, pixelColor, Anchor.Centre);
 				}
 			}
 		}
@@ -1603,9 +1603,9 @@ namespace DLS.Graphics
 			Vector2 pixelDrawSize = Vector2.one * (scale * pixelSizeT);
 			
 			// Draw black background
-			UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
+			Seb.Vis.UI.UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
 			// Draw colored LED (red for preview)
-			UI.DrawQuad(centre, pixelDrawSize, Color.red, Anchor.Centre);
+			Seb.Vis.UI.UI.DrawQuad(centre, pixelDrawSize, Color.red, Anchor.Centre);
 		}
 
 		static void UI_DrawSevenSegmentDisplay(Vector2 centre, float scale, int A, int B, int C, int D, int E, int F, int G)
@@ -1637,19 +1637,19 @@ namespace DLS.Graphics
 
 			// Draw bounds (black background) - match game exactly
 			Vector2 boundsSize = new(boundsWidth, boundsHeight);
-			UI.DrawPanel(centre, boundsSize, Color.black, Anchor.Centre);
+			Seb.Vis.UI.UI.DrawPanel(centre, boundsSize, Color.black, Anchor.Centre);
 
 			// Draw segments in the exact same order and positions as the game
 			// Draw horizontal segments
-			if (G == 1) UI.DrawDiamond(centre, segmentSizeHorizontal, segmentColor); // mid
-			if (A == 1) UI.DrawDiamond(centre + Vector2.up * segmentRegionHeight / 2, segmentSizeHorizontal, segmentColor); // top
-			if (D == 1) UI.DrawDiamond(centre - Vector2.up * segmentRegionHeight / 2, segmentSizeHorizontal, segmentColor); // bottom
+			if (G == 1) Seb.Vis.UI.UI.DrawDiamond(centre, segmentSizeHorizontal, segmentColor); // mid
+			if (A == 1) Seb.Vis.UI.UI.DrawDiamond(centre + Vector2.up * segmentRegionHeight / 2, segmentSizeHorizontal, segmentColor); // top
+			if (D == 1) Seb.Vis.UI.UI.DrawDiamond(centre - Vector2.up * segmentRegionHeight / 2, segmentSizeHorizontal, segmentColor); // bottom
 
 			// Draw vertical segments
-			if (F == 1) UI.DrawDiamond(centre - offsetX + offsetY, segmentSizeVertical, segmentColor); // left top
-			if (E == 1) UI.DrawDiamond(centre - offsetX - offsetY, segmentSizeVertical, segmentColor); // left bottom
-			if (B == 1) UI.DrawDiamond(centre + offsetX + offsetY, segmentSizeVertical, segmentColor); // right top
-			if (C == 1) UI.DrawDiamond(centre + offsetX - offsetY, segmentSizeVertical, segmentColor); // right bottom
+			if (F == 1) Seb.Vis.UI.UI.DrawDiamond(centre - offsetX + offsetY, segmentSizeVertical, segmentColor); // left top
+			if (E == 1) Seb.Vis.UI.UI.DrawDiamond(centre - offsetX - offsetY, segmentSizeVertical, segmentColor); // left bottom
+			if (B == 1) Seb.Vis.UI.UI.DrawDiamond(centre + offsetX + offsetY, segmentSizeVertical, segmentColor); // right top
+			if (C == 1) Seb.Vis.UI.UI.DrawDiamond(centre + offsetX - offsetY, segmentSizeVertical, segmentColor); // right bottom
 		}
 
     }

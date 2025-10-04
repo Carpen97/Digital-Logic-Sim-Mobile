@@ -919,7 +919,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 356359881}
-  - component: {fileID: 356359880}
+  - component: {fileID: 356359882}
   m_Layer: 0
   m_Name: FireBaseProbe
   m_TagString: Untagged
@@ -927,18 +927,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &356359880
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 356359879}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85f4b3f2e4cf6774c9b86f3c270fc921, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &356359881
 Transform:
   m_ObjectHideFlags: 0
@@ -954,6 +942,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &356359882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 356359879}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1019853180c66774bbecbd341df4d9c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  runTestOnStart: 1
+  testLevelId: Test Level
+  testScore: 42
+  testUserName: PCTestUser
+  isTestRunning: 0
+  lastTestResult: 
+  lastError: 
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1610,7 +1617,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1073838229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2144,7 +2151,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1785793816
 MonoBehaviour:
   m_ObjectHideFlags: 0

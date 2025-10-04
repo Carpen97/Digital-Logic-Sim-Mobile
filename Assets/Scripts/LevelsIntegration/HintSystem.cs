@@ -3,6 +3,7 @@ using UnityEngine;
 using DLS.Game;
 using DLS.Levels;
 using DLS.Levels.Host;
+using DLS.Graphics.UI;
 
 namespace DLS.Game.LevelsIntegration
 {
@@ -15,7 +16,7 @@ namespace DLS.Game.LevelsIntegration
         /// <summary>
         /// Global toggle for the hint tool. When false, all handles use default colors.
         /// </summary>
-        public static bool EnableHintTool => MobileUIController.Instance != null && MobileUIController.Instance.isHintToolActive;
+        public static bool EnableHintTool => MobileUIControllerWrapper.IsHintToolActive;
 
         // Performance optimization: cache the last calculated input state
         private static ulong _cachedInputState = 0;

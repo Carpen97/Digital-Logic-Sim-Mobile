@@ -109,7 +109,7 @@ namespace DLS.Game
 				Prefs_SimTargetStepsPerSecond = 1000,
 				Prefs_SimStepsPerClockTick = 250,
 				Prefs_SimPaused = false,
-				Prefs_UIThemeMode = 1,
+				// Prefs_UIThemeMode removed - only Squiggles Theme is used
 				Prefs_GridDisplayMode = 1,
 				Prefs_UseDragAndDropMode = true,
 				AllCustomChipNames = Array.Empty<string>(),
