@@ -25,6 +25,8 @@ namespace DLS.Graphics
 
 		static readonly string[] buttonNames_moveSingleStep = { "MOVE UP", "MOVE DOWN" };
 		static readonly string[] buttonNames_jump = { "JUMP UP", "JUMP DOWN" };
+		static readonly string[] buttonNames_collectionJump = { "JUMP OUT", "JUMP IN" };
+		static readonly string[] buttonNames_collectionMovement = { "JUMP IN", "JUMP OUT", "JUMP UP", "JUMP DOWN", "MOVE UP", "MOVE DOWN" };
 		static readonly string[] buttonNames_chipAction = { "USE", "OPEN", "DELETE" };
 		static readonly string[] buttonNames_collectionRenameOrDelete = { "RENAME", "DELETE" };
 
@@ -42,6 +44,7 @@ namespace DLS.Graphics
 		static readonly bool[] interactableStates_move = { true, true };
 		static readonly bool[] interactableStates_starredList = { true, true, true };
 		static readonly bool[] interactable_chipActionButtons = { true, true, true };
+		static readonly bool[] interactableStates_collectionMovement = { true, true, true, true, true, true };
 
 		static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc drawCollectionEntry = DrawCollectionEntry;
 
@@ -51,6 +54,8 @@ namespace DLS.Graphics
 		// State
 		static int selectedCollectionIndex;
 		static int selectedChipInCollectionIndex;
+		static int selectedNestedCollectionIndex;
+		static int selectedChipInNestedCollectionIndex;
 		static int selectedStarredItemIndex;
 
 		static bool creatingNewCollection;
@@ -132,6 +137,13 @@ namespace DLS.Graphics
 			MenuHelper.DrawLeftAlignTextWithBackground(text, topLeft, new Vector2(width, 2.3f), Anchor.TopLeft, textCol, bgCol, true);
 		}
 
+		static int DrawHorizontalButtonGroup(string[] names, bool[] interactionStates, ref Vector2 topLeft, float width, float verticalSpacing = DefaultButtonSpacing)
+		{
+			int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(names, interactionStates, ActiveUITheme.ButtonTheme, topLeft, width, DefaultButtonSpacing, 0, Anchor.TopLeft);
+			topLeft.y -= Seb.Vis.UI.UI.PrevBounds.Height + verticalSpacing;
+			return buttonIndex;
+		}
+
 		static void DrawStarredPanel(Vector2 topLeft, Vector2 size)
 		{
 			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
@@ -153,11 +165,19 @@ namespace DLS.Graphics
 
 			// Draw ADD TO STARRED button at the bottom
 			// Check if we have something selected to star/unstar
-			bool hasCollectionSelected = selectedCollectionIndex != -1 && selectedChipInCollectionIndex == -1;
-			bool hasChipSelected = selectedCollectionIndex != -1 && selectedChipInCollectionIndex != -1;
+			// Add bounds checking to prevent index out of range errors
+			bool hasValidCollection = selectedCollectionIndex >= 0 && selectedCollectionIndex < collections.Count;
+			bool hasValidNestedCollection = hasValidCollection && selectedNestedCollectionIndex >= 0 && selectedNestedCollectionIndex < collections[selectedCollectionIndex].NestedCollections.Count;
+			bool hasValidChip = hasValidCollection && selectedChipInCollectionIndex >= 0 && selectedChipInCollectionIndex < collections[selectedCollectionIndex].Chips.Count;
+			bool hasValidNestedChip = hasValidNestedCollection && selectedChipInNestedCollectionIndex >= 0 && selectedChipInNestedCollectionIndex < collections[selectedCollectionIndex].NestedCollections[selectedNestedCollectionIndex].Chips.Count;
+			
+			bool hasCollectionSelected = hasValidCollection && selectedChipInCollectionIndex == -1 && selectedNestedCollectionIndex == -1;
+			bool hasChipSelected = hasValidCollection && selectedChipInCollectionIndex != -1 && hasValidChip;
+			bool hasNestedCollectionSelected = hasValidCollection && selectedNestedCollectionIndex != -1 && selectedChipInNestedCollectionIndex == -1 && hasValidNestedCollection;
+			bool hasNestedChipSelected = hasValidCollection && selectedNestedCollectionIndex != -1 && selectedChipInNestedCollectionIndex != -1 && hasValidNestedChip;
 			bool hasStarredItemSelected = selectedStarredItemIndex != -1;
 
-			if (hasChipSelected || hasCollectionSelected || hasStarredItemSelected)
+			if (hasChipSelected || hasCollectionSelected || hasNestedCollectionSelected || hasNestedChipSelected || hasStarredItemSelected)
 			{
 				string buttonText = "";
 				bool isStarred = false;
@@ -173,6 +193,21 @@ namespace DLS.Graphics
 				{
 					string collectionName = collections[selectedCollectionIndex].Name;
 					isStarred = project.description.IsStarred(collectionName, true);
+					buttonText = isStarred ? "UNSTAR" : "ADD TO STARRED";
+				}
+				else if (hasNestedCollectionSelected)
+				{
+					ChipCollection collection = collections[selectedCollectionIndex];
+					string nestedCollectionName = collection.NestedCollections[selectedNestedCollectionIndex].Name;
+					// Nested collections can't be starred directly, but we can show the option
+					buttonText = "ADD TO STARRED";
+				}
+				else if (hasNestedChipSelected)
+				{
+					ChipCollection collection = collections[selectedCollectionIndex];
+					ChipCollection nestedCollection = collection.NestedCollections[selectedNestedCollectionIndex];
+					string selectedChipName = nestedCollection.Chips[selectedChipInNestedCollectionIndex];
+					isStarred = project.description.IsStarred(selectedChipName, false);
 					buttonText = isStarred ? "UNSTAR" : "ADD TO STARRED";
 				}
 				else if (hasStarredItemSelected)
@@ -243,24 +278,95 @@ namespace DLS.Graphics
 			ChipCollection collection = collections[collectionIndex];
 			string label = collection.GetDisplayString();
 
-			bool collectionHighlighted = collectionIndex == selectedCollectionIndex;
+			// Collection is highlighted only if it's selected AND no nested collection or chip is selected
+			bool collectionHighlighted = (collectionIndex == selectedCollectionIndex) && (selectedNestedCollectionIndex == -1) && (selectedChipInCollectionIndex == -1);
 			ButtonTheme activeCollectionTheme = GetButtonTheme(true, collectionHighlighted);
 
 			bool collectionPressed = Seb.Vis.UI.UI.Button(label, activeCollectionTheme, topLeft, new Vector2(width, 2), true, false, false, activeCollectionTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 			if (collectionPressed)
 			{
+				// Check if this collection is already selected
+				bool wasAlreadySelected = (selectedCollectionIndex == collectionIndex);
+				
 				selectedCollectionIndex = collectionIndex;
 				selectedChipInCollectionIndex = -1;
+				selectedNestedCollectionIndex = -1; // Clear nested collection selection
+				selectedChipInNestedCollectionIndex = -1; // Clear nested collection chip selection
 				selectedStarredItemIndex = -1;
 				lastAutoOpenedCollection = null;
-				// If holding control, select without toggling
-				if (!InputHelper.CtrlIsHeld) collection.IsToggledOpen = !collection.IsToggledOpen;
+				
+				// Only toggle if the collection was already selected (not on first selection)
+				if (wasAlreadySelected && !InputHelper.CtrlIsHeld) 
+				{
+					collection.IsToggledOpen = !collection.IsToggledOpen;
+				}
 			}
 
 			const float nestedInset = 1.75f;
 
 			if (collection.IsToggledOpen)
 			{
+				// Draw nested collections first
+				for (int nestedIndex = 0; nestedIndex < collection.NestedCollections.Count; nestedIndex++)
+				{
+					ChipCollection nestedCollection = collection.NestedCollections[nestedIndex];
+					string nestedLabel = nestedCollection.GetDisplayString();
+					
+					// Use same theme as regular collections for nested collections
+					// Nested collection is highlighted only if it's selected AND no chip is selected
+					bool nestedCollectionHighlighted = (nestedIndex == selectedNestedCollectionIndex) && (collectionIndex == selectedCollectionIndex) && (selectedChipInNestedCollectionIndex == -1);
+					ButtonTheme nestedTheme = GetButtonTheme(true, nestedCollectionHighlighted);
+					Vector2 nestedLabelPos = new(topLeft.x + nestedInset, Seb.Vis.UI.UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
+					bool nestedPressed = Seb.Vis.UI.UI.Button(nestedLabel, nestedTheme, nestedLabelPos, new Vector2(width - nestedInset, 2), true, false, false, nestedTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+					
+					if (nestedPressed)
+					{
+						// Check if this nested collection is already selected
+						bool wasAlreadySelected = (selectedNestedCollectionIndex == nestedIndex && selectedCollectionIndex == collectionIndex);
+						
+						// Update selection indices - this allows cross-collection selection
+						selectedCollectionIndex = collectionIndex; // Update to the parent collection
+						selectedNestedCollectionIndex = nestedIndex;
+						selectedChipInCollectionIndex = -1;
+						selectedChipInNestedCollectionIndex = -1; // Clear nested collection chip selection
+						selectedStarredItemIndex = -1;
+						lastAutoOpenedCollection = null;
+						Debug.Log($"Selected nested collection '{nestedCollection.Name}' at index {nestedIndex}");
+						
+						// Only toggle if the nested collection was already selected (not on first selection)
+						if (wasAlreadySelected && !InputHelper.CtrlIsHeld) 
+						{
+							nestedCollection.IsToggledOpen = !nestedCollection.IsToggledOpen;
+						}
+					}
+
+					// Draw nested collection contents if open
+					if (nestedCollection.IsToggledOpen)
+					{
+						const float nestedCollectionInset = 1.75f;
+						for (int chipIndex = 0; chipIndex < nestedCollection.Chips.Count; chipIndex++)
+						{
+							string chipName = nestedCollection.Chips[chipIndex];
+							// Check if this chip is selected
+							bool chipHighlighted = (chipIndex == selectedChipInNestedCollectionIndex) && (nestedIndex == selectedNestedCollectionIndex) && (collectionIndex == selectedCollectionIndex);
+							ButtonTheme activeChipTheme = chipHighlighted ? ActiveUITheme.ChipLibraryChipToggleOn : ActiveUITheme.ChipLibraryChipToggleOff;
+							Vector2 chipLabelPos = new(topLeft.x + nestedInset + nestedCollectionInset, Seb.Vis.UI.UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
+							bool chipPressed = Seb.Vis.UI.UI.Button(chipName, activeChipTheme, chipLabelPos, new Vector2(width - nestedInset - nestedCollectionInset, 2), true, false, false, activeChipTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+							if (chipPressed)
+							{
+								// Update selection indices - this allows cross-collection selection
+								selectedCollectionIndex = collectionIndex; // Update to the parent collection
+								selectedNestedCollectionIndex = nestedIndex;
+								selectedChipInNestedCollectionIndex = chipIndex;
+								selectedChipInCollectionIndex = -1; // Clear main collection selection
+								selectedStarredItemIndex = -1;
+								lastAutoOpenedCollection = null;
+							}
+						}
+					}
+				}
+
+				// Draw regular chips
 				for (int chipIndex = 0; chipIndex < collection.Chips.Count; chipIndex++)
 				{
 					string chipName = collection.Chips[chipIndex];
@@ -279,6 +385,8 @@ namespace DLS.Graphics
 						}
 
 						selectedStarredItemIndex = -1;
+						selectedNestedCollectionIndex = -1;
+						selectedChipInNestedCollectionIndex = -1; // Clear folder chip selection
 						lastAutoOpenedCollection = null;
 					}
 				}
@@ -298,15 +406,29 @@ namespace DLS.Graphics
 			MenuHelper.DrawReservedMenuPanel(panelID, panelBounds, false);
 			const float SectionSpacing = 3;
 
-			bool hasCollectionSelected = selectedCollectionIndex != -1 && selectedChipInCollectionIndex == -1;
-			bool hasChipSelected = selectedCollectionIndex != -1 && selectedChipInCollectionIndex != -1;
+			// Add bounds checking to prevent index out of range errors
+			bool hasValidCollection = selectedCollectionIndex >= 0 && selectedCollectionIndex < collections.Count;
+			bool hasValidNestedCollection = hasValidCollection && selectedNestedCollectionIndex >= 0 && selectedNestedCollectionIndex < collections[selectedCollectionIndex].NestedCollections.Count;
+			bool hasValidChip = hasValidCollection && selectedChipInCollectionIndex >= 0 && selectedChipInCollectionIndex < collections[selectedCollectionIndex].Chips.Count;
+			bool hasValidNestedChip = hasValidNestedCollection && selectedChipInNestedCollectionIndex >= 0 && selectedChipInNestedCollectionIndex < collections[selectedCollectionIndex].NestedCollections[selectedNestedCollectionIndex].Chips.Count;
+			
+			bool hasCollectionSelected = hasValidCollection && selectedChipInCollectionIndex == -1 && selectedNestedCollectionIndex == -1;
+			bool hasChipSelected = hasValidCollection && selectedChipInCollectionIndex != -1 && hasValidChip;
+			bool hasNestedCollectionSelected = hasValidCollection && selectedNestedCollectionIndex != -1 && selectedChipInNestedCollectionIndex == -1 && hasValidNestedCollection;
+			bool hasNestedChipSelected = hasValidCollection && selectedNestedCollectionIndex != -1 && selectedChipInNestedCollectionIndex != -1 && hasValidNestedChip;
 			bool hasStarredItemSelected = selectedStarredItemIndex != -1;
+			
+			// Debug logging for nested collection selection
+			if (selectedNestedCollectionIndex != -1)
+			{
+				Debug.Log($"Nested collection selection: index={selectedNestedCollectionIndex}, hasValidCollection={hasValidCollection}, hasValidNestedCollection={hasValidNestedCollection}, hasNestedCollectionSelected={hasNestedCollectionSelected}");
+			}
 
 			// Always draw preview window (even when empty)
 			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 				// ---- Draw Chip Preview First (Top Element) ----
-				DrawChipPreview(panelContentBounds, hasChipSelected, hasStarredItemSelected);
+				DrawChipPreview(panelContentBounds, hasChipSelected, hasStarredItemSelected, hasNestedChipSelected);
 				
 				// Add spacing below preview
 				topLeft.y -= previewWindowHeight; // Space for preview window
@@ -327,6 +449,23 @@ namespace DLS.Graphics
 					ButtonTheme collectionButtonTheme = GetButtonTheme(true, true); // Red theme
 					DrawHeader(collectionName, collectionButtonTheme.buttonCols.normal, collectionButtonTheme.textCols.normal, ref topLeft, panelContentBounds.Width);
 				}
+				else if (hasNestedCollectionSelected)
+				{
+					// Same header theme as regular collections for nested collection selection
+					ChipCollection collection = collections[selectedCollectionIndex];
+					string nestedCollectionName = collection.NestedCollections[selectedNestedCollectionIndex].Name;
+					ButtonTheme nestedButtonTheme = GetButtonTheme(true, true); // Same theme as regular collections
+					DrawHeader(nestedCollectionName, nestedButtonTheme.buttonCols.normal, nestedButtonTheme.textCols.normal, ref topLeft, panelContentBounds.Width);
+				}
+				else if (hasNestedChipSelected)
+				{
+					// Blue header for nested collection chip selection
+					ChipCollection collection = collections[selectedCollectionIndex];
+					ChipCollection nestedCollection = collection.NestedCollections[selectedNestedCollectionIndex];
+					string chipName = nestedCollection.Chips[selectedChipInNestedCollectionIndex];
+					ButtonTheme chipButtonTheme = GetButtonTheme(false, true); // Blue theme
+					DrawHeader(chipName, chipButtonTheme.buttonCols.normal, chipButtonTheme.textCols.normal, ref topLeft, panelContentBounds.Width);
+				}
 				else if (hasStarredItemSelected)
 				{
 					// Blue header for starred item selection
@@ -337,63 +476,409 @@ namespace DLS.Graphics
 				// No header when nothing is selected
 				
 				// ---- Selected Chip UI ----
-				if (hasChipSelected || hasCollectionSelected || hasStarredItemSelected)
+				if (hasChipSelected || hasCollectionSelected || hasNestedCollectionSelected || hasNestedChipSelected || hasStarredItemSelected)
 				{
 					if (hasChipSelected)
 					{
 						// ---- Draw ----
 						ChipCollection collection = collections[selectedCollectionIndex];
 						string selectedChipName = collection.Chips[selectedChipInCollectionIndex];
-						bool canStepUpInCollection = selectedChipInCollectionIndex > 0;
-						bool canStepDownInCollection = selectedChipInCollectionIndex < collection.Chips.Count - 1;
-						bool canJumpUpACollection = selectedCollectionIndex > 0;
-						bool canJumpDownACollection = selectedCollectionIndex < collections.Count - 1;
-
-						bool isStarred = project.description.IsStarred(selectedChipName, false);
-						// Buttons: down/up
-						interactableStates_move[0] = canStepUpInCollection || canJumpUpACollection;
-						interactableStates_move[1] = canStepDownInCollection || canJumpDownACollection;
-						int buttonIndex_moveStep = DrawHorizontalButtonGroup(buttonNames_moveSingleStep, interactableStates_move, ref topLeft, panelContentBounds.Width);
-						int buttonIndex_moveJump = DrawHorizontalButtonGroup(buttonNames_jump, interactableStates_move, ref topLeft, panelContentBounds.Width);
+						
+						// Calculate all movement possibilities for chip
+						bool canJumpIn = collection.NestedCollections.Count > 0; // Can jump into nested collection if any exist
+						bool canJumpOut = true; // Chips can always jump out of collections
+						bool canJumpUp = selectedCollectionIndex > 0; // Can move to collection above
+						bool canJumpDown = selectedCollectionIndex < collections.Count - 1; // Can move to collection below
+						bool canMoveUp = selectedChipInCollectionIndex > 0; // Can move up within collection
+						bool canMoveDown = selectedChipInCollectionIndex < collection.Chips.Count - 1; // Can move down within collection
+						
+						// Set button states
+						interactableStates_collectionMovement[0] = canJumpIn; // JUMP IN
+						interactableStates_collectionMovement[1] = canJumpOut; // JUMP OUT
+						interactableStates_collectionMovement[2] = canJumpUp; // JUMP UP
+						interactableStates_collectionMovement[3] = canJumpDown; // JUMP DOWN
+						interactableStates_collectionMovement[4] = canMoveUp; // MOVE UP
+						interactableStates_collectionMovement[5] = canMoveDown; // MOVE DOWN
+						
+						// Draw all 6 movement buttons in 3 rows (2 buttons per row)
+						int buttonIndex_movement = DrawCollectionMovementButtons(buttonNames_collectionMovement, interactableStates_collectionMovement, ref topLeft, panelContentBounds.Width);
+						
+						// Draw chip action buttons
 						ChipActionButtons(selectedChipName, ref topLeft, panelContentBounds.Width);
 
-						bool moveSingleStepDown = buttonIndex_moveStep == 1;
-						bool moveJumpDown = buttonIndex_moveJump == 1;
-						bool moveSingleStepUp = buttonIndex_moveStep == 0;
-						bool moveJumpUp = buttonIndex_moveJump == 0;
+						// Handle movement buttons
+						bool jumpIn = buttonIndex_movement == 0;
+						bool jumpOut = buttonIndex_movement == 1;
+						bool jumpUp = buttonIndex_movement == 2;
+						bool jumpDown = buttonIndex_movement == 3;
+						bool moveUp = buttonIndex_movement == 4;
+						bool moveDown = buttonIndex_movement == 5;
 
 						// ---- Handle button inputs ----
-
-
-						if (moveSingleStepDown || moveJumpDown) // Move chip down
+						if (jumpIn) // JUMP IN - move chip into closest nested collection above
 						{
-							bool moveWithinCurrentCollection = (moveSingleStepDown && canStepDownInCollection) || (moveJumpDown && !canJumpDownACollection);
-							if (moveWithinCurrentCollection) // move down in current collection
+							// Find the closest nested collection above the chip's position within the current collection
+							ChipCollection targetNestedCollection = null;
+							int targetNestedIndex = -1;
+							
+							// Look for nested collections in the current collection that are above the chip's position
+							// Nested collections are drawn before chips, so we need to find the closest one above
+							for (int i = 0; i < collection.NestedCollections.Count; i++)
 							{
-								int targetIndex = moveJumpDown ? collection.Chips.Count - 1 : selectedChipInCollectionIndex + 1;
-								collection.Chips.RemoveAt(selectedChipInCollectionIndex);
-								collection.Chips.Insert(targetIndex, selectedChipName);
-								selectedChipInCollectionIndex = targetIndex;
+								// Since nested collections are drawn before chips, any nested collection is "above" any chip
+								// We'll take the last (most recently added) nested collection as the target
+								targetNestedCollection = collection.NestedCollections[i];
+								targetNestedIndex = i;
 							}
-							else // move down to next collection
+							
+							if (targetNestedCollection != null)
 							{
-								collection = MoveSelectedChipToNewCollection(selectedCollectionIndex + 1);
+								// Move chip into the closest nested collection above
+								collection.Chips.RemoveAt(selectedChipInCollectionIndex);
+								targetNestedCollection.Chips.Add(selectedChipName);
+								// Stay in the same collection, just move to nested collection
+								selectedNestedCollectionIndex = targetNestedIndex;
+								selectedChipInCollectionIndex = -1; // No longer in main collection
+								selectedChipInNestedCollectionIndex = targetNestedCollection.Chips.Count - 1;
+								
+								// Auto-expand the target nested collection to show the moved chip
+								targetNestedCollection.IsToggledOpen = true;
+								
+								Debug.Log($"Moved chip '{selectedChipName}' into nested collection '{targetNestedCollection.Name}' within current collection");
+								Debug.Log($"Selection state after move: selectedCollectionIndex={selectedCollectionIndex}, selectedNestedCollectionIndex={selectedNestedCollectionIndex}, selectedChipInNestedCollectionIndex={selectedChipInNestedCollectionIndex}");
+							}
+							else
+							{
+								// No nested collection above, move to main collection above
+								if (selectedCollectionIndex > 0)
+								{
+									ChipCollection targetCollection = collections[selectedCollectionIndex - 1];
+									collection.Chips.RemoveAt(selectedChipInCollectionIndex);
+									targetCollection.Chips.Add(selectedChipName);
+									selectedCollectionIndex = selectedCollectionIndex - 1;
+									selectedChipInCollectionIndex = targetCollection.Chips.Count - 1;
+									Debug.Log($"Moved chip '{selectedChipName}' into collection above (no nested collection found)");
+								}
+								else
+								{
+									Debug.Log("Cannot move chip - no collection above to move into");
+								}
 							}
 						}
-						else if (moveSingleStepUp || moveJumpUp) // Move chip up
+						else if (jumpOut) // JUMP OUT - move chip out of collection and place below
 						{
-							bool moveWithinCurrentCollection = (moveSingleStepUp && canStepUpInCollection) || (moveJumpUp && !canJumpUpACollection);
-							if (moveWithinCurrentCollection) // move up in current collection
+							// Move chip out of current collection and place it below the collection
+							collection.Chips.RemoveAt(selectedChipInCollectionIndex);
+							
+							// Find the next collection to place the chip in
+							if (selectedCollectionIndex < collections.Count - 1)
 							{
-								int targetIndex = moveJumpUp ? 0 : selectedChipInCollectionIndex - 1;
-								collection.Chips.RemoveAt(selectedChipInCollectionIndex);
-								collection.Chips.Insert(targetIndex, selectedChipName);
-								selectedChipInCollectionIndex = targetIndex;
+								// Place in the collection below
+								ChipCollection targetCollection = collections[selectedCollectionIndex + 1];
+								targetCollection.Chips.Add(selectedChipName);
+								selectedCollectionIndex = selectedCollectionIndex + 1;
+								selectedChipInCollectionIndex = targetCollection.Chips.Count - 1;
+								Debug.Log($"Moved chip '{selectedChipName}' out of collection and placed in next collection");
 							}
-							else // move up to next collection
+							else
 							{
-								collection = MoveSelectedChipToNewCollection(selectedCollectionIndex - 1);
+								// No collection below, create a new collection or place at the end
+								// For now, just place it back at the end of the current collection
+								collection.Chips.Add(selectedChipName);
+								selectedChipInCollectionIndex = collection.Chips.Count - 1;
+								Debug.Log($"Moved chip '{selectedChipName}' to end of current collection (no collection below)");
 							}
+						}
+						else if (jumpUp) // JUMP UP - move to collection above
+						{
+							collection = MoveSelectedChipToNewCollection(selectedCollectionIndex - 1);
+							Debug.Log($"Moved chip '{selectedChipName}' to collection above");
+						}
+						else if (jumpDown) // JUMP DOWN - move to collection below
+						{
+							collection = MoveSelectedChipToNewCollection(selectedCollectionIndex + 1);
+							Debug.Log($"Moved chip '{selectedChipName}' to collection below");
+						}
+						else if (moveUp) // MOVE UP - move up within collection
+						{
+							int targetIndex = selectedChipInCollectionIndex - 1;
+							collection.Chips.RemoveAt(selectedChipInCollectionIndex);
+							collection.Chips.Insert(targetIndex, selectedChipName);
+							selectedChipInCollectionIndex = targetIndex;
+							Debug.Log($"Moved chip '{selectedChipName}' up within collection");
+						}
+						else if (moveDown) // MOVE DOWN - move down within collection
+						{
+							int targetIndex = selectedChipInCollectionIndex + 1;
+							collection.Chips.RemoveAt(selectedChipInCollectionIndex);
+							collection.Chips.Insert(targetIndex, selectedChipName);
+							selectedChipInCollectionIndex = targetIndex;
+							Debug.Log($"Moved chip '{selectedChipName}' down within collection");
+						}
+					}
+					// ---- Selected Folder Chip UI ----
+					else if (hasNestedChipSelected)
+					{
+						// ---- Draw ----
+						ChipCollection collection = collections[selectedCollectionIndex];
+						ChipCollection nestedCollection = collection.NestedCollections[selectedNestedCollectionIndex];
+						string selectedChipName = nestedCollection.Chips[selectedChipInNestedCollectionIndex];
+						
+						// Calculate all movement possibilities for nested chip
+						bool canJumpIn = selectedCollectionIndex > 0; // Can jump into collection above
+						bool canJumpOut = true; // Can jump out to parent collection
+						bool canJumpUp = selectedNestedCollectionIndex > 0; // Can move to nested collection above
+						bool canJumpDown = selectedNestedCollectionIndex < collection.NestedCollections.Count - 1; // Can move to nested collection below
+						bool canMoveUp = selectedChipInNestedCollectionIndex > 0; // Can move up within nested collection
+						bool canMoveDown = selectedChipInNestedCollectionIndex < nestedCollection.Chips.Count - 1; // Can move down within nested collection
+						
+						// Set button states
+						interactableStates_collectionMovement[0] = canJumpIn; // JUMP IN
+						interactableStates_collectionMovement[1] = canJumpOut; // JUMP OUT
+						interactableStates_collectionMovement[2] = canJumpUp; // JUMP UP
+						interactableStates_collectionMovement[3] = canJumpDown; // JUMP DOWN
+						interactableStates_collectionMovement[4] = canMoveUp; // MOVE UP
+						interactableStates_collectionMovement[5] = canMoveDown; // MOVE DOWN
+						
+						// Draw all 6 movement buttons in 3 rows (2 buttons per row)
+						int buttonIndex_movement = DrawCollectionMovementButtons(buttonNames_collectionMovement, interactableStates_collectionMovement, ref topLeft, panelContentBounds.Width);
+						
+						// Draw chip action buttons
+						ChipActionButtons(selectedChipName, ref topLeft, panelContentBounds.Width);
+
+						// Handle movement buttons
+						bool jumpIn = buttonIndex_movement == 0;
+						bool jumpOut = buttonIndex_movement == 1;
+						bool jumpUp = buttonIndex_movement == 2;
+						bool jumpDown = buttonIndex_movement == 3;
+						bool moveUp = buttonIndex_movement == 4;
+						bool moveDown = buttonIndex_movement == 5;
+
+						// ---- Handle button inputs ----
+						if (jumpIn) // JUMP IN - move chip into closest nested collection above
+						{
+							// Find the closest nested collection above the current chip position within the same parent
+							ChipCollection targetNestedCollection = null;
+							int targetNestedIndex = -1;
+							
+							// Look for nested collections in the parent collection above the current nested collection
+							for (int i = 0; i < collection.NestedCollections.Count; i++)
+							{
+								if (i < selectedNestedCollectionIndex) // Only consider nested collections above the current one
+								{
+									targetNestedCollection = collection.NestedCollections[i];
+									targetNestedIndex = i;
+									break; // Take the first (closest) nested collection above
+								}
+							}
+							
+							if (targetNestedCollection != null)
+							{
+								// Move chip into the closest nested collection above
+								nestedCollection.Chips.RemoveAt(selectedChipInNestedCollectionIndex);
+								targetNestedCollection.Chips.Add(selectedChipName);
+								selectedNestedCollectionIndex = targetNestedIndex;
+								selectedChipInNestedCollectionIndex = targetNestedCollection.Chips.Count - 1;
+								
+								// Auto-expand the target nested collection to show the moved chip
+								targetNestedCollection.IsToggledOpen = true;
+								
+								Debug.Log($"Moved nested chip '{selectedChipName}' into nested collection '{targetNestedCollection.Name}' above");
+							}
+							else
+							{
+								// No nested collection above, move to main collection above
+								ChipCollection targetCollection = collections[selectedCollectionIndex - 1];
+								nestedCollection.Chips.RemoveAt(selectedChipInNestedCollectionIndex);
+								targetCollection.Chips.Add(selectedChipName);
+								selectedCollectionIndex = selectedCollectionIndex - 1;
+								selectedNestedCollectionIndex = -1;
+								selectedChipInNestedCollectionIndex = -1;
+								selectedChipInCollectionIndex = targetCollection.Chips.Count - 1;
+								Debug.Log($"Moved nested chip '{selectedChipName}' into collection above (no nested collection found)");
+							}
+						}
+						else if (jumpOut) // JUMP OUT - move chip to parent collection
+						{
+							// Move chip to the parent collection
+							nestedCollection.Chips.RemoveAt(selectedChipInNestedCollectionIndex);
+							collection.Chips.Add(selectedChipName);
+							selectedNestedCollectionIndex = -1;
+							selectedChipInNestedCollectionIndex = -1;
+							selectedChipInCollectionIndex = collection.Chips.Count - 1;
+							Debug.Log($"Moved nested chip '{selectedChipName}' to parent collection");
+						}
+						else if (jumpUp) // JUMP UP - move to previous nested collection above
+						{
+							// Find the previous nested collection above the current one
+							ChipCollection targetNestedCollection = null;
+							int targetNestedIndex = -1;
+							
+							// Look for nested collections above the current one within the same parent
+							for (int i = selectedNestedCollectionIndex - 1; i >= 0; i--)
+							{
+								targetNestedCollection = collection.NestedCollections[i];
+								targetNestedIndex = i;
+								break; // Take the first (closest) nested collection above
+							}
+							
+							if (targetNestedCollection != null)
+							{
+								// Move chip to the previous nested collection above
+								nestedCollection.Chips.RemoveAt(selectedChipInNestedCollectionIndex);
+								targetNestedCollection.Chips.Add(selectedChipName);
+								selectedNestedCollectionIndex = targetNestedIndex;
+								selectedChipInNestedCollectionIndex = targetNestedCollection.Chips.Count - 1;
+								Debug.Log($"Moved nested chip '{selectedChipName}' to nested collection '{targetNestedCollection.Name}' above");
+							}
+							else
+							{
+								Debug.Log("Cannot move chip up - no nested collection above");
+							}
+						}
+						else if (jumpDown) // JUMP DOWN - move to next nested collection below
+						{
+							// Find the next nested collection below the current one
+							ChipCollection targetNestedCollection = null;
+							int targetNestedIndex = -1;
+							
+							// Look for nested collections below the current one within the same parent
+							for (int i = selectedNestedCollectionIndex + 1; i < collection.NestedCollections.Count; i++)
+							{
+								targetNestedCollection = collection.NestedCollections[i];
+								targetNestedIndex = i;
+								break; // Take the first (closest) nested collection below
+							}
+							
+							if (targetNestedCollection != null)
+							{
+								// Move chip to the next nested collection below
+								nestedCollection.Chips.RemoveAt(selectedChipInNestedCollectionIndex);
+								targetNestedCollection.Chips.Add(selectedChipName);
+								selectedNestedCollectionIndex = targetNestedIndex;
+								selectedChipInNestedCollectionIndex = targetNestedCollection.Chips.Count - 1;
+								Debug.Log($"Moved nested chip '{selectedChipName}' to nested collection '{targetNestedCollection.Name}' below");
+							}
+							else
+							{
+								Debug.Log("Cannot move chip down - no nested collection below");
+							}
+						}
+						else if (moveUp) // MOVE UP - move up within nested collection
+						{
+							int targetIndex = selectedChipInNestedCollectionIndex - 1;
+							nestedCollection.Chips.RemoveAt(selectedChipInNestedCollectionIndex);
+							nestedCollection.Chips.Insert(targetIndex, selectedChipName);
+							selectedChipInNestedCollectionIndex = targetIndex;
+							Debug.Log($"Moved nested chip '{selectedChipName}' up within nested collection");
+						}
+						else if (moveDown) // MOVE DOWN - move down within nested collection
+						{
+							int targetIndex = selectedChipInNestedCollectionIndex + 1;
+							nestedCollection.Chips.RemoveAt(selectedChipInNestedCollectionIndex);
+							nestedCollection.Chips.Insert(targetIndex, selectedChipName);
+							selectedChipInNestedCollectionIndex = targetIndex;
+							Debug.Log($"Moved nested chip '{selectedChipName}' down within nested collection");
+						}
+					}
+					// ---- Selected Nested Collection UI ----
+					else if (hasNestedCollectionSelected)
+					{
+						// ---- Draw ----
+						ChipCollection collection = collections[selectedCollectionIndex];
+						ChipCollection nestedCollection = collection.NestedCollections[selectedNestedCollectionIndex];
+						string nestedCollectionName = nestedCollection.Name;
+						
+						// Calculate all movement possibilities for nested collection
+						bool canJumpIn = selectedCollectionIndex > 0; // Can nest into collection above if it exists
+						bool canJumpOut = true; // Always can unnest
+						bool canJumpUp = selectedCollectionIndex > 0; // Can move to collection above
+						bool canJumpDown = selectedCollectionIndex < collections.Count - 1; // Can move to collection below
+						bool canMoveUp = selectedNestedCollectionIndex > 0; // Can move up within nested collections
+						bool canMoveDown = selectedNestedCollectionIndex < collection.NestedCollections.Count - 1; // Can move down within nested collections
+						
+						// Set button states
+						interactableStates_collectionMovement[0] = canJumpIn; // JUMP IN
+						interactableStates_collectionMovement[1] = canJumpOut; // JUMP OUT
+						interactableStates_collectionMovement[2] = canJumpUp; // JUMP UP
+						interactableStates_collectionMovement[3] = canJumpDown; // JUMP DOWN
+						interactableStates_collectionMovement[4] = canMoveUp; // MOVE UP
+						interactableStates_collectionMovement[5] = canMoveDown; // MOVE DOWN
+						
+						// Draw all 6 movement buttons in 3 rows (2 buttons per row)
+						int buttonIndex_movement = DrawCollectionMovementButtons(buttonNames_collectionMovement, interactableStates_collectionMovement, ref topLeft, panelContentBounds.Width);
+						
+						// Nested collection action buttons (similar to chips)
+						ChipActionButtons(nestedCollectionName, ref topLeft, panelContentBounds.Width);
+						
+						bool jumpIn = buttonIndex_movement == 0;
+						bool jumpOut = buttonIndex_movement == 1;
+						bool jumpUp = buttonIndex_movement == 2;
+						bool jumpDown = buttonIndex_movement == 3;
+						bool moveUp = buttonIndex_movement == 4;
+						bool moveDown = buttonIndex_movement == 5;
+						
+						// ---- Handle button inputs ----
+						if (jumpIn)
+						{
+							// Nest: Move nested collection into the collection above
+							ChipCollection targetCollection = collections[selectedCollectionIndex - 1];
+							collection.NestedCollections.RemoveAt(selectedNestedCollectionIndex);
+							targetCollection.NestedCollections.Add(nestedCollection);
+							nestedCollection.ParentCollection = targetCollection;
+							selectedCollectionIndex = selectedCollectionIndex - 1;
+							selectedNestedCollectionIndex = targetCollection.NestedCollections.Count - 1;
+							Debug.Log($"Nested collection '{nestedCollectionName}' into '{targetCollection.Name}'");
+						}
+						else if (jumpOut)
+						{
+							// Unnest: Move nested collection to top level, placed below current collection
+							collection.NestedCollections.RemoveAt(selectedNestedCollectionIndex);
+							collections.Insert(selectedCollectionIndex + 1, nestedCollection);
+							nestedCollection.ParentCollection = null;
+							selectedCollectionIndex = selectedCollectionIndex + 1;
+							selectedNestedCollectionIndex = -1;
+							Debug.Log($"Unnested collection '{nestedCollectionName}' to top level");
+						}
+						else if (jumpUp)
+						{
+							// Move nested collection to the collection above
+							ChipCollection targetCollection = collections[selectedCollectionIndex - 1];
+							collection.NestedCollections.RemoveAt(selectedNestedCollectionIndex);
+							targetCollection.NestedCollections.Add(nestedCollection);
+							nestedCollection.ParentCollection = targetCollection;
+							selectedCollectionIndex = selectedCollectionIndex - 1;
+							selectedNestedCollectionIndex = targetCollection.NestedCollections.Count - 1;
+							Debug.Log($"Moved nested collection '{nestedCollectionName}' to collection above");
+						}
+						else if (jumpDown)
+						{
+							// Move nested collection to the collection below
+							ChipCollection targetCollection = collections[selectedCollectionIndex + 1];
+							collection.NestedCollections.RemoveAt(selectedNestedCollectionIndex);
+							targetCollection.NestedCollections.Add(nestedCollection);
+							nestedCollection.ParentCollection = targetCollection;
+							selectedCollectionIndex = selectedCollectionIndex + 1;
+							selectedNestedCollectionIndex = targetCollection.NestedCollections.Count - 1;
+							Debug.Log($"Moved nested collection '{nestedCollectionName}' to collection below");
+						}
+						else if (moveUp)
+						{
+							// Move nested collection up within the same collection
+							ChipCollection temp = collection.NestedCollections[selectedNestedCollectionIndex];
+							collection.NestedCollections[selectedNestedCollectionIndex] = collection.NestedCollections[selectedNestedCollectionIndex - 1];
+							collection.NestedCollections[selectedNestedCollectionIndex - 1] = temp;
+							selectedNestedCollectionIndex--;
+							Debug.Log($"Moved nested collection '{nestedCollectionName}' up within collection");
+						}
+						else if (moveDown)
+						{
+							// Move nested collection down within the same collection
+							ChipCollection temp = collection.NestedCollections[selectedNestedCollectionIndex];
+							collection.NestedCollections[selectedNestedCollectionIndex] = collection.NestedCollections[selectedNestedCollectionIndex + 1];
+							collection.NestedCollections[selectedNestedCollectionIndex + 1] = temp;
+							selectedNestedCollectionIndex++;
+							Debug.Log($"Moved nested collection '{nestedCollectionName}' down within collection");
 						}
 					}
 					// ---- Selected Collection UI ----
@@ -405,9 +890,24 @@ namespace DLS.Graphics
 
 						bool isStarred = project.description.IsStarred(collection.Name, true);
 
-						interactableStates_move[0] = selectedCollectionIndex > 0;
-						interactableStates_move[1] = selectedCollectionIndex < collections.Count - 1;
-						int buttonIndexOrganize = DrawHorizontalButtonGroup(buttonNames_moveSingleStep, interactableStates_move, ref topLeft, panelContentBounds.Width);
+						// Calculate all movement possibilities for regular collection
+						bool canJumpIn = selectedCollectionIndex > 0; // Can nest into collection above if it exists
+						bool canJumpOut = false; // Regular collections can't jump out (they're already at top level)
+						bool canJumpUp = selectedCollectionIndex > 0; // Can move to collection above
+						bool canJumpDown = selectedCollectionIndex < collections.Count - 1; // Can move to collection below
+						bool canMoveUp = selectedCollectionIndex > 0; // Can move up within top level
+						bool canMoveDown = selectedCollectionIndex < collections.Count - 1; // Can move down within top level
+						
+						// Set button states
+						interactableStates_collectionMovement[0] = canJumpIn; // JUMP IN
+						interactableStates_collectionMovement[1] = canJumpOut; // JUMP OUT
+						interactableStates_collectionMovement[2] = canJumpUp; // JUMP UP
+						interactableStates_collectionMovement[3] = canJumpDown; // JUMP DOWN
+						interactableStates_collectionMovement[4] = canMoveUp; // MOVE UP
+						interactableStates_collectionMovement[5] = canMoveDown; // MOVE DOWN
+						
+						// Draw all 6 movement buttons in 3 rows (2 buttons per row)
+						int buttonIndex_movement = DrawCollectionMovementButtons(buttonNames_collectionMovement, interactableStates_collectionMovement, ref topLeft, panelContentBounds.Width);
 
 						bool canRenameOrDelete = !ChipDescription.NameMatch(collection.Name, defaultOtherChipsCollectionName);
 						interactableStates_renameDelete[0] = canRenameOrDelete;
@@ -433,21 +933,74 @@ namespace DLS.Graphics
 							}
 						}
 
-						if (buttonIndexOrganize == 0) // Move collection up
+						// Handle movement buttons
+						bool jumpIn = buttonIndex_movement == 0;
+						bool jumpOut = buttonIndex_movement == 1;
+						bool jumpUp = buttonIndex_movement == 2;
+						bool jumpDown = buttonIndex_movement == 3;
+						bool moveUp = buttonIndex_movement == 4;
+						bool moveDown = buttonIndex_movement == 5;
+						
+						if (jumpIn) // JUMP IN - nest into collection above
+						{
+							// Check if there's a collection above to nest into
+							if (selectedCollectionIndex > 0)
+							{
+								ChipCollection targetCollection = collections[selectedCollectionIndex - 1];
+								collections.RemoveAt(selectedCollectionIndex);
+								targetCollection.NestedCollections.Add(collection);
+								collection.ParentCollection = targetCollection;
+								selectedCollectionIndex = selectedCollectionIndex - 1;
+								selectedNestedCollectionIndex = targetCollection.NestedCollections.Count - 1;
+								Debug.Log($"Nested collection '{selectedCollectionName}' into '{targetCollection.Name}'");
+							}
+							else
+							{
+								Debug.Log("Cannot nest collection - no collection above to nest into");
+							}
+						}
+						else if (jumpOut) // JUMP OUT - not applicable for regular collections
+						{
+							// Regular collections can't jump out (they're already at top level)
+							Debug.Log("Regular collections cannot jump out");
+						}
+						else if (jumpUp) // JUMP UP - move to collection above
+						{
+							// This is the same as MOVE UP for regular collections
+							int indexStart = selectedCollectionIndex;
+							int indexEnd = selectedCollectionIndex - 1;
+							(collections[indexStart], collections[indexEnd]) = (collections[indexEnd], collections[indexStart]);
+							selectedCollectionIndex = indexEnd;
+							collection = collections[selectedCollectionIndex];
+							Debug.Log($"Moved collection '{selectedCollectionName}' to position above");
+						}
+						else if (jumpDown) // JUMP DOWN - move to collection below
+						{
+							// This is the same as MOVE DOWN for regular collections
+							int indexStart = selectedCollectionIndex;
+							int indexEnd = selectedCollectionIndex + 1;
+							(collections[indexStart], collections[indexEnd]) = (collections[indexEnd], collections[indexStart]);
+							selectedCollectionIndex = indexEnd;
+							collection = collections[selectedCollectionIndex];
+							Debug.Log($"Moved collection '{selectedCollectionName}' to position below");
+						}
+						else if (moveUp) // MOVE UP - move one position up
 						{
 							int indexStart = selectedCollectionIndex;
 							int indexEnd = selectedCollectionIndex - 1;
 							(collections[indexStart], collections[indexEnd]) = (collections[indexEnd], collections[indexStart]);
 							selectedCollectionIndex = indexEnd;
 							collection = collections[selectedCollectionIndex];
+							Debug.Log($"Moved collection '{selectedCollectionName}' up one position");
 						}
-						else if (buttonIndexOrganize == 1) // Move collection down
+						else if (moveDown) // MOVE DOWN - move one position down
 						{
 							int indexStart = selectedCollectionIndex;
 							int indexEnd = selectedCollectionIndex + 1;
 							(collections[indexStart], collections[indexEnd]) = (collections[indexEnd], collections[indexStart]);
 							selectedCollectionIndex = indexEnd;
 							collection = collections[selectedCollectionIndex];
+							Debug.Log($"Moved collection '{selectedCollectionName}' down one position");
 						}
 					}
 					else if (hasStarredItemSelected)
@@ -489,20 +1042,23 @@ namespace DLS.Graphics
 				{
 					panelID = Seb.Vis.UI.UI.ReservePanel();
 
-					// New collection button
-					if (!renamingCollection)
+
+					// New collection button (only show when not in input mode)
+					if (!renamingCollection && !creatingNewCollection)
 					{
 						bool createNew = Seb.Vis.UI.UI.Button("NEW COLLECTION", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
 						if (createNew) creatingNewCollection = true;
-						if (!creatingNewCollection)
-						{
-							topLeft += Vector2.down * (Seb.Vis.UI.UI.PrevBounds.Height + DefaultButtonSpacing * 1);
-							bool exit = Seb.Vis.UI.UI.Button("EXIT LIBRARY", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
-							if (exit) ExitLibrary();
-						}
+						topLeft += Vector2.down * (Seb.Vis.UI.UI.PrevBounds.Height + DefaultButtonSpacing * 1);
+					}
 
+					// Exit library button (only show when not in input mode)
+					if (!renamingCollection && !creatingNewCollection)
+					{
+						bool exit = Seb.Vis.UI.UI.Button("EXIT LIBRARY", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
+						if (exit) ExitLibrary();
 						topLeft += Vector2.down * (Seb.Vis.UI.UI.PrevBounds.Height + DefaultButtonSpacing * 2);
 					}
+
 
 					// New collection / rename collection input field
 					if (creatingNewCollection || renamingCollection)
@@ -523,10 +1079,22 @@ namespace DLS.Graphics
 							{
 								if (creatingNewCollection)
 								{
-									collections.Add(new ChipCollection(nameField.text));
-									selectedChipInCollectionIndex = -1;
-									selectedCollectionIndex = collections.Count - 1;
-									selectedStarredItemIndex = -1;
+									// Check if we should create a nested collection or top-level collection
+									if (selectedCollectionIndex != -1 && selectedChipInCollectionIndex == -1 && selectedNestedCollectionIndex == -1)
+									{
+										// Create nested collection within the selected collection
+										ChipCollection selectedCollection = collections[selectedCollectionIndex];
+										ChipCollection newNestedCollection = selectedCollection.CreateNestedCollection(nameField.text);
+										Debug.Log($"Created nested collection '{nameField.text}' in collection '{selectedCollection.Name}'");
+									}
+									else
+									{
+										// Create top-level collection
+										collections.Add(new ChipCollection(nameField.text));
+										selectedChipInCollectionIndex = -1;
+										selectedCollectionIndex = collections.Count - 1;
+										selectedStarredItemIndex = -1;
+									}
 								}
 								else if (renamingCollection)
 								{
@@ -600,13 +1168,6 @@ namespace DLS.Graphics
 				MenuHelper.DrawCentredTextWithBackground(text, topLeft, new Vector2(width, 2), Anchor.TopLeft, textCol, bgCol);
 				topLeft += Vector2.down * (Seb.Vis.UI.UI.PrevBounds.Height + spacingBelow);
 			}
-
-		static int DrawHorizontalButtonGroup(string[] names, bool[] interactionStates, ref Vector2 topLeft, float width, float verticalSpacing = DefaultButtonSpacing)
-		{
-			int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(names, interactionStates, ActiveUITheme.ButtonTheme, topLeft, width, DefaultButtonSpacing, 0, Anchor.TopLeft);
-			topLeft.y -= Seb.Vis.UI.UI.PrevBounds.Height + verticalSpacing;
-			return buttonIndex;
-		}
 
 		static void ChipActionButtons(string selectedChipName, ref Vector2 topLeft, float width)
 			{
@@ -762,12 +1323,50 @@ namespace DLS.Graphics
 			return true;
 		}
 
+		static bool IsValidFolderName(string name)
+		{
+			if (!ValidateCollectionNameInput(name)) return false;
+
+			if (string.IsNullOrWhiteSpace(name)) return false;
+
+			// Check for duplicate nested collection names within the same collection
+			if (selectedCollectionIndex != -1)
+			{
+				ChipCollection collection = collections[selectedCollectionIndex];
+				foreach (var nestedCollection in collection.NestedCollections)
+				{
+					if (ChipDescription.NameMatch(nestedCollection.Name, name)) return false;
+				}
+			}
+
+			return true;
+		}
+
 		static ButtonTheme GetButtonTheme(bool isCollection, bool isSelected) =>
 			isCollection
 				? isSelected ? ActiveUITheme.ChipLibraryCollectionToggleOn : ActiveUITheme.ChipLibraryCollectionToggleOff
 				: isSelected
 					? ActiveUITheme.ChipLibraryChipToggleOn
 					: ActiveUITheme.ChipLibraryChipToggleOff;
+
+		static ButtonTheme GetFolderTheme(bool isSelected)
+		{
+			// Create green theme for folders
+			ButtonTheme folderTheme = ActiveUITheme.ChipLibraryCollectionToggleOff;
+			if (isSelected)
+			{
+				// Green selection color for folders
+				folderTheme.buttonCols.normal = ColHelper.MakeCol("#3CD168"); // Green color
+				folderTheme.textCols.normal = Color.white;
+			}
+			else
+			{
+				// Default folder appearance
+				folderTheme.buttonCols.normal = ColHelper.MakeCol("#2D2D2D");
+				folderTheme.textCols.normal = ColHelper.MakeCol("#3CD168"); // Green text
+			}
+			return folderTheme;
+		}
 
 		static void OpenChipIfConfirmed(bool confirm)
 		{
@@ -867,7 +1466,7 @@ namespace DLS.Graphics
 			}
 		}
 
-		static void DrawChipPreview(Bounds2D panelContentBounds, bool hasChipSelected, bool hasStarredItemSelected)
+		static void DrawChipPreview(Bounds2D panelContentBounds, bool hasChipSelected, bool hasStarredItemSelected, bool hasNestedChipSelected = false)
 		{
 			// Always draw preview window
 			const float previewWidth = 28f;
@@ -881,7 +1480,7 @@ namespace DLS.Graphics
 			MenuHelper.DrawLeftAlignTextWithBackground("", previewTopLeft, new Vector2(previewWidth, previewHeight), Anchor.TopLeft, Color.white, previewBgCol, true);
 
 			// Only draw chip content if something is selected
-			if (!hasChipSelected && !hasStarredItemSelected)
+			if (!hasChipSelected && !hasStarredItemSelected && !hasNestedChipSelected)
 			{
 				return; // Empty preview window
 			}
@@ -893,6 +1492,12 @@ namespace DLS.Graphics
 			{
 				ChipCollection collection = collections[selectedCollectionIndex];
 				selectedChipName = collection.Chips[selectedChipInCollectionIndex];
+			}
+			else if (hasNestedChipSelected)
+			{
+				ChipCollection collection = collections[selectedCollectionIndex];
+				ChipCollection nestedCollection = collection.NestedCollections[selectedNestedCollectionIndex];
+				selectedChipName = nestedCollection.Chips[selectedChipInNestedCollectionIndex];
 			}
 			else if (hasStarredItemSelected)
 			{
@@ -1649,8 +2254,35 @@ namespace DLS.Graphics
 			if (F == 1) Seb.Vis.UI.UI.DrawDiamond(centre - offsetX + offsetY, segmentSizeVertical, segmentColor); // left top
 			if (E == 1) Seb.Vis.UI.UI.DrawDiamond(centre - offsetX - offsetY, segmentSizeVertical, segmentColor); // left bottom
 			if (B == 1) Seb.Vis.UI.UI.DrawDiamond(centre + offsetX + offsetY, segmentSizeVertical, segmentColor); // right top
-			if (C == 1) Seb.Vis.UI.UI.DrawDiamond(centre + offsetX - offsetY, segmentSizeVertical, segmentColor); // right bottom
+                        if (C == 1) Seb.Vis.UI.UI.DrawDiamond(centre + offsetX - offsetY, segmentSizeVertical, segmentColor); // right bottom
 		}
 
+		static int DrawCollectionMovementButtons(string[] buttonNames, bool[] interactableStates, ref Vector2 topLeft, float width)
+		{
+			int buttonIndex = -1;
+			
+			// Row 1: JUMP IN, JUMP OUT
+			interactableStates_move[0] = interactableStates[0];
+			interactableStates_move[1] = interactableStates[1];
+			int row1Index = DrawHorizontalButtonGroup(new[] { buttonNames[0], buttonNames[1] }, interactableStates_move, ref topLeft, width);
+			if (row1Index == 0) buttonIndex = 0; // JUMP IN
+			else if (row1Index == 1) buttonIndex = 1; // JUMP OUT
+			
+			// Row 2: JUMP UP, JUMP DOWN
+			interactableStates_move[0] = interactableStates[2];
+			interactableStates_move[1] = interactableStates[3];
+			int row2Index = DrawHorizontalButtonGroup(new[] { buttonNames[2], buttonNames[3] }, interactableStates_move, ref topLeft, width);
+			if (row2Index == 0) buttonIndex = 2; // JUMP UP
+			else if (row2Index == 1) buttonIndex = 3; // JUMP DOWN
+			
+			// Row 3: MOVE UP, MOVE DOWN
+			interactableStates_move[0] = interactableStates[4];
+			interactableStates_move[1] = interactableStates[5];
+			int row3Index = DrawHorizontalButtonGroup(new[] { buttonNames[4], buttonNames[5] }, interactableStates_move, ref topLeft, width);
+			if (row3Index == 0) buttonIndex = 4; // MOVE UP
+			else if (row3Index == 1) buttonIndex = 5; // MOVE DOWN
+			
+			return buttonIndex;
+		}
     }
 }

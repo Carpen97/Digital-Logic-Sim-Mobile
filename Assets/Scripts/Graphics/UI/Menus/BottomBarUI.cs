@@ -77,6 +77,19 @@ namespace DLS.Graphics
 		static ChipCollection activeCollection;
 		static Vector2 collectionPopupBottomLeft;
 		static Bounds2D barBounds_ScreenSpace;
+		
+		// Nested collection expansion state
+		static ChipCollection activeNestedCollection;
+		static Vector2 nestedCollectionPopupBottomLeft;
+		static int nestedCollectionInteractFrame;
+		static float clickedItemY; // Track Y position of the clicked item for alignment
+		
+		// Hover state tracking to prevent flicker
+		static string hoveredNestedCollectionName;
+		static int hoverStartFrame;
+		static int lastExpansionFrame;
+		const int hoverDelayFrames = 5; // Increased delay to prevent flicker
+		const int expansionCooldownFrames = 10; // Prevent rapid expansion/collapse
 
 		static bool MenuButtonsAndShortcutsEnabled => Project.ActiveProject.CanEditViewedChip;
 
@@ -320,125 +333,379 @@ namespace DLS.Graphics
 
 
 			DrawCollectionsPopup();
+			DrawNestedCollectionsPopup();
 		}
 
 
 		static void DrawCollectionsPopup()
 		{
-			if (activeCollection == null || activeCollection.Chips.Count <= 0) return;
+			if (activeCollection == null) return;
 
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 			Project project = Project.ActiveProject;
 
-			int firstButtonIndex = activeCollection.Chips.Count - 1;
+			// Build combined list of all items (chips first, then nested collections, since popup displays top-to-bottom)
+			var allItems = new System.Collections.Generic.List<(string name, bool isNestedCollection, int originalIndex)>();
+			
+			// Add chips first (will appear at bottom of popup)
+			for (int i = 0; i < activeCollection.Chips.Count; i++)
+			{
+				allItems.Add((activeCollection.Chips[i], false, i));
+			}
+			
+			// Add nested collections (will appear at top of popup)
+			for (int i = 0; i < activeCollection.NestedCollections.Count; i++)
+			{
+				allItems.Add((activeCollection.NestedCollections[i].Name, true, i));
+			}
+
+			if (allItems.Count <= 0) return;
+
+			int firstButtonIndex = allItems.Count - 1;
 			int pressedIndex = -1;
 			Vector2 layoutOrigin = collectionPopupBottomLeft + new Vector2(0, 0);
 			bool expandLeft = layoutOrigin.x > Seb.Vis.UI.UI.HalfWidth;
-			bool isFirstPartial = true;
 			bool openedContextMenu = false;
+			
 
-			while (firstButtonIndex >= 0)
+			// Calculate how many items can fit in the available space
+			float availableHeight = Seb.Vis.UI.UI.Height - barHeight - 0.1f;
+			float itemHeight = buttonHeight + buttonSpacing;
+			int maxItemsPerColumn = Mathf.FloorToInt(availableHeight / itemHeight);
+			
+			// Calculate total items and determine if we need two columns
+			int totalItems = allItems.Count;
+			bool needsTwoColumns = totalItems > maxItemsPerColumn;
+			
+			if (needsTwoColumns)
 			{
-				Bounds2D collectionBounds = default;
-				int numButtonsToDraw = 0;
-
-				// Layout pass: calculate draw bounds (stop before going past top of screen)
-				using (Seb.Vis.UI.UI.BeginBoundsScope(draw: false))
-				{
-					Vector2 buttonLayoutPos = layoutOrigin;
-
-					for (int i = firstButtonIndex; i >= 0; i--)
-					{
-						string chipName = activeCollection.Chips[i];
-						ChipDescription desc;
-						project.chipLibrary.TryGetChipDescription(chipName, out desc);
-						//if (ShouldHideChipInLevel(desc)) continue;
-						Seb.Vis.UI.UI.Button(chipName, DrawSettings.ActiveUITheme.ChipButton, buttonLayoutPos, new Vector2(0, buttonHeight), false, true, false, DrawSettings.ActiveUITheme.ChipButton.buttonCols, Anchor.BottomLeft, false, 0);
-						buttonLayoutPos = Seb.Vis.UI.UI.PrevBounds.TopLeft + Vector2.up * buttonSpacing;
-
-						// Stop if approaching top of screen (we'll draw the rest of the collection starting on a new line)
-						if (buttonLayoutPos.y > Seb.Vis.UI.UI.Height - 0.1f) break;
-
-						collectionBounds = Seb.Vis.UI.UI.GetCurrentBoundsScope();
-						numButtonsToDraw++;
-					}
-				}
-				if (numButtonsToDraw == 0)
-				{
-					// Nothing visible left in this collection (e.g., all pins hidden in level) — close popup and stop.
-					activeCollection = null;
-					return; // or: break;
-				}
-
-				if (expandLeft && !isFirstPartial)
-				{
-					collectionBounds = Bounds2D.Translate(collectionBounds, Vector2.left * collectionBounds.Width);
-				}
-
-				// Draw the collections (or as much as fit vertically), as well as a background panel
-				Bounds2D panelBounds = Bounds2D.Grow(collectionBounds, buttonSpacing * 2);
+				// Two-column layout
+				int itemsInFirstColumn = Mathf.CeilToInt(totalItems / 2f);
+				int itemsInSecondColumn = totalItems - itemsInFirstColumn;
+				
+				// Draw first column
+				Vector2 firstColumnPos = layoutOrigin;
+				Bounds2D firstColumnBounds = DrawTwoColumnSection(firstColumnPos, 0, itemsInFirstColumn, allItems, theme, ref openedContextMenu, project, ref pressedIndex);
+				
+				// Draw second column
+				Vector2 secondColumnPos = new Vector2(firstColumnBounds.Right + buttonSpacing, layoutOrigin.y);
+				Bounds2D secondColumnBounds = DrawTwoColumnSection(secondColumnPos, itemsInFirstColumn, itemsInSecondColumn, allItems, theme, ref openedContextMenu, project, ref pressedIndex);
+				
+				// Draw background panel for the entire two-column area
+				Bounds2D combinedBounds = new Bounds2D(
+					new Vector2(Mathf.Min(firstColumnBounds.Min.x, secondColumnBounds.Min.x), Mathf.Min(firstColumnBounds.Min.y, secondColumnBounds.Min.y)),
+					new Vector2(Mathf.Max(firstColumnBounds.Max.x, secondColumnBounds.Max.x), Mathf.Max(firstColumnBounds.Max.y, secondColumnBounds.Max.y))
+				);
+				Bounds2D panelBounds = Bounds2D.Grow(combinedBounds, buttonSpacing * 2);
 				panelBounds = new Bounds2D(new Vector2(panelBounds.Min.x, barHeight), panelBounds.Max);
 				Seb.Vis.UI.UI.DrawPanel(panelBounds, theme.StarredBarCol);
-				int buttonIndex = DrawCollectionsPopupPartial(collectionBounds.BottomLeft, collectionBounds.Width, firstButtonIndex, numButtonsToDraw, ref openedContextMenu, project);
-				if (buttonIndex != -1) pressedIndex = buttonIndex;
-
-				// Prepare for next part of the collection (if not all did fit on the screen)
-				firstButtonIndex -= numButtonsToDraw;
-				layoutOrigin = expandLeft ? panelBounds.BottomLeft : panelBounds.BottomRight;
-				isFirstPartial = false;
+			}
+			else
+			{
+				// Single column layout
+				Vector2 singleColumnPos = layoutOrigin;
+				Bounds2D singleColumnBounds = DrawTwoColumnSection(singleColumnPos, 0, totalItems, allItems, theme, ref openedContextMenu, project, ref pressedIndex);
+				
+				// Draw background panel for the single column
+				Bounds2D panelBounds = Bounds2D.Grow(singleColumnBounds, buttonSpacing * 2);
+				panelBounds = new Bounds2D(new Vector2(panelBounds.Min.x, barHeight), panelBounds.Max);
+				Seb.Vis.UI.UI.DrawPanel(panelBounds, theme.StarredBarCol);
 			}
 
 			if (!openedContextMenu)
 			{
 				if (pressedIndex != -1)
 				{
-					project.controller.StartPlacing(project.chipLibrary.GetChipDescription(activeCollection.Chips[pressedIndex]));
+					var selectedItem = allItems[pressedIndex];
+					if (selectedItem.isNestedCollection)
+					{
+						// Handle nested collection click - open right-side expansion
+						var nestedCollection = activeCollection.NestedCollections[selectedItem.originalIndex];
+						if (nestedCollection.Chips.Count > 0)
+						{
+							// Calculate proper position based on main popup width
+							float mainPopupWidth = CalculateMainPopupWidth();
+							// Use the Y position of the clicked item for proper alignment
+							nestedCollectionPopupBottomLeft = new Vector2(collectionPopupBottomLeft.x + mainPopupWidth, clickedItemY + buttonHeight);
+							activeNestedCollection = nestedCollection == activeNestedCollection ? null : nestedCollection;
+							nestedCollectionInteractFrame = Time.frameCount;
+						}
+					}
+					else
+					{
+						// Handle regular chip click
+						project.controller.StartPlacing(project.chipLibrary.GetChipDescription(activeCollection.Chips[selectedItem.originalIndex]));
+						if (KeyboardShortcuts.MultiModeHeld)
+						{
+							closeActiveCollectionMultiModeExit = true;
+						}
+						else
+						{
+							activeCollection = null;
+						}
+					}
+				}
+				else if (KeyboardShortcuts.CancelShortcutTriggered || (InputHelper.IsAnyMouseButtonDownThisFrame_IgnoreConsumed() && Time.frameCount != collectionInteractFrame) || UIDrawer.ActiveMenu != UIDrawer.MenuType.None)
+				{
+					activeCollection = null;
+					hoveredNestedCollectionName = null; // Clear hover state when collection closes
+				}
+			}
+		}
+
+		static Bounds2D DrawTwoColumnSection(Vector2 startPos, int startIndex, int count, System.Collections.Generic.List<(string name, bool isNestedCollection, int originalIndex)> allItems, DrawSettings.UIThemeDLS theme, ref bool openedContextMenu, Project project, ref int pressedIndex)
+		{
+			Vector2 currentPos = startPos;
+			Bounds2D sectionBounds = default;
+
+			int maxCharLength = 0;	
+			for (int i = 0; i < count; i++)
+			{
+				int itemIndex = startIndex + i;
+				if (itemIndex >= allItems.Count) break;
+				var item = allItems[itemIndex];
+				maxCharLength = Math.Max(item.name.Length, maxCharLength);
+			}
+			
+			for (int i = 0; i < count; i++)
+			{
+				int itemIndex = startIndex + i;
+				if (itemIndex >= allItems.Count) break;
+				
+				var item = allItems[itemIndex];
+				//string displayName = item.isNestedCollection ? $"{item.name} ►" : item.name;
+
+				string displayName = item.isNestedCollection ? $"{item.name.PadRight(maxCharLength)} ►" : item.name;
+				
+				// Calculate button width
+				float buttonWidth = Draw.CalculateTextBoundsSize(displayName.AsSpan(), DrawSettings.ActiveUITheme.ChipButton.fontSize, DrawSettings.ActiveUITheme.ChipButton.font).x + 1;
+				
+				// Draw the button
+				bool buttonPressed = Seb.Vis.UI.UI.Button(displayName, DrawSettings.ActiveUITheme.ChipButton, currentPos, new Vector2(buttonWidth, buttonHeight), true, false, false, DrawSettings.ActiveUITheme.ChipButton.buttonCols, Anchor.BottomLeft, true, 0.55f);
+				
+				// Handle nested collection expansion
+				if (item.isNestedCollection)
+				{
+					#if UNITY_ANDROID || UNITY_IOS
+					// On mobile, require click/tap for expansion
+					if (buttonPressed)
+					{
+						pressedIndex = itemIndex;
+						// Store the Y position of the clicked item for proper alignment
+						clickedItemY = currentPos.y;
+					}
+					#else
+					// On PC, expand on hover with anti-flicker logic
+					bool isHovering = Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds);
+					
+					// Allow hover expansion if:
+					// 1. No nested collection is currently active, OR
+					// 2. We're hovering over a different nested collection
+					bool canHoverExpand = activeNestedCollection == null || 
+						(activeNestedCollection != null && !ChipDescription.NameMatch(activeNestedCollection.Name, item.name));
+					
+					if (isHovering && canHoverExpand)
+					{
+						// Start or continue hover tracking
+						if (hoveredNestedCollectionName != item.name)
+						{
+							hoveredNestedCollectionName = item.name;
+							hoverStartFrame = Time.frameCount;
+						}
+						
+						// Only expand after hover delay to prevent flicker
+						if (Time.frameCount - hoverStartFrame >= hoverDelayFrames)
+						{
+							pressedIndex = itemIndex;
+							// Store the Y position of the hovered item for proper alignment
+							clickedItemY = currentPos.y;
+						}
+					}
+					else if (!isHovering)
+					{
+						// Clear hover state when not hovering
+						if (hoveredNestedCollectionName == item.name)
+						{
+							hoveredNestedCollectionName = null;
+						}
+					}
+					
+					// Always allow click for expansion on PC
+					if (buttonPressed)
+					{
+						pressedIndex = itemIndex;
+						// Store the Y position of the clicked item for proper alignment
+						clickedItemY = currentPos.y;
+					}
+					#endif
+				}
+				else
+				{
+					// Regular chips always require click
+					if (buttonPressed)
+					{
+						pressedIndex = itemIndex;
+					}
+					
+					#if !UNITY_ANDROID && !UNITY_IOS
+					// On PC, close nested collection when hovering over regular chips
+					bool isHovering = Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds);
+					if (isHovering && activeNestedCollection != null)
+					{
+						// Close the nested collection when hovering over a regular chip
+						activeNestedCollection = null;
+					}
+					#endif
+				}
+				
+				// Handle right-click context menu
+				if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds))
+				{
+					ContextMenu.OpenBottomBarContextMenu(item.name, item.isNestedCollection, true);
+					openedContextMenu = true;
+				}
+				
+				
+				// Update bounds
+				if (sectionBounds.Min == Vector2.zero && sectionBounds.Max == Vector2.zero)
+				{
+					sectionBounds = Seb.Vis.UI.UI.PrevBounds;
+				}
+				else
+				{
+					sectionBounds = new Bounds2D(
+						new Vector2(Mathf.Min(sectionBounds.Min.x, Seb.Vis.UI.UI.PrevBounds.Min.x), Mathf.Min(sectionBounds.Min.y, Seb.Vis.UI.UI.PrevBounds.Min.y)),
+						new Vector2(Mathf.Max(sectionBounds.Max.x, Seb.Vis.UI.UI.PrevBounds.Max.x), Mathf.Max(sectionBounds.Max.y, Seb.Vis.UI.UI.PrevBounds.Max.y))
+					);
+				}
+				
+				// Move to next position
+				currentPos = Seb.Vis.UI.UI.PrevBounds.TopLeft + Vector2.up * buttonSpacing;
+			}
+			
+			return sectionBounds;
+		}
+
+
+		static void DrawNestedCollectionsPopup()
+		{
+			if (activeNestedCollection == null || activeNestedCollection.Chips.Count <= 0) return;
+
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Project project = Project.ActiveProject;
+
+			// Build list of items for the nested collection (all are regular chips, no nested collections)
+			var allItems = new System.Collections.Generic.List<(string name, bool isNestedCollection, int originalIndex)>();
+			
+			// Add all chips from the nested collection
+			for (int i = 0; i < activeNestedCollection.Chips.Count; i++)
+			{
+				allItems.Add((activeNestedCollection.Chips[i], false, i));
+			}
+
+			if (allItems.Count <= 0) return;
+
+			int pressedIndex = -1;
+			Vector2 layoutOrigin = nestedCollectionPopupBottomLeft + new Vector2(0, 0);
+			bool openedContextMenu = false;
+
+			// Calculate how many items can fit in the available space
+			float availableHeight = Seb.Vis.UI.UI.Height - barHeight - 0.1f;
+			float itemHeight = buttonHeight + buttonSpacing;
+			int maxItemsPerColumn = Mathf.FloorToInt(availableHeight / itemHeight);
+			
+			// Calculate total items and determine if we need two columns
+			int totalItems = allItems.Count;
+
+			while (layoutOrigin.y - (totalItems-1) * itemHeight < BottomBarUI.barHeight)
+			{
+				layoutOrigin += Vector2.up * itemHeight;
+			}
+
+
+			// Single column layout (grows downwards)
+			Vector2 singleColumnPos = layoutOrigin;
+			Bounds2D singleColumnBounds = DrawNestedCollectionSection(singleColumnPos, 0, totalItems, allItems, theme, ref openedContextMenu, project, ref pressedIndex);
+			Debug.Log("Pressed index: " + pressedIndex);
+				
+			// Draw background panel for the single column
+			Bounds2D panelBounds = Bounds2D.Grow(singleColumnBounds, buttonSpacing * 2);
+			panelBounds = new Bounds2D(panelBounds.Min, panelBounds.Max);
+			Seb.Vis.UI.UI.DrawPanel(panelBounds, theme.StarredBarCol);
+
+			if (!openedContextMenu)
+			{
+				if (pressedIndex != -1)
+				{
+					project.controller.StartPlacing(project.chipLibrary.GetChipDescription(activeNestedCollection.Chips[pressedIndex]));
 					if (KeyboardShortcuts.MultiModeHeld)
 					{
 						closeActiveCollectionMultiModeExit = true;
 					}
 					else
 					{
-						activeCollection = null;
+						activeNestedCollection = null;
 					}
 				}
-				else if (KeyboardShortcuts.CancelShortcutTriggered || (InputHelper.IsAnyMouseButtonDownThisFrame_IgnoreConsumed() && Time.frameCount != collectionInteractFrame) || UIDrawer.ActiveMenu != UIDrawer.MenuType.None)
+				else if (KeyboardShortcuts.CancelShortcutTriggered || (InputHelper.IsAnyMouseButtonDownThisFrame_IgnoreConsumed() && Time.frameCount != nestedCollectionInteractFrame) || UIDrawer.ActiveMenu != UIDrawer.MenuType.None)
 				{
-					activeCollection = null;
+					activeNestedCollection = null;
 				}
 			}
 		}
 
-		static int DrawCollectionsPopupPartial(Vector2 bottomLeftCurr, float maxWidth, int startIndex, int count, ref bool openedContextMenu, Project project)
+		static Bounds2D DrawNestedCollectionSection(Vector2 startPos, int startIndex, int count, System.Collections.Generic.List<(string name, bool isNestedCollection, int originalIndex)> allItems, DrawSettings.UIThemeDLS theme, ref bool openedContextMenu, Project project, ref int pressedIndex)
 		{
-			int pressedIndex = -1;
-			int endIndex = startIndex - count + 1;
-			ButtonTheme theme = DrawSettings.ActiveUITheme.ChipButton;
-			DevChipInstance viewedChip = Project.ActiveProject.ViewedChip;
-			bool ignoreInputs = ContextMenu.HasFocus();
-
-			// Draw pop-up buttons
-			for (int i = startIndex; i >= endIndex; i--)
+			Vector2 currentPos = startPos;
+			Bounds2D sectionBounds = default;
+			
+			for (int i = 0; i < count; i++)
 			{
-				const float offsetX = 0.55f;
-				string chipName = activeCollection.Chips[i];
-				project.chipLibrary.TryGetChipDescription(chipName, out var desc);
-				bool enabled = viewedChip.CanAddSubchip(chipName) && !ShouldHideChipInLevel(desc);
-				if (Seb.Vis.UI.UI.Button(chipName, theme, bottomLeftCurr, new Vector2(maxWidth, buttonHeight), enabled, false, false, theme.buttonCols, Anchor.BottomLeft, true, offsetX, ignoreInputs))
+				int itemIndex = startIndex + i;
+				if (itemIndex >= allItems.Count) break;
+				
+				var item = allItems[itemIndex];
+				string displayName = item.name; // No "►" prefix for nested collection items
+				
+				// Calculate button width
+				float buttonWidth = Draw.CalculateTextBoundsSize(displayName.AsSpan(), DrawSettings.ActiveUITheme.ChipButton.fontSize, DrawSettings.ActiveUITheme.ChipButton.font).x + 1;
+				
+				// Draw the button
+				bool buttonPressed = Seb.Vis.UI.UI.Button(displayName, DrawSettings.ActiveUITheme.ChipButton, currentPos, new Vector2(buttonWidth, buttonHeight), true, false, false, DrawSettings.ActiveUITheme.ChipButton.buttonCols, Anchor.TopLeft, true, 0.55f);
+				
+				// Handle button press
+				if (buttonPressed)
 				{
-					pressedIndex = i;
+					pressedIndex = itemIndex;
 				}
-				else if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds))
+				
+				// Handle right-click context menu
+				if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds))
 				{
-					ContextMenu.OpenBottomBarContextMenu(chipName, false, true);
+					ContextMenu.OpenBottomBarContextMenu(item.name, false, true);
 					openedContextMenu = true;
 				}
-
-				bottomLeftCurr = Seb.Vis.UI.UI.PrevBounds.TopLeft + Vector2.up * buttonSpacing;
+				
+				// Update bounds
+				if (sectionBounds.Min == Vector2.zero && sectionBounds.Max == Vector2.zero)
+				{
+					sectionBounds = Seb.Vis.UI.UI.PrevBounds;
+				}
+				else
+				{
+					sectionBounds = new Bounds2D(
+						new Vector2(Mathf.Min(sectionBounds.Min.x, Seb.Vis.UI.UI.PrevBounds.Min.x), Mathf.Min(sectionBounds.Min.y, Seb.Vis.UI.UI.PrevBounds.Min.y)),
+						new Vector2(Mathf.Max(sectionBounds.Max.x, Seb.Vis.UI.UI.PrevBounds.Max.x), Mathf.Max(sectionBounds.Max.y, Seb.Vis.UI.UI.PrevBounds.Max.y))
+					);
+				}
+				
+				// Move to next position - GROW DOWNWARDS (not upwards like main popup)
+				currentPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * buttonSpacing;
 			}
-
-			return pressedIndex;
+			
+			return sectionBounds;
 		}
+
 
 		static ChipCollection GetChipCollectionByName(string name)
 		{
@@ -451,6 +718,89 @@ namespace DLS.Graphics
 			}
 
 			throw new Exception("Failed to find collection with name: " + name);
+		}
+
+		static float CalculateMainPopupWidth()
+		{
+			if (activeCollection == null) return 0f;
+
+			// Build the same list as in DrawCollectionsPopup
+			var allItems = new System.Collections.Generic.List<(string name, bool isNestedCollection, int originalIndex)>();
+			
+			// Add chips first
+			for (int i = 0; i < activeCollection.Chips.Count; i++)
+			{
+				allItems.Add((activeCollection.Chips[i], false, i));
+			}
+			
+			// Add nested collections
+			for (int i = 0; i < activeCollection.NestedCollections.Count; i++)
+			{
+				allItems.Add((activeCollection.NestedCollections[i].Name, true, i));
+			}
+
+			if (allItems.Count <= 0) return 0f;
+
+			// Calculate how many items can fit in the available space
+			float availableHeight = Seb.Vis.UI.UI.Height - barHeight - 0.1f;
+			float itemHeight = buttonHeight + buttonSpacing;
+			int maxItemsPerColumn = Mathf.FloorToInt(availableHeight / itemHeight);
+			
+			// Calculate total items and determine if we need two columns
+			int totalItems = allItems.Count;
+			bool needsTwoColumns = totalItems > maxItemsPerColumn;
+			
+			if (needsTwoColumns)
+			{
+				// Two-column layout - calculate width of both columns
+				int itemsInFirstColumn = Mathf.CeilToInt(totalItems / 2f);
+				int itemsInSecondColumn = totalItems - itemsInFirstColumn;
+				
+				// Calculate width of first column
+				float firstColumnWidth = CalculateColumnWidth(allItems, 0, itemsInFirstColumn);
+				
+				// Calculate width of second column
+				float secondColumnWidth = CalculateColumnWidth(allItems, itemsInFirstColumn, itemsInSecondColumn);
+				
+				// Total width is first column + spacing + second column + padding
+				return firstColumnWidth + buttonSpacing + secondColumnWidth + buttonSpacing * 2;
+			}
+			else
+			{
+				// Single column layout
+				float singleColumnWidth = CalculateColumnWidth(allItems, 0, totalItems);
+				return singleColumnWidth + buttonSpacing * 2;
+			}
+		}
+
+		static float CalculateColumnWidth(System.Collections.Generic.List<(string name, bool isNestedCollection, int originalIndex)> allItems, int startIndex, int count)
+		{
+			float maxWidth = 0f;
+
+			int maxCharLength = 0;	
+			for (int i = 0; i < count; i++)
+			{
+				int itemIndex = startIndex + i;
+				if (itemIndex >= allItems.Count) break;
+				var item = allItems[itemIndex];
+				maxCharLength = Math.Max(item.name.Length, maxCharLength);
+			}
+			
+			for (int i = 0; i < count; i++)
+				{
+					int itemIndex = startIndex + i;
+					if (itemIndex >= allItems.Count) break;
+
+					var item = allItems[itemIndex];
+					//string displayName = item.isNestedCollection ? $"{itemName} ►" : itemName;
+					string displayName = item.isNestedCollection ? $"{item.name.PadRight(maxCharLength)} ►" : item.name;
+
+					// Calculate button width
+					float buttonWidth = Draw.CalculateTextBoundsSize(displayName.AsSpan(), DrawSettings.ActiveUITheme.ChipButton.fontSize, DrawSettings.ActiveUITheme.ChipButton.font).x + 1;
+					maxWidth = Mathf.Max(maxWidth, buttonWidth);
+				}
+			
+			return maxWidth;
 		}
 
 		static bool MouseIsOverBar() => InputHelper.MouseInBounds_ScreenSpace(barBounds_ScreenSpace);
@@ -566,6 +916,10 @@ namespace DLS.Graphics
 			chipBarTotalWidthLastFrame = 0;
 			isDraggingChipBar = false;
 			activeCollection = null;
+			activeNestedCollection = null;
+			hoveredNestedCollectionName = null;
+			lastExpansionFrame = 0;
+			clickedItemY = 0;
 		}
 
 	}

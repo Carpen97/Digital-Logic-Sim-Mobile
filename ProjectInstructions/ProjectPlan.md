@@ -67,8 +67,8 @@ Mobile Port (origin)
 | 024 | Component grouping system              | Open   | Add support for grouping multiple components. Selecting multiple components shows a new UI button to create a group. Groups behave as single units for selection/deselection. Groups can also be saved and spawned, similar to chips. |
 | 026 | Perpendicular guide for straight lines | Open   | When straight line mode is toggled, draw a perpendicular guide line to assist alignment.                                                                                                                                              |
 | 034 | Auto-open edit tool for single component| Open   | When pressing the edit tool, if there is just one component selected that is editable, automatically open the edit tool for that component instead of requiring an additional step. Streamline the editing workflow by eliminating the need to manually select the component again when only one editable component is available. |
-| 036 | Create sub folders in collections        | Open   | Add support for creating sub folders within collections to better organize chips. Implement hierarchical collection structure with nested folders. Adjust BottomBarUI.cs to properly display and navigate subfolder content. Enable users to create, rename, and manage nested folder structures within collections for improved chip organization. |
 | 037 | Fix Firebase integration on PC            | Open   | Follow-up to Ticket 035: PC version works but Firebase integration needs fixing on PC platform. Investigate and resolve Firebase connectivity, authentication, and data synchronization issues on desktop builds. Ensure user names, score uploads, solution sharing, and leaderboard functionality work correctly on PC platform. |
+| 038 | Add patch notes popup to About menu       | Open   | Create patch notes popup accessible from the About menu that displays user-facing changes and improvements since the last release. Popup should show new features, improvements, and bug fixes from a user perspective. Integrate with existing About menu system and ensure mobile-optimized display. |
 
 ---
 
@@ -90,6 +90,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 2. **In Progress** → Moved only when PM receives explicit instruction
 3. **Completed** → Moved to CompletedTickets.md with closure details
 4. **🔴 MANDATORY: Git Commit** → **PM MUST remind user to commit completed tickets immediately with descriptive commit messages**
+5. **📝 MANDATORY: Patch Notes Review** → **PM MUST ask: "Should this be noted in patch notes?" and update PatchNotes.md for user-facing changes**
 
 ### **Key Rules:**
 - ❌ **Never move tickets** without explicit instruction
@@ -99,6 +100,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - ✅ **Provide guidance** and technical specifications when needed
 - ✅ **Always require approval** - Worker chats must discuss and get approval before making code changes
 - 🔴 **MANDATORY: Git Commit Reminder** - **PM MUST proactively remind user to commit completed tickets with format: "Ticket XXX: Brief description"**
+- 📝 **MANDATORY: Patch Notes Review** - **PM MUST ask "Should this be noted in patch notes?" and update PatchNotes.md for user-facing changes**
 
 ### **Current Status:**
 - **7 Open Tickets** available for selection
