@@ -13,6 +13,12 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📋 **Completed Tickets**
 
+### **Ticket 041** – Fix unsaved changes popup issue in levels
+**Closed:** 2025-01-27  
+**Summary:** Fixed incorrect unsaved changes popup appearing in levels after saving progress. Resolved multiple root causes: random color generation causing JSON differences, wire object side effects during description creation, inconsistent chip state synchronization after level save, and order of operations issues in new chip creation. Modified DescriptionCreator.cs to use consistent gray color for level chips and removed wire object modifications. Updated LevelManager.cs to synchronize chip saved state with level progress. Fixed BottomBarUI.cs order of operations and updated UndoController.cs method calls. Result: accurate unsaved changes detection in level workflow with no false positive popups after saving progress. ✅
+
+---
+
 ### **Ticket 036** – Create sub folders in collections
 **Closed:** 2025-01-27  
 **Summary:** Successfully implemented hierarchical collection structure with nested folders for better chip organization. Added support for creating, renaming, and managing sub folders within collections. Modified BottomBarUI.cs to properly display and navigate subfolder content with intuitive folder browsing interface. Implemented drag-and-drop chip organization into folders with visual hierarchy indicators and folder icons. Enhanced collection system with hierarchical data structure and folder navigation including breadcrumb system. Maintained backward compatibility with existing collections while adding comprehensive folder management capabilities. All success criteria met with mobile and PC compatible folder management system. ✅
@@ -140,9 +146,9 @@ This document contains a historical record of all completed tickets from the Dig
 ---
 
 ## 📊 **Statistics**
-- **Total Completed Tickets:** 22
+- **Total Completed Tickets:** 23
 - **Latest Completion:** 2025-01-27
-- **Most Recent:** Create sub folders in collections
+- **Most Recent:** Fix unsaved changes popup issue in levels
 - **Key Achievements:** Community integration, Levels system, UI fixes, Performance optimizations, Mobile UX improvements, Library enhancements
 
 ---

@@ -54,7 +54,9 @@ Mobile Port (origin)
 
 ### 🔄 In Progress
 
-*Currently no tickets in progress*
+| ID  | Name                          | Status     | Notes                                                                                                                                    |
+| --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 040 | Add more levels               | In Progress| Expand the level system with additional challenging levels to provide more gameplay content and learning opportunities. Create new level scenarios with varying difficulty levels including advanced logic circuits, sequential logic challenges, and practical applications. Assigned to development team. |
 
 ---
 
@@ -69,6 +71,8 @@ Mobile Port (origin)
 | 034 | Auto-open edit tool for single component| Open   | When pressing the edit tool, if there is just one component selected that is editable, automatically open the edit tool for that component instead of requiring an additional step. Streamline the editing workflow by eliminating the need to manually select the component again when only one editable component is available. |
 | 037 | Fix Firebase integration on PC            | Open   | Follow-up to Ticket 035: PC version works but Firebase integration needs fixing on PC platform. Investigate and resolve Firebase connectivity, authentication, and data synchronization issues on desktop builds. Ensure user names, score uploads, solution sharing, and leaderboard functionality work correctly on PC platform. |
 | 038 | Add patch notes popup to About menu       | Open   | Create patch notes popup accessible from the About menu that displays user-facing changes and improvements since the last release. Popup should show new features, improvements, and bug fixes from a user perspective. Integrate with existing About menu system and ensure mobile-optimized display. |
+| 039 | Show dotted wire preview on mobile wire creation| Open   | When creating new wires on mobile, display a preview of the wire path as a dotted line to show where the wire will be placed. Enhance user experience by providing visual feedback during wire creation process. Implement dotted wire rendering for wire preview state before wire is confirmed. Mobile-specific enhancement for touch-based wire creation workflow. |
+| 041 | Fix unsaved changes popup issue in levels| Open   | Fixed incorrect unsaved changes popup appearing in levels after saving progress. Resolved random color generation, wire object side effects, inconsistent chip state synchronization, and order of operations issues. Modified DescriptionCreator.cs, LevelManager.cs, BottomBarUI.cs, and UndoController.cs to ensure accurate unsaved changes detection in level workflow. |
 
 ---
 
@@ -104,5 +108,5 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **7 Open Tickets** available for selection
-- **0 In Progress** tickets
+- **1 In Progress** tickets
 - **Project ready** for next instructions
