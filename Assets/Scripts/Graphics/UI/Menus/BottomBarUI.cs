@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using DLS.Description;
 using DLS.Game;
 using DLS.Game.LevelsIntegration;
@@ -86,10 +87,6 @@ namespace DLS.Graphics
 		
 		// Hover state tracking to prevent flicker
 		static string hoveredNestedCollectionName;
-		static int hoverStartFrame;
-		static int lastExpansionFrame;
-		const int hoverDelayFrames = 5; // Increased delay to prevent flicker
-		const int expansionCooldownFrames = 10; // Prevent rapid expansion/collapse
 
 		static bool MenuButtonsAndShortcutsEnabled => Project.ActiveProject.CanEditViewedChip;
 
@@ -137,7 +134,7 @@ namespace DLS.Graphics
 					// Show "Save" instead of "Save Chip" when in a level
 					if (i == SaveChipButtonIndex && LevelManager.Instance?.IsActive == true)
 					{
-						text = text.Replace("SAVE CHIP", "SAVE").Replace("Save Chip", "Save");
+						text = text.Replace("SAVE CHIP    ", "SAVE         ").Replace("Save Chip", "Save");
 					}
 					
 					if (Seb.Vis.UI.UI.Button(text, theme, pos, size, buttonEnabled, false, false, theme.buttonCols, Anchor.BottomLeft))
@@ -827,7 +824,7 @@ namespace DLS.Graphics
 			if (LevelManager.Instance?.IsActive == true)
 			{
 				LevelManager.Instance.SaveCurrentProgress();
-				Debug.Log("[BottomBarUI] Saved level progress");
+				Debug.Log($"[BottomBarUI] Saved level progress. HasUnsavedChanges after save: {LevelManager.Instance.HasUnsavedChanges()}");
 			}
 			else
 			{
@@ -888,8 +885,8 @@ namespace DLS.Graphics
 			{
 				if (confirm)
 				{
-					Project.ActiveProject.CreateBlankDevChip();
 					LevelManager.Instance?.ExitLevel();   
+					Project.ActiveProject.CreateBlankDevChip();
 				}
 			}
 		}
@@ -918,7 +915,6 @@ namespace DLS.Graphics
 			activeCollection = null;
 			activeNestedCollection = null;
 			hoveredNestedCollectionName = null;
-			lastExpansionFrame = 0;
 			clickedItemY = 0;
 		}
 
