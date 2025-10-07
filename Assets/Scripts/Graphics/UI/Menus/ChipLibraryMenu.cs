@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DLS.Description;
+using ChipCollection = DLS.Description.ChipCollection;
 using DLS.Game;
 using DLS.Game.LevelsIntegration;
 using Seb.Helpers;
@@ -158,7 +159,7 @@ namespace DLS.Graphics
 			const float buttonMargin = 1.5f;
 			Vector2 scrollViewSize = new Vector2(panelContentBounds.Width, panelContentBounds.Height - buttonHeight - buttonMargin * 4);
 			Vector2 buttonArea = new Vector2(panelContentBounds.Width, buttonHeight);
-			Vector2 buttonTopLeft = panelContentBounds.BottomLeft + Vector2.up * (buttonHeight + buttonMargin*3);
+			Vector2 buttonTopLeft = panelContentBounds.BottomLeft + Vector2.up * (buttonHeight + buttonMargin*2);
 
 			// Draw scrollable starred list
 			Seb.Vis.UI.UI.DrawScrollView(ID_StarredScrollbar, panelContentBounds.TopLeft, scrollViewSize, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawStarredEntry, project.description.StarredList.Count);
@@ -269,7 +270,104 @@ namespace DLS.Graphics
 			Bounds2D panelBoundsMinusHeader = Bounds2D.CreateFromTopLeftAndSize(Seb.Vis.UI.UI.PrevBounds.BottomLeft, new Vector2(size.x, size.y - Seb.Vis.UI.UI.PrevBounds.Height));
 			Bounds2D panelContentBounds = Bounds2D.Shrink(panelBoundsMinusHeader, PanelUIPadding);
 
-			Seb.Vis.UI.UI.DrawScrollView(ID_CollectionsScrollbar, panelContentBounds.TopLeft, panelContentBounds.Size, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawCollectionEntry, collections.Count);
+			// Calculate space needed for buttons and input controls
+			const float buttonHeight = 0f; // Use default auto-sized button height to match other panels
+			const float buttonMargin = 1.5f;
+			const float inputControlsHeight = 8f; // Height for text input + CANCEL/CREATE buttons
+			
+			// Make scroll panel as tall as STARRED panel initially, then adjust based on input state
+			float reservedSpace = buttonHeight + buttonMargin * 4; // Space for NEW COLLECTION button
+			if (creatingNewCollection || renamingCollection)
+			{
+				reservedSpace += inputControlsHeight + buttonMargin * 2; // Additional space for input controls
+			}
+			
+			Vector2 scrollViewSize = new Vector2(panelContentBounds.Width, panelContentBounds.Height - reservedSpace);
+			Vector2 buttonArea = new Vector2(panelContentBounds.Width, buttonHeight);
+			Vector2 inputControlsArea = new Vector2(panelContentBounds.Width, inputControlsHeight);
+			
+			// Draw scrollable collections list
+			Seb.Vis.UI.UI.DrawScrollView(ID_CollectionsScrollbar, panelContentBounds.TopLeft, scrollViewSize, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawCollectionEntry, collections.Count);
+			
+			// Position NEW COLLECTION button and input controls at the bottom
+			Vector2 buttonTopLeft = panelContentBounds.BottomLeft + Vector2.up * (buttonHeight + buttonMargin*2);
+			if (creatingNewCollection || renamingCollection)
+			{
+				buttonTopLeft += Vector2.up * (inputControlsHeight + buttonMargin * 2);
+			}
+			Vector2 inputControlsTopLeft = panelContentBounds.BottomLeft + Vector2.up * (inputControlsHeight + buttonMargin * 2);
+			
+			// NEW COLLECTION button (only show when not in input mode)
+			if (!renamingCollection && !creatingNewCollection)
+			{
+				bool createNew = Seb.Vis.UI.UI.Button("NEW COLLECTION", ActiveUITheme.ButtonTheme, buttonTopLeft, buttonArea, true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
+				if (createNew) creatingNewCollection = true;
+			}
+			
+			// New collection / rename collection input field
+			if (creatingNewCollection || renamingCollection)
+			{
+				using (Seb.Vis.UI.UI.BeginDisabledScope(false))
+				{
+					InputFieldTheme inputTheme = MenuHelper.Theme.ChipNameInputField;
+					inputTheme.fontSize = MenuHelper.Theme.FontSizeRegular;
+					InputFieldState nameField = Seb.Vis.UI.UI.InputField(ID_NameInput, inputTheme, inputControlsTopLeft, new Vector2(inputControlsArea.x, 2.5f), string.Empty, Anchor.TopLeft, 1, ValidateCollectionNameInput, true);
+					int button_cancelConfirm = MenuHelper.DrawButtonPair("CANCEL", renamingCollection ? "RENAME" : "CREATE", Seb.Vis.UI.UI.PrevBounds.BottomLeft, inputControlsArea.x, true, true, IsValidCollectionName(nameField.text));
+					if (button_cancelConfirm == 0)
+					{
+						nameField.ClearText();
+						creatingNewCollection = false;
+						renamingCollection = false;
+					}
+					else if (button_cancelConfirm == 1 || KeyboardShortcuts.ConfirmShortcutTriggered)
+					{
+						if (creatingNewCollection)
+						{
+							// Check if we should create a nested collection or top-level collection
+							if (selectedCollectionIndex != -1 && selectedChipInCollectionIndex == -1 && selectedNestedCollectionIndex == -1)
+							{
+								// Create nested collection within the selected collection
+								ChipCollection selectedCollection = collections[selectedCollectionIndex];
+								ChipCollection newNestedCollection = selectedCollection.CreateNestedCollection(nameField.text);
+								Debug.Log($"Created nested collection '{nameField.text}' in collection '{selectedCollection.Name}'");
+							}
+							else
+							{
+								// Create top-level collection
+								ChipCollection newCollection = new ChipCollection(nameField.text);
+								collections.Add(newCollection);
+								Debug.Log($"Created new collection '{nameField.text}'");
+							}
+							nameField.ClearText();
+							creatingNewCollection = false;
+							project.SaveCurrentProjectDescription();
+						}
+						else if (renamingCollection)
+						{
+							if (selectedCollectionIndex != -1 && selectedChipInCollectionIndex == -1 && selectedNestedCollectionIndex == -1)
+							{
+								// Rename top-level collection
+								ChipCollection selectedCollection = collections[selectedCollectionIndex];
+								selectedCollection.Name = nameField.text;
+								project.RenameStarred(nameField.text, selectedCollection.Name, true);
+								Debug.Log($"Renamed collection to '{nameField.text}'");
+							}
+							else if (selectedCollectionIndex != -1 && selectedNestedCollectionIndex != -1 && selectedChipInCollectionIndex == -1)
+							{
+								// Rename nested collection
+								ChipCollection selectedCollection = collections[selectedCollectionIndex];
+								ChipCollection selectedNestedCollection = selectedCollection.NestedCollections[selectedNestedCollectionIndex];
+								selectedNestedCollection.Name = nameField.text;
+								Debug.Log($"Renamed nested collection to '{nameField.text}'");
+							}
+							nameField.ClearText();
+							renamingCollection = false;
+							project.SaveCurrentProjectDescription();
+						}
+					}
+				}
+			}
+			
 			MenuHelper.DrawReservedMenuPanel(panelID, panelBounds, false);
 		}
 
@@ -1043,71 +1141,17 @@ namespace DLS.Graphics
 					panelID = Seb.Vis.UI.UI.ReservePanel();
 
 
-					// New collection button (only show when not in input mode)
-					if (!renamingCollection && !creatingNewCollection)
-					{
-						bool createNew = Seb.Vis.UI.UI.Button("NEW COLLECTION", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
-						if (createNew) creatingNewCollection = true;
-						topLeft += Vector2.down * (Seb.Vis.UI.UI.PrevBounds.Height + DefaultButtonSpacing * 1);
-					}
 
 					// Exit library button (only show when not in input mode)
 					if (!renamingCollection && !creatingNewCollection)
 					{
+						Vector2 exitPos = Seb.Vis.UI.UI.GetCurrentBoundsScope().BottomLeft + Vector2.up * (3f);
 						bool exit = Seb.Vis.UI.UI.Button("EXIT LIBRARY", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
 						if (exit) ExitLibrary();
 						topLeft += Vector2.down * (Seb.Vis.UI.UI.PrevBounds.Height + DefaultButtonSpacing * 2);
 					}
 
 
-					// New collection / rename collection input field
-					if (creatingNewCollection || renamingCollection)
-					{
-						using (Seb.Vis.UI.UI.BeginDisabledScope(false))
-						{
-							InputFieldTheme inputTheme = MenuHelper.Theme.ChipNameInputField;
-							inputTheme.fontSize = MenuHelper.Theme.FontSizeRegular;
-							InputFieldState nameField = Seb.Vis.UI.UI.InputField(ID_NameInput, inputTheme, topLeft, new Vector2(panelContentBounds.Width, 2.5f), string.Empty, Anchor.TopLeft, 1, ValidateCollectionNameInput, true);
-							int button_cancelConfirm = MenuHelper.DrawButtonPair("CANCEL", renamingCollection ? "RENAME" : "CREATE", Seb.Vis.UI.UI.PrevBounds.BottomLeft, panelContentBounds.Width, true, true, IsValidCollectionName(nameField.text));
-							if (button_cancelConfirm == 0)
-							{
-								nameField.ClearText();
-								creatingNewCollection = false;
-								renamingCollection = false;
-							}
-							else if (button_cancelConfirm == 1 || KeyboardShortcuts.ConfirmShortcutTriggered)
-							{
-								if (creatingNewCollection)
-								{
-									// Check if we should create a nested collection or top-level collection
-									if (selectedCollectionIndex != -1 && selectedChipInCollectionIndex == -1 && selectedNestedCollectionIndex == -1)
-									{
-										// Create nested collection within the selected collection
-										ChipCollection selectedCollection = collections[selectedCollectionIndex];
-										ChipCollection newNestedCollection = selectedCollection.CreateNestedCollection(nameField.text);
-										Debug.Log($"Created nested collection '{nameField.text}' in collection '{selectedCollection.Name}'");
-									}
-									else
-									{
-										// Create top-level collection
-										collections.Add(new ChipCollection(nameField.text));
-										selectedChipInCollectionIndex = -1;
-										selectedCollectionIndex = collections.Count - 1;
-										selectedStarredItemIndex = -1;
-									}
-								}
-								else if (renamingCollection)
-								{
-									string nameNew = nameField.text;
-									project.RenameCollection(selectedCollectionIndex, nameNew);
-								}
-
-								nameField.ClearText();
-								creatingNewCollection = false;
-								renamingCollection = false;
-							}
-						}
-					}
 
 					topLeft = Seb.Vis.UI.UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
 				}
