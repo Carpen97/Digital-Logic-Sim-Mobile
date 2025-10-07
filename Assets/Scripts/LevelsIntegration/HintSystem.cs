@@ -3,7 +3,6 @@ using UnityEngine;
 using DLS.Game;
 using DLS.Levels;
 using DLS.Levels.Host;
-using DLS.Graphics.UI;
 
 namespace DLS.Game.LevelsIntegration
 {
