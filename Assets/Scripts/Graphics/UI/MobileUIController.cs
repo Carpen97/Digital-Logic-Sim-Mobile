@@ -7,6 +7,9 @@ using Seb.Vis.UI;
 using UnityEngine;
 using DLS.Game.LevelsIntegration;	// for LevelManager
 using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 
 #if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
@@ -48,21 +51,30 @@ public class MobileUIController : MonoBehaviour
 
 	private void Awake()
 	{
-		#if !UNITY_ANDROID && !UNITY_IOS
-		// Disable the parent Canvas GameObject on desktop platforms
-		if (transform.parent != null)
+		// Check if we're on a mobile platform OR if we're in editor with iOS/Android platform selected
+		bool isMobilePlatform = Application.platform == RuntimePlatform.Android || 
+		                       Application.platform == RuntimePlatform.IPhonePlayer ||
+		                       (Application.isEditor && (EditorUserBuildSettings.activeBuildTarget == BuildTarget.iOS || 
+		                                                EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android));
+		
+		if (!isMobilePlatform)
 		{
-			transform.parent.gameObject.SetActive(false);
-			Debug.Log("[MobileUIController] Disabled parent Canvas on desktop platform");
+			// Disable the parent Canvas GameObject on desktop platforms
+			if (transform.parent != null)
+			{
+				transform.parent.gameObject.SetActive(false);
+				Debug.Log("[MobileUIController] Disabled parent Canvas on desktop platform");
+			}
+			else
+			{
+				// Fallback: if for some reason there's no parent, just disable this GameObject
+				gameObject.SetActive(false);
+				Debug.Log("[MobileUIController] Disabled on desktop platform (no parent Canvas)");
+			}
+			return; // Exit Awake early for desktop platforms
 		}
 		else
 		{
-			// Fallback: if for some reason there's no parent, just disable this GameObject
-			gameObject.SetActive(false);
-			Debug.Log("[MobileUIController] Disabled on desktop platform (no parent Canvas)");
-		}
-		return; // Exit Awake early for desktop platforms
-		#else
 		if (Instance == null)
 		{
 			Instance = this;
@@ -87,9 +99,6 @@ public class MobileUIController : MonoBehaviour
 		{
 			Destroy(gameObject); // Prevent multiple MobileUIControllers
 		}
-		#endif
-
-
 	}
 
     void Update()
