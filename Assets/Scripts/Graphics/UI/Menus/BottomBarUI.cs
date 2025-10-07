@@ -87,6 +87,8 @@ namespace DLS.Graphics
 		
 		// Hover state tracking to prevent flicker
 		static string hoveredNestedCollectionName;
+		static int hoverStartFrame;
+		static int hoverDelayFrames = 30; // Frames to wait before expanding on hover
 
 		static bool MenuButtonsAndShortcutsEnabled => Project.ActiveProject.CanEditViewedChip;
 
