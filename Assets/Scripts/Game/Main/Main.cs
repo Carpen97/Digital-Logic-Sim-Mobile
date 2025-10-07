@@ -172,7 +172,7 @@ namespace DLS.Game
 			if (KeyboardShortcuts.OpenSaveDataFolderShortcutTriggered) OpenSaveDataFolderInFileBrowser();
 			
 			// Handle level validation shortcut for PC testing
-			if (KeyboardShortcuts.ValidateLevelShortcutTriggered)
+			if (DLS.Game.KeyboardShortcuts.ValidateLevelShortcutTriggered)
 			{
 				// Only trigger if we're in a level and no menu is open
 				if (LevelManager.Instance?.IsActive == true && UIDrawer.ActiveMenu == UIDrawer.MenuType.None)
@@ -184,7 +184,7 @@ namespace DLS.Game
 			}
 			
 			// Handle clear level progress shortcut for testing
-			if (KeyboardShortcuts.ClearLevelProgressShortcutTriggered)
+			if (DLS.Game.KeyboardShortcuts.ClearLevelProgressShortcutTriggered)
 			{
 				// Only trigger if we're in a level and no menu is open
 				if (LevelManager.Instance?.IsActive == true && UIDrawer.ActiveMenu == UIDrawer.MenuType.None)

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using DLS.Description;
+using ChipCollection = DLS.Description.ChipCollection;
 using DLS.Game;
 using DLS.Game.LevelsIntegration;
 using DLS.SaveSystem;
