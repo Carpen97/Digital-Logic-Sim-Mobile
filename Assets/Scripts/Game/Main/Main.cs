@@ -16,10 +16,10 @@ namespace DLS.Game
 {
 	public static class Main
 	{
-		public static readonly Version DLSVersion = new(2, 1, 6, 8);
+		public static readonly Version DLSVersion = new(2, 1, 7, 0);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
 		public static readonly Version DLSVersion_ModdedID = new(1, 1, 2);
-		public const string LastUpdatedString = "9 Sep 2025";
+		public const string LastUpdatedString = "7 Oct 2025";
 		public const string LastUpdatedModdedString = "10 Aug 2025";
 		public static AppSettings ActiveAppSettings;
 
