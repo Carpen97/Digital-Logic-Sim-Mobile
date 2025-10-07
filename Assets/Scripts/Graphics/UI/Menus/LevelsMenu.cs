@@ -173,11 +173,15 @@ namespace DLS.Graphics
 					ButtonTheme activeLevelTheme = packIndex == _selectedLevelPackIndex && levelIndex == _selectedLevelIndex ? ActiveUITheme.ChipLibraryChipToggleOn : ActiveUITheme.ChipLibraryChipToggleOff;
 					Vector2 levelLabelPos = new(topLeft.x + nestedInset, Seb.Vis.UI.UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
 					
-					// Add green tickmark if level is completed
+					// Add green tickmark if level is completed, or dot if has progress
 					string levelDisplayName = level.name;
 					if (IsLevelCompleted(level.id))
 					{
 						levelDisplayName += " ✓";
+					}
+					else if (HasLevelProgress(level.id))
+					{
+						levelDisplayName += " ●";
 					}
 					
 					bool levelPressed = Seb.Vis.UI.UI.Button(levelDisplayName, activeLevelTheme, levelLabelPos, new Vector2(width - nestedInset, 2), true, false, false, activeLevelTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
@@ -261,27 +265,53 @@ namespace DLS.Graphics
 		static void DrawActionButtons(Bounds2D panelContentBounds)
 		{
 			// Position buttons to flow naturally after the banner
-			//Vector2 buttonPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 1.5f; // After preview + banner + spacing
-			Vector2 buttonPos = panelContentBounds.CentreBottom + Vector2.up * (3 * 5f) ;
+			Vector2 buttonPos = panelContentBounds.CentreBottom + Vector2.up * (3 * 5f);
 			Vector2 buttonSize = new(panelContentBounds.Width * 0.9f, 4f); // Double height, wider
 			const float buttonSpacing = 1f; // Normal spacing between buttons
 
 			bool canPlay = _allLevels.Count > 0;
+			bool hasProgress = canPlay && HasLevelProgress(_allLevels[0].id);
 			
 			// Center buttons horizontally
 			Vector2 centeredButtonPos = new(panelContentBounds.Centre.x, buttonPos.y);
 			
-			bool pressedPlay = Seb.Vis.UI.UI.Button("PLAY", ActiveUITheme.ButtonTheme, centeredButtonPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
-			
-			Vector2 leaderboardPos = centeredButtonPos + Vector2.down * (buttonSize.y + buttonSpacing);
-			bool pressedLeaderboard = Seb.Vis.UI.UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
-			
-			Vector2 exitPos = leaderboardPos + Vector2.down * (buttonSize.y + buttonSpacing);
-			bool pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+			// If level has progress, show Continue and Restart buttons
+			if (hasProgress)
+			{
+				// Calculate positions for two buttons side by side
+				float halfWidth = (buttonSize.x - buttonSpacing) / 2f;
+				Vector2 continuePos = new(panelContentBounds.Centre.x - halfWidth / 2f - buttonSpacing / 2f, buttonPos.y);
+				Vector2 restartPos = new(panelContentBounds.Centre.x + halfWidth / 2f + buttonSpacing / 2f, buttonPos.y);
+				
+				bool pressedContinue = Seb.Vis.UI.UI.Button("CONTINUE", ActiveUITheme.ButtonTheme, continuePos, new Vector2(halfWidth, buttonSize.y), canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				bool pressedRestart = Seb.Vis.UI.UI.Button("RESTART", ActiveUITheme.ButtonTheme, restartPos, new Vector2(halfWidth, buttonSize.y), canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				
+				Vector2 leaderboardPos = centeredButtonPos + Vector2.down * (buttonSize.y + buttonSpacing);
+				bool pressedLeaderboard = Seb.Vis.UI.UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				
+				Vector2 exitPos = leaderboardPos + Vector2.down * (buttonSize.y + buttonSpacing);
+				bool pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 
-			if (pressedPlay) PlaySelectedLevel();
-			if (pressedLeaderboard) OpenLeaderboard();
-			if (pressedExit) Close();
+				if (pressedContinue) PlaySelectedLevel(continueFromSave: true);
+				if (pressedRestart) PlaySelectedLevel(continueFromSave: false);
+				if (pressedLeaderboard) OpenLeaderboard();
+				if (pressedExit) Close();
+			}
+			else
+			{
+				// No progress, show normal Play button
+				bool pressedPlay = Seb.Vis.UI.UI.Button("PLAY", ActiveUITheme.ButtonTheme, centeredButtonPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				
+				Vector2 leaderboardPos = centeredButtonPos + Vector2.down * (buttonSize.y + buttonSpacing);
+				bool pressedLeaderboard = Seb.Vis.UI.UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				
+				Vector2 exitPos = leaderboardPos + Vector2.down * (buttonSize.y + buttonSpacing);
+				bool pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+
+				if (pressedPlay) PlaySelectedLevel(continueFromSave: false);
+				if (pressedLeaderboard) OpenLeaderboard();
+				if (pressedExit) Close();
+			}
 		}
 
 		static ButtonTheme GetButtonTheme(bool isLevelPack, bool isSelected) =>
@@ -462,7 +492,7 @@ namespace DLS.Graphics
 		}
 
 		// -------- Play flow --------
-		static void PlaySelectedLevel()
+		static void PlaySelectedLevel(bool continueFromSave = false)
 		{
 			if (_selectedLevelPackIndex < 0 || _selectedLevelPackIndex >= _levelPacks.Count ||
 				_selectedLevelIndex < 0 || _selectedLevelIndex >= _levelPacks[_selectedLevelPackIndex].levels.Count)
@@ -509,15 +539,24 @@ namespace DLS.Graphics
 						runner.SaveCurrentProgress();
 					}
 					
+					// Start level - if restarting, clear progress first
+					if (!continueFromSave)
+					{
+						LevelProgressService.ClearLevelProgress(selectedLevelDef.id);
+					}
 					runner.StartLevel(selectedLevelDef);
-					Debug.Log($"[LevelsMenu] Started level: id={selectedLevelDef.id}, name={selectedLevelDef.name}, inputs={selectedLevelDef.inputCount}, outputs={selectedLevelDef.outputCount}, vectors={(selectedLevelDef.testVectors == null ? -1 : selectedLevelDef.testVectors.Length)}");
+					Debug.Log($"[LevelsMenu] Started level: id={selectedLevelDef.id}, name={selectedLevelDef.name}, continueFromSave={continueFromSave}");
 					Close();
 				}
 				else if (option == 2) // Continue without Saving
 				{
-					// Start new level without saving current progress
+					// Start level - if restarting, clear progress first
+					if (!continueFromSave)
+					{
+						LevelProgressService.ClearLevelProgress(selectedLevelDef.id);
+					}
 					runner.StartLevel(selectedLevelDef);
-					Debug.Log($"[LevelsMenu] Started level: id={selectedLevelDef.id}, name={selectedLevelDef.name}, inputs={selectedLevelDef.inputCount}, outputs={selectedLevelDef.outputCount}, vectors={(selectedLevelDef.testVectors == null ? -1 : selectedLevelDef.testVectors.Length)}");
+					Debug.Log($"[LevelsMenu] Started level: id={selectedLevelDef.id}, name={selectedLevelDef.name}, continueFromSave={continueFromSave}");
 					Close();
 				}
 			}
@@ -547,24 +586,44 @@ namespace DLS.Graphics
 			PlayerPrefs.SetInt(PlayerPrefsKey_LastIndex + "_Level", _selectedLevelIndex);
 		}
 
-		/// <summary>
-		/// Check if a level has been completed using LevelProgressService
-		/// </summary>
-		static bool IsLevelCompleted(string levelId)
+	/// <summary>
+	/// Check if a level has been completed using LevelProgressService
+	/// </summary>
+	static bool IsLevelCompleted(string levelId)
+	{
+		if (string.IsNullOrEmpty(levelId)) return false;
+		
+		try
 		{
-			if (string.IsNullOrEmpty(levelId)) return false;
-			
-			try
-			{
-				var progress = LevelProgressService.Get(levelId);
-				return progress.Completed;
-			}
-			catch (Exception ex)
-			{
-				Debug.LogWarning($"[LevelsMenu] Failed to check completion for level {levelId}: {ex.Message}");
-				return false;
-			}
+			var progress = LevelProgressService.Get(levelId);
+			return progress.Completed;
 		}
+		catch (Exception ex)
+		{
+			Debug.LogWarning($"[LevelsMenu] Failed to check completion for level {levelId}: {ex.Message}");
+			return false;
+		}
+	}
+
+	/// <summary>
+	/// Check if a level has saved progress (completed or has some work saved)
+	/// </summary>
+	static bool HasLevelProgress(string levelId)
+	{
+		if (string.IsNullOrEmpty(levelId)) return false;
+		
+		try
+		{
+			var progress = LevelProgressService.Get(levelId);
+			// Has progress if it's completed OR has a saved state
+			return progress.Completed || LevelProgressService.HasLevelProgress(levelId);
+		}
+		catch (Exception ex)
+		{
+			Debug.LogWarning($"[LevelsMenu] Failed to check progress for level {levelId}: {ex.Message}");
+			return false;
+		}
+	}
 
 		// Unity’s JsonUtility can’t parse top-level arrays; helper wraps/unwraps.
 		static class JsonHelper

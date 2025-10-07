@@ -88,42 +88,82 @@ namespace DLS.Game
 
 		public static void CreateOrLoadProject(string projectName, string startupChipName = "")
 		{
-			if (Loader.ProjectExists(projectName)) { ActiveProject = LoadProject(projectName); Saver.SaveProjectDescription(ActiveProject.description); }
-			else ActiveProject = CreateProject(projectName);
+			try
+			{
+				Debug.Log($"[Main] CreateOrLoadProject called with projectName: '{projectName}', startupChipName: '{startupChipName}'");
+				
+				if (Loader.ProjectExists(projectName)) 
+				{ 
+					Debug.Log($"[Main] Project exists, loading: {projectName}");
+					ActiveProject = LoadProject(projectName); 
+					Saver.SaveProjectDescription(ActiveProject.description); 
+				}
+				else 
+				{
+					Debug.Log($"[Main] Project doesn't exist, creating: {projectName}");
+					ActiveProject = CreateProject(projectName);
+				}
 
-			ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(startupChipName);
-			ActiveProject.StartSimulation();
-			ActiveProject.audioState = audioState;
-			UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+				Debug.Log($"[Main] Loading dev chip or creating new: {startupChipName}");
+				ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(startupChipName);
+				
+				Debug.Log($"[Main] Starting simulation");
+				ActiveProject.StartSimulation();
+				ActiveProject.audioState = audioState;
+				
+				Debug.Log($"[Main] Setting menu to None");
+				UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+				Debug.Log($"[Main] CreateOrLoadProject completed successfully");
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"[Main] CreateOrLoadProject failed: {ex.Message}");
+				Debug.LogError($"[Main] Stack trace: {ex.StackTrace}");
+				// Don't re-throw to prevent crash, but log the error
+			}
 		}
 
 		static Project CreateProject(string projectName)
 		{
-			ProjectDescription initialDescription = new()
+			try
 			{
-				ProjectName = projectName,
-				DLSVersion_LastSaved = DLSVersion.ToString(),
-				DLSVersion_LastSavedModdedVersion = DLSVersion_ModdedID.ToString(),
-				DLSVersion_EarliestCompatible = DLSVersion_EarliestCompatible.ToString(),
-				CreationTime = DateTime.Now,
-                TimeSpentSinceCreated = new(),
-				Prefs_ChipPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
-				Prefs_MainPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
-				Prefs_SimTargetStepsPerSecond = 1000,
-				Prefs_SimStepsPerClockTick = 250,
-				Prefs_SimPaused = false,
-				// Prefs_UIThemeMode removed - only Squiggles Theme is used
-				Prefs_GridDisplayMode = 1,
-				Prefs_UseDragAndDropMode = true,
-				AllCustomChipNames = Array.Empty<string>(),
-				StarredList = BuiltinCollectionCreator.GetDefaultStarredList().ToList(),
-				ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections()),
-				pinBitCounts = Project.PinBitCounts,
-				SplitMergePairs = Project.SplitMergePairs
-			};
+				Debug.Log($"[Main] CreateProject called with projectName: '{projectName}'");
+				
+				ProjectDescription initialDescription = new()
+				{
+					ProjectName = projectName,
+					DLSVersion_LastSaved = DLSVersion.ToString(),
+					DLSVersion_LastSavedModdedVersion = DLSVersion_ModdedID.ToString(),
+					DLSVersion_EarliestCompatible = DLSVersion_EarliestCompatible.ToString(),
+					CreationTime = DateTime.Now,
+					TimeSpentSinceCreated = new(),
+					Prefs_ChipPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
+					Prefs_MainPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
+					Prefs_SimTargetStepsPerSecond = 1000,
+					Prefs_SimStepsPerClockTick = 250,
+					Prefs_SimPaused = false,
+					// Prefs_UIThemeMode removed - only Squiggles Theme is used
+					Prefs_GridDisplayMode = 1,
+					Prefs_UseDragAndDropMode = true,
+					AllCustomChipNames = Array.Empty<string>(),
+					StarredList = BuiltinCollectionCreator.GetDefaultStarredList().ToList(),
+					ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections()),
+					pinBitCounts = Project.PinBitCounts,
+					SplitMergePairs = Project.SplitMergePairs
+				};
 
-			Saver.SaveProjectDescription(initialDescription);
-			return LoadProject(projectName);
+				Debug.Log($"[Main] Saving project description for: {projectName}");
+				Saver.SaveProjectDescription(initialDescription);
+				
+				Debug.Log($"[Main] Loading project: {projectName}");
+				return LoadProject(projectName);
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"[Main] CreateProject failed for '{projectName}': {ex.Message}");
+				Debug.LogError($"[Main] Stack trace: {ex.StackTrace}");
+				throw; // Re-throw to maintain existing behavior
+			}
 		}
 
 	public static void ImportProject()

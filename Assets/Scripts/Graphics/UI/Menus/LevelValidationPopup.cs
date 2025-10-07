@@ -14,6 +14,26 @@ using DLS.Game; // For Project class
 using DLS.Online; // For Firebase testing
 using static DLS.Graphics.DrawSettings;
 
+// Data structures for levels.json parsing
+[System.Serializable]
+public class LevelsData
+{
+    public int schemaVersion;
+    public string packId;
+    public string packName;
+    public string packDescription;
+    public Chapter[] chapters;
+}
+
+[System.Serializable]
+public class Chapter
+{
+    public string chapterId;
+    public string chapterName;
+    public string chapterDescription;
+    public LevelDefinition[] levels;
+}
+
 namespace DLS.Graphics
 {
 	public static class LevelValidationPopup
@@ -730,10 +750,14 @@ namespace DLS.Graphics
 			Vector2 uploadPos = new Vector2(startX + buttonWidth + spacing, startY);
 			Vector2 saveAsChipPos = new Vector2(startX + (buttonWidth + spacing) * 2, startY);
 
-			// Row 2: Levels, Leaderboard, Close
-			Vector2 levelsPos = new Vector2(startX, startY - buttonHeight - spacing);
-			Vector2 leaderboardPos = new Vector2(startX + buttonWidth + spacing, startY - buttonHeight - spacing);
-			Vector2 closePos = new Vector2(startX + (buttonWidth + spacing) * 2, startY - buttonHeight - spacing);
+			// Row 2: Restart, Next, Leaderboard
+			Vector2 restartPos = new Vector2(startX, startY - buttonHeight - spacing);
+			Vector2 nextPos = new Vector2(startX + buttonWidth + spacing, startY - buttonHeight - spacing);
+			Vector2 leaderboardPos = new Vector2(startX + (buttonWidth + spacing) * 2, startY - buttonHeight - spacing);
+			
+			// Row 3: Levels, Close, (empty)
+			Vector2 levelsPos = new Vector2(startX, startY - (buttonHeight + spacing) * 2);
+			Vector2 closePos = new Vector2(startX + buttonWidth + spacing, startY - (buttonHeight + spacing) * 2);
 
 			// Row 1: Apply Test button (left)
 			bool applyTestPressed = Seb.Vis.UI.UI.Button(
@@ -775,11 +799,11 @@ namespace DLS.Graphics
 				Anchor.TopLeft
 			);
 
-			// Row 2: Levels button (left)
-			bool levelsPressed = Seb.Vis.UI.UI.Button(
-				"Levels",
+			// Row 2: Restart button (left)
+			bool restartPressed = Seb.Vis.UI.UI.Button(
+				"Restart",
 				MenuHelper.Theme.ButtonTheme,
-				levelsPos,
+				restartPos,
 				new Vector2(buttonWidth, buttonHeight),
 				true,
 				false,
@@ -788,7 +812,20 @@ namespace DLS.Graphics
 				Anchor.TopLeft
 			);
 
-			// Row 2: Leaderboard button (middle)
+			// Row 2: Next button (middle) - only show if level is passed
+			bool nextPressed = Seb.Vis.UI.UI.Button(
+				"Next",
+				MenuHelper.Theme.ButtonTheme,
+				nextPos,
+				new Vector2(buttonWidth, buttonHeight),
+				levelPassed, // Only enabled if level is passed
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			// Row 2: Leaderboard button (right)
 			bool leaderboardPressed = Seb.Vis.UI.UI.Button(
 				"Leaderboard",
 				MenuHelper.Theme.ButtonTheme,
@@ -801,7 +838,20 @@ namespace DLS.Graphics
 				Anchor.TopLeft
 			);
 
-			// Row 2: Close button (right)
+			// Row 3: Levels button (left)
+			bool levelsPressed = Seb.Vis.UI.UI.Button(
+				"Levels",
+				MenuHelper.Theme.ButtonTheme,
+				levelsPos,
+				new Vector2(buttonWidth, buttonHeight),
+				true,
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			// Row 3: Close button (middle)
 			bool closePressed = Seb.Vis.UI.UI.Button(
 				"Close",
 				MenuHelper.Theme.ButtonTheme,
@@ -832,16 +882,26 @@ namespace DLS.Graphics
 				UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipSave);
 			}
 
-			if (levelsPressed)
+			if (restartPressed)
 			{
-				// Open the levels menu
-				UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
+				RestartCurrentLevel();
+			}
+
+			if (nextPressed && levelPassed)
+			{
+				PlayNextLevel();
 			}
 
 			if (leaderboardPressed)
 			{
 				string levelId = GetCurrentLevelId();
 				LeaderboardPopup.Open(levelId);
+			}
+
+			if (levelsPressed)
+			{
+				// Open the levels menu
+				UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
 			}
 
 			if (closePressed)
@@ -1083,6 +1143,142 @@ namespace DLS.Graphics
             catch
             {
                 return "Logic Gate";
+            }
+        }
+        
+        /// <summary>
+        /// Restart the current level
+        /// </summary>
+        static void RestartCurrentLevel()
+        {
+            var levelManager = LevelManager.Instance;
+            if (levelManager?.Current == null)
+            {
+                Debug.LogWarning("[LevelValidationPopup] No active level to restart");
+                return;
+            }
+            
+            // Get the current level definition
+            var currentLevel = levelManager.Current;
+            
+            // Clear saved progress before restarting
+            LevelProgressService.ClearLevelProgress(currentLevel.id);
+            
+            // Restart the level
+            levelManager.StartLevel(currentLevel);
+            
+            // Close the validation popup
+            UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+            
+            Debug.Log($"[LevelValidationPopup] Restarted level: {currentLevel.name}");
+        }
+        
+        /// <summary>
+        /// Play the next level in the sequence
+        /// </summary>
+        static void PlayNextLevel()
+        {
+            var levelManager = LevelManager.Instance;
+            if (levelManager?.Current == null)
+            {
+                Debug.LogWarning("[LevelValidationPopup] No active level to get next from");
+                return;
+            }
+            
+            // Get the next level definition
+            var nextLevel = GetNextLevelDefinition();
+            
+            if (nextLevel == null)
+            {
+                Debug.Log("[LevelValidationPopup] No next level available");
+                // Close popup and return to levels menu
+                UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
+                return;
+            }
+            
+            // Start the next level (will auto-load saved progress if it exists)
+            levelManager.StartLevel(nextLevel);
+            
+            // Close the validation popup
+            UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+            
+            Debug.Log($"[LevelValidationPopup] Started next level: {nextLevel.name}");
+        }
+        
+        /// <summary>
+        /// Get the next level definition based on the current level
+        /// </summary>
+        static LevelDefinition GetNextLevelDefinition()
+        {
+            var levelManager = LevelManager.Instance;
+            if (levelManager?.Current == null) return null;
+            
+            var currentLevel = levelManager.Current;
+            
+            try
+            {
+                // Load the levels.json file to find the next level
+                var levelsText = Resources.Load<TextAsset>("levels");
+                if (levelsText == null)
+                {
+                    Debug.LogWarning("[LevelValidationPopup] Could not find levels.json resource");
+                    return null;
+                }
+                
+                var levelsData = JsonUtility.FromJson<LevelsData>(levelsText.text);
+                if (levelsData?.chapters == null)
+                {
+                    Debug.LogWarning("[LevelValidationPopup] Invalid levels data structure");
+                    return null;
+                }
+                
+                // Find current level position
+                for (int chapterIndex = 0; chapterIndex < levelsData.chapters.Length; chapterIndex++)
+                {
+                    var chapter = levelsData.chapters[chapterIndex];
+                    if (chapter.levels == null) continue;
+                    
+                    for (int levelIndex = 0; levelIndex < chapter.levels.Length; levelIndex++)
+                    {
+                        var level = chapter.levels[levelIndex];
+                        if (level.id == currentLevel.id)
+                        {
+                            // Found current level - check for next level
+                            
+                            // First, try next level in same chapter
+                            if (levelIndex + 1 < chapter.levels.Length)
+                            {
+                                var nextLevel = chapter.levels[levelIndex + 1];
+                                Debug.Log($"[LevelValidationPopup] Found next level in same chapter: {nextLevel.name}");
+                                return nextLevel;
+                            }
+                            
+                            // If this is the last level in chapter, try first level in next chapter
+                            if (chapterIndex + 1 < levelsData.chapters.Length)
+                            {
+                                var nextChapter = levelsData.chapters[chapterIndex + 1];
+                                if (nextChapter.levels != null && nextChapter.levels.Length > 0)
+                                {
+                                    var nextLevel = nextChapter.levels[0];
+                                    Debug.Log($"[LevelValidationPopup] Found next level in next chapter: {nextLevel.name}");
+                                    return nextLevel;
+                                }
+                            }
+                            
+                            // No next level found
+                            Debug.Log("[LevelValidationPopup] This is the last level in the game");
+                            return null;
+                        }
+                    }
+                }
+                
+                Debug.LogWarning($"[LevelValidationPopup] Could not find current level {currentLevel.id} in levels data");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[LevelValidationPopup] Error finding next level: {ex.Message}");
+                return null;
             }
         }
         

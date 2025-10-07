@@ -104,9 +104,19 @@ namespace DLS.SaveSystem
 
 		static void WriteToFile(string data, string path)
 		{
-			Directory.CreateDirectory(Path.GetDirectoryName(path));
-			using StreamWriter writer = new(path);
-			writer.Write(data);
+			try
+			{
+				Debug.Log($"[Saver] Writing to file: {path}");
+				Directory.CreateDirectory(Path.GetDirectoryName(path));
+				using StreamWriter writer = new(path);
+				writer.Write(data);
+				Debug.Log($"[Saver] Successfully wrote to file: {path}");
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"[Saver] Failed to write to file {path}: {ex.Message}");
+				throw; // Re-throw to maintain existing behavior
+			}
 		}
 
 		static string GetChipFilePath(string chipName, string projectName)

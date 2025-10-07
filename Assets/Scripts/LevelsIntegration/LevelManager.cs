@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using DLS.Levels;
 using DLS.Levels.Host;
 using DLS.Game;
 using DLS.Description;
 using DLS.SaveSystem;
+using DLS.Simulation;
 
 namespace DLS.Game.LevelsIntegration
 {
@@ -247,31 +249,16 @@ namespace DLS.Game.LevelsIntegration
         /// </summary>
         public bool HasUnsavedChanges()
         {
-            if (!IsActive || string.IsNullOrEmpty(Current.id)) return false;
+            if (!IsActive || Current == null || string.IsNullOrEmpty(Current?.id)) return false;
             
             try
             {
-                // Check if there's saved progress for this level
-                bool hasSavedProgress = LevelProgressService.HasLevelProgress(Current.id);
-                
-                if (!hasSavedProgress)
-                {
-                    // No saved progress, check if there are any elements in the current chip
-                    return Project.ActiveProject?.ViewedChip?.Elements?.Count > 0;
-                }
-                
-                // There is saved progress, compare current state with saved state
-                var savedProgress = LevelProgressService.LoadLevelProgress(Current.id);
-                if (savedProgress == null) return true; // Can't load saved progress, assume changes
-                
-                // Create current chip description
                 var currentChip = Project.ActiveProject?.ViewedChip;
-                if (currentChip == null) return true; // No current chip, assume changes
+                if (currentChip == null) return false;
                 
-                var currentDescription = DescriptionCreator.CreateChipDescription(currentChip);
-                
-                // Compare using the same logic as chip unsaved changes
-                return Saver.HasUnsavedChanges(savedProgress, currentDescription);
+                // Use the same logic as regular chip unsaved changes detection
+                // This will work correctly because SaveCurrentProgress now updates LastSavedDescription
+                return Project.ActiveProject.ActiveChipHasUnsavedChanges();
             }
             catch (Exception ex)
             {
@@ -285,7 +272,7 @@ namespace DLS.Game.LevelsIntegration
         /// </summary>
         public void SaveCurrentProgress()
         {
-            if (!IsActive || string.IsNullOrEmpty(Current.id)) 
+            if (!IsActive || Current == null || string.IsNullOrEmpty(Current.id)) 
             {
                 Debug.LogWarning("[LevelManager] SaveCurrentProgress called but no active level");
                 return;
@@ -300,8 +287,15 @@ namespace DLS.Game.LevelsIntegration
                     return;
                 }
                 
+                // Create the current chip description to save
+                var currentDescription = DescriptionCreator.CreateChipDescription(currentChip);
+                
                 // Save the current chip state as level progress
                 LevelProgressService.SaveLevelProgress(Current.id, currentChip);
+                
+                // Update the chip's LastSavedDescription so HasUnsavedChanges works correctly
+                currentChip.LastSavedDescription = currentDescription;
+                
                 Debug.Log($"[LevelManager] Saved progress for level: {Current.id}");
             }
             catch (Exception ex)
@@ -322,14 +316,33 @@ namespace DLS.Game.LevelsIntegration
                 var savedProgress = LevelProgressService.LoadLevelProgress(levelId);
                 if (savedProgress != null)
                 {
-                    // Load the saved chip state
-                    var currentChip = Project.ActiveProject?.ViewedChip;
-                    if (currentChip != null)
+                    Debug.Log($"[LevelManager] Found saved progress for level: {levelId}");
+                    
+                    // Apply the saved chip description to the current chip
+                    var project = Project.ActiveProject;
+                    if (project != null)
                     {
-                        // Apply the saved progress to the current chip
-                        // This would require implementing a method to apply a ChipDescription to a DevChipInstance
-                        // For now, just log that we found saved progress
-                        Debug.Log($"[LevelManager] Found saved progress for level: {levelId}");
+                        // Load the saved chip description into a DevChipInstance
+                        var (devChip, anyElementFailedToLoad) = DevChipInstance.LoadFromDescriptionTest(savedProgress, project.chipLibrary);
+                        
+                        if (devChip != null)
+                        {
+                            // Build the simulation chip for the loaded progress
+                            var simChip = Simulator.BuildSimChip(devChip.LastSavedDescription, project.chipLibrary);
+                            devChip.SetSimChip(simChip);
+                            
+                            // Replace the current chip with the loaded progress chip
+                            // We need to access the private SetNewActiveDevChip method, so we'll use reflection
+                            var method = typeof(Project).GetMethod("SetNewActiveDevChip", 
+                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            method?.Invoke(project, new object[] { devChip });
+                            
+                            Debug.Log($"[LevelManager] Successfully loaded saved progress for level {levelId}");
+                        }
+                        else
+                        {
+                            Debug.LogError($"[LevelManager] Failed to create chip instance from saved progress for level {levelId}");
+                        }
                     }
                 }
             }
