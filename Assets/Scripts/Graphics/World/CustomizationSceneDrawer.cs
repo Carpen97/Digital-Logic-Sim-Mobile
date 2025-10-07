@@ -8,6 +8,7 @@ using UnityEngine;
 using System.Linq;
 using Seb.Vis.UI;
 using System.Collections.Generic;
+using DLS.Graphics.UI;
 
 namespace DLS.Graphics
 {

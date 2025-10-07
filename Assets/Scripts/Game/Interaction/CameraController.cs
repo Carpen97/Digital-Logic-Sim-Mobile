@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DLS.Graphics;
+using DLS.Graphics.UI;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis.UI;

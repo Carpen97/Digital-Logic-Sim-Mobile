@@ -9,6 +9,7 @@ using Seb.Types;
 using Seb.Vis;
 using Seb.Vis.UI;
 using UnityEngine;
+using DLS.Graphics.UI;
 
 namespace DLS.Graphics
 {

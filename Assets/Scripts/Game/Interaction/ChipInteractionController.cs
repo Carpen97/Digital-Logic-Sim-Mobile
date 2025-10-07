@@ -7,6 +7,7 @@ using Seb.Helpers;
 using UnityEngine;
 using System;
 using UnityEditor;
+using DLS.Graphics.UI;
 
 namespace DLS.Game
 {
