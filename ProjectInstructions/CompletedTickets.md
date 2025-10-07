@@ -13,6 +13,12 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📋 **Completed Tickets**
 
+### **Ticket 042** – Fix iOS NativeFilePicker for zip file selection
+**Closed:** 2025-01-27  
+**Summary:** Fixed NativeFilePicker not working on iOS - users were unable to select zip files for project import. Problem: Users could browse through the file explorer and perform actions like move, duplicate, and delete, but could not actually select/import zip files. Root cause: Code was using platform-specific file type formats (iOS UTI strings like "public.zip-archive" instead of MIME types like "application/zip"). The NativeFilePicker plugin expects MIME type format on all platforms and handles iOS conversion internally. Solution: Removed platform-specific conditional compilation directives and standardized on MIME type format for all platforms. Modified Main.cs (project import) and AndroidChipIO.cs (chip import) to use universal MIME types. Verified zip and JSON file selection now works on iOS while maintaining Android functionality. ✅
+
+---
+
 ### **Ticket 041** – Fix unsaved changes popup issue in levels
 **Closed:** 2025-01-27  
 **Summary:** Fixed incorrect unsaved changes popup appearing in levels after saving progress. Resolved multiple root causes: random color generation causing JSON differences, wire object side effects during description creation, inconsistent chip state synchronization after level save, and order of operations issues in new chip creation. Modified DescriptionCreator.cs to use consistent gray color for level chips and removed wire object modifications. Updated LevelManager.cs to synchronize chip saved state with level progress. Fixed BottomBarUI.cs order of operations and updated UndoController.cs method calls. Result: accurate unsaved changes detection in level workflow with no false positive popups after saving progress. ✅
@@ -152,9 +158,9 @@ This document contains a historical record of all completed tickets from the Dig
 ---
 
 ## 📊 **Statistics**
-- **Total Completed Tickets:** 24
+- **Total Completed Tickets:** 25
 - **Latest Completion:** 2025-01-27
-- **Most Recent:** Add more levels
+- **Most Recent:** Fix iOS NativeFilePicker for zip file selection
 - **Key Achievements:** Community integration, Levels system, UI fixes, Performance optimizations, Mobile UX improvements, Library enhancements
 
 ---

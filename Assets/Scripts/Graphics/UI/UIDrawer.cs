@@ -33,6 +33,7 @@ namespace DLS.Graphics
 			Overwrite,
 			Levels,
 			LevelValidationResult,
+			LevelCompleted,
 			Leaderboard,
 			ScoreExplanation,
 			CachingExplanation,

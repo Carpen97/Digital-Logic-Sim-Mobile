@@ -36,11 +36,7 @@ public static class AndroidIO
 				Debug.LogError($"[ImportChip] Failed to load file: {e.Message}");
 			}
 		},
-#if UNITY_IOS
-		new[] { "public.json", "public.plain-text", "public.text" }
-#else
 		new[] { "application/json", "text/json", "text/plain" }
-#endif
 		);
 	}
 

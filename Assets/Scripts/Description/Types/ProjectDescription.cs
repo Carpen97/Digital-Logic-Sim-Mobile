@@ -218,6 +218,9 @@ namespace DLS.Description
 	public class ChipCollection
 	{
 		public readonly List<string> Chips;
+		public readonly List<ChipCollection> NestedCollections;
+		[JsonIgnore] public ChipCollection ParentCollection;
+		
 		[JsonIgnore] string displayName_closed;
 		[JsonIgnore] string displayName_empty;
 
@@ -230,6 +233,7 @@ namespace DLS.Description
 		{
 			Name = name;
 			Chips = new List<string>(chips);
+			NestedCollections = new List<ChipCollection>();
 			UpdateDisplayStrings();
 		}
 
@@ -244,6 +248,14 @@ namespace DLS.Description
 		{
 			if (Chips.Count == 0) return displayName_empty;
 			return IsToggledOpen ? displayName_open : displayName_closed;
+		}
+
+		public ChipCollection CreateNestedCollection(string name)
+		{
+			var nested = new ChipCollection(name);
+			nested.ParentCollection = this;
+			NestedCollections.Add(nested);
+			return nested;
 		}
 	}
 }

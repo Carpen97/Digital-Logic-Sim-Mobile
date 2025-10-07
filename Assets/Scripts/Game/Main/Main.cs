@@ -138,11 +138,7 @@ namespace DLS.Game
 
 			AndroidIO.ImportProjectFromZip(path);
 		},
-#if UNITY_IOS
-		new[] { "public.zip-archive", "com.pkware.zip-archive" }
-#else
 		new[] { "application/zip", "application/octet-stream" }
-#endif
 		);
 	}
 		public static void ExportProject(string projectName)

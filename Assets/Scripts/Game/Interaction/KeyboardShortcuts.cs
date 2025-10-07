@@ -11,16 +11,20 @@ namespace DLS.Game
 		public static bool MainMenu_SettingsShortcutTriggered => CtrlShortcutTriggered(KeyCode.S);
 		public static bool MainMenu_QuitShortcutTriggered => CtrlShortcutTriggered(KeyCode.Q);
 
-		// ---- Bottom Bar Menu shortcuts ----
-		public static bool SaveShortcutTriggered => CtrlShortcutTriggered(KeyCode.S);
-		public static bool LibraryShortcutTriggered => CtrlShortcutTriggered(KeyCode.L);
-		public static bool PreferencesShortcutTriggered => CtrlShortcutTriggered(KeyCode.P);
-		public static bool StatsShortcutTriggered => CtrlShortcutTriggered(KeyCode.T);
-		public static bool CreateNewChipShortcutTriggered => CtrlShortcutTriggered(KeyCode.N);
-		public static bool QuitToMainMenuShortcutTriggered => CtrlShortcutTriggered(KeyCode.Q);
-		public static bool SearchShortcutTriggered => CtrlShortcutTriggered(KeyCode.F);
-		public static bool SpecialChipsShortcutTriggered => CtrlShortcutTriggered(KeyCode.B);
-		public static bool LevelsShortcutTriggered => CtrlShortcutTriggered(KeyCode.E);
+	// ---- Bottom Bar Menu shortcuts ----
+	public static bool SaveShortcutTriggered => CtrlShortcutTriggered(KeyCode.S);
+	public static bool LibraryShortcutTriggered => CtrlShortcutTriggered(KeyCode.L);
+	public static bool PreferencesShortcutTriggered => CtrlShortcutTriggered(KeyCode.P);
+	public static bool StatsShortcutTriggered => CtrlShortcutTriggered(KeyCode.T);
+	public static bool CreateNewChipShortcutTriggered => CtrlShortcutTriggered(KeyCode.N);
+	public static bool QuitToMainMenuShortcutTriggered => CtrlShortcutTriggered(KeyCode.Q);
+	public static bool SearchShortcutTriggered => CtrlShortcutTriggered(KeyCode.F);
+	public static bool SpecialChipsShortcutTriggered => CtrlShortcutTriggered(KeyCode.B);
+	public static bool LevelsShortcutTriggered => CtrlShortcutTriggered(KeyCode.E);
+	
+	// ---- Level shortcuts ----
+	public static bool ValidateLevelShortcutTriggered => CtrlShortcutTriggered(KeyCode.V);
+	public static bool ClearLevelProgressShortcutTriggered => CtrlShortcutTriggered(KeyCode.X);
 
 		// ---- Misc shortcuts ----
 		public static bool DuplicateShortcutTriggered => MultiModeHeld && InputHelper.IsKeyDownThisFrame(KeyCode.D);

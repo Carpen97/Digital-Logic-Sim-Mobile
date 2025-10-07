@@ -4,7 +4,7 @@
   "DLSVersion_EarliestCompatible": "2.0.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.2.0",
   "CreationTime": "2025-03-14T18:23:30.404+01:00",
-  "LastSaveTime": "2025-10-04T23:45:00.520+02:00",
+  "LastSaveTime": "2025-10-07T20:30:25.915+02:00",
   "Prefs_MainPinNamesDisplayMode": 3,
   "Prefs_ChipPinNamesDisplayMode": 2,
   "Prefs_GridDisplayMode": 1,
@@ -19,9 +19,9 @@
   "Prefs_UseDragAndDropMode": true,
   "Prefs_UserName": null,
   "Prefs_RememberUserName": false,
-  "StepsRanSinceCreated": 153235594,
+  "StepsRanSinceCreated": 153257012,
   "TimeSpentSinceCreated": {
-    "StartFrom": "3.19:35:12.5104771"
+    "StartFrom": "3.19:35:35.3969765"
   },
   "AllCustomChipNames":[
     "AND",
@@ -88,46 +88,55 @@
   "ChipCollections":[
     {
       "Chips":["NAND","AND","NOT","NOR","XOR","OR","KEY","CLOCK"],
+      "NestedCollections":[],
       "IsToggledOpen":false,
       "Name":"BASICS"
     },
     {
       "Chips":["3-STATE BUFFER","IN-1","IN-4","IN-8","OUT-1","OUT-4","OUT-8","IN-16","OUT-16","IN-32","OUT-32","IN-128","OUT-128","IN-2","OUT-2","IN-6","OUT-6","IN-5","OUT-5","IN-7","OUT-7","IN-9","OUT-9","IN-31","OUT-31","IN-37","OUT-37","IN-12","OUT-12","IN-13","OUT-13","IN-21","OUT-21","IN-23","OUT-23","IN-17","OUT-17","IN-56","OUT-56"],
+      "NestedCollections":[],
       "IsToggledOpen":false,
       "Name":"IN/OUT"
     },
     {
       "Chips":["32-16BIT","32-8BIT","32-4BIT","32-1BIT","16-32BIT","16-8BIT","16-4BIT","16-1BIT","8-32BIT","8-16BIT","8-4BIT","8-1BIT","4-32BIT","4-16BIT","4-8BIT","4-1BIT","1-32BIT","1-16BIT","1-8BIT","1-4BIT"],
+      "NestedCollections":[],
       "IsToggledOpen":false,
       "Name":"MERGE/SPLIT"
     },
     {
       "Chips":["7-SEGMENT","DECIMAL-4","DECIMAL-8","DOT DISPLAY","RGB DISPLAY","LED","TOUCHSCREEN RGB DISPLAY"],
+      "NestedCollections":[],
       "IsToggledOpen":false,
       "Name":"DISPLAY"
     },
     {
       "Chips":["BUS-1","BUS-4","BUS-8","BUS-16","BUS-32","BUS-128","BUS-2","BUS-6","BUS-5","BUS-7","BUS-9","BUS-31","BUS-37","BUS-12","BUS-13","BUS-21","BUS-23","BUS-17","BUS-56"],
+      "NestedCollections":[],
       "IsToggledOpen":false,
       "Name":"BUS"
     },
     {
       "Chips":["REGISTER-4","REG-8"],
+      "NestedCollections":[],
       "IsToggledOpen":true,
       "Name":"MEMORY"
     },
     {
       "Chips":["D-LATCH","FLIP-FLOP","OR-8","MEM-1","NOT-8","AND(8,1)","MUX-8","PC","BUF-8","ALU-8","DECODE-3","AND-3","CONTROL UNIT","TOGGLE","FLAGS","DISP-7","demo","7-SEGMENT DRIVER","DABBLE","LSB","LSHIFT-8","DOUBLE DABBLE","ALU","BUS BUFFER","MEM-256","REGISTER-8","XNOR","EQUALS-8","ADDER-4","DECODER-2","ADDER-8","ADDER","MEM-16","REGISTER-1","AND-8","RAM-256×8 (async)","ROM 256×16"],
+      "NestedCollections":[],
       "IsToggledOpen":true,
       "Name":"KEEP"
     },
     {
       "Chips":["WIP2","RAM-sync","CONST"],
+      "NestedCollections":[],
       "IsToggledOpen":true,
       "Name":"TEST"
     },
     {
       "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest","#AA","StatsTest","StatsTest1","StatsTest2","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8","DETECTOR","RTC","ConstTest"],
+      "NestedCollections":[],
       "IsToggledOpen":true,
       "Name":"OTHER"
     }
