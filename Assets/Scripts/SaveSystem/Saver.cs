@@ -106,15 +106,15 @@ namespace DLS.SaveSystem
 		{
 			try
 			{
-				Debug.Log($"[Saver] Writing to file: {path}");
+				UnityEngine.Debug.Log($"[Saver] Writing to file: {path}");
 				Directory.CreateDirectory(Path.GetDirectoryName(path));
 				using StreamWriter writer = new(path);
 				writer.Write(data);
-				Debug.Log($"[Saver] Successfully wrote to file: {path}");
+				UnityEngine.Debug.Log($"[Saver] Successfully wrote to file: {path}");
 			}
 			catch (Exception ex)
 			{
-				Debug.LogError($"[Saver] Failed to write to file {path}: {ex.Message}");
+				UnityEngine.Debug.LogError($"[Saver] Failed to write to file {path}: {ex.Message}");
 				throw; // Re-throw to maintain existing behavior
 			}
 		}

@@ -90,35 +90,35 @@ namespace DLS.Game
 		{
 			try
 			{
-				Debug.Log($"[Main] CreateOrLoadProject called with projectName: '{projectName}', startupChipName: '{startupChipName}'");
+				UnityEngine.Debug.Log($"[Main] CreateOrLoadProject called with projectName: '{projectName}', startupChipName: '{startupChipName}'");
 				
 				if (Loader.ProjectExists(projectName)) 
 				{ 
-					Debug.Log($"[Main] Project exists, loading: {projectName}");
+					UnityEngine.Debug.Log($"[Main] Project exists, loading: {projectName}");
 					ActiveProject = LoadProject(projectName); 
 					Saver.SaveProjectDescription(ActiveProject.description); 
 				}
 				else 
 				{
-					Debug.Log($"[Main] Project doesn't exist, creating: {projectName}");
+					UnityEngine.Debug.Log($"[Main] Project doesn't exist, creating: {projectName}");
 					ActiveProject = CreateProject(projectName);
 				}
 
-				Debug.Log($"[Main] Loading dev chip or creating new: {startupChipName}");
+				UnityEngine.Debug.Log($"[Main] Loading dev chip or creating new: {startupChipName}");
 				ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(startupChipName);
 				
-				Debug.Log($"[Main] Starting simulation");
+				UnityEngine.Debug.Log($"[Main] Starting simulation");
 				ActiveProject.StartSimulation();
 				ActiveProject.audioState = audioState;
 				
-				Debug.Log($"[Main] Setting menu to None");
+				UnityEngine.Debug.Log($"[Main] Setting menu to None");
 				UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
-				Debug.Log($"[Main] CreateOrLoadProject completed successfully");
+				UnityEngine.Debug.Log($"[Main] CreateOrLoadProject completed successfully");
 			}
 			catch (Exception ex)
 			{
-				Debug.LogError($"[Main] CreateOrLoadProject failed: {ex.Message}");
-				Debug.LogError($"[Main] Stack trace: {ex.StackTrace}");
+				UnityEngine.Debug.LogError($"[Main] CreateOrLoadProject failed: {ex.Message}");
+				UnityEngine.Debug.LogError($"[Main] Stack trace: {ex.StackTrace}");
 				// Don't re-throw to prevent crash, but log the error
 			}
 		}
@@ -127,7 +127,7 @@ namespace DLS.Game
 		{
 			try
 			{
-				Debug.Log($"[Main] CreateProject called with projectName: '{projectName}'");
+				UnityEngine.Debug.Log($"[Main] CreateProject called with projectName: '{projectName}'");
 				
 				ProjectDescription initialDescription = new()
 				{
@@ -152,16 +152,16 @@ namespace DLS.Game
 					SplitMergePairs = Project.SplitMergePairs
 				};
 
-				Debug.Log($"[Main] Saving project description for: {projectName}");
+				UnityEngine.Debug.Log($"[Main] Saving project description for: {projectName}");
 				Saver.SaveProjectDescription(initialDescription);
 				
-				Debug.Log($"[Main] Loading project: {projectName}");
+				UnityEngine.Debug.Log($"[Main] Loading project: {projectName}");
 				return LoadProject(projectName);
 			}
 			catch (Exception ex)
 			{
-				Debug.LogError($"[Main] CreateProject failed for '{projectName}': {ex.Message}");
-				Debug.LogError($"[Main] Stack trace: {ex.StackTrace}");
+				UnityEngine.Debug.LogError($"[Main] CreateProject failed for '{projectName}': {ex.Message}");
+				UnityEngine.Debug.LogError($"[Main] Stack trace: {ex.StackTrace}");
 				throw; // Re-throw to maintain existing behavior
 			}
 		}
