@@ -7,9 +7,6 @@ using Seb.Vis.UI;
 using UnityEngine;
 using DLS.Game.LevelsIntegration;	// for LevelManager
 using UnityEngine.UI;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 
 public class MobileUIController : MonoBehaviour
@@ -50,11 +47,9 @@ public class MobileUIController : MonoBehaviour
 
 	private void Awake()
 	{
-		// Check if we're on a mobile platform OR if we're in editor with iOS/Android platform selected
+		// Check if we're on a mobile platform
 		bool isMobilePlatform = Application.platform == RuntimePlatform.Android || 
-		                       Application.platform == RuntimePlatform.IPhonePlayer ||
-		                       (Application.isEditor && (EditorUserBuildSettings.activeBuildTarget == BuildTarget.iOS || 
-		                                                EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android));
+		                       Application.platform == RuntimePlatform.IPhonePlayer;
 		
 		if (!isMobilePlatform)
 		{
