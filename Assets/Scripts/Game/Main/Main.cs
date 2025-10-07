@@ -6,6 +6,9 @@ using System.Linq;
 using DLS.Description;
 using DLS.Graphics;
 using DLS.SaveSystem;
+using DLS.Game.LevelsIntegration;
+using DLS.Online;
+using DLS.Levels;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -123,19 +126,25 @@ namespace DLS.Game
 			return LoadProject(projectName);
 		}
 
-		public static void ImportProject()
+	public static void ImportProject()
+	{
+		NativeFilePicker.PickFile((path) =>
 		{
-			NativeFilePicker.PickFile((path) =>
+			if (string.IsNullOrEmpty(path))
 			{
-				if (string.IsNullOrEmpty(path))
-				{
-					UnityEngine.Debug.LogWarning("[ImportProject] No file selected.");
-					return;
-				}
+				UnityEngine.Debug.LogWarning("[ImportProject] No file selected.");
+				return;
+			}
 
-				AndroidIO.ImportProjectFromZip(path);
-			}, new[] { "application/zip", "application/octet-stream" });
-		}
+			AndroidIO.ImportProjectFromZip(path);
+		},
+#if UNITY_IOS
+		new[] { "public.zip-archive", "com.pkware.zip-archive" }
+#else
+		new[] { "application/zip", "application/octet-stream" }
+#endif
+		);
+	}
 		public static void ExportProject(string projectName)
 		{
 			AndroidIO.ExportProjectToZip(projectName);
@@ -165,6 +174,31 @@ namespace DLS.Game
 		static void HandleGlobalInput()
 		{
 			if (KeyboardShortcuts.OpenSaveDataFolderShortcutTriggered) OpenSaveDataFolderInFileBrowser();
+			
+			// Handle level validation shortcut for PC testing
+			if (KeyboardShortcuts.ValidateLevelShortcutTriggered)
+			{
+				// Only trigger if we're in a level and no menu is open
+				if (LevelManager.Instance?.IsActive == true && UIDrawer.ActiveMenu == UIDrawer.MenuType.None)
+				{
+					UnityEngine.Debug.Log("[Main] Ctrl+V pressed - triggering level validation");
+					var report = LevelManager.Instance.RunValidation();
+					LevelValidationPopup.Open(report);
+				}
+			}
+			
+			// Handle clear level progress shortcut for testing
+			if (KeyboardShortcuts.ClearLevelProgressShortcutTriggered)
+			{
+				// Only trigger if we're in a level and no menu is open
+				if (LevelManager.Instance?.IsActive == true && UIDrawer.ActiveMenu == UIDrawer.MenuType.None)
+				{
+					UnityEngine.Debug.Log("[Main] Ctrl+C pressed - clearing level progress");
+					LevelProgressService.ClearLevelProgress(LevelManager.Instance.Current.id);
+					UnityEngine.Debug.Log($"[Main] Cleared progress for level: {LevelManager.Instance.Current.id}");
+				}
+			}
+			
 		}
 
 		public class Version
