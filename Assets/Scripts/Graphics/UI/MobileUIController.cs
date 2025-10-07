@@ -98,6 +98,7 @@ public class MobileUIController : MonoBehaviour
 		{
 			Destroy(gameObject); // Prevent multiple MobileUIControllers
 		}
+		}
 	}
 
     void Update()
