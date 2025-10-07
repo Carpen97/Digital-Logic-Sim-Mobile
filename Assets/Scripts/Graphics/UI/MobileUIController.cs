@@ -12,7 +12,6 @@ using UnityEditor;
 #endif
 
 
-#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
 public class MobileUIController : MonoBehaviour
 {
 	[Header("Placement Buttons")]
@@ -483,4 +482,3 @@ public class MobileUIController : MonoBehaviour
 		onCancelCallback?.Invoke();
 	}
 }
-#endif
