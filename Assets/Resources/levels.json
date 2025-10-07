@@ -1,0 +1,1693 @@
+{
+  "schemaVersion": 1,
+  "packId": "pack.basics",
+  "packName": "Digital Logic – Basics",
+  "packDescription": "",
+  "chapters": [
+    {
+      "chapterId": "ch.basics",
+      "chapterName": "Basics",
+      "chapterDescription": "Master the building blocks of digital electronics! Learn how simple gates like AND, OR, and XOR create the foundation for all computer logic. Discover how combining gates creates powerful circuits.",
+      "levels": [
+        {
+          "id": "lvl.not.1",
+          "chapterId": "ch.basics",
+          "name": "NOT Gate",
+          "description": "Output should be the inverse of input.",
+          "inputCount": 1,
+          "outputCount": 1,
+          "inputLabels": [
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "0",
+              "expected": "1"
+            },
+            {
+              "inputs": "1",
+              "expected": "0"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.and.1",
+          "chapterId": "ch.basics",
+          "name": "AND Gate",
+          "description": "Output should be 1 only if both inputs are 1.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputLabels": [
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00",
+              "expected": "0"
+            },
+            {
+              "inputs": "01",
+              "expected": "0"
+            },
+            {
+              "inputs": "10",
+              "expected": "0"
+            },
+            {
+              "inputs": "11",
+              "expected": "1"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.or.1",
+          "chapterId": "ch.basics",
+          "name": "OR Gate",
+          "description": "Output should be 1 if either input is 1.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputLabels": [
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00",
+              "expected": "0"
+            },
+            {
+              "inputs": "01",
+              "expected": "1"
+            },
+            {
+              "inputs": "10",
+              "expected": "1"
+            },
+            {
+              "inputs": "11",
+              "expected": "1"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.xor.1",
+          "chapterId": "ch.basics",
+          "name": "XOR Gate",
+          "description": "Output should be 1 if exactly one input is 1.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputLabels": [
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00",
+              "expected": "0"
+            },
+            {
+              "inputs": "01",
+              "expected": "1"
+            },
+            {
+              "inputs": "10",
+              "expected": "1"
+            },
+            {
+              "inputs": "11",
+              "expected": "0"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.nor.1",
+          "chapterId": "ch.basics",
+          "name": "NOR Gate",
+          "description": "Output is 1 only when both inputs are 0.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputLabels": [
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00",
+              "expected": "1"
+            },
+            {
+              "inputs": "01",
+              "expected": "0"
+            },
+            {
+              "inputs": "10",
+              "expected": "0"
+            },
+            {
+              "inputs": "11",
+              "expected": "0"
+            }
+          ],
+          "hints": [
+            "NOR is NOT OR",
+            "Y = NOT (A OR B)"
+          ]
+        },
+        {
+          "id": "lvl.xnor.1",
+          "chapterId": "ch.basics",
+          "name": "XNOR Gate",
+          "description": "Output is 1 when inputs are equal.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputLabels": [
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00",
+              "expected": "1"
+            },
+            {
+              "inputs": "01",
+              "expected": "0"
+            },
+            {
+              "inputs": "10",
+              "expected": "0"
+            },
+            {
+              "inputs": "11",
+              "expected": "1"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.a_and_not_b",
+          "chapterId": "ch.basics",
+          "name": "A AND NOT B",
+          "description": "Output should be 1 when A=1 and B=0.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputLabels": [
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00",
+              "expected": "0"
+            },
+            {
+              "inputs": "10",
+              "expected": "0"
+            },
+            {
+              "inputs": "01",
+              "expected": "1"
+            },
+            {
+              "inputs": "11",
+              "expected": "0"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.a_or_not_b",
+          "chapterId": "ch.basics",
+          "name": "A OR NOT B",
+          "description": "Output should be 1 when A=1 or B=0 (or both).",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputLabels": [
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00",
+              "expected": "1"
+            },
+            {
+              "inputs": "10",
+              "expected": "1"
+            },
+            {
+              "inputs": "01",
+              "expected": "0"
+            },
+            {
+              "inputs": "11",
+              "expected": "1"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.impl.1",
+          "chapterId": "ch.basics",
+          "name": "Implication (A → B)",
+          "description": "(!A) OR B.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputLabels": [
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00",
+              "expected": "1"
+            },
+            {
+              "inputs": "01",
+              "expected": "1"
+            },
+            {
+              "inputs": "10",
+              "expected": "0"
+            },
+            {
+              "inputs": "11",
+              "expected": "1"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.and3.1",
+          "chapterId": "ch.basics",
+          "name": "3-Input AND",
+          "description": "Output is 1 only when A=B=C=1.",
+          "inputCount": 3,
+          "outputCount": 1,
+          "inputLabels": [
+            "C",
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "000",
+              "expected": "0"
+            },
+            {
+              "inputs": "001",
+              "expected": "0"
+            },
+            {
+              "inputs": "010",
+              "expected": "0"
+            },
+            {
+              "inputs": "011",
+              "expected": "0"
+            },
+            {
+              "inputs": "100",
+              "expected": "0"
+            },
+            {
+              "inputs": "101",
+              "expected": "0"
+            },
+            {
+              "inputs": "110",
+              "expected": "0"
+            },
+            {
+              "inputs": "111",
+              "expected": "1"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.or3.1",
+          "chapterId": "ch.basics",
+          "name": "3-Input OR",
+          "description": "Output is 1 if any input is 1.",
+          "inputCount": 3,
+          "outputCount": 1,
+          "inputLabels": [
+            "C",
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "000",
+              "expected": "0"
+            },
+            {
+              "inputs": "001",
+              "expected": "1"
+            },
+            {
+              "inputs": "010",
+              "expected": "1"
+            },
+            {
+              "inputs": "011",
+              "expected": "1"
+            },
+            {
+              "inputs": "100",
+              "expected": "1"
+            },
+            {
+              "inputs": "101",
+              "expected": "1"
+            },
+            {
+              "inputs": "110",
+              "expected": "1"
+            },
+            {
+              "inputs": "111",
+              "expected": "1"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.maj3.1",
+          "chapterId": "ch.basics",
+          "name": "Majority",
+          "description": "Output is 1 when at least two inputs are 1.",
+          "inputCount": 3,
+          "outputCount": 1,
+          "inputLabels": [
+            "C",
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "000",
+              "expected": "0"
+            },
+            {
+              "inputs": "001",
+              "expected": "0"
+            },
+            {
+              "inputs": "010",
+              "expected": "0"
+            },
+            {
+              "inputs": "011",
+              "expected": "1"
+            },
+            {
+              "inputs": "100",
+              "expected": "0"
+            },
+            {
+              "inputs": "101",
+              "expected": "1"
+            },
+            {
+              "inputs": "110",
+              "expected": "1"
+            },
+            {
+              "inputs": "111",
+              "expected": "1"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.par3.1",
+          "chapterId": "ch.basics",
+          "name": "Parity (Odd, 3-bit)",
+          "description": "Output is 1 when the number of 1s is odd.",
+          "inputCount": 3,
+          "outputCount": 1,
+          "inputLabels": [
+            "C",
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "000",
+              "expected": "0"
+            },
+            {
+              "inputs": "001",
+              "expected": "1"
+            },
+            {
+              "inputs": "010",
+              "expected": "1"
+            },
+            {
+              "inputs": "011",
+              "expected": "0"
+            },
+            {
+              "inputs": "100",
+              "expected": "1"
+            },
+            {
+              "inputs": "101",
+              "expected": "0"
+            },
+            {
+              "inputs": "110",
+              "expected": "0"
+            },
+            {
+              "inputs": "111",
+              "expected": "1"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.atleast1zero",
+          "chapterId": "ch.basics",
+          "name": "At Least One Zero",
+          "description": "Output is 1 unless both inputs are 1.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputLabels": [
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00",
+              "expected": "1"
+            },
+            {
+              "inputs": "01",
+              "expected": "1"
+            },
+            {
+              "inputs": "10",
+              "expected": "1"
+            },
+            {
+              "inputs": "11",
+              "expected": "0"
+            }
+          ],
+          "hints": []
+        },
+        {
+          "id": "lvl.mux2.1",
+          "chapterId": "ch.basics",
+          "name": "2→1 MUX (S,A,B)",
+          "description": "If S=0 output A; if S=1 output B.",
+          "inputCount": 3,
+          "outputCount": 1,
+          "inputLabels": [
+            "B",
+            "S",
+            "A"
+          ],
+          "outputLabels": [
+            "Y"
+          ],
+          "testVectors": [
+            {
+              "inputs": "000",
+              "expected": "0"
+            },
+            {
+              "inputs": "001",
+              "expected": "1"
+            },
+            {
+              "inputs": "010",
+              "expected": "0"
+            },
+            {
+              "inputs": "011",
+              "expected": "0"
+            },
+            {
+              "inputs": "100",
+              "expected": "0"
+            },
+            {
+              "inputs": "101",
+              "expected": "1"
+            },
+            {
+              "inputs": "110",
+              "expected": "1"
+            },
+            {
+              "inputs": "111",
+              "expected": "1"
+            }
+          ],
+          "hints": []
+        }
+      ]
+    },
+    {
+      "chapterId": "ch.sequential",
+      "chapterName": "Sequential Circuits",
+      "chapterDescription": "Enter the world of memory and time! Build circuits that remember their past and create counters, latches, and flip-flops. This is where digital circuits gain the power of memory and state.",
+      "levels": [
+        {
+          "id": "lvl.counter4bit.1",
+          "chapterId": "ch.sequential",
+          "name": "4-bit Counter",
+          "description": "Count from 0 to 15 and repeat. Use clock input.",
+          "inputCount": 1,
+          "outputCount": 4,
+          "inputLabels": [
+            "CLK"
+          ],
+          "outputLabels": [
+            "Q3",
+            "Q2",
+            "Q1",
+            "Q0"
+          ],
+          "isSequential": true,
+          "clockInputIndex": 0,
+          "settleStepsPerVector": 3,
+          "testSequences": [
+            {
+              "name": "Reset and Count",
+              "vectors": [
+                {
+                  "inputs": "0",
+                  "expected": "0000",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0001",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0001",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0010",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0010",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0011",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0011",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0100",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0100",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0101",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0101",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0110",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0110",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0111",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0111",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1000",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1000",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1001",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1001",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1010",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1010",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1011",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1011",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1100",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1100",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1101",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1101",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1110",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1110",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1111",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1111",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0000",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                }
+              ]
+            }
+          ],
+          "hints": [
+            "Use D flip-flops for each bit",
+            "Q0 toggles every clock",
+            "Q1 toggles when Q0=1",
+            "Q2 toggles when Q0=1 and Q1=1",
+            "Q3 toggles when Q0=1, Q1=1, and Q2=1"
+          ]
+        },
+        {
+          "id": "lvl.srlatch.1",
+          "chapterId": "ch.sequential",
+          "name": "SR Latch",
+          "description": "Basic memory element. Set when S=1, Reset when R=1, Hold when both are 0.",
+          "inputCount": 2,
+          "outputCount": 2,
+          "inputLabels": [
+            "R",
+            "S"
+          ],
+          "outputLabels": [
+            "Q",
+            "Qn"
+          ],
+          "isSequential": true,
+          "settleStepsPerVector": 2,
+          "testSequences": [
+            {
+              "name": "Set and Reset",
+              "vectors": [
+                {
+                  "inputs": "01",
+                  "expected": "10",
+                  "settleSteps": 3,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "00",
+                  "expected": "10",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "10",
+                  "expected": "01",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "00",
+                  "expected": "01",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "01",
+                  "expected": "10",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "00",
+                  "expected": "10",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                }
+              ]
+            }
+          ],
+          "hints": [
+            "Use NAND gates",
+            "Q = NOT (R AND Qn)",
+            "Qn = NOT (S AND Q)"
+          ]
+        },
+        {
+          "id": "lvl.dflipflop.1",
+          "chapterId": "ch.sequential",
+          "name": "D Flip-Flop",
+          "description": "Data storage element. Q follows D on clock edge.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputLabels": [
+            "D",
+            "CLK"
+          ],
+          "outputLabels": [
+            "Q"
+          ],
+          "isSequential": true,
+          "clockInputIndex": 1,
+          "settleStepsPerVector": 3,
+          "testSequences": [
+            {
+              "name": "Data Storage",
+              "vectors": [
+                {
+                  "inputs": "00",
+                  "expected": "0",
+                  "settleSteps": 10,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "01",
+                  "expected": "0",
+                  "settleSteps": 10,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "00",
+                  "expected": "0",
+                  "settleSteps": 10,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "10",
+                  "expected": "0",
+                  "settleSteps": 10,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "11",
+                  "expected": "1",
+                  "settleSteps": 10,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "10",
+                  "expected": "1",
+                  "settleSteps": 10,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "00",
+                  "expected": "1",
+                  "settleSteps": 10,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "01",
+                  "expected": "0",
+                  "settleSteps": 10,
+                  "isClockEdge": true
+                }
+              ]
+            }
+          ],
+          "hints": [
+            "Use D flip-flop or build from NAND gates",
+            "Q changes only on clock edge",
+            "D input is sampled on clock edge"
+          ]
+        }
+      ]
+    },
+    {
+      "chapterId": "ch.arithmetic",
+      "chapterName": "Arithmetic Fundamentals",
+      "chapterDescription": "Learn the magic of binary math! Construct adders from simple gates, understand carry propagation, and build the mathematical foundation that powers every computer's arithmetic unit.",
+      "levels": [
+        {
+          "id": "lvl.halfadder.1",
+          "chapterId": "ch.arithmetic",
+          "name": "Half Adder",
+          "description": "Add two single bits. Output is sum and carry.",
+          "inputCount": 2,
+          "outputCount": 2,
+          "inputLabels": [
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Sum",
+            "Carry"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00",
+              "expected": "00"
+            },
+            {
+              "inputs": "01",
+              "expected": "10"
+            },
+            {
+              "inputs": "10",
+              "expected": "10"
+            },
+            {
+              "inputs": "11",
+              "expected": "01"
+            }
+          ],
+          "hints": [
+            "Sum = A XOR B",
+            "Carry = A AND B"
+          ]
+        },
+        {
+          "id": "lvl.fulladder.1",
+          "chapterId": "ch.arithmetic",
+          "name": "Full Adder",
+          "description": "Add two bits plus carry-in. Output is sum and carry-out.",
+          "inputCount": 3,
+          "outputCount": 2,
+          "inputLabels": [
+            "Cin",
+            "B",
+            "A"
+          ],
+          "outputLabels": [
+            "Sum",
+            "Cout"
+          ],
+          "testVectors": [
+            {
+              "inputs": "000",
+              "expected": "00"
+            },
+            {
+              "inputs": "001",
+              "expected": "10"
+            },
+            {
+              "inputs": "010",
+              "expected": "10"
+            },
+            {
+              "inputs": "011",
+              "expected": "01"
+            },
+            {
+              "inputs": "100",
+              "expected": "10"
+            },
+            {
+              "inputs": "101",
+              "expected": "01"
+            },
+            {
+              "inputs": "110",
+              "expected": "01"
+            },
+            {
+              "inputs": "111",
+              "expected": "11"
+            }
+          ],
+          "hints": [
+            "Use two half adders",
+            "Sum = A XOR B XOR Cin",
+            "Cout = (A AND B) OR (Cin AND (A XOR B))"
+          ]
+        },
+        {
+          "id": "lvl.adder4bit.1",
+          "chapterId": "ch.arithmetic",
+          "name": "4-bit Adder",
+          "description": "Add two 4-bit numbers. Output is 5-bit result (4-bit sum + carry).",
+          "inputCount": 8,
+          "outputCount": 5,
+          "inputLabels": [
+            "B3",
+            "B2",
+            "B1",
+            "B0",
+            "A3",
+            "A2",
+            "A1",
+            "A0"
+          ],
+          "outputLabels": [
+            "Sum3",
+            "Sum2",
+            "Sum1",
+            "Sum0",
+            "Carry"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00000000",
+              "expected": "00000"
+            },
+            {
+              "inputs": "00000001",
+              "expected": "00001"
+            },
+            {
+              "inputs": "00010001",
+              "expected": "00011"
+            },
+            {
+              "inputs": "00110011",
+              "expected": "00110"
+            },
+            {
+              "inputs": "01010101",
+              "expected": "01010"
+            },
+            {
+              "inputs": "01110111",
+              "expected": "01110"
+            },
+            {
+              "inputs": "10011001",
+              "expected": "10010"
+            },
+            {
+              "inputs": "11111111",
+              "expected": "11110"
+            },
+            {
+              "inputs": "00001111",
+              "expected": "01111"
+            },
+            {
+              "inputs": "11110000",
+              "expected": "01111"
+            },
+            {
+              "inputs": "00011111",
+              "expected": "10000"
+            },
+            {
+              "inputs": "11110001",
+              "expected": "10001"
+            }
+          ],
+          "hints": [
+            "Chain four full adders",
+            "Carry propagates through all stages",
+            "Test with edge cases: 0+0, max+1, overflow"
+          ]
+        }
+      ]
+    },
+    {
+      "chapterId": "ch.advanced_arithmetic",
+      "chapterName": "Advanced Arithmetic",
+      "chapterDescription": "Reach the pinnacle of digital design! Build subtraction circuits using two's complement, create comparators, and finally construct a complete ALU - the heart of every processor that performs all arithmetic and logic operations.",
+      "levels": [
+        {
+          "id": "lvl.subtractor.1",
+          "chapterId": "ch.advanced_arithmetic",
+          "name": "4-bit Subtractor",
+          "description": "Subtract B from A using two's complement. Output is difference and borrow.",
+          "inputCount": 8,
+          "outputCount": 5,
+          "inputLabels": [
+            "B3",
+            "B2",
+            "B1",
+            "B0",
+            "A3",
+            "A2",
+            "A1",
+            "A0"
+          ],
+          "outputLabels": [
+            "Diff3",
+            "Diff2",
+            "Diff1",
+            "Diff0",
+            "Borrow"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00000000",
+              "expected": "00000"
+            },
+            {
+              "inputs": "00000001",
+              "expected": "11111"
+            },
+            {
+              "inputs": "00000010",
+              "expected": "11110"
+            },
+            {
+              "inputs": "00000011",
+              "expected": "11101"
+            },
+            {
+              "inputs": "00010001",
+              "expected": "00000"
+            },
+            {
+              "inputs": "00010010",
+              "expected": "11111"
+            },
+            {
+              "inputs": "00100010",
+              "expected": "00000"
+            },
+            {
+              "inputs": "00110011",
+              "expected": "00000"
+            },
+            {
+              "inputs": "01000100",
+              "expected": "00000"
+            },
+            {
+              "inputs": "01010101",
+              "expected": "00000"
+            },
+            {
+              "inputs": "01100110",
+              "expected": "00000"
+            },
+            {
+              "inputs": "01110111",
+              "expected": "00000"
+            },
+            {
+              "inputs": "10001000",
+              "expected": "00000"
+            },
+            {
+              "inputs": "10011001",
+              "expected": "00000"
+            },
+            {
+              "inputs": "10101010",
+              "expected": "00000"
+            },
+            {
+              "inputs": "10111011",
+              "expected": "00000"
+            },
+            {
+              "inputs": "11001100",
+              "expected": "00000"
+            },
+            {
+              "inputs": "11011101",
+              "expected": "00000"
+            },
+            {
+              "inputs": "11101110",
+              "expected": "00000"
+            },
+            {
+              "inputs": "11111111",
+              "expected": "00000"
+            }
+          ],
+          "hints": [
+            "Use two's complement: A - B = A + (~B + 1)",
+            "Invert B, add 1, then use 4-bit adder",
+            "Borrow indicates negative result"
+          ]
+        },
+        {
+          "id": "lvl.comparator.1",
+          "chapterId": "ch.advanced_arithmetic",
+          "name": "4-bit Comparator",
+          "description": "Compare two 4-bit numbers. Output A>B, A=B, A<B.",
+          "inputCount": 8,
+          "outputCount": 3,
+          "inputLabels": [
+            "B3",
+            "B2",
+            "B1",
+            "B0",
+            "A3",
+            "A2",
+            "A1",
+            "A0"
+          ],
+          "outputLabels": [
+            "A_GT_B",
+            "A_EQ_B",
+            "A_LT_B"
+          ],
+          "testVectors": [
+            {
+              "inputs": "00000000",
+              "expected": "010"
+            },
+            {
+              "inputs": "00000001",
+              "expected": "001"
+            },
+            {
+              "inputs": "00000010",
+              "expected": "001"
+            },
+            {
+              "inputs": "00000011",
+              "expected": "001"
+            },
+            {
+              "inputs": "00010001",
+              "expected": "100"
+            },
+            {
+              "inputs": "00010010",
+              "expected": "001"
+            },
+            {
+              "inputs": "00010011",
+              "expected": "001"
+            },
+            {
+              "inputs": "00100010",
+              "expected": "100"
+            },
+            {
+              "inputs": "00100011",
+              "expected": "001"
+            },
+            {
+              "inputs": "00110011",
+              "expected": "100"
+            },
+            {
+              "inputs": "01000100",
+              "expected": "100"
+            },
+            {
+              "inputs": "01010101",
+              "expected": "100"
+            },
+            {
+              "inputs": "01100110",
+              "expected": "100"
+            },
+            {
+              "inputs": "01110111",
+              "expected": "100"
+            },
+            {
+              "inputs": "10001000",
+              "expected": "100"
+            },
+            {
+              "inputs": "10011001",
+              "expected": "100"
+            },
+            {
+              "inputs": "10101010",
+              "expected": "100"
+            },
+            {
+              "inputs": "10111011",
+              "expected": "100"
+            },
+            {
+              "inputs": "11001100",
+              "expected": "100"
+            },
+            {
+              "inputs": "11011101",
+              "expected": "100"
+            },
+            {
+              "inputs": "11101110",
+              "expected": "100"
+            },
+            {
+              "inputs": "11111111",
+              "expected": "010"
+            }
+          ],
+          "hints": [
+            "A = B when all bits match",
+            "A > B when MSB differs and A_MSB=1, or MSB same and A > B in lower bits",
+            "A < B when neither A > B nor A = B",
+            "Compare bits from most significant to least significant"
+          ]
+        },
+        {
+          "id": "lvl.alu_simple.1",
+          "chapterId": "ch.advanced_arithmetic",
+          "name": "Simple ALU (Add/Sub)",
+          "description": "4-bit ALU with add/subtract operations. Op=0: add, Op=1: subtract.",
+          "inputCount": 9,
+          "outputCount": 5,
+          "inputLabels": [
+            "Op",
+            "B3",
+            "B2",
+            "B1",
+            "B0",
+            "A3",
+            "A2",
+            "A1",
+            "A0"
+          ],
+          "outputLabels": [
+            "Result3",
+            "Result2",
+            "Result1",
+            "Result0",
+            "Carry/Borrow"
+          ],
+          "testVectors": [
+            {
+              "inputs": "000000000",
+              "expected": "00000"
+            },
+            {
+              "inputs": "000000001",
+              "expected": "00001"
+            },
+            {
+              "inputs": "000000010",
+              "expected": "00010"
+            },
+            {
+              "inputs": "000000011",
+              "expected": "00011"
+            },
+            {
+              "inputs": "000100001",
+              "expected": "00010"
+            },
+            {
+              "inputs": "000100010",
+              "expected": "00011"
+            },
+            {
+              "inputs": "000100011",
+              "expected": "00100"
+            },
+            {
+              "inputs": "001000010",
+              "expected": "00011"
+            },
+            {
+              "inputs": "001000011",
+              "expected": "00100"
+            },
+            {
+              "inputs": "001100011",
+              "expected": "00110"
+            },
+            {
+              "inputs": "010001000",
+              "expected": "00100"
+            },
+            {
+              "inputs": "010101010",
+              "expected": "01010"
+            },
+            {
+              "inputs": "011001100",
+              "expected": "01100"
+            },
+            {
+              "inputs": "011101110",
+              "expected": "01110"
+            },
+            {
+              "inputs": "100010000",
+              "expected": "01000"
+            },
+            {
+              "inputs": "100110010",
+              "expected": "01010"
+            },
+            {
+              "inputs": "101010100",
+              "expected": "01100"
+            },
+            {
+              "inputs": "101110110",
+              "expected": "01110"
+            },
+            {
+              "inputs": "110011000",
+              "expected": "10000"
+            },
+            {
+              "inputs": "110111010",
+              "expected": "10010"
+            },
+            {
+              "inputs": "111011100",
+              "expected": "10100"
+            },
+            {
+              "inputs": "111111110",
+              "expected": "10110"
+            },
+            {
+              "inputs": "100000001",
+              "expected": "11111"
+            },
+            {
+              "inputs": "100000010",
+              "expected": "11110"
+            },
+            {
+              "inputs": "100000011",
+              "expected": "11101"
+            },
+            {
+              "inputs": "100100001",
+              "expected": "00000"
+            },
+            {
+              "inputs": "100100010",
+              "expected": "11111"
+            },
+            {
+              "inputs": "100100011",
+              "expected": "11110"
+            },
+            {
+              "inputs": "101000010",
+              "expected": "00001"
+            },
+            {
+              "inputs": "101000011",
+              "expected": "00000"
+            },
+            {
+              "inputs": "101100011",
+              "expected": "00010"
+            },
+            {
+              "inputs": "110001000",
+              "expected": "00100"
+            },
+            {
+              "inputs": "110101010",
+              "expected": "01010"
+            },
+            {
+              "inputs": "111001100",
+              "expected": "01100"
+            },
+            {
+              "inputs": "111101110",
+              "expected": "01110"
+            }
+          ],
+          "hints": [
+            "Use MUX to select between adder and subtractor",
+            "When Op=0: A + B",
+            "When Op=1: A - B (two's complement)"
+          ]
+        },
+        {
+          "id": "lvl.alu_complete.1",
+          "chapterId": "ch.advanced_arithmetic",
+          "name": "Complete 4-bit ALU",
+          "description": "Full ALU with 4 operations: AND, OR, ADD, SUB. 2-bit operation select.",
+          "inputCount": 10,
+          "outputCount": 5,
+          "inputLabels": [
+            "Op1",
+            "Op0",
+            "B3",
+            "B2",
+            "B1",
+            "B0",
+            "A3",
+            "A2",
+            "A1",
+            "A0"
+          ],
+          "outputLabels": [
+            "Result3",
+            "Result2",
+            "Result1",
+            "Result0",
+            "Flag"
+          ],
+          "testVectors": [
+            {
+              "inputs": "0000000000",
+              "expected": "00000"
+            },
+            {
+              "inputs": "0000000001",
+              "expected": "00000"
+            },
+            {
+              "inputs": "0000000011",
+              "expected": "00001"
+            },
+            {
+              "inputs": "0000001111",
+              "expected": "01111"
+            },
+            {
+              "inputs": "0001111000",
+              "expected": "01000"
+            },
+            {
+              "inputs": "0011111100",
+              "expected": "01100"
+            },
+            {
+              "inputs": "0100000001",
+              "expected": "00001"
+            },
+            {
+              "inputs": "0100000011",
+              "expected": "00010"
+            },
+            {
+              "inputs": "0100001111",
+              "expected": "10000"
+            },
+            {
+              "inputs": "0101111000",
+              "expected": "11111"
+            },
+            {
+              "inputs": "0111111100",
+              "expected": "11111"
+            },
+            {
+              "inputs": "1000000001",
+              "expected": "11111"
+            },
+            {
+              "inputs": "1000000011",
+              "expected": "11110"
+            },
+            {
+              "inputs": "1000001111",
+              "expected": "10001"
+            },
+            {
+              "inputs": "1001111000",
+              "expected": "00001"
+            },
+            {
+              "inputs": "1011111100",
+              "expected": "00011"
+            },
+            {
+              "inputs": "1100000001",
+              "expected": "00001"
+            },
+            {
+              "inputs": "1100000011",
+              "expected": "00010"
+            },
+            {
+              "inputs": "1100001111",
+              "expected": "10000"
+            },
+            {
+              "inputs": "1101111000",
+              "expected": "11111"
+            },
+            {
+              "inputs": "1111111100",
+              "expected": "11111"
+            }
+          ],
+          "hints": [
+            "Op=00: A AND B",
+            "Op=01: A OR B", 
+            "Op=10: A + B",
+            "Op=11: A - B",
+            "Use 4-to-1 MUX to select operation"
+          ]
+        }
+      ]
+    }
+  ]
+}
