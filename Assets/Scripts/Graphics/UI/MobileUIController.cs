@@ -47,9 +47,17 @@ public class MobileUIController : MonoBehaviour
 
 	private void Awake()
 	{
-		// Check if we're on a mobile platform
-		bool isMobilePlatform = Application.platform == RuntimePlatform.Android || 
-		                       Application.platform == RuntimePlatform.IPhonePlayer;
+		// Check if we're on a mobile platform OR in the Unity Editor (for testing mobile builds)
+		bool isMobilePlatform;
+		
+		#if UNITY_EDITOR
+		// In the editor, always enable mobile UI for testing mobile builds
+		isMobilePlatform = true;
+		#else
+		// Check actual runtime platform for builds
+		isMobilePlatform = Application.platform == RuntimePlatform.Android || 
+		                   Application.platform == RuntimePlatform.IPhonePlayer;
+		#endif
 		
 		if (!isMobilePlatform)
 		{
