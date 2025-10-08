@@ -300,7 +300,7 @@ namespace DLS.Graphics
 							// Take first item from collection without opening
 							if (newActiveCollection.Chips.Count > 0 && KeyboardShortcuts.TakeFirstFromCollectionModifierHeld)
 							{
-								project.controller.StartPlacing(newActiveCollection.Chips[0]);
+								TryStartPlacing(project, newActiveCollection.Chips[0]);
 								activeCollection = null;
 							}
 							// Open collection in popup
@@ -314,7 +314,7 @@ namespace DLS.Graphics
 						}
 						else
 						{
-							project.controller.StartPlacing(project.chipLibrary.GetChipDescription(starred.Name));
+							TryStartPlacing(project, starred.Name);
 							activeCollection = null;
 						}
 					}
@@ -434,7 +434,7 @@ namespace DLS.Graphics
 					else
 					{
 						// Handle regular chip click
-						project.controller.StartPlacing(project.chipLibrary.GetChipDescription(activeCollection.Chips[selectedItem.originalIndex]));
+						TryStartPlacing(project, activeCollection.Chips[selectedItem.originalIndex]);
 						if (KeyboardShortcuts.MultiModeHeld)
 						{
 							closeActiveCollectionMultiModeExit = true;
@@ -637,7 +637,7 @@ namespace DLS.Graphics
 			{
 				if (pressedIndex != -1)
 				{
-					project.controller.StartPlacing(project.chipLibrary.GetChipDescription(activeNestedCollection.Chips[pressedIndex]));
+					TryStartPlacing(project, activeNestedCollection.Chips[pressedIndex]);
 					if (KeyboardShortcuts.MultiModeHeld)
 					{
 						closeActiveCollectionMultiModeExit = true;
@@ -804,6 +804,32 @@ namespace DLS.Graphics
 		}
 
 		static bool MouseIsOverBar() => InputHelper.MouseInBounds_ScreenSpace(barBounds_ScreenSpace);
+		
+		/// <summary>
+		/// Try to start placing a chip. If it's an Input/Output pin in a level, show a message instead.
+		/// </summary>
+		static void TryStartPlacing(Project project, string chipName)
+		{
+			ChipDescription desc = project.chipLibrary.GetChipDescription(chipName);
+			
+			// Check if trying to add Input/Output pins in a level
+			if (ShouldHideChipInLevel(desc))
+			{
+				ShowInputOutputDisabledMessage();
+				return;
+			}
+			
+			// Proceed with normal placement
+			project.controller.StartPlacing(desc);
+		}
+		
+		/// <summary>
+		/// Shows a simple message that adding input/output pins is disabled for levels
+		/// </summary>
+		static void ShowInputOutputDisabledMessage()
+		{
+			SimpleMessagePopup.Open("Adding input/output pins is disabled for this level");
+		}
 
 		static void ExitToMainMenu()
 		{

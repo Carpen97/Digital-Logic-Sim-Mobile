@@ -29,41 +29,122 @@ namespace DLS.SaveSystem
 			}
 		}
 
-		public static void ApplyVersionChangesToProject(ref ProjectDescription projectDescription)
+	public static void ApplyVersionChangesToProject(ref ProjectDescription projectDescription)
+	{
+		Main.Version defaultModdedVersion = new(1, 0, 0);
+		Main.Version moddedVersion_1_1_0 = new(1, 1, 0); // Custom IN and OUTS version
+		Main.Version moddedVersion_1_1_1 = new(1, 1, 1); // New 16 and 32 bit pins
+		Main.Version moddedVersion_1_2_0 = new(1, 2, 0); // Nested IN/OUT collections
+
+
+		bool canParseModdedVersion = Main.Version.TryParse(projectDescription.DLSVersion_LastSavedModdedVersion, out Main.Version projectVersion);
+
+		bool isVersionEarlierThan_1_1_0 = (!canParseModdedVersion) || projectVersion.ToInt() < moddedVersion_1_1_0.ToInt();
+		bool isVersionEarlierThan_1_1_1 = (!canParseModdedVersion) || projectVersion.ToInt() < moddedVersion_1_1_1.ToInt();
+		bool isVersionEarlierThan_1_2_0 = (!canParseModdedVersion) || projectVersion.ToInt() < moddedVersion_1_2_0.ToInt();
+
+		bool isSplitMergeInvalid = projectDescription.SplitMergePairs == null || projectDescription.SplitMergePairs.Count == 0;
+		bool isPinBitCountInvalid = projectDescription.pinBitCounts == null || projectDescription.pinBitCounts.Count == 0;
+
+		if (isVersionEarlierThan_1_1_0 | isPinBitCountInvalid)
 		{
-			Main.Version defaultModdedVersion = new(1, 0, 0);
-			Main.Version moddedVersion_1_1_0 = new(1, 1, 0); // Custom IN and OUTS version
-			Main.Version moddedVersion_1_1_1 = new(1, 1, 1); // New 16 and 32 bit pins
+			projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
+			projectDescription.pinBitCounts = Project.PinBitCounts;
+			projectDescription.SplitMergePairs = Project.SplitMergePairs;
+		}
 
-
-			bool canParseModdedVersion = Main.Version.TryParse(projectDescription.DLSVersion_LastSavedModdedVersion, out Main.Version projectVersion);
-
-			bool isVersionEarlierThan_1_1_0 = (!canParseModdedVersion) || projectVersion.ToInt() < moddedVersion_1_1_0.ToInt();
-			bool isVersionEarlierThan_1_1_1 = (!canParseModdedVersion) || projectVersion.ToInt() < moddedVersion_1_1_1.ToInt();
-
-			bool isSplitMergeInvalid = projectDescription.SplitMergePairs == null || projectDescription.SplitMergePairs.Count == 0;
-			bool isPinBitCountInvalid = projectDescription.pinBitCounts == null || projectDescription.pinBitCounts.Count == 0;
-
-			if (isVersionEarlierThan_1_1_0 | isPinBitCountInvalid)
+		if (isVersionEarlierThan_1_1_0 | isSplitMergeInvalid)
+		{
+			projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
+			projectDescription.SplitMergePairs = Project.SplitMergePairs;
+		}
+		
+		if (isVersionEarlierThan_1_1_1)
+		{
+			projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
+			projectDescription.pinBitCounts.Union(Project.PinBitCounts);
+			projectDescription.SplitMergePairs.Union(Project.SplitMergePairs);
+		}
+		
+		// Migrate IN/OUT collection to nested structure
+		if (isVersionEarlierThan_1_2_0)
+		{
+			MigrateInOutCollectionToNested(ref projectDescription);
+			projectDescription.DLSVersion_LastSavedModdedVersion = moddedVersion_1_2_0.ToString();
+		}
+    }
+    
+    static void MigrateInOutCollectionToNested(ref ProjectDescription projectDescription)
+    {
+		// Find the IN/OUT collection
+		ChipCollection inOutCollection = projectDescription.ChipCollections.FirstOrDefault(c => c.Name == "IN/OUT");
+		if (inOutCollection == null) return;
+		
+		// Group chips by bit width
+		var chipsByBitWidth = new Dictionary<int, List<string>>();
+		var otherChips = new List<string>(); // BUTTON, TOGGLE, etc.
+		
+		for (int i = inOutCollection.Chips.Count - 1; i >= 0; i--)
+		{
+			string chipName = inOutCollection.Chips[i];
+			
+			// Check if it's an IN or OUT pin
+			if ((chipName.StartsWith("IN-") || chipName.StartsWith("OUT-")) && 
+			    chipName.Contains("-"))
 			{
-				projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
-				projectDescription.pinBitCounts = Project.PinBitCounts;
-				projectDescription.SplitMergePairs = Project.SplitMergePairs;
+				// Extract bit width (e.g., "IN-4" -> 4, "OUT-8" -> 8)
+				string[] parts = chipName.Split('-');
+				if (parts.Length == 2 && int.TryParse(parts[1], out int bitWidth))
+				{
+					if (!chipsByBitWidth.ContainsKey(bitWidth))
+					{
+						chipsByBitWidth[bitWidth] = new List<string>();
+					}
+					chipsByBitWidth[bitWidth].Add(chipName);
+					inOutCollection.Chips.RemoveAt(i); // Remove from main collection
+				}
 			}
-
-			if (isVersionEarlierThan_1_1_0 | isSplitMergeInvalid)
+			else
 			{
-				projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
-				projectDescription.SplitMergePairs = Project.SplitMergePairs;
+				// It's a special chip like BUTTON or TOGGLE - keep in main collection
+				// (Don't remove these)
+			}
+		}
+		
+		// Create nested collections for each bit width (sorted)
+		var sortedBitWidths = chipsByBitWidth.Keys.OrderBy(x => x).ToList();
+		foreach (int bitWidth in sortedBitWidths)
+		{
+			string nestedCollectionName = $"{bitWidth}-bit";
+			
+			// Check if nested collection already exists
+			ChipCollection nested = inOutCollection.NestedCollections
+				.FirstOrDefault(nc => nc.Name == nestedCollectionName);
+			
+			if (nested == null)
+			{
+				nested = inOutCollection.CreateNestedCollection(nestedCollectionName);
 			}
 			
-			if (isVersionEarlierThan_1_1_1)
+			// Add chips to nested collection, sorted (IN first, then OUT)
+			var sortedChips = chipsByBitWidth[bitWidth].OrderBy(name => 
 			{
-				projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
-				projectDescription.pinBitCounts.Union(Project.PinBitCounts);
-				projectDescription.SplitMergePairs.Union(Project.SplitMergePairs);
+				if (name.StartsWith("IN-")) return 0;
+				if (name.StartsWith("OUT-")) return 1;
+				return 2;
+			}).ToList();
+			
+			foreach (string chipName in sortedChips)
+			{
+				if (!nested.Chips.Contains(chipName))
+				{
+					nested.Chips.Add(chipName);
+				}
 			}
-        }
+		}
+		
+		Debug.Log($"[UpgradeHelper] Migrated IN/OUT collection to nested structure with {chipsByBitWidth.Count} bit-width groups");
+	}
 
         static void UpdateChipPre_2_1_5(ChipDescription chipDesc)
 		{

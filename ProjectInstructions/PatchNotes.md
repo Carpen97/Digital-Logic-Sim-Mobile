@@ -56,6 +56,7 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 - **User Names**: Add custom names when uploading scores to leaderboards
 - **Level Progress**: Save chip shortcuts available directly from level completion screens
 - **I/O Pin Names**: Toggle display of input/output pin names in levels for better guidance
+- **iOS Platform Support**: Full iOS support with project import/export and Firebase integration working seamlessly on iPad and iPhone
 
 **Improvements:**
 - **Enhanced Level System**: Expanded with more challenging levels and progressive difficulty
@@ -63,14 +64,15 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 - **Cross-Platform Compatibility**: Seamless experience across mobile and PC platforms
 
 **Bug Fixes:**
+- Fixed iOS file picker for importing project zip files
 - Various stability improvements and performance optimizations
 
 ---
 
 ## 📊 **Statistics**
-- **Total Features Added:** 6
+- **Total Features Added:** 7
 - **Latest Update:** 2025-01-27
-- **User-Facing Changes:** Hierarchical collections, PC version, solution sharing
+- **User-Facing Changes:** Hierarchical collections, PC version, solution sharing, iOS platform support
 
 ---
 

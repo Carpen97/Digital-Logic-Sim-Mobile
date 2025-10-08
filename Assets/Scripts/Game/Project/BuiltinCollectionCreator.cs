@@ -26,20 +26,7 @@ namespace DLS.Game
 					ChipType.TriStateBuffer,
 					ChipType.Constant_8Bit
 				),
-				CreateChipCollection("IN/OUT",
-					ChipType.Button,
-					ChipType.Toggle
-				).AddNames
-				(
-					"IN-1",
-					"IN-4",
-					"IN-8",
-					"OUT-1",
-					"OUT-4",
-					"OUT-8"
-				)
-				
-				,
+				CreateInOutCollection(),
 				CreateByNames("MERGE/SPLIT",
 					"1-4BIT",
 					"1-8BIT",
@@ -66,6 +53,29 @@ namespace DLS.Game
 					ChipType.dev_Ram_8Bit
 				)
 			};
+		}
+
+		static ChipCollection CreateInOutCollection()
+		{
+			var inOutCollection = CreateChipCollection("IN/OUT",
+				ChipType.Button,
+				ChipType.Toggle
+			);
+			
+			// Create nested collections for each bit width
+			var oneBit = inOutCollection.CreateNestedCollection("1-bit");
+			oneBit.Chips.Add("IN-1");
+			oneBit.Chips.Add("OUT-1");
+			
+			var fourBit = inOutCollection.CreateNestedCollection("4-bit");
+			fourBit.Chips.Add("IN-4");
+			fourBit.Chips.Add("OUT-4");
+			
+			var eightBit = inOutCollection.CreateNestedCollection("8-bit");
+			eightBit.Chips.Add("IN-8");
+			eightBit.Chips.Add("OUT-8");
+			
+			return inOutCollection;
 		}
 
 		static ChipCollection CreateChipCollection(string name, params ChipType[] chipTypes)

@@ -876,6 +876,8 @@ namespace DLS.Graphics
 
 			if (saveAsChipPressed && levelPassed)
 			{
+				// Set return menu so ChipSave knows to come back here
+				ChipSaveMenu.SetReturnMenu(UIDrawer.MenuType.LevelValidationResult);
 				// Open the chip save menu
 				UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipSave);
 			}
@@ -898,8 +900,18 @@ namespace DLS.Graphics
 
 			if (levelsPressed)
 			{
-				// Open the levels menu
-				UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
+				// Check for unsaved changes before opening levels menu
+				var levelManager = LevelManager.Instance;
+				if (levelManager?.IsActive == true && levelManager.HasUnsavedChanges())
+				{
+					Debug.Log("[LevelValidationPopup] Levels button: Showing level unsaved changes popup");
+					LevelUnsavedChangesPopup.OpenPopup(HandleLevelsButtonAfterUnsavedCheck);
+				}
+				else
+				{
+					// Open the levels menu
+					UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
+				}
 			}
 
 			if (closePressed)
@@ -1193,6 +1205,82 @@ namespace DLS.Graphics
                 UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
                 return;
             }
+            
+            // Check for unsaved changes before starting next level
+            if (levelManager.IsActive && levelManager.HasUnsavedChanges())
+            {
+                Debug.Log("[LevelValidationPopup] PlayNextLevel: Showing level unsaved changes popup");
+                LevelUnsavedChangesPopup.OpenPopup((option) => HandleNextLevelAfterUnsavedCheck(option, nextLevel));
+            }
+            else
+            {
+                Debug.Log("[LevelValidationPopup] PlayNextLevel: No unsaved changes, proceeding directly");
+                StartNextLevel(nextLevel);
+            }
+        }
+        
+        /// <summary>
+        /// Handle unsaved changes callback when navigating to next level
+        /// </summary>
+        static void HandleNextLevelAfterUnsavedCheck(int option, LevelDefinition nextLevel)
+        {
+            if (option == 0) // Cancel
+            {
+                // Do nothing, stay in validation popup
+                UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
+                return;
+            }
+            else if (option == 1) // Save and Continue
+            {
+                // Save level progress before starting next level
+                var levelManager = LevelManager.Instance;
+                if (levelManager?.IsActive == true)
+                {
+                    levelManager.SaveCurrentProgress();
+                    Debug.Log($"[LevelValidationPopup] Saved level progress before starting next level");
+                }
+                StartNextLevel(nextLevel);
+            }
+            else if (option == 2) // Continue without Saving
+            {
+                StartNextLevel(nextLevel);
+            }
+        }
+        
+        /// <summary>
+        /// Handle unsaved changes callback when opening Levels menu
+        /// </summary>
+        static void HandleLevelsButtonAfterUnsavedCheck(int option)
+        {
+            if (option == 0) // Cancel
+            {
+                // Do nothing, stay in validation popup
+                UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
+                return;
+            }
+            else if (option == 1) // Save and Continue
+            {
+                // Save level progress before opening levels menu
+                var levelManager = LevelManager.Instance;
+                if (levelManager?.IsActive == true)
+                {
+                    levelManager.SaveCurrentProgress();
+                    Debug.Log($"[LevelValidationPopup] Saved level progress before opening levels menu");
+                }
+                UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
+            }
+            else if (option == 2) // Continue without Saving
+            {
+                UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
+            }
+        }
+        
+        /// <summary>
+        /// Actually start the next level
+        /// </summary>
+        static void StartNextLevel(LevelDefinition nextLevel)
+        {
+            var levelManager = LevelManager.Instance;
             
             // Start the next level (will auto-load saved progress if it exists)
             levelManager.StartLevel(nextLevel);

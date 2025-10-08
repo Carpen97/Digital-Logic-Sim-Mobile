@@ -27,6 +27,9 @@ namespace DLS.Graphics
 
 		public static SubChipInstance ActiveCustomizeChip;
 		static SubChipInstance CustomizeStateBeforeEnteringCustomizeMenu;
+		
+		// Track where we were opened from to return there on close
+		static UIDrawer.MenuType returnToMenuOnClose = UIDrawer.MenuType.None;
 
 		static readonly string[] CancelSaveButtonNames =
 		{
@@ -45,6 +48,15 @@ namespace DLS.Graphics
 		{
 			ActiveCustomizeChip ??= CreateCustomizationState();
 			InitUIFromDescription(ActiveCustomizeChip.Description);
+		}
+		
+		/// <summary>
+		/// Sets the menu to return to when this menu is closed.
+		/// Call this before opening the ChipSave menu.
+		/// </summary>
+		public static void SetReturnMenu(UIDrawer.MenuType returnMenu)
+		{
+			returnToMenuOnClose = returnMenu;
 		}
 
 		public static (Vector2 size, float pad) GetTextInputSize()
@@ -324,7 +336,8 @@ namespace DLS.Graphics
 		static void CloseMenu()
 		{
 			ActiveCustomizeChip = null;
-			UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+			UIDrawer.SetActiveMenu(returnToMenuOnClose);
+			returnToMenuOnClose = UIDrawer.MenuType.None; // Reset for next time
 		}
 
 		public static void Reset()

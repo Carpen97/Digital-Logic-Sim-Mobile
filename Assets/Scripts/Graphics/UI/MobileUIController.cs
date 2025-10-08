@@ -47,6 +47,8 @@ public class MobileUIController : MonoBehaviour
 
 	private void Awake()
 	{
+		Debug.Log("[MobileUIController] Awake() called");
+		
 		// Check if we're on a mobile platform OR in the Unity Editor (for testing mobile builds)
 		bool isMobilePlatform;
 		
@@ -86,14 +88,17 @@ public class MobileUIController : MonoBehaviour
 			hintImage = hintTool.GetComponent<Image>();
 			
 			// Apply Squiggles Theme immediately
+			Debug.Log($"[MobileUIController] Checking IconThemeManager - Instance: {(IconThemeManager.Instance != null ? "EXISTS" : "NULL")}, CurrentTheme: {(IconThemeManager.Instance?.CurrentTheme != null ? IconThemeManager.Instance.CurrentTheme.name : "NULL")}");
+			
 			if (IconThemeManager.Instance?.CurrentTheme != null)
 			{
 				ApplyTheme(IconThemeManager.Instance.CurrentTheme);
+				Debug.Log("[MobileUIController] Successfully applied SquigglesTheme from IconThemeManager");
 			}
 			else
 			{
-				// Fallback: Force Squiggles Theme sprites directly
-				Debug.LogWarning("[MobileUIController] IconThemeManager not found, applying Squiggles Theme directly");
+				Debug.LogWarning("[MobileUIController] IconThemeManager not ready yet, trying fallback methods...");
+				// Try fallback methods
 				ApplySquigglesThemeDirectly();
 			}
 		}

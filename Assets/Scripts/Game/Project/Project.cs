@@ -76,13 +76,14 @@ namespace DLS.Game
 		public double simAvgTicksPerSec { get; private set; }
 		public SimChip rootSimChip => editModeChip.SimChip;
 
-		public Project(ProjectDescription description, ChipLibrary chipLibrary)
-		{
-			ActiveProject = this;
-			this.description = description;
-			this.chipLibrary = chipLibrary;
-			SearchPopup.ClearRecentChips();
-		}
+	public Project(ProjectDescription description, ChipLibrary chipLibrary)
+	{
+		ActiveProject = this;
+		this.description = description;
+		this.chipLibrary = chipLibrary;
+		this.audioState = Main.audioState;
+		SearchPopup.ClearRecentChips();
+	}
 
 		public void Update()
 		{
@@ -753,12 +754,26 @@ namespace DLS.Game
 		{
 			foreach (ChipCollection collection in description.ChipCollections)
 			{
+				// Check main collection chips
 				for (int i = 0; i < collection.Chips.Count; i++)
 				{
 					if (ChipDescription.NameMatch(collection.Chips[i], chipNameOld))
 					{
 						collection.Chips[i] = chipNameNew;
 						return;
+					}
+				}
+				
+				// Check nested collections
+				foreach (ChipCollection nestedCollection in collection.NestedCollections)
+				{
+					for (int i = 0; i < nestedCollection.Chips.Count; i++)
+					{
+						if (ChipDescription.NameMatch(nestedCollection.Chips[i], chipNameOld))
+						{
+							nestedCollection.Chips[i] = chipNameNew;
+							return;
+						}
 					}
 				}
 			}
@@ -768,12 +783,26 @@ namespace DLS.Game
 		{
 			foreach (ChipCollection collection in description.ChipCollections)
 			{
+				// Check main collection chips
 				for (int i = 0; i < collection.Chips.Count; i++)
 				{
 					if (ChipDescription.NameMatch(collection.Chips[i], chipNameToRemove))
 					{
 						collection.Chips.RemoveAt(i);
 						return;
+					}
+				}
+				
+				// Check nested collections
+				foreach (ChipCollection nestedCollection in collection.NestedCollections)
+				{
+					for (int i = 0; i < nestedCollection.Chips.Count; i++)
+					{
+						if (ChipDescription.NameMatch(nestedCollection.Chips[i], chipNameToRemove))
+						{
+							nestedCollection.Chips.RemoveAt(i);
+							return;
+						}
 					}
 				}
 			}
@@ -793,10 +822,25 @@ namespace DLS.Game
             chipLibrary.NotifyChipSaved(busTerminus, true);
 
 
+            // Add to IN/OUT collection in appropriate nested collection
             if (description.ChipCollections.Any(c => c.Name == "IN/OUT"))
 			{
-				description.ChipCollections.First(c => c.Name == "IN/OUT").Chips.Add(inPin.Name);
-                description.ChipCollections.First(c => c.Name == "IN/OUT").Chips.Add(outPin.Name);
+				var inOutCollection = description.ChipCollections.First(c => c.Name == "IN/OUT");
+				string nestedCollectionName = $"{pinSize}-bit";
+				
+				// Find or create the nested collection for this bit width
+				ChipCollection targetNestedCollection = inOutCollection.NestedCollections
+					.FirstOrDefault(nc => nc.Name == nestedCollectionName);
+				
+				if (targetNestedCollection == null)
+				{
+					// Create new nested collection if it doesn't exist
+					targetNestedCollection = inOutCollection.CreateNestedCollection(nestedCollectionName);
+				}
+				
+				// Add the IN and OUT pins to the nested collection
+				targetNestedCollection.Chips.Add(inPin.Name);
+				targetNestedCollection.Chips.Add(outPin.Name);
             }
 
 			if(description.ChipCollections.Any(c => c.Name == "BUS"))

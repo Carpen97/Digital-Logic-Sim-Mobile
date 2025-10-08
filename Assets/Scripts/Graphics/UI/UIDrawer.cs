@@ -37,7 +37,8 @@ namespace DLS.Graphics
 			Leaderboard,
 			ScoreExplanation,
 			CachingExplanation,
-			UserNameInput
+			UserNameInput,
+			SimpleMessage
 		}
 
 		static MenuType activeMenuOld;
@@ -99,6 +100,7 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.ScoreExplanation) ScoreExplanationPopup.DrawMenu();
 			else if (menuToDraw == MenuType.CachingExplanation) CachingExplanationPopup.DrawMenu();
 			else if (menuToDraw == MenuType.UserNameInput) UserNameInputPopup.DrawMenu();
+			else if (menuToDraw == MenuType.SimpleMessage) SimpleMessagePopup.DrawMenu();
 			else
 			{
 				bool showSimPausedBanner = project.simPaused;

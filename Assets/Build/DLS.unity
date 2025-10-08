@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   openSaveDirectory: 0
-  openInMainMenu: 0
+  openInMainMenu: 1
   testProjectName: MainTest
   openA: 1
   chipToOpenA: NOT
@@ -954,13 +954,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1019853180c66774bbecbd341df4d9c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  runTestOnStart: 1
-  testLevelId: Test Level
-  testScore: 42
-  testUserName: PCTestUser
-  isTestRunning: 0
-  lastTestResult: 
-  lastError: 
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1617,7 +1610,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1073838229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1630,10 +1623,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec3b0b823b943504c9d24a07a6578594, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultTheme: {fileID: 11400000, guid: 9e17d769eec9c154abbcaae3fb831c56, type: 2}
-  availableThemes:
-  - {fileID: 11400000, guid: c18fb6055229cef4689349be94ce805a, type: 2}
-  - {fileID: 11400000, guid: 9e17d769eec9c154abbcaae3fb831c56, type: 2}
+  squigglesTheme: {fileID: 11400000, guid: dc4c28ad9bf326040a1994273b81efdb, type: 3}
 --- !u!4 &1073838230
 Transform:
   m_ObjectHideFlags: 0
@@ -2151,7 +2141,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1785793816
 MonoBehaviour:
   m_ObjectHideFlags: 0

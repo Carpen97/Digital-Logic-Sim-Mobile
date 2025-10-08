@@ -10,10 +10,17 @@ public class IconThemeManager : MonoBehaviour
 
 	private void Awake()
 	{
-		if (Instance != null) { Destroy(gameObject); return; }
+		Debug.Log($"[IconThemeManager] Awake() called - squigglesTheme: {(squigglesTheme != null ? squigglesTheme.name : "NULL")}");
+		
+		if (Instance != null) { 
+			Debug.LogWarning("[IconThemeManager] Instance already exists, destroying duplicate");
+			Destroy(gameObject); 
+			return; 
+		}
 		Instance = this;
 		
 		// Always use Squiggles Theme
 		CurrentTheme = squigglesTheme;
+		Debug.Log($"[IconThemeManager] Initialized - CurrentTheme: {(CurrentTheme != null ? CurrentTheme.name : "NULL")}");
 	}
 }
