@@ -86,42 +86,48 @@ namespace DLS.Game
 			UIDrawer.SetActiveMenu(UIDrawer.MenuType.MainMenu);
 		}
 
-		public static void CreateOrLoadProject(string projectName, string startupChipName = "")
+	public static void CreateOrLoadProject(string projectName, string startupChipName = "")
+	{
+		try
 		{
-			try
+			UnityEngine.Debug.Log($"[Main] CreateOrLoadProject called with projectName: '{projectName}', startupChipName: '{startupChipName}'");
+			
+			if (Loader.ProjectExists(projectName)) 
+			{ 
+				UnityEngine.Debug.Log($"[Main] Project exists, loading: {projectName}");
+				ActiveProject = LoadProject(projectName); 
+				Saver.SaveProjectDescription(ActiveProject.description); 
+			}
+			else 
 			{
-				UnityEngine.Debug.Log($"[Main] CreateOrLoadProject called with projectName: '{projectName}', startupChipName: '{startupChipName}'");
-				
-				if (Loader.ProjectExists(projectName)) 
-				{ 
-					UnityEngine.Debug.Log($"[Main] Project exists, loading: {projectName}");
-					ActiveProject = LoadProject(projectName); 
-					Saver.SaveProjectDescription(ActiveProject.description); 
-				}
-				else 
-				{
-					UnityEngine.Debug.Log($"[Main] Project doesn't exist, creating: {projectName}");
-					ActiveProject = CreateProject(projectName);
-				}
+				UnityEngine.Debug.Log($"[Main] Project doesn't exist, creating: {projectName}");
+				ActiveProject = CreateProject(projectName);
+			}
 
-				UnityEngine.Debug.Log($"[Main] Loading dev chip or creating new: {startupChipName}");
-				ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(startupChipName);
-				
-				UnityEngine.Debug.Log($"[Main] Starting simulation");
-				ActiveProject.StartSimulation();
-				ActiveProject.audioState = audioState;
-				
-				UnityEngine.Debug.Log($"[Main] Setting menu to None");
-				UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
-				UnityEngine.Debug.Log($"[Main] CreateOrLoadProject completed successfully");
-			}
-			catch (Exception ex)
-			{
-				UnityEngine.Debug.LogError($"[Main] CreateOrLoadProject failed: {ex.Message}");
-				UnityEngine.Debug.LogError($"[Main] Stack trace: {ex.StackTrace}");
-				// Don't re-throw to prevent crash, but log the error
-			}
+			UnityEngine.Debug.Log($"[Main] Loading dev chip or creating new: {startupChipName}");
+			ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(startupChipName);
+			
+			UnityEngine.Debug.Log($"[Main] Starting simulation");
+			ActiveProject.StartSimulation();
+			ActiveProject.audioState = audioState;
+			
+			UnityEngine.Debug.Log($"[Main] Setting menu to None");
+			UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+			UnityEngine.Debug.Log($"[Main] CreateOrLoadProject completed successfully");
 		}
+		catch (Exception ex)
+		{
+			UnityEngine.Debug.LogError($"[Main] CreateOrLoadProject failed: {ex.Message}");
+			UnityEngine.Debug.LogError($"[Main] Stack trace: {ex.StackTrace}");
+			
+			// Show error popup to user instead of silently failing
+			string userFriendlyMessage = GetUserFriendlyErrorMessage(ex);
+			DLS.Graphics.MainMenu.ShowProjectCreationError(userFriendlyMessage);
+			
+			// Make sure we go back to main menu
+			UIDrawer.SetActiveMenu(UIDrawer.MenuType.MainMenu);
+		}
+	}
 
 		static Project CreateProject(string projectName)
 		{
@@ -210,6 +216,35 @@ namespace DLS.Game
 		}
 
 		static Project LoadProject(string projectName) => Loader.LoadProject(projectName);
+
+	static string GetUserFriendlyErrorMessage(Exception ex)
+	{
+		string message = ex.Message;
+		
+		// Check for common error patterns and provide helpful messages
+		if (message.Contains("DirectoryNotFoundException") || message.Contains("Could not find") || message.Contains("does not exist"))
+		{
+			return "Could not find the project directory. The file system may not be accessible.";
+		}
+		else if (message.Contains("UnauthorizedAccessException") || message.Contains("Access") || message.Contains("denied"))
+		{
+			return "Permission denied. The app may not have access to save files.\n\nTry restarting the app or checking iOS settings.";
+		}
+		else if (message.Contains("IOException") || message.Contains("write") || message.Contains("read"))
+		{
+			return "File system error. Unable to read or write project files.\n\nTry restarting the app.";
+		}
+		else if (message.Contains("JSON") || message.Contains("Serializ") || message.Contains("Deserializ"))
+		{
+			return "Failed to save/load project data.\n\nThe project file may be corrupted.";
+		}
+		else
+		{
+			// Return a shortened version of the actual error
+			string shortMessage = message.Length > 150 ? message.Substring(0, 150) + "..." : message;
+			return $"An error occurred:\n\n{shortMessage}\n\nCheck Unity logs for details.";
+		}
+	}
 
 		static void HandleGlobalInput()
 		{

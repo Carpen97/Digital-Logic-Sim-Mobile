@@ -16,9 +16,10 @@ namespace DLS.Graphics
 		public const int MaxProjectNameLength = 20;
 		const bool capitalize = true;
 
-		static MenuScreen activeMenuScreen = MenuScreen.Main;
-		static PopupKind activePopup = PopupKind.None;
-		static AppSettings EditedAppSettings;
+	static MenuScreen activeMenuScreen = MenuScreen.Main;
+	static PopupKind activePopup = PopupKind.None;
+	static AppSettings EditedAppSettings;
+	static string projectCreationErrorMessage = "";
 
 		static readonly UIHandle ID_ProjectNameInput = new("MainMenu_ProjectNameInputField");
 		static readonly UIHandle ID_DisplayResolutionWheel = new("MainMenu_DisplayResolutionWheel");
@@ -183,24 +184,27 @@ namespace DLS.Graphics
 					break;
 			}
 
-			switch (activePopup)
-			{
-				case PopupKind.DeleteConfirmation:
-					DrawDeleteProjectConfirmationPopup();
-					break;
-				case PopupKind.OverwriteConfirmation:
-					DrawOverwriteProjectConfirmationPopup();
-					break;
-				case PopupKind.NamePopup_RenameProject:
-					DrawNamePopup();
-					break;
-				case PopupKind.NamePopup_DuplicateProject:
-					DrawNamePopup();
-					break;
-				case PopupKind.NamePopup_NewProject:
-					DrawNamePopup();
-					break;
-			}
+		switch (activePopup)
+		{
+			case PopupKind.DeleteConfirmation:
+				DrawDeleteProjectConfirmationPopup();
+				break;
+			case PopupKind.OverwriteConfirmation:
+				DrawOverwriteProjectConfirmationPopup();
+				break;
+			case PopupKind.NamePopup_RenameProject:
+				DrawNamePopup();
+				break;
+			case PopupKind.NamePopup_DuplicateProject:
+				DrawNamePopup();
+				break;
+			case PopupKind.NamePopup_NewProject:
+				DrawNamePopup();
+				break;
+			case PopupKind.ProjectCreationError:
+				DrawProjectCreationErrorPopup();
+				break;
+		}
 		}
 
 		public static void OnMenuOpened()
@@ -313,9 +317,15 @@ namespace DLS.Graphics
 			AndroidIO.ExportProjectToZip(projectName);
 		}
 
-		public static void ShowOverwriteConfirmationPopup(){
-			activePopup = PopupKind.OverwriteConfirmation;
-		}
+	public static void ShowOverwriteConfirmationPopup(){
+		activePopup = PopupKind.OverwriteConfirmation;
+	}
+
+	public static void ShowProjectCreationError(string errorMessage)
+	{
+		projectCreationErrorMessage = errorMessage;
+		activePopup = PopupKind.ProjectCreationError;
+	}
 
 		static bool ProjectNameValidator(string inputString) => inputString.Length <= 20 && !SaveUtils.NameContainsForbiddenChar(inputString);
 
@@ -630,36 +640,63 @@ namespace DLS.Graphics
 			}
 		}
 
-		static void DrawDeleteProjectConfirmationPopup()
+	static void DrawDeleteProjectConfirmationPopup()
+	{
+		DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+
+		Seb.Vis.UI.UI.StartNewLayer();
+		Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+		using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 		{
-			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+			Seb.Vis.UI.UI.DrawText("Are you sure you want to delete this project?", theme.FontRegular, theme.FontSizeRegular, Seb.Vis.UI.UI.Centre, Anchor.Centre, Color.yellow);
 
-			Seb.Vis.UI.UI.StartNewLayer();
-			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+			Vector2 buttonRegionTopLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
+			float buttonRegionWidth = Seb.Vis.UI.UI.PrevBounds.Width;
+			int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "DELETE" }, theme.MainMenuButtonTheme, buttonRegionTopLeft, buttonRegionWidth, DrawSettings.HorizontalButtonSpacing, 0, Anchor.TopLeft);
+			Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
 
-			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			if (buttonIndex == 0) // Cancel
 			{
-				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
-				Seb.Vis.UI.UI.DrawText("Are you sure you want to delete this project?", theme.FontRegular, theme.FontSizeRegular, Seb.Vis.UI.UI.Centre, Anchor.Centre, Color.yellow);
-
-				Vector2 buttonRegionTopLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
-				float buttonRegionWidth = Seb.Vis.UI.UI.PrevBounds.Width;
-				int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "DELETE" }, theme.MainMenuButtonTheme, buttonRegionTopLeft, buttonRegionWidth, DrawSettings.HorizontalButtonSpacing, 0, Anchor.TopLeft);
-				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
-
-				if (buttonIndex == 0) // Cancel
-				{
-					activePopup = PopupKind.None;
-				}
-				else if (buttonIndex == 1) // Delete
-				{
-					Saver.DeleteProject(SelectedProjectName);
-					selectedProjectIndex = -1;
-					RefreshLoadedProjects();
-					activePopup = PopupKind.None;
-				}
+				activePopup = PopupKind.None;
+			}
+			else if (buttonIndex == 1) // Delete
+			{
+				Saver.DeleteProject(SelectedProjectName);
+				selectedProjectIndex = -1;
+				RefreshLoadedProjects();
+				activePopup = PopupKind.None;
 			}
 		}
+	}
+
+	static void DrawProjectCreationErrorPopup()
+	{
+		DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+
+		Seb.Vis.UI.UI.StartNewLayer();
+		Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+		using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+		{
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+			
+			string displayMessage = "Failed to create/open project:\n\n" + projectCreationErrorMessage;
+			Seb.Vis.UI.UI.DrawText(displayMessage, theme.FontRegular, theme.FontSizeRegular * 0.8f, Seb.Vis.UI.UI.Centre, Anchor.Centre, Color.red);
+
+			Vector2 buttonRegionTopLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
+			float buttonRegionWidth = Seb.Vis.UI.UI.PrevBounds.Width;
+			
+			if (Seb.Vis.UI.UI.Button("OK", theme.MainMenuButtonTheme, buttonRegionTopLeft + Vector2.right * buttonRegionWidth / 2, Vector2.zero, true, true, true, theme.MainMenuButtonTheme.buttonCols) || KeyboardShortcuts.CancelShortcutTriggered)
+			{
+				activePopup = PopupKind.None;
+				projectCreationErrorMessage = "";
+			}
+			
+			Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+		}
+	}
 
 		static void DrawAboutScreen()
 		{
@@ -792,14 +829,15 @@ namespace DLS.Graphics
 			About
 		}
 
-		enum PopupKind
-		{
-			None,
-			DeleteConfirmation,
-			NamePopup_RenameProject,
-			NamePopup_DuplicateProject,
-			NamePopup_NewProject,
-			OverwriteConfirmation,
-		}
+	enum PopupKind
+	{
+		None,
+		DeleteConfirmation,
+		NamePopup_RenameProject,
+		NamePopup_DuplicateProject,
+		NamePopup_NewProject,
+		OverwriteConfirmation,
+		ProjectCreationError,
+	}
 	}
 }
