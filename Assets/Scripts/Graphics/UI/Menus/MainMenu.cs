@@ -228,6 +228,8 @@ namespace DLS.Graphics
 			{
 				RefreshLoadedProjects();
 				activePopup = PopupKind.NamePopup_NewProject;
+				// Set default text for new project
+				Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectNameInput).SetText("TEST");
 			}
 			else if (buttonIndex == 1 || KeyboardShortcuts.MainMenu_OpenProjectShortcutTriggered) // Load project
 			{

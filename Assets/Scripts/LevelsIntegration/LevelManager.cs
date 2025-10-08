@@ -256,9 +256,33 @@ namespace DLS.Game.LevelsIntegration
                 var currentChip = Project.ActiveProject?.ViewedChip;
                 if (currentChip == null) return false;
                 
-                // Use the same logic as regular chip unsaved changes detection
-                // This will work correctly because SaveCurrentProgress now updates LastSavedDescription
-                return Project.ActiveProject.ActiveChipHasUnsavedChanges();
+                // For levels, we need special logic because levels automatically create I/O pins
+                // Check if there's saved progress for this level
+                bool hasSavedProgress = LevelProgressService.HasLevelProgress(Current.id);
+                
+                if (!hasSavedProgress)
+                {
+                    // No saved progress - check if user has added any custom elements (beyond the level's I/O pins)
+                    // Count only elements that are NOT input/output pins (which are automatically created by the level)
+                    int customElements = 0;
+                    foreach (var element in currentChip.Elements)
+                    {
+                        if (element is not DevPinInstance)
+                        {
+                            customElements++;
+                        }
+                    }
+                    return customElements > 0;
+                }
+                else
+                {
+                    // There is saved progress - compare current state with saved state
+                    var savedProgress = LevelProgressService.LoadLevelProgress(Current.id);
+                    if (savedProgress == null) return true; // Can't load saved progress, assume changes
+                    
+                    var currentDescription = DescriptionCreator.CreateChipDescription(currentChip);
+                    return Saver.HasUnsavedChanges(savedProgress, currentDescription);
+                }
             }
             catch (Exception ex)
             {
