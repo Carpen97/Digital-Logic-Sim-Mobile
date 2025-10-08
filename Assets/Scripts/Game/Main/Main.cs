@@ -199,8 +199,8 @@ namespace DLS.Game
 					AllCustomChipNames = Array.Empty<string>(),
 					StarredList = BuiltinCollectionCreator.GetDefaultStarredList()?.ToList() ?? new List<StarredItem>(),
 					ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections() ?? Array.Empty<ChipCollection>()),
-					pinBitCounts = Project.PinBitCounts ?? new Dictionary<string, int>(),
-					SplitMergePairs = Project.SplitMergePairs ?? new List<SplitMergePair>()
+					pinBitCounts = Project.PinBitCounts ?? new List<PinBitCount>(),
+					SplitMergePairs = Project.SplitMergePairs ?? new List<KeyValuePair<PinBitCount, PinBitCount>>()
 				};
 
 				UnityEngine.Debug.Log($"[Main] ProjectDescription created, checking for null properties...");
