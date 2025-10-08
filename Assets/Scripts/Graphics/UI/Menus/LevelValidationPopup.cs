@@ -730,7 +730,7 @@ namespace DLS.Graphics
 		// ---------- Firebase Buttons ----------
 		static void DrawFirebaseButtons()
 		{
-			Vector2 buttonStart = Seb.Vis.UI.UI.PrevBounds.CentreBottom + Vector2.down * 1f;
+			Vector2 buttonStart = Seb.Vis.UI.UI.PrevBounds.CentreBottom + Vector2.down * 2.5f;
 			float buttonWidth = Seb.Vis.UI.UI.Width * 0.28f * 0.75f;  // Reduced button width to 75% of current size
 			float buttonHeight = ButtonHeight * 1.3f; // Increased button height for better proportions
 			float spacing = 1.8f * 0.5f; // Reduced spacing to half of current value
@@ -740,26 +740,24 @@ namespace DLS.Graphics
 			bool hasValidSelection = _selectedIndex >= 0 && _selectedIndex < _rows.Count;
 			bool canApplyTest = hasValidSelection && !_isSequentialLevel; // Only allow for combinational levels
 
-			// Calculate grid positions (3 buttons per row) - center relative to entire popup, not just scroll view
-			float totalWidth = (buttonWidth * 3) + (spacing * 2);
+			// Calculate grid positions (4 buttons per row) - center relative to entire popup, not just scroll view
+			float totalWidth = (buttonWidth * 4) + (spacing * 3);
 			float startX = Seb.Vis.UI.UI.Centre.x - totalWidth / 2f;  // Center relative to entire popup
 			float startY = buttonStart.y;
 
-			// Row 1: Apply Test, Upload Score, Save as Chip
+			// Row 1: Apply Test, Upload Score, Levels, Next
 			Vector2 applyTestPos = new Vector2(startX, startY);
 			Vector2 uploadPos = new Vector2(startX + buttonWidth + spacing, startY);
-			Vector2 saveAsChipPos = new Vector2(startX + (buttonWidth + spacing) * 2, startY);
+			Vector2 levelsPos = new Vector2(startX + (buttonWidth + spacing) * 2, startY);
+			Vector2 nextPos = new Vector2(startX + (buttonWidth + spacing) * 3, startY);
 
-			// Row 2: Restart, Next, Leaderboard
+			// Row 2: Restart, Leaderboard, Save as Chip, Close
 			Vector2 restartPos = new Vector2(startX, startY - buttonHeight - spacing);
-			Vector2 nextPos = new Vector2(startX + buttonWidth + spacing, startY - buttonHeight - spacing);
-			Vector2 leaderboardPos = new Vector2(startX + (buttonWidth + spacing) * 2, startY - buttonHeight - spacing);
-			
-			// Row 3: Levels, Close, (empty)
-			Vector2 levelsPos = new Vector2(startX, startY - (buttonHeight + spacing) * 2);
-			Vector2 closePos = new Vector2(startX + buttonWidth + spacing, startY - (buttonHeight + spacing) * 2);
+			Vector2 leaderboardPos = new Vector2(startX + buttonWidth + spacing, startY - buttonHeight - spacing);
+			Vector2 saveAsChipPos = new Vector2(startX + (buttonWidth + spacing) * 2, startY - buttonHeight - spacing);
+			Vector2 closePos = new Vector2(startX + (buttonWidth + spacing) * 3, startY - buttonHeight - spacing);
 
-			// Row 1: Apply Test button (left)
+			// Row 1: Apply Test button (position 1)
 			bool applyTestPressed = Seb.Vis.UI.UI.Button(
 				"Apply Test",
 				MenuHelper.Theme.ButtonTheme,
@@ -772,7 +770,7 @@ namespace DLS.Graphics
 				Anchor.TopLeft
 			);
 
-			// Row 1: Upload Score button (middle)
+			// Row 1: Upload Score button (position 2)
 			string uploadButtonText = _isUploading ? _uploadStatus : "Upload Score";
 			bool uploadPressed = Seb.Vis.UI.UI.Button(
 				uploadButtonText,
@@ -786,59 +784,7 @@ namespace DLS.Graphics
 				Anchor.TopLeft
 			);
 
-			// Row 1: Save as Chip button (right)
-			bool saveAsChipPressed = Seb.Vis.UI.UI.Button(
-				"Save as Chip",
-				MenuHelper.Theme.ButtonTheme,
-				saveAsChipPos,
-				new Vector2(buttonWidth, buttonHeight),
-				levelPassed, // Only enabled when level is completed
-				false,
-				false,
-				MenuHelper.Theme.ButtonTheme.buttonCols,
-				Anchor.TopLeft
-			);
-
-			// Row 2: Restart button (left)
-			bool restartPressed = Seb.Vis.UI.UI.Button(
-				"Restart",
-				MenuHelper.Theme.ButtonTheme,
-				restartPos,
-				new Vector2(buttonWidth, buttonHeight),
-				true,
-				false,
-				false,
-				MenuHelper.Theme.ButtonTheme.buttonCols,
-				Anchor.TopLeft
-			);
-
-			// Row 2: Next button (middle) - only show if level is passed
-			bool nextPressed = Seb.Vis.UI.UI.Button(
-				"Next",
-				MenuHelper.Theme.ButtonTheme,
-				nextPos,
-				new Vector2(buttonWidth, buttonHeight),
-				levelPassed, // Only enabled if level is passed
-				false,
-				false,
-				MenuHelper.Theme.ButtonTheme.buttonCols,
-				Anchor.TopLeft
-			);
-
-			// Row 2: Leaderboard button (right)
-			bool leaderboardPressed = Seb.Vis.UI.UI.Button(
-				"Leaderboard",
-				MenuHelper.Theme.ButtonTheme,
-				leaderboardPos,
-				new Vector2(buttonWidth, buttonHeight),
-				true,
-				false,
-				false,
-				MenuHelper.Theme.ButtonTheme.buttonCols,
-				Anchor.TopLeft
-			);
-
-			// Row 3: Levels button (left)
+			// Row 1: Levels button (position 3)
 			bool levelsPressed = Seb.Vis.UI.UI.Button(
 				"Levels",
 				MenuHelper.Theme.ButtonTheme,
@@ -851,7 +797,59 @@ namespace DLS.Graphics
 				Anchor.TopLeft
 			);
 
-			// Row 3: Close button (middle)
+			// Row 1: Next button (position 4)
+			bool nextPressed = Seb.Vis.UI.UI.Button(
+				"Next",
+				MenuHelper.Theme.ButtonTheme,
+				nextPos,
+				new Vector2(buttonWidth, buttonHeight),
+				true, // Always enabled
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			// Row 2: Restart button (position 1)
+			bool restartPressed = Seb.Vis.UI.UI.Button(
+				"Restart",
+				MenuHelper.Theme.ButtonTheme,
+				restartPos,
+				new Vector2(buttonWidth, buttonHeight),
+				true,
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			// Row 2: Leaderboard button (position 2)
+			bool leaderboardPressed = Seb.Vis.UI.UI.Button(
+				"Leaderboard",
+				MenuHelper.Theme.ButtonTheme,
+				leaderboardPos,
+				new Vector2(buttonWidth, buttonHeight),
+				true,
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			// Row 2: Save as Chip button (position 3)
+			bool saveAsChipPressed = Seb.Vis.UI.UI.Button(
+				"Save as Chip",
+				MenuHelper.Theme.ButtonTheme,
+				saveAsChipPos,
+				new Vector2(buttonWidth, buttonHeight),
+				levelPassed, // Only enabled when level is completed
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			// Row 2: Close button (position 4)
 			bool closePressed = Seb.Vis.UI.UI.Button(
 				"Close",
 				MenuHelper.Theme.ButtonTheme,
@@ -887,7 +885,7 @@ namespace DLS.Graphics
 				RestartCurrentLevel();
 			}
 
-			if (nextPressed && levelPassed)
+			if (nextPressed)
 			{
 				PlayNextLevel();
 			}

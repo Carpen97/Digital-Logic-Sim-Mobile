@@ -31,17 +31,19 @@ namespace DLS.Graphics
 			// Make the banner clickable for validation
 			bool canValidate = Project.ActiveProject != null && Project.ActiveProject.CanEditViewedChip;
 			
-			// Create custom transparent grey color scheme
-			var transparentGreyCols = new Seb.Vis.UI.ButtonTheme.StateCols
-			{
-				normal = new Color(0.2f, 0.2f, 0.2f, 0.3f),      // Transparent dark grey
-				hover = new Color(0.3f, 0.3f, 0.3f, 0.4f),       // Slightly lighter when hovered
-				pressed = new Color(0.4f, 0.4f, 0.4f, 0.5f),     // Even lighter when pressed
-				inactive = new Color(0.1f, 0.1f, 0.1f, 0.2f)     // Darker when inactive
-			};
+			// Handle click detection directly without drawing a button background
+			// Create narrower hitbox (25% to 75% of screen width) while keeping visual panel full width
+			float hitboxWidth = Seb.Vis.UI.UI.Width * 0.5f; // 50% of screen width (25% to 75%)
+			Vector2 hitboxSize = new Vector2(hitboxWidth, panelBounds.Size.y);
+			Vector2 hitboxPos = panelBounds.Centre; // Center the hitbox
 			
-			bool hoveringButton = Seb.Vis.UI.UI.Button("", ActiveUITheme.MenuButtonTheme, panelBounds.BottomLeft, panelBounds.Size, true, false, false, transparentGreyCols, Anchor.BottomLeft);
-			if (canValidate && hoveringButton)
+			// Convert to screen space for mouse detection
+			Bounds2D hitboxBounds = Bounds2D.CreateFromCentreAndSize(hitboxPos, hitboxSize);
+			Bounds2D screenBounds = Seb.Vis.UI.UI.UIToScreenSpace(hitboxBounds);
+			bool mouseOverHitbox = Seb.Helpers.InputHelper.MouseInBounds_ScreenSpace(screenBounds.Centre, screenBounds.Size);
+			bool clicked = mouseOverHitbox && Seb.Helpers.InputHelper.IsMouseDownThisFrame(Seb.Helpers.MouseButton.Left);
+			
+			if (canValidate && clicked)
 			{
 				OnValidateButtonPressed();
 			}
