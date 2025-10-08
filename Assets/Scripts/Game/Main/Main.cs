@@ -103,22 +103,22 @@ namespace DLS.Game
 				debugLogs.Add($"[Main] Project exists, loading: {projectName}");
 				UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
 				
-				ActiveProject = LoadProject(projectName);
-				debugLogs.Add($"[Main] ActiveProject loaded, is null: {ActiveProject == null}");
+			ActiveProject = LoadProject(projectName);
+			debugLogs.Add($"[Main] ActiveProject loaded, is null: {ActiveProject == null}");
+			UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
+			
+			if (ActiveProject != null)
+			{
+				Saver.SaveProjectDescription(ActiveProject.description);
+				debugLogs.Add($"[Main] Project description saved");
 				UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
-				
-				if (ActiveProject != null && ActiveProject.description != null)
-				{
-					Saver.SaveProjectDescription(ActiveProject.description);
-					debugLogs.Add($"[Main] Project description saved");
-					UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
-				}
-				else
-				{
-					string errorLog = $"[Main] ActiveProject or description is null! ActiveProject={ActiveProject}, description={ActiveProject?.description}";
-					debugLogs.Add(errorLog);
-					UnityEngine.Debug.LogError(errorLog);
-				}
+			}
+			else
+			{
+				string errorLog = $"[Main] ActiveProject is null!";
+				debugLogs.Add(errorLog);
+				UnityEngine.Debug.LogError(errorLog);
+			}
 			}
 			else 
 			{

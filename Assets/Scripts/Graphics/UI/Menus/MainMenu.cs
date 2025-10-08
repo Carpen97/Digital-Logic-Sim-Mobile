@@ -700,9 +700,9 @@ namespace DLS.Graphics
 			
 			Vector2 pos = Seb.Vis.UI.UI.Centre;
 			
-			// Error message at top
-			string displayMessage = "Failed to create/open project:\n" + projectCreationErrorMessage;
-			Seb.Vis.UI.UI.DrawText(displayMessage, theme.FontRegular, theme.FontSizeRegular * 0.7f, pos + Vector2.up * (popupSize.y / 2 - 3), Anchor.TopCentre, Color.red);
+		// Error message at top
+		string displayMessage = "Failed to create/open project:\n" + projectCreationErrorMessage;
+		Seb.Vis.UI.UI.DrawText(displayMessage, theme.FontRegular, theme.FontSizeRegular * 0.7f, pos + Vector2.up * (popupSize.y / 2 - 3), Anchor.CentreTop, Color.red);
 			
 			// Debug logs section
 			if (projectCreationDebugLogs != null && projectCreationDebugLogs.Count > 0)
