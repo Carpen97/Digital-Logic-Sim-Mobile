@@ -50,6 +50,11 @@ namespace DLS.Description
 			JsonSerializerSettings settings = CreateSerializationSettings();
 			settings.NullValueHandling = NullValueHandling.Ignore; // Ignore null values
 			settings.DefaultValueHandling = DefaultValueHandling.Ignore; // Ignore default values
+			settings.Error = (sender, args) => {
+				UnityEngine.Debug.LogError($"[Serializer] JSON Error: {args.ErrorContext.Error.Message}");
+				UnityEngine.Debug.LogError($"[Serializer] Error Path: {args.ErrorContext.Path}");
+				args.ErrorContext.Handled = true; // Don't throw, just log and continue
+			};
 			
 			JsonSerializer serializer = JsonSerializer.Create(settings);
 			serializer.Serialize(writer, obj);

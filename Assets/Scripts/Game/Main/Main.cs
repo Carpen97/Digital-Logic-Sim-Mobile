@@ -208,6 +208,32 @@ namespace DLS.Game
 				UnityEngine.Debug.Log($"[Main] ChipCollections is null: {initialDescription.ChipCollections == null}");
 				UnityEngine.Debug.Log($"[Main] pinBitCounts is null: {initialDescription.pinBitCounts == null}");
 				UnityEngine.Debug.Log($"[Main] SplitMergePairs is null: {initialDescription.SplitMergePairs == null}");
+				
+				// Check nested properties
+				if (initialDescription.StarredList != null)
+				{
+					UnityEngine.Debug.Log($"[Main] StarredList count: {initialDescription.StarredList.Count}");
+					for (int i = 0; i < initialDescription.StarredList.Count && i < 3; i++)
+					{
+						var item = initialDescription.StarredList[i];
+						UnityEngine.Debug.Log($"[Main] StarredList[{i}] Name: '{item.Name}'");
+					}
+				}
+				
+				if (initialDescription.ChipCollections != null)
+				{
+					UnityEngine.Debug.Log($"[Main] ChipCollections count: {initialDescription.ChipCollections.Count}");
+					for (int i = 0; i < initialDescription.ChipCollections.Count && i < 3; i++)
+					{
+						var collection = initialDescription.ChipCollections[i];
+						UnityEngine.Debug.Log($"[Main] ChipCollections[{i}] is null: {collection == null}");
+						if (collection != null)
+						{
+							UnityEngine.Debug.Log($"[Main] ChipCollections[{i}].Name: '{collection.Name}'");
+							UnityEngine.Debug.Log($"[Main] ChipCollections[{i}].Chips is null: {collection.Chips == null}");
+						}
+					}
+				}
 
 				UnityEngine.Debug.Log($"[Main] Saving project description for: {projectName}");
 				Saver.SaveProjectDescription(initialDescription);
