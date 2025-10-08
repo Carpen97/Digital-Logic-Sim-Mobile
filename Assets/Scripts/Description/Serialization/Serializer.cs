@@ -31,19 +31,38 @@ namespace DLS.Description
 			return settings;
 		}
 
-		static string Serialize(object obj)
+	static string Serialize(object obj)
+	{
+		try
 		{
+			if (obj == null)
+			{
+				UnityEngine.Debug.LogError("[Serializer] Attempted to serialize null object");
+				return "{}";
+			}
+
 			using StringWriter stringWriter = new();
 			using CustomJsonTextWriter writer = new(stringWriter);
 			writer.Formatting = Formatting.Indented;
 			writer.Indentation = 2;
 			writer.IndentChar = ' ';
 
-			JsonSerializer serializer = JsonSerializer.Create(CreateSerializationSettings());
+			JsonSerializerSettings settings = CreateSerializationSettings();
+			settings.NullValueHandling = NullValueHandling.Ignore; // Ignore null values
+			settings.DefaultValueHandling = DefaultValueHandling.Ignore; // Ignore default values
+			
+			JsonSerializer serializer = JsonSerializer.Create(settings);
 			serializer.Serialize(writer, obj);
 
 			return stringWriter.ToString();
 		}
+		catch (Exception ex)
+		{
+			UnityEngine.Debug.LogError($"[Serializer] Failed to serialize object of type {obj?.GetType().Name}: {ex.Message}");
+			UnityEngine.Debug.LogError($"[Serializer] Stack trace: {ex.StackTrace}");
+			throw;
+		}
+	}
 
 		static T Deserialize<T>(string s)
 		{

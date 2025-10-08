@@ -182,10 +182,10 @@ namespace DLS.Game
 				
 				ProjectDescription initialDescription = new()
 				{
-					ProjectName = projectName,
-					DLSVersion_LastSaved = DLSVersion.ToString(),
-					DLSVersion_LastSavedModdedVersion = DLSVersion_ModdedID.ToString(),
-					DLSVersion_EarliestCompatible = DLSVersion_EarliestCompatible.ToString(),
+					ProjectName = projectName ?? "Untitled",
+					DLSVersion_LastSaved = DLSVersion?.ToString() ?? "2.1.7.0",
+					DLSVersion_LastSavedModdedVersion = DLSVersion_ModdedID?.ToString() ?? "1.1.2",
+					DLSVersion_EarliestCompatible = DLSVersion_EarliestCompatible?.ToString() ?? "2.0.0",
 					CreationTime = DateTime.Now,
 					TimeSpentSinceCreated = new(),
 					Prefs_ChipPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
@@ -197,11 +197,17 @@ namespace DLS.Game
 					Prefs_GridDisplayMode = 1,
 					Prefs_UseDragAndDropMode = true,
 					AllCustomChipNames = Array.Empty<string>(),
-					StarredList = BuiltinCollectionCreator.GetDefaultStarredList().ToList(),
-					ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections()),
-					pinBitCounts = Project.PinBitCounts,
-					SplitMergePairs = Project.SplitMergePairs
+					StarredList = BuiltinCollectionCreator.GetDefaultStarredList()?.ToList() ?? new List<StarredItem>(),
+					ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections() ?? Array.Empty<ChipCollection>()),
+					pinBitCounts = Project.PinBitCounts ?? new Dictionary<string, int>(),
+					SplitMergePairs = Project.SplitMergePairs ?? new List<SplitMergePair>()
 				};
+
+				UnityEngine.Debug.Log($"[Main] ProjectDescription created, checking for null properties...");
+				UnityEngine.Debug.Log($"[Main] StarredList is null: {initialDescription.StarredList == null}");
+				UnityEngine.Debug.Log($"[Main] ChipCollections is null: {initialDescription.ChipCollections == null}");
+				UnityEngine.Debug.Log($"[Main] pinBitCounts is null: {initialDescription.pinBitCounts == null}");
+				UnityEngine.Debug.Log($"[Main] SplitMergePairs is null: {initialDescription.SplitMergePairs == null}");
 
 				UnityEngine.Debug.Log($"[Main] Saving project description for: {projectName}");
 				Saver.SaveProjectDescription(initialDescription);
