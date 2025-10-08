@@ -20,16 +20,18 @@ namespace DLS.Graphics
 	static PopupKind activePopup = PopupKind.None;
 	static AppSettings EditedAppSettings;
 	static string projectCreationErrorMessage = "";
+	static List<string> projectCreationDebugLogs = new List<string>();
 
-		static readonly UIHandle ID_ProjectNameInput = new("MainMenu_ProjectNameInputField");
-		static readonly UIHandle ID_DisplayResolutionWheel = new("MainMenu_DisplayResolutionWheel");
-		static readonly UIHandle ID_DisplayWidthWheel = new("MainMenu_DisplayWidthWheel");
-		static readonly UIHandle ID_DisplayHeightWheel = new("MainMenu_DisplayHeightWheel");
-		static readonly UIHandle ID_FullscreenWheel = new("MainMenu_FullscreenWheel");
-		static readonly UIHandle ID_Orientation = new("MainMenu_OrientationWheel");
-		static readonly UIHandle ID_ShowScrollButtons = new("MainMenu_ShowScrollButtonsnWheel");
-		static readonly UIHandle ID_UIScaling = new("MainMenu_UIScalingWheel");
-		static readonly UIHandle ID_ProjectsScrollView = new("MainMenu_ProjectsScrollView");
+	static readonly UIHandle ID_ProjectNameInput = new("MainMenu_ProjectNameInputField");
+	static readonly UIHandle ID_DisplayResolutionWheel = new("MainMenu_DisplayResolutionWheel");
+	static readonly UIHandle ID_DisplayWidthWheel = new("MainMenu_DisplayWidthWheel");
+	static readonly UIHandle ID_DisplayHeightWheel = new("MainMenu_DisplayHeightWheel");
+	static readonly UIHandle ID_FullscreenWheel = new("MainMenu_FullscreenWheel");
+	static readonly UIHandle ID_Orientation = new("MainMenu_OrientationWheel");
+	static readonly UIHandle ID_ShowScrollButtons = new("MainMenu_ShowScrollButtonsnWheel");
+	static readonly UIHandle ID_UIScaling = new("MainMenu_UIScalingWheel");
+	static readonly UIHandle ID_ProjectsScrollView = new("MainMenu_ProjectsScrollView");
+	static readonly UIHandle ID_ErrorLogsScrollView = new("MainMenu_ErrorLogsScrollView");
 
 		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string[] SettingsWheelFullScreenOptions = { "AUTO","WINDOWED", "MAXIMIZED", "BORDERLESS", "EXCLUSIVE" };
@@ -324,6 +326,13 @@ namespace DLS.Graphics
 	public static void ShowProjectCreationError(string errorMessage)
 	{
 		projectCreationErrorMessage = errorMessage;
+		activePopup = PopupKind.ProjectCreationError;
+	}
+
+	public static void ShowProjectCreationError(string errorMessage, List<string> debugLogs)
+	{
+		projectCreationErrorMessage = errorMessage;
+		projectCreationDebugLogs = debugLogs != null ? new List<string>(debugLogs) : new List<string>();
 		activePopup = PopupKind.ProjectCreationError;
 	}
 
@@ -682,16 +691,51 @@ namespace DLS.Graphics
 		{
 			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 			
-			string displayMessage = "Failed to create/open project:\n\n" + projectCreationErrorMessage;
-			Seb.Vis.UI.UI.DrawText(displayMessage, theme.FontRegular, theme.FontSizeRegular * 0.8f, Seb.Vis.UI.UI.Centre, Anchor.Centre, Color.red);
-
-			Vector2 buttonRegionTopLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
-			float buttonRegionWidth = Seb.Vis.UI.UI.PrevBounds.Width;
+			#if UNITY_ANDROID || UNITY_IOS
+			Vector2 popupSize = new(70, 40);
+			#else
+			Vector2 popupSize = new(60, 35);
+			#endif
 			
-			if (Seb.Vis.UI.UI.Button("OK", theme.MainMenuButtonTheme, buttonRegionTopLeft + Vector2.right * buttonRegionWidth / 2, Vector2.zero, true, true, true, theme.MainMenuButtonTheme.buttonCols) || KeyboardShortcuts.CancelShortcutTriggered)
+			Vector2 pos = Seb.Vis.UI.UI.Centre;
+			
+			// Error message at top
+			string displayMessage = "Failed to create/open project:\n" + projectCreationErrorMessage;
+			Seb.Vis.UI.UI.DrawText(displayMessage, theme.FontRegular, theme.FontSizeRegular * 0.7f, pos + Vector2.up * (popupSize.y / 2 - 3), Anchor.TopCentre, Color.red);
+			
+			// Debug logs section
+			if (projectCreationDebugLogs != null && projectCreationDebugLogs.Count > 0)
+			{
+				Vector2 logPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 2;
+				Seb.Vis.UI.UI.DrawText("Debug Logs:", theme.FontRegular, theme.FontSizeRegular * 0.6f, logPos, Anchor.TopLeft, Color.yellow);
+				
+				Vector2 scrollViewPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 1;
+				Vector2 scrollViewSize = new(popupSize.x - 4, 20);
+				
+				Seb.Vis.UI.UI.DrawScrollView(ID_ErrorLogsScrollView, scrollViewPos, scrollViewSize, Anchor.TopLeft, theme.ScrollTheme, (topLeft, width, isLayoutPass) =>
+				{
+					float spacing = 0.5f;
+					foreach (string log in projectCreationDebugLogs)
+					{
+						Color logColor = Color.white;
+						if (log.Contains("Error") || log.Contains("Exception"))
+							logColor = new Color(1f, 0.3f, 0.3f);
+						else if (log.Contains("null"))
+							logColor = new Color(1f, 0.7f, 0.3f);
+						
+						Seb.Vis.UI.UI.DrawText(log, theme.FontRegular, theme.FontSizeRegular * 0.5f, topLeft, Anchor.TopLeft, logColor);
+						topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * spacing;
+					}
+				});
+			}
+
+			Vector2 buttonPos = pos + Vector2.down * (popupSize.y / 2 - 3);
+			
+			if (Seb.Vis.UI.UI.Button("OK", theme.MainMenuButtonTheme, buttonPos, Vector2.zero, true, true, true, theme.MainMenuButtonTheme.buttonCols) || KeyboardShortcuts.CancelShortcutTriggered)
 			{
 				activePopup = PopupKind.None;
 				projectCreationErrorMessage = "";
+				projectCreationDebugLogs.Clear();
 			}
 			
 			Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));

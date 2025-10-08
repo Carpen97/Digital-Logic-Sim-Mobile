@@ -88,41 +88,86 @@ namespace DLS.Game
 
 	public static void CreateOrLoadProject(string projectName, string startupChipName = "")
 	{
+		List<string> debugLogs = new List<string>();
+		
 		try
 		{
-			UnityEngine.Debug.Log($"[Main] CreateOrLoadProject called with projectName: '{projectName}', startupChipName: '{startupChipName}'");
+			debugLogs.Add($"[Main] CreateOrLoadProject called with projectName: '{projectName}', startupChipName: '{startupChipName}'");
+			UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
+			
+			debugLogs.Add($"[Main] audioState is null: {audioState == null}");
+			UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
 			
 			if (Loader.ProjectExists(projectName)) 
 			{ 
-				UnityEngine.Debug.Log($"[Main] Project exists, loading: {projectName}");
-				ActiveProject = LoadProject(projectName); 
-				Saver.SaveProjectDescription(ActiveProject.description); 
+				debugLogs.Add($"[Main] Project exists, loading: {projectName}");
+				UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
+				
+				ActiveProject = LoadProject(projectName);
+				debugLogs.Add($"[Main] ActiveProject loaded, is null: {ActiveProject == null}");
+				UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
+				
+				if (ActiveProject != null && ActiveProject.description != null)
+				{
+					Saver.SaveProjectDescription(ActiveProject.description);
+					debugLogs.Add($"[Main] Project description saved");
+					UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
+				}
+				else
+				{
+					string errorLog = $"[Main] ActiveProject or description is null! ActiveProject={ActiveProject}, description={ActiveProject?.description}";
+					debugLogs.Add(errorLog);
+					UnityEngine.Debug.LogError(errorLog);
+				}
 			}
 			else 
 			{
-				UnityEngine.Debug.Log($"[Main] Project doesn't exist, creating: {projectName}");
+				debugLogs.Add($"[Main] Project doesn't exist, creating: {projectName}");
+				UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
+				
 				ActiveProject = CreateProject(projectName);
+				debugLogs.Add($"[Main] ActiveProject created, is null: {ActiveProject == null}");
+				UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
 			}
 
-			UnityEngine.Debug.Log($"[Main] Loading dev chip or creating new: {startupChipName}");
+			if (ActiveProject == null)
+			{
+				throw new Exception("Failed to create or load project - ActiveProject is null");
+			}
+
+			debugLogs.Add($"[Main] Loading dev chip or creating new: {startupChipName}");
+			UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
 			ActiveProject.LoadDevChipOrCreateNewIfDoesntExist(startupChipName);
 			
-			UnityEngine.Debug.Log($"[Main] Starting simulation");
+			debugLogs.Add($"[Main] Starting simulation");
+			UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
 			ActiveProject.StartSimulation();
+			
+			debugLogs.Add($"[Main] Setting audioState (audioState is null: {audioState == null})");
+			UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
 			ActiveProject.audioState = audioState;
 			
-			UnityEngine.Debug.Log($"[Main] Setting menu to None");
+			debugLogs.Add($"[Main] Setting menu to None");
+			UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
 			UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
-			UnityEngine.Debug.Log($"[Main] CreateOrLoadProject completed successfully");
+			
+			debugLogs.Add($"[Main] CreateOrLoadProject completed successfully");
+			UnityEngine.Debug.Log(debugLogs[debugLogs.Count - 1]);
 		}
 		catch (Exception ex)
 		{
-			UnityEngine.Debug.LogError($"[Main] CreateOrLoadProject failed: {ex.Message}");
+			debugLogs.Add($"[ERROR] Exception type: {ex.GetType().Name}");
+			debugLogs.Add($"[ERROR] Message: {ex.Message}");
+			debugLogs.Add($"[ERROR] Stack trace: {ex.StackTrace}");
+			
+			UnityEngine.Debug.LogError($"[Main] CreateOrLoadProject failed at line: {new System.Diagnostics.StackTrace(ex, true).GetFrame(0)?.GetFileLineNumber()}");
+			UnityEngine.Debug.LogError($"[Main] Exception type: {ex.GetType().Name}");
+			UnityEngine.Debug.LogError($"[Main] Message: {ex.Message}");
 			UnityEngine.Debug.LogError($"[Main] Stack trace: {ex.StackTrace}");
 			
-			// Show error popup to user instead of silently failing
+			// Show error popup to user with debug logs
 			string userFriendlyMessage = GetUserFriendlyErrorMessage(ex);
-			DLS.Graphics.MainMenu.ShowProjectCreationError(userFriendlyMessage);
+			DLS.Graphics.MainMenu.ShowProjectCreationError(userFriendlyMessage, debugLogs);
 			
 			// Make sure we go back to main menu
 			UIDrawer.SetActiveMenu(UIDrawer.MenuType.MainMenu);

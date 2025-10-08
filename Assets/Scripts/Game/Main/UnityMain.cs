@@ -60,22 +60,31 @@ namespace DLS.Game
 		public static UnityMain instance;
 		AudioUnity audioUnity;
 
-		void Awake()
+	void Awake()
+	{
+		instance = this;
+		audioUnity = FindFirstObjectByType<AudioUnity>();
+		ResetStatics();
+
+		// Add debug log viewer for remote debugging
+		#if UNITY_IOS || UNITY_ANDROID
+		if (FindFirstObjectByType<DLS.Graphics.DebugLogViewer>() == null)
 		{
-			instance = this;
-			audioUnity = FindFirstObjectByType<AudioUnity>();
-			ResetStatics();
-
-			AudioState audioState = new();
-			audioUnity.audioState = audioState;
-
-			Main.Init(audioState);
-
-
-			if (openInMainMenu || !Application.isEditor) Main.LoadMainMenu();
-			else Main.CreateOrLoadProject(testProjectName, openA ? chipToOpenA : chipToOpenB);
-
+			GameObject debugViewer = new GameObject("DebugLogViewer");
+			debugViewer.AddComponent<DLS.Graphics.DebugLogViewer>();
 		}
+		#endif
+
+		AudioState audioState = new();
+		audioUnity.audioState = audioState;
+
+		Main.Init(audioState);
+
+
+		if (openInMainMenu || !Application.isEditor) Main.LoadMainMenu();
+		else Main.CreateOrLoadProject(testProjectName, openA ? chipToOpenA : chipToOpenB);
+
+	}
 
 		void Update()
 		{
