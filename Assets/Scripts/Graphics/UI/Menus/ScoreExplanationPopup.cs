@@ -37,13 +37,17 @@ namespace DLS.Graphics
 				Seb.Vis.UI.UI.DrawText(title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
 				//Seb.Vis.UI.UI.ModifyPanel(titleBG, Bounds2D.Grow(Seb.Vis.UI.UI.PrevBounds, 3f), Color.clear);
 
-				// Content text (shorter, more concise version)
-				string contentText = @"Your score is calculated based on the number of NAND gates 
-used in your solution.
+			// Content text (emphasizes nested NAND counting)
+			string contentText = @"Your score is the TOTAL number of NAND gates used in your
+solution, counting recursively through all nested custom chips.
 
 • Lower scores are better
 • Each NAND gate counts as 1 point
-• Try to minimize the number of NAND gates used
+• Custom chips contribute their internal NAND count
+
+Example: Using a custom chip containing 3 NAND gates counts
+as 3 points, not 1. The scoring counts ALL NAND gates at every
+nesting level.
 
 NAND gates are fundamental building blocks that can be used
 to create any other logic gate.";

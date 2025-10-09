@@ -16,8 +16,8 @@ namespace DLS.Graphics
 {
 	public static class ChipLibraryMenu
 	{
-		const string defaultOtherChipsCollectionName = "OTHER";
-		const float previewWindowHeight = 18f;
+	const string defaultOtherChipsCollectionName = "OTHER";
+	const float previewWindowHeight = 17f; // 10% reduction from 18f
 
 		const int deleteMessageMaxCharsPerLine = 25;
 		static readonly UIHandle ID_CollectionsScrollbar = new("ChipLibrary_CollectionsScrollbar");
@@ -63,6 +63,7 @@ namespace DLS.Graphics
 		static bool renamingCollection;
 		static bool isConfirmingChipDeletion;
 		static bool isConfirmingCollectionDeletion;
+		static bool justOpenedInputField; // Track if we just opened the input field this frame
 
 		static string deleteConfirmMessage;
 		static Color deleteConfirmMessageCol;
@@ -82,19 +83,29 @@ namespace DLS.Graphics
 
 		public static void DrawMenu()
 		{
+			justOpenedInputField = false; // Reset at the start of each frame
+			
 			MenuHelper.DrawBackgroundOverlay();
 			Vector2 panelEdgePadding = new(3.25f, 2.6f);
 
 			const float interPanelSpacing = 1.5f;
-			const float menuOffsetY = 1.13f;
 			const float starredPanelWidthT = 0.32f;
 			const float collectionPanelWidthT = 0.35f;
 			const float selectedPanelWidthT = 1 - (starredPanelWidthT + collectionPanelWidthT);
 
+			// Calculate panel dimensions
 			float panelWidthSum = Seb.Vis.UI.UI.Width - interPanelSpacing * 2 - panelEdgePadding.x * 2;
-			float panelHeight = Seb.Vis.UI.UI.Height - panelEdgePadding.y * 2;
+			float availableHeight = Seb.Vis.UI.UI.Height - panelEdgePadding.y * 2;
+			
+			// Calculate desired panel height (use a reasonable max height)
+			float maxPanelHeight = Seb.Vis.UI.UI.Height * 0.85f; // Use 85% of screen height max
+			float panelHeight = Mathf.Min(availableHeight, maxPanelHeight);
+			
+			// Center the menu vertically
+			float totalMenuHeight = panelHeight;
+			float verticalOffset = (Seb.Vis.UI.UI.Height - totalMenuHeight) / 2f;
 
-			Vector2 panelATopLeft = Seb.Vis.UI.UI.TopLeft + new Vector2(panelEdgePadding.x, -panelEdgePadding.y + menuOffsetY);
+			Vector2 panelATopLeft = Seb.Vis.UI.UI.TopLeft + new Vector2(panelEdgePadding.x, -verticalOffset);
 			Vector2 panelSizeA = new(panelWidthSum * starredPanelWidthT, panelHeight);
 			Vector2 panelBTopLeft = panelATopLeft + Vector2.right * (panelSizeA.x + interPanelSpacing);
 			Vector2 panelSizeB = new(panelWidthSum * collectionPanelWidthT, panelHeight);
@@ -155,11 +166,11 @@ namespace DLS.Graphics
 			Bounds2D panelContentBounds = Bounds2D.Shrink(panelBoundsMinusHeader, PanelUIPadding);
 
 			// Reserve space for the button at the bottom
-			const float buttonHeight = 0f;
+			const float buttonHeight = 2.5f; // Estimated button height when auto-sized
 			const float buttonMargin = 1.5f;
 			Vector2 scrollViewSize = new Vector2(panelContentBounds.Width, panelContentBounds.Height - buttonHeight - buttonMargin * 4);
-			Vector2 buttonArea = new Vector2(panelContentBounds.Width, buttonHeight);
-			Vector2 buttonTopLeft = panelContentBounds.BottomLeft + Vector2.up * (buttonHeight + buttonMargin*2);
+			Vector2 buttonArea = new Vector2(panelContentBounds.Width, 0); // 0 = auto-size
+			Vector2 buttonTopLeft = panelContentBounds.BottomLeft + Vector2.up * 4.5f;
 
 			// Draw scrollable starred list
 			Seb.Vis.UI.UI.DrawScrollView(ID_StarredScrollbar, panelContentBounds.TopLeft, scrollViewSize, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawStarredEntry, project.description.StarredList.Count);
@@ -271,9 +282,9 @@ namespace DLS.Graphics
 			Bounds2D panelContentBounds = Bounds2D.Shrink(panelBoundsMinusHeader, PanelUIPadding);
 
 			// Calculate space needed for buttons and input controls
-			const float buttonHeight = 0f; // Use default auto-sized button height to match other panels
+			const float buttonHeight = 2.5f; // Estimated button height when auto-sized
 			const float buttonMargin = 1.5f;
-			const float inputControlsHeight = 8f; // Height for text input + CANCEL/CREATE buttons
+			const float inputControlsHeight = 5f; // Height for text input + CANCEL/CREATE buttons
 			
 			// Make scroll panel as tall as STARRED panel initially, then adjust based on input state
 			float reservedSpace = buttonHeight + buttonMargin * 4; // Space for NEW COLLECTION button
@@ -283,25 +294,29 @@ namespace DLS.Graphics
 			}
 			
 			Vector2 scrollViewSize = new Vector2(panelContentBounds.Width, panelContentBounds.Height - reservedSpace);
-			Vector2 buttonArea = new Vector2(panelContentBounds.Width, buttonHeight);
+			Vector2 buttonArea = new Vector2(panelContentBounds.Width, 0); // 0 = auto-size
 			Vector2 inputControlsArea = new Vector2(panelContentBounds.Width, inputControlsHeight);
 			
 			// Draw scrollable collections list
 			Seb.Vis.UI.UI.DrawScrollView(ID_CollectionsScrollbar, panelContentBounds.TopLeft, scrollViewSize, UILayoutHelper.DefaultSpacing, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawCollectionEntry, collections.Count);
 			
 			// Position NEW COLLECTION button and input controls at the bottom
-			Vector2 buttonTopLeft = panelContentBounds.BottomLeft + Vector2.up * (buttonHeight + buttonMargin*2);
+			Vector2 buttonTopLeft = panelContentBounds.BottomLeft + Vector2.up * 4.5f;
 			if (creatingNewCollection || renamingCollection)
 			{
 				buttonTopLeft += Vector2.up * (inputControlsHeight + buttonMargin * 2);
 			}
-			Vector2 inputControlsTopLeft = panelContentBounds.BottomLeft + Vector2.up * (inputControlsHeight + buttonMargin * 2);
+			Vector2 inputControlsTopLeft = panelContentBounds.BottomLeft + Vector2.up * (inputControlsHeight + 4.5f);
 			
 			// NEW COLLECTION button (only show when not in input mode)
 			if (!renamingCollection && !creatingNewCollection)
 			{
 				bool createNew = Seb.Vis.UI.UI.Button("NEW COLLECTION", ActiveUITheme.ButtonTheme, buttonTopLeft, buttonArea, true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
-				if (createNew) creatingNewCollection = true;
+				if (createNew)
+				{
+					creatingNewCollection = true;
+					justOpenedInputField = true; // Mark that we just opened the input field
+				}
 			}
 			
 			// New collection / rename collection input field
@@ -313,13 +328,15 @@ namespace DLS.Graphics
 					inputTheme.fontSize = MenuHelper.Theme.FontSizeRegular;
 					InputFieldState nameField = Seb.Vis.UI.UI.InputField(ID_NameInput, inputTheme, inputControlsTopLeft, new Vector2(inputControlsArea.x, 2.5f), string.Empty, Anchor.TopLeft, 1, ValidateCollectionNameInput, true);
 					int button_cancelConfirm = MenuHelper.DrawButtonPair("CANCEL", renamingCollection ? "RENAME" : "CREATE", Seb.Vis.UI.UI.PrevBounds.BottomLeft, inputControlsArea.x, true, true, IsValidCollectionName(nameField.text));
-					if (button_cancelConfirm == 0)
+					
+					// Skip button processing if we just opened the input field this frame (prevents accidental clicks)
+					if (!justOpenedInputField && button_cancelConfirm == 0)
 					{
 						nameField.ClearText();
 						creatingNewCollection = false;
 						renamingCollection = false;
 					}
-					else if (button_cancelConfirm == 1 || KeyboardShortcuts.ConfirmShortcutTriggered)
+					else if (!justOpenedInputField && (button_cancelConfirm == 1 || KeyboardShortcuts.ConfirmShortcutTriggered))
 					{
 						if (creatingNewCollection)
 						{
@@ -1018,6 +1035,7 @@ namespace DLS.Graphics
 						{
 							Seb.Vis.UI.UI.GetInputFieldState(ID_NameInput).ClearText();
 							renamingCollection = true;
+							justOpenedInputField = true; // Mark that we just opened the input field
 						}
 						else if (buttonIndexEditCollection == 1) // Delete collection
 						{
@@ -1138,20 +1156,15 @@ namespace DLS.Graphics
 			{
 				using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 				{
-					panelID = Seb.Vis.UI.UI.ReservePanel();
-
-
-
 					// Exit library button (only show when not in input mode)
+					// Position it at the same vertical level as "ADD TO STARRED" button in the starred panel
 					if (!renamingCollection && !creatingNewCollection)
 					{
-						Vector2 exitPos = Seb.Vis.UI.UI.GetCurrentBoundsScope().BottomLeft + Vector2.up * (3f);
-						bool exit = Seb.Vis.UI.UI.Button("EXIT LIBRARY", ActiveUITheme.ButtonTheme, topLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
+						Vector2 exitButtonTopLeft = panelContentBounds.BottomLeft + Vector2.up * 4.5f;
+						
+						bool exit = Seb.Vis.UI.UI.Button("EXIT LIBRARY", ActiveUITheme.ButtonTheme, exitButtonTopLeft, new Vector2(panelContentBounds.Width, 0), true, false, true, ActiveUITheme.ButtonTheme.buttonCols, Anchor.TopLeft);
 						if (exit) ExitLibrary();
-						topLeft += Vector2.down * (Seb.Vis.UI.UI.PrevBounds.Height + DefaultButtonSpacing * 2);
 					}
-
-
 
 					topLeft = Seb.Vis.UI.UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
 				}

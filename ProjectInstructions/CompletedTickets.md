@@ -13,6 +13,12 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📋 **Completed Tickets**
 
+### **Ticket 045** – Update score info text to emphasize nested NAND chip counting
+**Closed:** 2025-01-27  
+**Summary:** Successfully updated the score explanation popup to clearly emphasize how nested NAND chips are counted in level scoring. Modified ScoreExplanationPopup.cs to explain that NAND gates inside custom chips are counted recursively. Added explicit examples showing that using a custom chip with 3 NANDs counts as 3 points, not 1. Enhanced user understanding with emphasis on "TOTAL" and "recursive" counting. Text clarifies that the scoring system counts all NAND gates at every nested level. Improved transparency of scoring mechanics to help users optimize their solutions and understand scoring criteria. ✅
+
+---
+
 ### **Ticket 043** – iOS deployment and testing on iPad
 **Closed:** 2025-01-27  
 **Summary:** Successfully built, deployed, and tested the Digital Logic Sim Mobile application on iPad. Verified all functionality works correctly on iOS hardware including project import/export, Firebase integration (score uploads, leaderboards, solution sharing), level system, UI navigation, touch controls, and all mobile-optimized features. Confirmed cross-platform compatibility with proper iOS-specific handling. Application runs smoothly on actual iOS devices with all features operational. Full iOS platform validation complete. ✅
@@ -170,9 +176,9 @@ This document contains a historical record of all completed tickets from the Dig
 ---
 
 ## 📊 **Statistics**
-- **Total Completed Tickets:** 27
+- **Total Completed Tickets:** 28
 - **Latest Completion:** 2025-01-27
-- **Most Recent:** iOS deployment and testing on iPad
+- **Most Recent:** Update score info text to emphasize nested NAND chip counting
 - **Key Achievements:** Community integration, Levels system, UI fixes, Performance optimizations, Mobile UX improvements, Library enhancements, iOS platform support
 
 ---

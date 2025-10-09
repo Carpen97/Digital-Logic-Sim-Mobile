@@ -72,7 +72,6 @@ Mobile Port (origin)
 | 038 | Add patch notes popup to About menu       | Open   | Create patch notes popup accessible from the About menu that displays user-facing changes and improvements since the last release. Popup should show new features, improvements, and bug fixes from a user perspective. Integrate with existing About menu system and ensure mobile-optimized display. |
 | 039 | Show dotted wire preview on mobile wire creation| Open   | When creating new wires on mobile, display a preview of the wire path as a dotted line to show where the wire will be placed. Enhance user experience by providing visual feedback during wire creation process. Implement dotted wire rendering for wire preview state before wire is confirmed. Mobile-specific enhancement for touch-based wire creation workflow. |
 | 044 | Unity Security Vulnerability Patch (CVE-2025-59489) | Open   | **CRITICAL SECURITY UPDATE**: Unity has disclosed CVE-2025-59489 affecting games built with Unity 2017.1+ on Android, Windows, macOS, and Linux. Required actions: (1) Update Unity Editor to patched version via Unity Hub/Download Archive, (2) Rebuild and republish for Android and other affected platforms to Google Play and distribution channels, (3) Alternative: Use Unity binary patcher tool if rebuild not feasible (cannot use if app has tamper-proofing/anti-cheat). Priority: High - Time critical security update. Primary concern: Android distribution on Google Play. Note: Google Play has additional protections but patch is still mandatory. |
-| 045 | Update score info text to emphasize nested NAND chip counting | Open   | Modify the score information text to clearly emphasize how nested NAND chips are counted in level scoring. Users need better understanding of the scoring system, particularly regarding how NAND gates within custom chips contribute to the total count. Improve clarity and transparency of scoring mechanics to help users optimize their solutions and understand scoring criteria. Update relevant UI text and help information to explain nested chip counting behavior. |
 
 ---
 
@@ -107,6 +106,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - 📝 **MANDATORY: Patch Notes Review** - **PM MUST ask "Should this be noted in patch notes?" and update PatchNotes.md for user-facing changes**
 
 ### **Current Status:**
-- **8 Open Tickets** available for selection
+- **7 Open Tickets** available for selection
 - **0 In Progress** tickets
 - **Project ready** for next instructions

@@ -62,6 +62,7 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 - **Enhanced Level System**: Expanded with more challenging levels and progressive difficulty
 - **Improved UI Navigation**: Better folder browsing and collection management
 - **Cross-Platform Compatibility**: Seamless experience across mobile and PC platforms
+- **Clearer Score Explanation**: Updated scoring information to better explain how nested NAND gates are counted in level solutions
 
 **Bug Fixes:**
 - Fixed iOS file picker for importing project zip files
