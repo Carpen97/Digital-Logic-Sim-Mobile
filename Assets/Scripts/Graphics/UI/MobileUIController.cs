@@ -358,6 +358,14 @@ public class MobileUIController : MonoBehaviour
 
 	public void OnWrenchButtonPress()
 	{	
+		// Check if exactly one editable component is selected and auto-open its edit menu
+		if (!isWrenchToolActive && TryAutoOpenEditMenuForSingleSelection())
+		{
+			// Edit menu opened, don't activate wrench tool mode
+			return;
+		}
+
+		// Default behavior: toggle wrench tool mode
 		isWrenchToolActive = !isWrenchToolActive;
 		if(isWrenchToolActive){
 			isBoxSelectToolActive = false;
@@ -366,6 +374,73 @@ public class MobileUIController : MonoBehaviour
 		}
 		else
 			wrenchImage.color = Color.white;
+	}
+
+	/// <summary>
+	/// Checks if exactly one editable component is selected and automatically opens its edit menu.
+	/// Returns true if an edit menu was opened, false otherwise.
+	/// </summary>
+	private bool TryAutoOpenEditMenuForSingleSelection()
+	{
+		// Only check when wrench tool is not already active
+		if (Project.ActiveProject == null || Project.ActiveProject.controller == null)
+			return false;
+
+		var selectedElements = Project.ActiveProject.controller.SelectedElements;
+		
+		// Only proceed if exactly one element is selected
+		if (selectedElements.Count != 1)
+			return false;
+
+		var selected = selectedElements[0];
+
+		// Handle SubChipInstance (chips like ROM, Key, Pulse, Constant, Custom, LED, Button)
+		if (selected is SubChipInstance subChip)
+		{
+			return TryAutoOpenChipEditMenu(subChip);
+		}
+		
+		// Handle DevPinInstance (input/output pins)
+		if (selected is DevPinInstance devPin)
+		{
+			return TryAutoOpenPinEditMenu(devPin);
+		}
+
+		return false;
+	}
+
+	private bool TryAutoOpenChipEditMenu(SubChipInstance subChip)
+	{
+		// Check if we can edit the current chip
+		if (!Project.ActiveProject.CanEditViewedChip)
+			return false;
+
+		// Set the interaction context so edit menus can access it
+		DLS.Graphics.ContextMenu.SetInteractionContext(subChip);
+
+		// Select the chip before opening menu
+		Project.ActiveProject.controller.Select(subChip, false);
+
+		// Always open the context menu (centered) - let user choose action from there
+		DLS.Graphics.ContextMenu.OpenContextMenuCentered(subChip);
+		return true;
+	}
+
+	private bool TryAutoOpenPinEditMenu(DevPinInstance devPin)
+	{
+		// Check if we can edit the current chip
+		if (!Project.ActiveProject.CanEditViewedChip)
+			return false;
+
+		// Set the interaction context so edit menus can access it
+		DLS.Graphics.ContextMenu.SetInteractionContext(devPin);
+
+		// Select the pin before opening menu
+		Project.ActiveProject.controller.Select(devPin, false);
+
+		// Always open the context menu (centered) - let user choose action from there
+		DLS.Graphics.ContextMenu.OpenContextMenuCentered(devPin);
+		return true;
 	}
 
 	public void OnBoxSelectToolPress()

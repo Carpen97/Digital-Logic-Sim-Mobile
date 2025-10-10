@@ -70,6 +70,7 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 - **Improved UI Navigation**: Better folder browsing and collection management
 - **Cross-Platform Compatibility**: Seamless experience across mobile and PC platforms
 - **Clearer Score Explanation**: Updated scoring information to better explain how nested NAND gates are counted in level solutions
+- **Auto-Open Edit Tool**: Single component selected + wrench press now automatically opens the edit menu, reducing taps by 50% for faster workflow
 
 **Bug Fixes:**
 - Fixed iOS file picker for importing project zip files

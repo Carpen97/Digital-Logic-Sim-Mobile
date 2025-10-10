@@ -19,6 +19,7 @@ namespace DLS.Graphics
 		static string interactionContextName;
 		static bool bottomBarItemIsCollection;
 		static Vector2 mouseOpenMenuPos;
+		static bool shouldCenterMenu; // Flag to center menu on next draw
 
 		static MenuEntry[] activeContextMenuEntries;
 		static readonly MenuEntry dividerMenuEntry = new(menuDividerString, null, null);
@@ -301,6 +302,28 @@ namespace DLS.Graphics
 			float menuWidthHeader = Draw.CalculateTextBoundsSize(contextMenuHeader, theme.fontSize, theme.font).x + 1;
 			menuWidth = Mathf.Max(menuWidth, menuWidthHeader);
 
+			// If menu should be centered, calculate center position now (inside UI scope)
+			if (shouldCenterMenu)
+			{
+				// Position menu in center-ish area, accounting for menu expanding downward
+				// Estimate menu height: header + entries, each button is ~4 units tall on mobile
+				#if UNITY_ANDROID || UNITY_IOS
+				float estimatedMenuHeight = (menuEntries.Length + 1) * 4f; // 4 = buttonSize.y (2*2)
+				#else
+				float estimatedMenuHeight = (menuEntries.Length + 1) * 2f; // 2 = buttonSize.y
+				#endif
+				
+				// Start from center and offset upward by half the estimated menu height
+				float centerY = Seb.Vis.UI.UI.Height * 0.5f;
+				float startY = centerY + estimatedMenuHeight * 0.5f;
+				
+				// Center X: offset left by half the menu width so menu is centered
+				float centerX = Seb.Vis.UI.UI.Width * 0.5f - menuWidth * 0.5f;
+				
+				mouseOpenMenuPos = new Vector2(centerX, startY);
+				shouldCenterMenu = false;
+			}
+
 			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 			#if UNITY_ANDROID || UNITY_IOS
 			Vector2 buttonSize = new(menuWidth, 2*2);
@@ -523,6 +546,82 @@ namespace DLS.Graphics
 		public static void UnstarBottomBarEntry()
 		{
 			Project.ActiveProject.SetStarred(interactionContextName, false, bottomBarItemIsCollection, true);
+		}
+
+		/// <summary>
+		/// Sets the interaction context for use by edit menus (ROM, Key, Pulse, Constant, etc).
+		/// This is needed when auto-opening edit menus from the wrench tool.
+		/// </summary>
+		public static void SetInteractionContext(IInteractable context)
+		{
+			interactionContext = context;
+			if (context is SubChipInstance subChip)
+			{
+				interactionContextName = subChip.Description.Name;
+			}
+			else if (context is DevPinInstance devPin)
+			{
+				interactionContextName = devPin.Name;
+			}
+		}
+
+		/// <summary>
+		/// Opens the context menu centered on screen for the given chip.
+		/// Used when auto-opening from wrench tool.
+		/// </summary>
+		public static void OpenContextMenuCentered(SubChipInstance subChip)
+		{
+			interactionContext = subChip;
+			interactionContextName = subChip.Description.Name;
+			
+			// Determine which menu entries to show
+			string headerName;
+			if (subChip.ChipType == ChipType.Custom)
+			{
+				headerName = subChip.Description.Name;
+				activeContextMenuEntries = entries_customSubchip;
+			}
+			else // builtin type
+			{
+				headerName = ChipTypeHelper.IsBusType(subChip.ChipType) ? "BUS" : subChip.Description.Name;
+				if (subChip.ChipType is ChipType.Key) activeContextMenuEntries = entries_builtinKeySubchip;
+				else if (ChipTypeHelper.IsRomType(subChip.ChipType)) activeContextMenuEntries = entries_builtinRomSubchip;
+				else if (subChip.ChipType is ChipType.Pulse) activeContextMenuEntries = entries_builtinPulseChip;
+				else if (ChipTypeHelper.IsBusType(subChip.ChipType)) activeContextMenuEntries = entries_builtinBus;
+				else if (subChip.ChipType == ChipType.DisplayLED) activeContextMenuEntries = entries_builtinLED;
+				else if (subChip.ChipType == ChipType.Button) activeContextMenuEntries = entries_builtinButton;
+				else if (subChip.ChipType == ChipType.Constant_8Bit) activeContextMenuEntries = entries_builtinConstantChip;
+				else activeContextMenuEntries = entries_builtinSubchip;
+			}
+			
+			// Set flag to center menu on next draw (when UI scope is active)
+			shouldCenterMenu = true;
+			mouseOpenMenuPos = new Vector2(50f, 50f); // Temporary position
+			
+			contextMenuHeader = headerName.PadRight(pad);
+			IsOpen = true;
+		}
+
+		/// <summary>
+		/// Opens the context menu centered on screen for the given dev pin.
+		/// Used when auto-opening from wrench tool.
+		/// </summary>
+		public static void OpenContextMenuCentered(DevPinInstance devPin)
+		{
+			// Convert DevPinInstance to PinInstance for context menu
+			interactionContext = devPin.Pin;
+			interactionContextName = devPin.Name;
+			
+			// Determine which menu entries to show
+			string headerName = CreatePinHeaderName(devPin.Name);
+			activeContextMenuEntries = devPin.IsInputPin ? entries_inputDevPin : entries_outputDevPin;
+			
+			// Set flag to center menu on next draw (when UI scope is active)
+			shouldCenterMenu = true;
+			mouseOpenMenuPos = new Vector2(50f, 50f); // Temporary position
+			
+			contextMenuHeader = headerName.PadRight(pad);
+			IsOpen = true;
 		}
 
 		public readonly struct MenuEntry
