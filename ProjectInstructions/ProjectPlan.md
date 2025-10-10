@@ -26,17 +26,25 @@ Mobile Port (origin)
 - `origin`: https://github.com/Carpen97/Digital-Logic-Sim-Mobile.git (Mobile port)
 
 **Branch Strategy:**
-- **`upstream/main`**: Track Seb's original updates
-- **`community/main` & `community/dev`**: Track community improvements and features
-- **`origin/main`**: Main mobile development branch
-- **`merge/mobile-community`**: Integration branch for merging community updates into mobile
-- **`mobile-port`**: Legacy mobile development branch
+- **`upstream/main`**: Track Seb's original updates (read-only)
+- **`community/main` & `community/dev`**: Track community improvements and features (read-only)
+- **`main`** (local & `origin/main`): **PRIMARY development branch** - all mobile development happens here
+- **`merge/mobile-community`**: Integration branch ONLY for merging community updates into mobile
+- **`mobile-port`**: Legacy mobile development branch (deprecated)
+
+**Current Setup:**
+- **Active branch**: `main` (tracks `origin/main`)
+- **Development**: All work happens on `main` branch
+- **Backup**: Code also exists on `origin/merge/mobile-community` (from previous workflow)
 
 **Workflow:**
-1. **Community Updates**: Pull from `community/dev` into `merge/mobile-community`
-2. **Mobile Development**: Work on `origin/main` or create feature branches
-3. **Integration**: Merge community updates into mobile branch as needed
-4. **Upstream Updates**: Periodically check `upstream/main` for Seb's latest changes
+1. **Mobile Development**: Work on `main` branch - this is where all tickets are developed
+2. **Git Sync**: After each ticket completion, commit to `main` and push to `origin/main`
+3. **Community Updates** (when needed): 
+   - Pull from `community/dev` into `merge/mobile-community`
+   - Review and test changes
+   - Merge `merge/mobile-community` into `main` when ready
+4. **Upstream Updates** (periodic): Check `upstream/main` for Seb's latest changes and integrate as needed
 
 **🚨 CRITICAL: Unity Scene Safety Rules**
 - ⚠️ **BEFORE ANY GIT BRANCH OPERATION**: Save Unity scenes (`Ctrl+S` / File → Save)
