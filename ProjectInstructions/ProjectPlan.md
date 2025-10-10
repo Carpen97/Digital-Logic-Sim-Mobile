@@ -38,6 +38,13 @@ Mobile Port (origin)
 3. **Integration**: Merge community updates into mobile branch as needed
 4. **Upstream Updates**: Periodically check `upstream/main` for Seb's latest changes
 
+**🚨 CRITICAL: Unity Scene Safety Rules**
+- ⚠️ **BEFORE ANY GIT BRANCH OPERATION**: Save Unity scenes (`Ctrl+S` / File → Save)
+- ⚠️ **BEFORE SWITCHING BRANCHES**: Commit any Unity scene changes to git
+- ⚠️ **NEVER switch branches** with unsaved Unity scene changes
+- ⚠️ **PM MUST WARN USER** before any `git checkout`, `git merge`, or branch switching operation
+- 💡 **Why**: Git branch switches update scene files, causing Unity to lose unsaved changes when it reloads
+
 ---
 
 ### 🎯 Goals
@@ -103,6 +110,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - ✅ **Always require approval** - Worker chats must discuss and get approval before making code changes
 - 🔴 **MANDATORY: Git Commit Reminder** - **PM MUST proactively remind user to commit completed tickets with format: "Ticket XXX: Brief description"**
 - 📝 **MANDATORY: Patch Notes Review** - **PM MUST ask "Should this be noted in patch notes?" and update PatchNotes.md for user-facing changes**
+- 🚨 **CRITICAL: Unity Scene Safety** - **PM MUST ALWAYS warn user to save Unity scenes BEFORE any git branch operations (checkout, merge, switch, etc.)**
 
 ### **Current Status:**
 - **5 Open Tickets** available for selection
