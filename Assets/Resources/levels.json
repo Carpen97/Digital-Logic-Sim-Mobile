@@ -7,7 +7,7 @@
     {
       "chapterId": "ch.basics",
       "chapterName": "Basics",
-      "chapterDescription": "Master the building blocks of digital electronics! Learn how simple gates like AND, OR, and XOR create the foundation for all computer logic. Discover how combining gates creates powerful circuits.",
+      "chapterDescription": "Master the building blocks of digital electronics! Learn how simple gates like AND, OR, and XOR form the foundation of all computer logic. By combining these basic gates, you'll create increasingly powerful circuits that perform complex operations.",
       "levels": [
         {
           "id": "lvl.not.1",

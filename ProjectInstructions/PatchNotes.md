@@ -71,6 +71,7 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 - **Cross-Platform Compatibility**: Seamless experience across mobile and PC platforms
 - **Clearer Score Explanation**: Updated scoring information to better explain how nested NAND gates are counted in level solutions
 - **Auto-Open Edit Tool**: Single component selected + wrench press now automatically opens the edit menu, reducing taps by 50% for faster workflow
+- **Selectable Chapters in Levels Menu**: Chapters now show educational descriptions when selected, with color-coded banners, auto-selection of next incomplete level, and improved mobile touch experience. Better learning journey with context before diving into levels.
 
 **Bug Fixes:**
 - Fixed iOS file picker for importing project zip files
