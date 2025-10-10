@@ -49,8 +49,13 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 
 ### **Version 2.1.6.9** - 2025-01-28
 
+**New Features:**
+- **Patch Notes Popup**: View "What's New" directly from the About menu! See recent features, improvements, and bug fixes with color-coded sections. Easy to navigate with version selection and scrollable content.
+
 **Improvements:**
 - **PC Firebase Integration**: Full Firebase functionality now works on PC builds (Windows, macOS, Linux). PC users can now upload scores, view leaderboards, share solutions, and set user names just like mobile users. All online features are now available across all platforms.
+- **Auto-Open Edit Tool**: Single component selected + wrench press now automatically opens the edit menu, reducing taps by 50% for faster workflow
+- **Selectable Chapters in Levels Menu**: Chapters now show educational descriptions when selected, with color-coded banners, auto-selection of next incomplete level, and improved mobile touch experience. Better learning journey with context before diving into levels.
 
 ---
 
@@ -80,9 +85,9 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 ---
 
 ## 📊 **Statistics**
-- **Total Features Added:** 7
+- **Total Features Added:** 8
 - **Latest Update:** 2025-01-28
-- **User-Facing Changes:** PC Firebase integration, hierarchical collections, solution sharing, iOS platform support
+- **User-Facing Changes:** Patch notes popup, PC Firebase integration, hierarchical collections, solution sharing, iOS platform support
 
 ---
 

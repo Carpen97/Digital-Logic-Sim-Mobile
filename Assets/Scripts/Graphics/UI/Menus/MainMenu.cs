@@ -22,6 +22,7 @@ namespace DLS.Graphics
 	static AppSettings EditedAppSettings;
 	static string projectCreationErrorMessage = "";
 	static List<string> projectCreationDebugLogs = new List<string>();
+	static int selectedPatchNoteIndex = 0; // Track which patch note version is selected
 
 	static readonly UIHandle ID_ProjectNameInput = new("MainMenu_ProjectNameInputField");
 	static readonly UIHandle ID_DisplayResolutionWheel = new("MainMenu_DisplayResolutionWheel");
@@ -33,6 +34,7 @@ namespace DLS.Graphics
 	static readonly UIHandle ID_UIScaling = new("MainMenu_UIScalingWheel");
 	static readonly UIHandle ID_ProjectsScrollView = new("MainMenu_ProjectsScrollView");
 	static readonly UIHandle ID_ErrorLogsScrollView = new("MainMenu_ErrorLogsScrollView");
+	static readonly UIHandle ID_PatchNotesScrollView = new("MainMenu_PatchNotesScrollView");
 
 		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string[] SettingsWheelFullScreenOptions = { "AUTO","WINDOWED", "MAXIMIZED", "BORDERLESS", "EXCLUSIVE" };
@@ -151,6 +153,41 @@ namespace DLS.Graphics
 
 		static string FormatButtonString(string s) => capitalize ? s.ToUpper() : s;
 
+	static string WrapText(string text, int maxCharsPerLine)
+	{
+		if (string.IsNullOrEmpty(text)) return text;
+		
+		string[] words = text.Split(' ');
+		System.Text.StringBuilder result = new System.Text.StringBuilder();
+		System.Text.StringBuilder currentLine = new System.Text.StringBuilder();
+		
+		foreach (string word in words)
+		{
+			// Check if adding this word would exceed the limit
+			if (currentLine.Length > 0 && currentLine.Length + word.Length + 1 > maxCharsPerLine)
+			{
+				// Start a new line
+				result.AppendLine(currentLine.ToString());
+				currentLine.Clear();
+			}
+			
+			// Add word to current line
+			if (currentLine.Length > 0)
+			{
+				currentLine.Append(" ");
+			}
+			currentLine.Append(word);
+		}
+		
+		// Add the last line
+		if (currentLine.Length > 0)
+		{
+			result.Append(currentLine.ToString());
+		}
+		
+		return result.ToString();
+	}
+
 		public static void Draw()
 		{
 			Simulator.UpdateInPausedState();
@@ -204,11 +241,14 @@ namespace DLS.Graphics
 			case PopupKind.NamePopup_NewProject:
 				DrawNamePopup();
 				break;
-			case PopupKind.ProjectCreationError:
-				DrawProjectCreationErrorPopup();
-				break;
-		}
-		}
+		case PopupKind.ProjectCreationError:
+			DrawProjectCreationErrorPopup();
+			break;
+		case PopupKind.PatchNotes:
+			DrawPatchNotesPopup();
+			break;
+	}
+	}
 
 		public static void OnMenuOpened()
 		{
@@ -390,12 +430,18 @@ namespace DLS.Graphics
 			}
 		}
 
-		static void BackToMain()
+	static void BackToMain()
+	{
+		Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectNameInput).ClearText();
+		activeMenuScreen = MenuScreen.Main;
+		activePopup = PopupKind.None;
+		
+		// Hide About menu logo GameObjects when leaving About screen
+		if (AboutMenuUIController.Instance != null)
 		{
-			Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectNameInput).ClearText();
-			activeMenuScreen = MenuScreen.Main;
-			activePopup = PopupKind.None;
+			AboutMenuUIController.Instance.HideLogos();
 		}
+	}
 
 
 		static void OnSettingsMenuOpened()
@@ -743,117 +789,258 @@ namespace DLS.Graphics
 		}
 	}
 
-		static void DrawAboutScreen()
+	static void DrawAboutScreen()
+	{
+		ButtonTheme theme = DrawSettings.ActiveUITheme.MainMenuButtonTheme;
+		
+		// Show logo GameObjects when About menu is active AND no popup is open
+		if (AboutMenuUIController.Instance != null)
 		{
-			ButtonTheme theme = DrawSettings.ActiveUITheme.MainMenuButtonTheme;
-			
-			// Add a bounds scope for the logos
-			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			if (activePopup == PopupKind.None)
 			{
-			string about_text = 
-			"This project is based on Digital Logic Sim, created by Sebastian Lague.\n" +
-			"This mobile version was ported and adapted by David Carpenfelt to make it accessible on Android devices.\n\n" +
-			"If you need inspiration for how to play the game, check out Sebastian's YouTube playlist:\n";
+				AboutMenuUIController.Instance.ShowLogos();
+			}
+			else
+			{
+				AboutMenuUIController.Instance.HideLogos();
+			}
+		}
+		
+		// Layout: Text on left (0.1 to 0.65), Logos on right (0.70 to 0.90)
+		float leftTextStartX = Seb.Vis.UI.UI.Width * 0.07f; // Left edge for text
+		float logoTextStartX = Seb.Vis.UI.UI.Width * 0.48f; // Left edge for text
+		float rightLogoX = Seb.Vis.UI.UI.Width * 0.866f; // Center of right column
 
-			Seb.Vis.UI.UI.DrawText(about_text, theme.font, theme.fontSize*0.6f, Seb.Vis.UI.UI.Centre + Vector2.up * 10, Anchor.Centre, Color.white);
-			
-			// Draw YouTube logo using PNG texture
-			Debug.Log($"[MainMenu] Attempting to load YouTube logo from: UI/Logos/YouTube");
-			// Try loading from the actual location - Assets/UI/Logos/
-			Texture2D youtubeLogo = Resources.Load<Texture2D>("UI/Logos/YouTube");
-			Debug.Log($"[MainMenu] YouTube Logo Loaded: {(youtubeLogo != null ? youtubeLogo.name : "NULL")}");
-			
-			// Debug: List all available resources
-			UnityEngine.Object[] allResources = Resources.LoadAll("UI/Logos");
-			Debug.Log($"[MainMenu] Available resources in UI/Logos: {allResources.Length}");
-			foreach (UnityEngine.Object obj in allResources)
-			{
-				Debug.Log($"[MainMenu] Found resource: {obj.name} ({obj.GetType().Name})");
-			}
-			
-			// Try alternative paths
-			Debug.Log($"[MainMenu] Trying alternative paths...");
-			Texture2D altYoutube = Resources.Load<Texture2D>("YouTube");
-			Debug.Log($"[MainMenu] Alternative YouTube path result: {(altYoutube != null ? altYoutube.name : "NULL")}");
-			
-			// Try loading from root Resources folder
-			UnityEngine.Object[] rootResources = Resources.LoadAll("");
-			Debug.Log($"[MainMenu] Root resources count: {rootResources.Length}");
-			foreach (UnityEngine.Object obj in rootResources)
-			{
-				if (obj.name.ToLower().Contains("youtube") || obj.name.ToLower().Contains("discord"))
-				{
-					Debug.Log($"[MainMenu] Found potential logo: {obj.name} ({obj.GetType().Name})");
-				}
-			}
-			if (youtubeLogo != null)
-			{
-				Vector2 youtubePos = Seb.Vis.UI.UI.Centre + Vector2.up * 2;
-				Vector2 youtubeSize = new Vector2(3, 3);
-				Debug.Log($"[MainMenu] Drawing YouTube Logo at Pos: {youtubePos}, Size: {youtubeSize}");
-				Seb.Vis.UI.UI.DrawTextureDirect(youtubePos, youtubeSize, youtubeLogo, Color.white);
-			}
-			
-			if (Seb.Vis.UI.UI.Button("Link to YouTube", theme, Seb.Vis.UI.UI.Centre + Vector2.up * 2, Vector2.zero, true, true, true, theme.buttonCols))
-			{
-				BackToMain();
-				Application.OpenURL("https://www.youtube.com/watch?v=QZwneRb-zqA&list=PLFt_AvWsXl0dPhqVsKt1Ni_46ARyiCGSq");
-			}
+			// Top section - Main about text
+		string about_text_1 = "This is an extension of Sebastian Lague's project Digital-Logic-Sim.";
+		about_text_1 = WrapText(about_text_1, 45) + "\n";
+		string about_text_2 = "The orignial goal of the extension was to make the simulator available on mobile. Since then more features have also been added such as the levels system (still very much a work in progress). Note this version also include changes introduced by the Community-Edit (check out discord for more info)";
+		about_text_2 = WrapText(about_text_2, 45);
+		string about_text = about_text_1 + about_text_2;
+		Seb.Vis.UI.UI.DrawText(about_text, theme.font, theme.fontSize*0.6f, new Vector2(leftTextStartX, Seb.Vis.UI.UI.Centre.y + 11), Anchor.TopLeft, Color.white);
 
-			string feedback_text = 
-			"If you'd like to give feedback please visit this discord thread\n";
+		
+		// YouTube section text
+		string youtube_text = WrapText(
+			"If you need inpiration for how to play the game or if you are curious about the origins of the project I highly recommend you check out Sebastians youtube",
+			35);
 
-			Seb.Vis.UI.UI.DrawText(feedback_text, theme.font, theme.fontSize*0.6f, Seb.Vis.UI.UI.CentreBottom + Vector2.up * 24, Anchor.Centre, Color.white);
-			
-			// Draw Discord logo using PNG texture
-			Texture2D discordLogo = Resources.Load<Texture2D>("UI/Logos/Discord");
-			Debug.Log($"[MainMenu] Discord Logo Loaded: {(discordLogo != null ? discordLogo.name : "NULL")}");
-			if (discordLogo != null)
-			{
-				Vector2 discordPos = Seb.Vis.UI.UI.CentreBottom + Vector2.up * 18;
-				Vector2 discordSize = new Vector2(3, 3);
-				Debug.Log($"[MainMenu] Drawing Discord Logo at Pos: {discordPos}, Size: {discordSize}");
-				Seb.Vis.UI.UI.DrawTextureDirect(discordPos, discordSize, discordLogo, Color.white);
-			}
-			
-			if (Seb.Vis.UI.UI.Button("Link to Discord", theme, Seb.Vis.UI.UI.CentreBottom + Vector2.up * 18, Vector2.zero, true, true, true, theme.buttonCols))
-			{
-				BackToMain();
-				Application.OpenURL("https://discord.com/channels/1361307968276136007/1366859789711315106");
-
-			}
-
-			if (Seb.Vis.UI.UI.Button("Back", theme, Seb.Vis.UI.UI.CentreBottom + Vector2.up * 10, Vector2.zero, true, true, true, theme.buttonCols))
-			{
-				BackToMain();
-			}
-			} // End bounds scope
+		Seb.Vis.UI.UI.DrawText(youtube_text, theme.font, theme.fontSize*0.6f, new Vector2(logoTextStartX, Seb.Vis.UI.UI.Centre.y + 11), Anchor.TopLeft, Color.white);
+		
+		// YouTube button (empty/semi-transparent overlay over logo GameObject)
+		Vector2 youtubeButtonPos = new Vector2(rightLogoX, Seb.Vis.UI.UI.Centre.y + 8);
+		Vector2 buttonSize = new Vector2(8, 9); // Size for the clickable area
+		
+		// Create semi-transparent button colors for visibility during development
+		ButtonTheme.StateCols logoButtonCols = new ButtonTheme.StateCols
+		{
+			normal = new Color(1, 1, 1, 0.1f),      // Slight white tint
+			hover = new Color(1, 1, 0.5f, 0.3f),    // Yellow tint on hover
+			pressed = new Color(0.5f, 1, 0.5f, 0.4f), // Green tint on press
+			inactive = new Color(0.5f, 0.5f, 0.5f, 0.1f) // Gray tint when inactive
+		};
+		
+		if (Seb.Vis.UI.UI.Button("", theme, youtubeButtonPos, buttonSize, true, false, false, logoButtonCols))
+		{
+			BackToMain();
+			Application.OpenURL("https://www.youtube.com/watch?v=QZwneRb-zqA&list=PLFt_AvWsXl0dPhqVsKt1Ni_46ARyiCGSq");
 		}
 
+		// Discord section text
+		string discord_text = WrapText(
+			"If you want to report a bug, give feedback or have ideas for new features. Head to discord",
+			35);
 
-		static void DrawVersionInfo()
+		Seb.Vis.UI.UI.DrawText(discord_text, theme.font, theme.fontSize*0.6f, new Vector2(logoTextStartX, Seb.Vis.UI.UI.CentreBottom.y + 21), Anchor.TopLeft, Color.white);
+		
+		// Discord button (empty/semi-transparent overlay over logo GameObject)
+		Vector2 discordButtonPos = new Vector2(rightLogoX, Seb.Vis.UI.UI.CentreBottom.y + 19.5f);
+		
+		// White background for Discord button
+		ButtonTheme.StateCols discordButtonCols = new ButtonTheme.StateCols
 		{
-			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
-			Seb.Vis.UI.UI.DrawPanel(Seb.Vis.UI.UI.BottomLeft, new Vector2(Seb.Vis.UI.UI.Width, 4), ColHelper.MakeCol255(37, 37, 43), Anchor.BottomLeft);
+			normal = new Color(1, 1, 1, 0.0f),      // White with some transparency
+			hover = new Color(1, 1, 0.8f, 0.4f),    // Slight yellow tint on hover
+			pressed = new Color(0.9f, 0.9f, 0.9f, 0.5f), // Slightly darker white on press
+			inactive = new Color(0.7f, 0.7f, 0.7f, 0.2f) // Gray tint when inactive
+		};
+		
+		Vector2 buttonSize2 = new Vector2(8, 7); // Size for the clickable area
+		if (Seb.Vis.UI.UI.Button("", theme, discordButtonPos, buttonSize2, true, false, false, discordButtonCols))
+		{
+			BackToMain();
+			Application.OpenURL("https://discord.com/channels/1361307968276136007/1366859789711315106");
+		}
 
-			float pad = 1;
-			Color col = new(1, 1, 1, 0.5f);
-			Color modColor = new(0.98f, 0.76f, 0.26f);
-			Color mobileColor = new(0.26f, 0.76f, 0.98f);
+		// Back button - stays centered at bottom
+		#if UNITY_ANDROID || UNITY_IOS
+		Vector2 backButtonPos = Seb.Vis.UI.UI.CentreBottom + Vector2.up * 10;
+		Vector2 whatsNewButtonPos = Seb.Vis.UI.UI.CentreBottom + Vector2.up * 10 + Vector2.left * 18;
+		#else
+		Vector2 backButtonPos = Seb.Vis.UI.UI.CentreBottom + Vector2.up * 10;
+		Vector2 whatsNewButtonPos = Seb.Vis.UI.UI.CentreBottom + Vector2.up * 10 + Vector2.left * 10;
+		#endif
+		
+		if (Seb.Vis.UI.UI.Button("What's New?", theme, whatsNewButtonPos, Vector2.zero, true, true, true, theme.buttonCols))
+		{
+			activePopup = PopupKind.PatchNotes;
+		}
+		
+		if (Seb.Vis.UI.UI.Button("Back", theme, backButtonPos, Vector2.zero, true, true, true, theme.buttonCols))
+		{
+			BackToMain();
+		}
+	}
 
-            Vector2 versionPos = Seb.Vis.UI.UI.PrevBounds.CentreLeft + Vector2.right * pad;
-			Vector2 datePos = Seb.Vis.UI.UI.PrevBounds.CentreRight + Vector2.left * pad;
-			Vector2 moddedPos = Seb.Vis.UI.UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.right * pad*11f;
-			Vector2 mobilePos = Seb.Vis.UI.UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.left * pad*9.9f;
+	static void DrawPatchNotesPopup()
+	{
+		DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
-			Seb.Vis.UI.UI.DrawText(authorString, theme.FontRegular, theme.FontSizeRegular, versionPos, Anchor.TextCentreLeft, col);
-			Seb.Vis.UI.UI.DrawText(versionString, theme.FontRegular, theme.FontSizeRegular, datePos, Anchor.TextCentreRight, col);
-			if (activeMenuScreen == MenuScreen.Main)
+		Seb.Vis.UI.UI.StartNewLayer();
+		Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+		using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+		{
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+			
+			#if UNITY_ANDROID || UNITY_IOS
+			Vector2 popupSize = new(85, 45);
+			#else
+			Vector2 popupSize = new(70, 40);
+			#endif
+			
+			Vector2 pos = Seb.Vis.UI.UI.Centre;
+			
+			// Title at top
+			Seb.Vis.UI.UI.DrawText("What's New in Digital Logic Sim", theme.FontRegular, theme.FontSizeRegular * 1.2f, pos + Vector2.up * (popupSize.y / 2 - 3), Anchor.CentreTop, Color.white);
+			
+			// Calculate split positions
+			float leftPanelWidth = popupSize.x * 0.65f;  // Patch notes detail (wider)
+			float rightPanelWidth = popupSize.x * 0.30f; // Version selector (narrower)
+			float panelHeight = popupSize.y - 12; // Leave space for title and buttons
+			float gap = 1f; // Gap between panels
+			
+			// Calculate top-left positions for both panels
+			float contentTop = pos.y + (popupSize.y / 2) - 7; // Below title
+			float leftPanelLeft = pos.x - (popupSize.x / 2) + 2; // Left edge of popup + padding
+			float rightPanelLeft = leftPanelLeft + leftPanelWidth + gap; // After left panel + gap
+			
+			// LEFT panel - Scrollable patch notes detail for SELECTED version
+			Vector2 leftScrollViewPos = new Vector2(leftPanelLeft, contentTop);
+			Vector2 leftScrollViewSize = new(leftPanelWidth - 2, panelHeight);
+			
+			Seb.Vis.UI.UI.DrawScrollView(ID_PatchNotesScrollView, leftScrollViewPos, leftScrollViewSize, Anchor.TopLeft, theme.ScrollTheme, (topLeft, width, isLayoutPass) =>
 			{
-            	Seb.Vis.UI.UI.DrawText(moddedString, theme.FontRegular, theme.FontSizeRegular, moddedPos, Anchor.TextCentreLeft, modColor);
-            	Seb.Vis.UI.UI.DrawText(mobileString, theme.FontRegular, theme.FontSizeRegular, mobilePos, Anchor.TextCentreRight, mobileColor);
+				float spacing = 0.5f;
+				float sectionSpacing = 1.0f; // Extra spacing before section headers
+				
+				// Version 2.1.6.9 - Combined patch notes
+				Seb.Vis.UI.UI.DrawText("Version 2.1.6.9", theme.FontRegular, theme.FontSizeRegular * 1.0f, topLeft, Anchor.TopLeft, new Color(0.98f, 0.76f, 0.26f));
+				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.3f;
+				
+				Seb.Vis.UI.UI.DrawText("Release Date: October 9, 2025", theme.FontRegular, theme.FontSizeRegular * 0.6f, topLeft, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
+				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * sectionSpacing;
+				
+				Seb.Vis.UI.UI.DrawText("New Features:", theme.FontRegular, theme.FontSizeRegular * 0.8f, topLeft, Anchor.TopLeft, new Color(0.6f, 0.9f, 0.6f));
+				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.3f;
+				
+				string features = WrapText(
+					"Drag and Drop Control Scheme - New intuitive chip placement mode. Simply drag chips from the bottom bar and drop them directly onto the canvas. Toggle between classic 'Drag and Lock' and new 'Drag and Drop' modes in preferences.\n\n" +
+					"Hierarchical Collection Organization - Create and manage sub folders within collections for better chip organization.\n\n" +
+					"PC Version - Full mobile features now available on PC with mouse and keyboard support.\n\n" +
+					"Solution Sharing - Upload and view complete solutions from leaderboard entries.\n\n" +
+					"User Names - Add custom names when uploading scores to leaderboards.\n\n" +
+					"iOS Platform Support - Full iOS support with project import/export and Firebase integration.",
+					(int)(width / (theme.FontSizeRegular * 0.6f * 0.5f)));
+				Seb.Vis.UI.UI.DrawText(features, theme.FontRegular, theme.FontSizeRegular * 0.6f, topLeft, Anchor.TopLeft, Color.white);
+				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * sectionSpacing;
+				
+				Seb.Vis.UI.UI.DrawText("Improvements:", theme.FontRegular, theme.FontSizeRegular * 0.8f, topLeft, Anchor.TopLeft, new Color(0.6f, 0.8f, 1f));
+				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.3f;
+				
+				string improvements = WrapText(
+					"PC Firebase Integration - Full Firebase functionality now works on PC builds (Windows, macOS, Linux). PC users can now upload scores, view leaderboards, share solutions, and set user names just like mobile users. All online features are now available across all platforms.\n\n" +
+					"Enhanced Level System - Expanded with more challenging levels and progressive difficulty.\n\n" +
+					"Improved UI Navigation - Better folder browsing and collection management.\n\n" +
+					"Clearer Score Explanation - Updated scoring information to better explain how nested NAND gates are counted.\n\n" +
+					"Auto-Open Edit Tool - Single component selected + wrench press now automatically opens the edit menu.\n\n" +
+					"Selectable Chapters in Levels Menu - Chapters now show educational descriptions when selected.",
+					(int)(width / (theme.FontSizeRegular * 0.6f * 0.5f)));
+				Seb.Vis.UI.UI.DrawText(improvements, theme.FontRegular, theme.FontSizeRegular * 0.6f, topLeft, Anchor.TopLeft, Color.white);
+				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * sectionSpacing;
+				
+				Seb.Vis.UI.UI.DrawText("Bug Fixes:", theme.FontRegular, theme.FontSizeRegular * 0.8f, topLeft, Anchor.TopLeft, new Color(1f, 0.6f, 0.6f));
+				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.3f;
+				
+				string fixes = WrapText(
+					"Fixed iOS file picker for importing project zip files. Various stability improvements and performance optimizations.",
+					(int)(width / (theme.FontSizeRegular * 0.6f * 0.5f)));
+				Seb.Vis.UI.UI.DrawText(fixes, theme.FontRegular, theme.FontSizeRegular * 0.6f, topLeft, Anchor.TopLeft, Color.white);
+			});
+			
+			// RIGHT panel - Version selector buttons
+			Vector2 rightPanelPos = new Vector2(rightPanelLeft, contentTop);
+			
+			// Draw version selection buttons
+			string[] versionNames = { "Version 2.1.6.9" };
+			
+			Vector2 versionButtonPos = rightPanelPos;
+			Vector2 versionButtonSize = new Vector2(rightPanelWidth - 2, 3);
+			
+			for (int i = 0; i < versionNames.Length; i++)
+			{
+				bool isSelected = selectedPatchNoteIndex == i;
+				ButtonTheme.StateCols buttonCols = isSelected 
+					? new ButtonTheme.StateCols(new Color(0.98f, 0.76f, 0.26f, 0.3f), new Color(0.98f, 0.76f, 0.26f, 0.5f), new Color(0.98f, 0.76f, 0.26f, 0.6f), Color.gray)
+					: theme.MainMenuButtonTheme.buttonCols;
+				
+				if (Seb.Vis.UI.UI.Button(versionNames[i], theme.MainMenuButtonTheme, versionButtonPos, versionButtonSize, true, false, true, buttonCols, Anchor.TopLeft))
+				{
+					selectedPatchNoteIndex = i;
+				}
+				
+				versionButtonPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.5f;
 			}
-        }
+			
+			// Close button at bottom
+			Vector2 buttonPos = pos + Vector2.down * (popupSize.y / 2 - 3);
+			
+			if (Seb.Vis.UI.UI.Button("Close", theme.MainMenuButtonTheme, buttonPos, Vector2.zero, true, true, true, theme.MainMenuButtonTheme.buttonCols) || KeyboardShortcuts.CancelShortcutTriggered)
+			{
+				activePopup = PopupKind.None;
+			}
+			
+			Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+		}
+	}
+
+
+	static void DrawVersionInfo()
+	{
+		DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+		Seb.Vis.UI.UI.DrawPanel(Seb.Vis.UI.UI.BottomLeft, new Vector2(Seb.Vis.UI.UI.Width, 4), ColHelper.MakeCol255(37, 37, 43), Anchor.BottomLeft);
+
+		float pad = 1;
+		Color col = new(1, 1, 1, 0.5f);
+		Color modColor = new(0.98f, 0.76f, 0.26f);
+		Color mobileColor = new(0.26f, 0.76f, 0.98f);
+
+		// Bottom row (grey text)
+        Vector2 versionPos = Seb.Vis.UI.UI.PrevBounds.CentreLeft + Vector2.right * pad;
+		Vector2 datePos = Seb.Vis.UI.UI.PrevBounds.CentreRight + Vector2.left * pad;
+		
+		// Top row (mobile/ComEdit) - positioned above bottom row, same X alignment
+		Vector2 mobilePos = versionPos + Vector2.up * 3.5f; // Same X as "Created by", 3.5 units up
+		Vector2 moddedPos = datePos + Vector2.up * 3.5f;    // Same X as "Version", 3.5 units up
+
+		Seb.Vis.UI.UI.DrawText(authorString, theme.FontRegular, theme.FontSizeRegular, versionPos, Anchor.TextCentreLeft, col);
+		Seb.Vis.UI.UI.DrawText(versionString, theme.FontRegular, theme.FontSizeRegular, datePos, Anchor.TextCentreRight, col);
+		if (activeMenuScreen == MenuScreen.Main || activeMenuScreen == MenuScreen.About)
+		{
+        	Seb.Vis.UI.UI.DrawText(moddedString, theme.FontRegular, theme.FontSizeRegular, moddedPos, Anchor.TextCentreRight, modColor);
+        	Seb.Vis.UI.UI.DrawText(mobileString, theme.FontRegular, theme.FontSizeRegular, mobilePos, Anchor.TextCentreLeft, mobileColor);
+		}
+    }
         static string ResolutionToString(Vector2Int r) => $"{r.x} x {r.y}";
 
 		static void Quit()
@@ -883,6 +1070,7 @@ namespace DLS.Graphics
 		NamePopup_NewProject,
 		OverwriteConfirmation,
 		ProjectCreationError,
+		PatchNotes,
 	}
 	}
 }

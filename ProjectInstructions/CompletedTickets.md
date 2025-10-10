@@ -11,7 +11,20 @@ This document contains a historical record of all completed tickets from the Dig
 
 ---
 
+## 📊 Statistics
+
+- **Total Completed Tickets**: 32
+- **Most Recent**: Ticket 038 (October 10, 2025)
+
+---
+
 ## 📋 **Completed Tickets**
+
+### **Ticket 038** – Add patch notes popup to About menu
+**Closed:** 2025-01-28  
+**Summary:** Successfully implemented a user-friendly patch notes popup accessible from the About menu, allowing users to view recent changes and new features within the app. About Menu UI redesigned with restructured layout (text 0.07-0.48, logos 0.70-0.90), integrated YouTube and Discord logo buttons with proper click handling, and created AboutMenuUIController.cs for GameObject-based logo display (logos automatically hide when popup is open). Patch notes popup features "What's New?" button next to Back button with platform-specific positioning, split-panel design (65% scrollable content, 30% version selector ready for future versions), proper centering with TopLeft anchor, and ESC key support. Content presentation includes color-coded sections (Green: New Features, Blue: Improvements, Red: Bug Fixes), current version 2.1.6.9 with complete feature list (6 new features, 6 improvements, bug fixes), proper vertical spacing, and automatic text wrapping. Additional improvements: fixed mobile port/ComEdit text alignment and increased vertical spacing between version info rows. Cross-platform compatibility works on both mobile and PC. Technical implementation: new AboutMenuUIController.cs, modified MainMenu.cs, new PopupKind.PatchNotes enum, ID_PatchNotesScrollView handle, WrapText() utility. Easy to update: add new version to versionNames array and new content block. All 7 success criteria met: button added, readable format, mobile-optimized scrolling, consistent UI theme, easy to close (ESC + button), easy to update, no performance issues. ✅
+
+---
 
 ### **Ticket 048** – Make chapters selectable with descriptions in Levels Menu
 **Closed:** 2025-01-28  
