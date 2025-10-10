@@ -843,7 +843,7 @@ namespace DLS.Graphics
 
             Vector2 versionPos = Seb.Vis.UI.UI.PrevBounds.CentreLeft + Vector2.right * pad;
 			Vector2 datePos = Seb.Vis.UI.UI.PrevBounds.CentreRight + Vector2.left * pad;
-			Vector2 moddedPos = Seb.Vis.UI.UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.right * pad*8.7f;
+			Vector2 moddedPos = Seb.Vis.UI.UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.right * pad*11f;
 			Vector2 mobilePos = Seb.Vis.UI.UI.PrevBounds.Centre + Vector2.up * 3.8f+ Vector2.left * pad*9.9f;
 
 			Seb.Vis.UI.UI.DrawText(authorString, theme.FontRegular, theme.FontSizeRegular, versionPos, Anchor.TextCentreLeft, col);

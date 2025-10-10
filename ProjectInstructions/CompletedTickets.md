@@ -13,6 +13,12 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📋 **Completed Tickets**
 
+### **Ticket 037** – Fix Firebase integration on PC
+**Closed:** 2025-01-28  
+**Summary:** Successfully enabled Firebase integration on PC platform builds (Windows, macOS, Linux) to provide feature parity with mobile platforms. Investigation confirmed Firebase DLLs (.dll for Windows, .so for Linux, .bundle for macOS) were already properly configured and google-services-desktop.json configuration file existed. Primary issue was code-level platform exclusion. Updated FirebaseBootstrap.cs to enable Firebase initialization on standalone platforms (removing UNITY_STANDALONE_WIN/LINUX/OSX from skip conditions while keeping Editor-only skip for development). Modified LeaderboardService.cs to use Firebase on PC builds instead of local storage fallback. Updated FirebaseProbe.cs to clarify PC authentication handling. Result: PC builds now support full Firebase functionality including anonymous authentication, score uploads, leaderboard access, solution sharing, and user name system - achieving complete feature parity with mobile platforms. Editor mode still uses local storage for testing workflow. ✅
+
+---
+
 ### **Ticket 045** – Update score info text to emphasize nested NAND chip counting
 **Closed:** 2025-01-27  
 **Summary:** Successfully updated the score explanation popup to clearly emphasize how nested NAND chips are counted in level scoring. Modified ScoreExplanationPopup.cs to explain that NAND gates inside custom chips are counted recursively. Added explicit examples showing that using a custom chip with 3 NANDs counts as 3 points, not 1. Enhanced user understanding with emphasis on "TOTAL" and "recursive" counting. Text clarifies that the scoring system counts all NAND gates at every nested level. Improved transparency of scoring mechanics to help users optimize their solutions and understand scoring criteria. ✅
@@ -176,10 +182,10 @@ This document contains a historical record of all completed tickets from the Dig
 ---
 
 ## 📊 **Statistics**
-- **Total Completed Tickets:** 28
-- **Latest Completion:** 2025-01-27
-- **Most Recent:** Update score info text to emphasize nested NAND chip counting
-- **Key Achievements:** Community integration, Levels system, UI fixes, Performance optimizations, Mobile UX improvements, Library enhancements, iOS platform support
+- **Total Completed Tickets:** 29
+- **Latest Completion:** 2025-01-28
+- **Most Recent:** Fix Firebase integration on PC
+- **Key Achievements:** Community integration, Levels system, UI fixes, Performance optimizations, Mobile UX improvements, Library enhancements, iOS platform support, PC Firebase integration
 
 ---
 

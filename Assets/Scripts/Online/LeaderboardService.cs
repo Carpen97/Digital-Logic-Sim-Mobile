@@ -34,15 +34,15 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Saving score for level {levelId}: {score}");
                 
-                // Use local storage in Editor and PC builds for testing
-                #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
-                Debug.Log($"[Leaderboard] Editor/PC mode - using local storage for testing");
+                // Use local storage in Editor for testing
+                #if UNITY_EDITOR
+                Debug.Log($"[Leaderboard] Editor mode - using local storage for testing");
                 
                 // Initialize local storage if needed
                 EditorLocalStorage.Initialize();
                 
                 // Save to local storage
-                EditorLocalStorage.SaveScore(levelId, score, userName ?? "PCUser", completeSolutionId);
+                EditorLocalStorage.SaveScore(levelId, score, userName ?? "EditorUser", completeSolutionId);
                 
                 Debug.Log($"[Leaderboard] Score saved to local storage for level {levelId} with score {score}");
                 await Task.Delay(100); // Simulate network delay
@@ -77,16 +77,24 @@ namespace DLS.Online
             try
             {
                 Debug.Log($"[Leaderboard] Starting Firebase save process...");
+                Debug.Log($"[Leaderboard] Platform: {UnityEngine.Application.platform}");
+                Debug.Log($"[Leaderboard] LevelId: {levelId}, Score: {score}, UserName: {userName}");
                 
                 // Ensure Firebase is initialized
+                Debug.Log("[Leaderboard] Calling FirebaseBootstrap.InitializeAsync()...");
                 await FirebaseBootstrap.InitializeAsync();
+                Debug.Log($"[Leaderboard] Firebase initialization returned. IsInitialized: {FirebaseBootstrap.IsInitialized}");
+                
                 if (!FirebaseBootstrap.IsInitialized)
                 {
                     throw new InvalidOperationException("Firebase not initialized");
                 }
 
                 // Get Firestore instance
-                var db = FirebaseFirestore.DefaultInstance;
+                Debug.Log("[Leaderboard] Attempting to get Firestore instance...");
+                var db = Firebase.Firestore.FirebaseFirestore.DefaultInstance;
+                Debug.Log($"[Leaderboard] Firestore instance: {(db != null ? "OK" : "NULL")}");
+                
                 if (db == null)
                 {
                     throw new InvalidOperationException("Firestore not available");
@@ -128,20 +136,32 @@ namespace DLS.Online
 
                 Debug.Log($"[Leaderboard] Writing to Firestore with {data.Count} fields...");
                 
-                // Use a simple approach with timeout
-                var writeTask = docRef.SetAsync(data);
-                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(15), cancellationToken);
-                var completedTask = await Task.WhenAny(writeTask, timeoutTask);
-                
-                if (completedTask == timeoutTask)
+                // IMPORTANT: Firestore writes can crash on Windows desktop builds due to Firebase C++ SDK issue
+                // Wrap in try-catch to prevent app crash
+                try
                 {
-                    Debug.LogWarning("[Leaderboard] Firestore write timed out after 15 seconds");
-                    throw new TimeoutException("Firestore write operation timed out");
+                    // Use a simple approach with timeout
+                    var writeTask = docRef.SetAsync(data);
+                    var timeoutTask = Task.Delay(TimeSpan.FromSeconds(15), cancellationToken);
+                    var completedTask = await Task.WhenAny(writeTask, timeoutTask);
+                    
+                    if (completedTask == timeoutTask)
+                    {
+                        Debug.LogWarning("[Leaderboard] Firestore write timed out after 15 seconds");
+                        throw new TimeoutException("Firestore write operation timed out");
+                    }
+                    
+                    await writeTask;
+                    Debug.Log($"[Leaderboard] Successfully saved score for level {levelId}");
                 }
-                
-                await writeTask;
-                Debug.Log($"[Leaderboard] Successfully saved score for level {levelId}");
-            }
+                catch (Exception writeEx)
+                {
+                    Debug.LogError($"[Leaderboard] Firestore write failed (this may be a known Firebase SDK issue on Windows): {writeEx.Message}");
+                    Debug.LogError($"[Leaderboard] Exception type: {writeEx.GetType().Name}");
+                    
+                    // Re-throw to propagate the error
+                    throw new InvalidOperationException($"Failed to write score to Firestore: {writeEx.Message}", writeEx);
+                }            }
             catch (Exception ex)
             {
                 Debug.LogError($"[Leaderboard] Failed to save score: {ex.Message}");
@@ -162,9 +182,9 @@ namespace DLS.Online
                 Debug.Log($"[Leaderboard] Getting top {limit} scores for level {levelId}");
                 Debug.Log($"[Leaderboard] UNITY_EDITOR defined: #if UNITY_EDITOR");
 
-                // Use local storage in Editor and PC builds for testing
-                #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
-                Debug.Log($"[Leaderboard] Editor/PC mode - using local storage for score retrieval");
+                // Use local storage in Editor for testing
+                #if UNITY_EDITOR
+                Debug.Log($"[Leaderboard] Editor mode - using local storage for score retrieval");
                 
                 // Initialize local storage if needed
                 EditorLocalStorage.Initialize();
@@ -326,9 +346,9 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Saving complete solution for level {solution.LevelId}: {solution.Score}");
                 
-                // Use local storage in Editor and PC builds for testing
-                #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
-                Debug.Log($"[Leaderboard] Editor/PC mode - using local storage for complete solution");
+                // Use local storage in Editor for testing
+                #if UNITY_EDITOR
+                Debug.Log($"[Leaderboard] Editor mode - using local storage for complete solution");
                 
                 // Initialize local storage if needed
                 EditorLocalStorage.Initialize();
@@ -434,20 +454,34 @@ namespace DLS.Online
 
                 Debug.Log($"[Leaderboard] Writing complete solution to Firestore with {data.Count} fields...");
                 
-                // Use a simple approach with timeout
-                var writeTask = docRef.SetAsync(data);
-                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
-                var completedTask = await Task.WhenAny(writeTask, timeoutTask);
-                
-                if (completedTask == timeoutTask)
+                // IMPORTANT: Firestore writes can crash on Windows desktop builds due to Firebase C++ SDK issue
+                // Wrap in try-catch to prevent app crash
+                try
                 {
-                    Debug.LogWarning("[Leaderboard] Complete solution Firestore write timed out after 30 seconds");
-                    throw new TimeoutException("Complete solution Firestore write operation timed out");
+                    // Use a simple approach with timeout
+                    var writeTask = docRef.SetAsync(data);
+                    var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
+                    var completedTask = await Task.WhenAny(writeTask, timeoutTask);
+                    
+                    if (completedTask == timeoutTask)
+                    {
+                        Debug.LogWarning("[Leaderboard] Complete solution Firestore write timed out after 30 seconds");
+                        throw new TimeoutException("Complete solution Firestore write operation timed out");
+                    }
+                    
+                    await writeTask;
+                    Debug.Log($"[Leaderboard] Successfully saved complete solution for level {solution.LevelId}");
+                    return docId;
                 }
-                
-                await writeTask;
-                Debug.Log($"[Leaderboard] Successfully saved complete solution for level {solution.LevelId}");
-                return docId;
+                catch (Exception writeEx)
+                {
+                    Debug.LogError($"[Leaderboard] Firestore write failed (this may be a known Firebase SDK issue on Windows): {writeEx.Message}");
+                    Debug.LogError($"[Leaderboard] Exception type: {writeEx.GetType().Name}");
+                    Debug.LogError($"[Leaderboard] Stack trace: {writeEx.StackTrace}");
+                    
+                    // Return a fallback ID to indicate failure but prevent crash
+                    throw new InvalidOperationException($"Failed to write complete solution to Firestore (Firebase SDK issue on Windows): {writeEx.Message}", writeEx);
+                }
             }
             catch (Exception ex)
             {
@@ -468,9 +502,9 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Getting complete solutions for level {levelId}");
 
-                // Skip Firebase operations in Editor and PC builds to avoid crashes
-                #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
-                Debug.Log($"[Leaderboard] Editor/PC mode - simulating complete solution retrieval for level {levelId}");
+                // Use local storage in Editor for testing
+                #if UNITY_EDITOR
+                Debug.Log($"[Leaderboard] Editor mode - simulating complete solution retrieval for level {levelId}");
                 await Task.Delay(100); // Simulate network delay
                 
                 // Return mock data for Editor
@@ -542,9 +576,9 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Getting complete solution {solutionId}");
 
-                // Use local storage in Editor and PC builds for testing
-                #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
-                Debug.Log($"[Leaderboard] Editor/PC mode - using local storage for complete solution retrieval");
+                // Use local storage in Editor for testing
+                #if UNITY_EDITOR
+                Debug.Log($"[Leaderboard] Editor mode - using local storage for complete solution retrieval");
                 
                 // Initialize local storage if needed
                 EditorLocalStorage.Initialize();

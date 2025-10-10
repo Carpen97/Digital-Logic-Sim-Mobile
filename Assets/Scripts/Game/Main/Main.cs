@@ -16,9 +16,9 @@ namespace DLS.Game
 {
 	public static class Main
 	{
-		public static readonly Version DLSVersion = new(2, 1, 7, 0);
+		public static readonly Version DLSVersion = new(2, 1, 6, 9);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
-		public static readonly Version DLSVersion_ModdedID = new(1, 1, 2);
+		public static readonly CEVersion DLSVersion_ModdedID = new(1, 1, 2);
 		public const string LastUpdatedString = "7 Oct 2025";
 		public const string LastUpdatedModdedString = "10 Aug 2025";
 		public static AppSettings ActiveAppSettings;
@@ -353,6 +353,7 @@ namespace DLS.Game
 			
 		}
 
+
 		public class Version
 		{
 			public readonly int Major;
@@ -404,6 +405,49 @@ namespace DLS.Game
 			}
 
 			public override string ToString() => $"{Major}.{Minor}.{Patch}.{Mobile}";
+		}
+		public class CEVersion
+		{
+			public readonly int Major;
+			public readonly int Minor;
+			public readonly int Patch;
+			public readonly int Mobile;
+			public CEVersion(int major, int minor, int patch)
+			{
+				Major = major;
+				Minor = minor;
+				Patch = patch;
+			}
+
+			public int ToInt() => Major * 100000 + Minor * 1000 + Patch;
+
+			public static Version Parse(string versionString)
+			{
+				string[] versionParts = versionString.Split('.');
+				int major = int.Parse(versionParts[0]);
+				int minor = int.Parse(versionParts[1]);
+				int patch = int.Parse(versionParts[2]);
+				if(versionParts.Length==3)
+					return new Version (major, minor, patch);
+				int mobile = int.Parse(versionParts[3]); //Parse one more number for mobile
+				return new Version(major, minor, patch, mobile);
+			}
+
+			public static bool TryParse(string versionString, out Version version)
+			{
+				try
+				{
+					version = Parse(versionString);
+					return true;
+				}
+				catch
+				{
+					version = null;
+					return false;
+				}
+			}
+
+			public override string ToString() => $"{Major}.{Minor}.{Patch}";
 		}
 	}
 }

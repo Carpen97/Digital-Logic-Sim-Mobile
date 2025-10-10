@@ -23,9 +23,9 @@ namespace DLS.Online
         /// </summary>
         public static Task InitializeAsync()
         {
-            // Skip Firebase initialization in Editor and PC builds to avoid crashes
-            #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
-            Debug.Log("[Firebase] Editor/PC mode - skipping Firebase initialization to avoid crashes");
+            // Skip Firebase initialization in Editor only to avoid DLL issues during development
+            #if UNITY_EDITOR
+            Debug.Log("[Firebase] Editor mode - skipping Firebase initialization for development");
             _isInitialized = true;
             _userId = "anon";
             return Task.CompletedTask;
@@ -52,6 +52,11 @@ namespace DLS.Online
         {
             try
             {
+                // Log platform information
+                Debug.Log($"[Firebase] Platform: {Application.platform}");
+                Debug.Log($"[Firebase] Unity Version: {Application.unityVersion}");
+                Debug.Log($"[Firebase] Is Editor: {Application.isEditor}");
+                
                 // Configure Firebase logging to reduce verbosity
                 FirebaseLoggingConfig.ConfigureLogging();
                 
@@ -112,8 +117,37 @@ namespace DLS.Online
 
                 Debug.Log("[Firebase] Firebase app initialized successfully");
 
-                // Handle authentication based on platform
-#if UNITY_ANDROID || UNITY_IOS
+                // IMPORTANT: Disable Firestore persistence on Windows to prevent crashes
+                // Source: https://github.com/firebase/quickstart-unity/issues/1284
+                #if UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
+                try
+                {
+                    Debug.Log("[Firebase] Configuring Firestore settings for desktop platform...");
+                    var db = Firebase.Firestore.FirebaseFirestore.DefaultInstance;
+                    if (db != null)
+                    {
+                        Debug.Log("[Firebase] Disabling Firestore persistence to prevent Windows crashes...");
+                        db.Settings.PersistenceEnabled = false;
+                        Debug.Log("[Firebase] Firestore persistence disabled successfully");
+                        
+                        // Also clear any existing persistence cache that might be corrupted
+                        Debug.Log("[Firebase] Clearing persistence cache...");
+                        await db.ClearPersistenceAsync();
+                        Debug.Log("[Firebase] Persistence cache cleared");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[Firebase] Firestore instance is null, skipping persistence configuration");
+                    }
+                }
+                catch (Exception firestoreEx)
+                {
+                    Debug.LogWarning($"[Firebase] Failed to configure Firestore settings (non-critical): {firestoreEx.Message}");
+                    // Continue anyway - this is a best-effort fix
+                }
+                #endif
+
+                // Handle authentication - now enabled for all non-Editor platforms
                 Debug.Log("[Firebase] About to start anonymous authentication...");
                 try
                 {
@@ -125,11 +159,6 @@ namespace DLS.Online
                     Debug.LogError($"[Firebase] Authentication failed, using fallback: {authEx.Message}");
                     _userId = "anon"; // Fallback to anonymous user
                 }
-#else
-                // On PC/desktop, skip authentication but still initialize Firebase
-                Debug.Log("[Firebase] Running on PC/desktop - skipping authentication but Firebase is available");
-                _userId = "anon";
-#endif
 
                 _isInitialized = true;
                 Debug.Log($"[Firebase] Initialization complete. UserId: {_userId}");
@@ -143,7 +172,6 @@ namespace DLS.Online
             }
         }
 
-#if UNITY_ANDROID || UNITY_IOS
         private static async Task SignInAnonymouslyAsync()
         {
             try
@@ -202,6 +230,5 @@ namespace DLS.Online
                 // Don't re-throw to prevent the app from crashing
             }
         }
-#endif
     }
 }

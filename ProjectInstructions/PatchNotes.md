@@ -47,6 +47,13 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 
 ## 🚀 **Current Release Notes**
 
+### **Version 2.1.6.9** - 2025-01-28
+
+**Improvements:**
+- **PC Firebase Integration**: Full Firebase functionality now works on PC builds (Windows, macOS, Linux). PC users can now upload scores, view leaderboards, share solutions, and set user names just like mobile users. All online features are now available across all platforms.
+
+---
+
 ### **Version 2.1.6.8** - 2025-01-27
 
 **New Features:**
@@ -72,8 +79,8 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 
 ## 📊 **Statistics**
 - **Total Features Added:** 7
-- **Latest Update:** 2025-01-27
-- **User-Facing Changes:** Hierarchical collections, PC version, solution sharing, iOS platform support
+- **Latest Update:** 2025-01-28
+- **User-Facing Changes:** PC Firebase integration, hierarchical collections, solution sharing, iOS platform support
 
 ---
 

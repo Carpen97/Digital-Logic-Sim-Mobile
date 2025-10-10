@@ -33,8 +33,9 @@ public class FirebaseProbe : MonoBehaviour {
         catch (System.Exception e) {
             Debug.LogError($"[Firebase] Unexpected sign-in error: {e}");
         }
+        #else
+        Debug.Log("[Firebase] Desktop/PC build - authentication handled by FirebaseBootstrap");
         #endif
-        Debug.Log("[Firebase] Skipping auth in Editor/desktop build.");
         #endif
     }
 }
