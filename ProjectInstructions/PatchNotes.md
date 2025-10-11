@@ -47,6 +47,27 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 
 ## 🚀 **Current Release Notes**
 
+### **Version 2.1.6.10** - 2025-10-11
+
+**Bug Fixes:**
+- **CRITICAL: Fixed bit order bug in level validation** - Resolved game-breaking bug where inputs/outputs were being reversed during validation, affecting all 26 levels. Game now correctly validates solutions.
+- **Fixed D Flip-Flop level** - Corrected output count mismatch that made the level unplayable
+- **Fixed 4-bit Subtractor** - Corrected all 26 test vectors for accurate validation
+- **Fixed Simple ALU** - Regenerated 27 test vectors with correct validation logic
+- **Enhanced Complete 4-bit ALU** - Expanded test coverage from 21 to 1024 vectors with optimized random sampling (40 tests for 25x faster validation)
+
+**New Features:**
+- **Added D Latch level** - New educational level fills gap in sequential logic progression
+- **Test Vector Generator** (Developer Tool) - Press 'G' key to automatically generate comprehensive test vectors from working circuits
+- **Random Test Sampling** - Performance optimization caps validation at 40 tests for complex levels
+- **Setup Phase Support** - Sequential circuits can now initialize state before validation begins
+
+**Improvements:**
+- **Level selection behavior** - Improved UI interaction in levels menu
+- **Validation performance** - 25x faster validation for complex levels with comprehensive coverage
+
+---
+
 ### **Version 2.1.6.9** - 2025-01-28
 
 **New Features:**
@@ -85,9 +106,9 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 ---
 
 ## 📊 **Statistics**
-- **Total Features Added:** 8
-- **Latest Update:** 2025-01-28
-- **User-Facing Changes:** Patch notes popup, PC Firebase integration, hierarchical collections, solution sharing, iOS platform support
+- **Total Features Added:** 12
+- **Latest Update:** 2025-10-11
+- **User-Facing Changes:** Critical bug fix (level validation), new D Latch level, test vector generator, enhanced levels, patch notes popup, PC Firebase integration
 
 ---
 
