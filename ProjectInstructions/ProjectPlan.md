@@ -87,6 +87,7 @@ Mobile Port (origin)
 | 046 | Add donation button | Open   | Add a donation button to support development of the Digital Logic Sim Mobile project. Button should be accessible from an appropriate location (e.g., About menu, main menu, or settings). Integrate with a donation platform (PayPal, Ko-fi, Buy Me a Coffee, or similar). Design should be unobtrusive but visible, matching the existing UI theme. Include optional thank you message for supporters. Consider mobile-optimized placement and ensure it opens donation link in external browser or platform-specific handler. |
 | 047 | Add toggleable eraser tool | Open   | Create a special eraser tool that toggles using the existing trash icon. Make the trash icon always visible (currently only shows when component is selected). When toggled, display banner text explaining eraser mode is active. In eraser mode, touching any component on screen will delete it immediately without requiring selection first. Banner should be tappable to switch to "wires only" mode, where only wires can be deleted. Streamline deletion workflow for faster circuit editing. Mobile-optimized tool for efficient component and wire removal. |
 | 051 | Make info panel scrollable in LevelValidationPopup | Open   | In LevelValidationPopup.cs, the info panel for sequential level testing should be scrollable to handle long test sequences. Currently the DrawInfoPanel method displays sequence details in a fixed-size panel, but long sequences get cut off. Implement scrollable content area similar to the patch notes popup implementation. Use DrawScrollView with proper scroll state management. Ensure the scrollable area fits within the existing left panel layout (65% width in two-panel sequential level layout). |
+| 052 | Add "Coming Soon" placeholder chapter | Open   | Add an extra empty chapter at the end of the level pack that displays "More levels coming soon" message. This provides a teaser for future content and sets user expectations. The chapter should be selectable (like other chapters) and display an engaging message in the preview/description area. Message should be friendly and encourage users to check back for updates. No actual levels in this chapter - just a placeholder to indicate more content is planned. Update levels.json with new chapter entry. |
 
 ---
 
@@ -122,6 +123,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - 🚨 **CRITICAL: Unity Scene Safety** - **PM MUST ALWAYS warn user to save Unity scenes BEFORE any git branch operations (checkout, merge, switch, etc.)**
 
 ### **Current Status:**
-- **8 Open Tickets** available for selection
+- **9 Open Tickets** available for selection
 - **0 In Progress** tickets
 - **Project ready** for next instructions
