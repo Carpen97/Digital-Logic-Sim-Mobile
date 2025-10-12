@@ -35,12 +35,92 @@ namespace DLS.Online
                 LoadScores();
                 LoadSolutions();
                 
+                // Auto-populate with mock data if empty
+                if (_scores.Count == 0)
+                {
+                    InitializeMockData();
+                }
+                
                 Debug.Log("[EditorLocalStorage] Local storage initialized successfully");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[EditorLocalStorage] Failed to initialize: {ex.Message}");
             }
+        }
+        
+        /// <summary>
+        /// Initialize mock leaderboard data for UI testing
+        /// </summary>
+        private static void InitializeMockData()
+        {
+            Debug.Log("[EditorLocalStorage] Populating mock leaderboard data for UI testing...");
+            
+            // Define common level IDs
+            string[] levelIds = new[] { "NOT Gate", "AND Gate", "OR Gate", "XOR Gate", "NAND Gate", "NOR Gate" };
+            
+            // Mock user names with variety for UI testing
+            string[] userNames = new[]
+            {
+                "Alice",
+                "Bob",
+                "Charlie",
+                "Diana",
+                "Eve",
+                "Frank",
+                "Grace",
+                "Henry",
+                "Ivy",
+                "Jack",
+                "Katherine_with_a_really_long_name_to_test_truncation",
+                "短名", // Short Chinese characters
+                "VeryLongUserNameThatShouldBeTruncatedInTheUI",
+                "Player_12345",
+                "🎮Gamer42",
+                "Anonymous"
+            };
+            
+            // Create mock scores for each level
+            System.Random random = new System.Random(42); // Fixed seed for consistent mock data
+            
+            foreach (var levelId in levelIds)
+            {
+                // Create 10-15 scores per level with varying quality
+                int scoreCount = random.Next(10, 16);
+                
+                for (int i = 0; i < scoreCount; i++)
+                {
+                    // Generate realistic scores (lower is better)
+                    int baseScore = 5 + i * 2; // Starting from 5, increasing by 2
+                    int scoreVariation = random.Next(-1, 3); // Add some randomness
+                    int score = Math.Max(1, baseScore + scoreVariation);
+                    
+                    // Pick a random username
+                    string userName = userNames[random.Next(userNames.Length)];
+                    
+                    // Create timestamps over the past week
+                    DateTime submittedAt = DateTime.UtcNow.AddHours(-random.Next(1, 168)); // Last 7 days
+                    
+                    // Create mock solution ID (some entries have it, some don't)
+                    string solutionId = (i % 3 == 0) ? Guid.NewGuid().ToString() : null;
+                    
+                    var scoreData = new
+                    {
+                        levelId = levelId,
+                        score = score,
+                        userName = userName,
+                        completeSolutionId = solutionId,
+                        submittedAt = submittedAt.ToString("yyyy-MM-ddTHH:mm:ss.ffffffZ"),
+                        userId = $"MockUser_{i}"
+                    };
+                    
+                    var scoreId = Guid.NewGuid().ToString();
+                    _scores[scoreId] = scoreData;
+                }
+            }
+            
+            SaveScores();
+            Debug.Log($"[EditorLocalStorage] Created {_scores.Count} mock scores across {levelIds.Length} levels for UI testing");
         }
         
         /// <summary>
@@ -192,6 +272,24 @@ namespace DLS.Online
             catch (Exception ex)
             {
                 Debug.LogError($"[EditorLocalStorage] Failed to clear storage: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Regenerate mock data (useful for testing different UI scenarios)
+        /// </summary>
+        public static void RegenerateMockData()
+        {
+            try
+            {
+                Debug.Log("[EditorLocalStorage] Regenerating mock data...");
+                _scores.Clear();
+                InitializeMockData();
+                Debug.Log("[EditorLocalStorage] Mock data regenerated successfully");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[EditorLocalStorage] Failed to regenerate mock data: {ex.Message}");
             }
         }
         

@@ -180,28 +180,36 @@ namespace DLS.Game
 			{
 				UnityEngine.Debug.Log($"[Main] CreateProject called with projectName: '{projectName}'");
 				
-				ProjectDescription initialDescription = new()
-				{
-					ProjectName = projectName ?? "Untitled",
-					DLSVersion_LastSaved = DLSVersion?.ToString() ?? "2.1.7.0",
-					DLSVersion_LastSavedModdedVersion = DLSVersion_ModdedID?.ToString() ?? "1.1.2",
-					DLSVersion_EarliestCompatible = DLSVersion_EarliestCompatible?.ToString() ?? "2.0.0",
-					CreationTime = DateTime.Now,
-					TimeSpentSinceCreated = new(),
-					Prefs_ChipPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
-					Prefs_MainPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
-					Prefs_SimTargetStepsPerSecond = 1000,
-					Prefs_SimStepsPerClockTick = 250,
-					Prefs_SimPaused = false,
-					// Prefs_UIThemeMode removed - only Squiggles Theme is used
-					Prefs_GridDisplayMode = 1,
-					Prefs_UseDragAndDropMode = true,
-					AllCustomChipNames = Array.Empty<string>(),
-					StarredList = BuiltinCollectionCreator.GetDefaultStarredList()?.ToList() ?? new List<StarredItem>(),
-					ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections() ?? Array.Empty<ChipCollection>()),
-					pinBitCounts = Project.PinBitCounts ?? new List<PinBitCount>(),
-					SplitMergePairs = Project.SplitMergePairs ?? new List<KeyValuePair<PinBitCount, PinBitCount>>()
-				};
+			ProjectDescription initialDescription = new()
+			{
+				ProjectName = projectName ?? "Untitled",
+				DLSVersion_LastSaved = DLSVersion?.ToString() ?? "2.1.7.0",
+				DLSVersion_LastSavedModdedVersion = DLSVersion_ModdedID?.ToString() ?? "1.1.2",
+				DLSVersion_EarliestCompatible = DLSVersion_EarliestCompatible?.ToString() ?? "2.0.0",
+				CreationTime = DateTime.Now,
+				TimeSpentSinceCreated = new(),
+				// Display preferences
+				Prefs_ChipPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnHover,
+				Prefs_MainPinNamesDisplayMode = PreferencesMenu.DisplayMode_OnlyInLevel,
+				Prefs_GridDisplayMode = 1, // On
+				Prefs_WireCurvatureMode = 1, // Small
+				Prefs_MultiWireLayoutAlgorithm = 1, // Slerp
+				// Editing preferences
+				Perfs_PinIndicators = 0, // Off
+				Prefs_Snapping = 2, // Always
+				Prefs_StraightWires = 0, // Hold Shift
+				Prefs_UseDragAndDropMode = true, // Drag and Drop
+			// Simulation preferences
+			Prefs_SimTargetStepsPerSecond = 1000,
+			Prefs_SimStepsPerClockTick = 25,
+			Prefs_SimPaused = false,
+				// Prefs_UIThemeMode removed - only Squiggles Theme is used
+				AllCustomChipNames = Array.Empty<string>(),
+				StarredList = BuiltinCollectionCreator.GetDefaultStarredList()?.ToList() ?? new List<StarredItem>(),
+				ChipCollections = new List<ChipCollection>(BuiltinCollectionCreator.CreateDefaultChipCollections() ?? Array.Empty<ChipCollection>()),
+				pinBitCounts = Project.PinBitCounts ?? new List<PinBitCount>(),
+				SplitMergePairs = Project.SplitMergePairs ?? new List<KeyValuePair<PinBitCount, PinBitCount>>()
+			};
 
 				UnityEngine.Debug.Log($"[Main] ProjectDescription created, checking for null properties...");
 				UnityEngine.Debug.Log($"[Main] StarredList is null: {initialDescription.StarredList == null}");
@@ -339,17 +347,36 @@ namespace DLS.Game
 				}
 			}
 			
-			// Handle clear level progress shortcut for testing
-			if (DLS.Game.KeyboardShortcuts.ClearLevelProgressShortcutTriggered)
+		// Handle clear level progress shortcut for testing
+		if (DLS.Game.KeyboardShortcuts.ClearLevelProgressShortcutTriggered)
+		{
+			// Only trigger if we're in a level and no menu is open
+			if (LevelManager.Instance?.IsActive == true && UIDrawer.ActiveMenu == UIDrawer.MenuType.None)
 			{
-				// Only trigger if we're in a level and no menu is open
-				if (LevelManager.Instance?.IsActive == true && UIDrawer.ActiveMenu == UIDrawer.MenuType.None)
+				UnityEngine.Debug.Log("[Main] Ctrl+C pressed - clearing level progress");
+				LevelProgressService.ClearLevelProgress(LevelManager.Instance.Current.id);
+				UnityEngine.Debug.Log($"[Main] Cleared progress for level: {LevelManager.Instance.Current.id}");
+			}
+		}
+		
+		#if UNITY_EDITOR
+		// Handle generate test vectors shortcut for PC testing (Editor only)
+		if (DLS.Game.KeyboardShortcuts.GenerateTestVectorsShortcutTriggered)
+		{
+			// Only trigger if we're in a level and no menu is open
+			if (LevelManager.Instance?.IsActive == true && UIDrawer.ActiveMenu == UIDrawer.MenuType.None)
+			{
+				UnityEngine.Debug.Log("[Main] G pressed - generating test vectors");
+				string json = LevelManager.Instance.GenerateTestVectors();
+				if (!string.IsNullOrEmpty(json))
 				{
-					UnityEngine.Debug.Log("[Main] Ctrl+C pressed - clearing level progress");
-					LevelProgressService.ClearLevelProgress(LevelManager.Instance.Current.id);
-					UnityEngine.Debug.Log($"[Main] Cleared progress for level: {LevelManager.Instance.Current.id}");
+					// Copy JSON to clipboard for easy pasting
+					GUIUtility.systemCopyBuffer = json;
+					UnityEngine.Debug.Log("[Main] Test vectors copied to clipboard!");
 				}
 			}
+		}
+		#endif
 			
 		}
 

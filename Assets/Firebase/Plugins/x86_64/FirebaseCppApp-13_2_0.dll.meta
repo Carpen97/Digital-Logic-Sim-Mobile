@@ -27,11 +27,11 @@ PluginImporter:
         Exclude Win: 1
         Exclude iOS: 0
     Editor:
-      enabled: 0
+      enabled: 1
       settings:
-        CPU: AnyCPU
+        CPU: x86_64
         DefaultValueInitialized: true
-        OS: AnyOS
+        OS: Windows
     Linux64:
       enabled: 0
       settings:

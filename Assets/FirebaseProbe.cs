@@ -4,38 +4,9 @@ using UnityEngine;
 
 public class FirebaseProbe : MonoBehaviour {
     async void Awake() {
-        // Skip Firebase initialization in Editor to avoid DllNotFoundException
-        #if UNITY_EDITOR
-        Debug.Log("[Firebase] Editor mode - skipping Firebase initialization to avoid DllNotFoundException");
-        await System.Threading.Tasks.Task.CompletedTask; // Satisfy async requirement
-        return;
-        #else
-        FirebaseApp.LogLevel = LogLevel.Debug; // verbose client logs
-
-        var status = await FirebaseApp.CheckAndFixDependenciesAsync();
-        Debug.Log($"[Firebase] Dependencies: {status}");
-        if (status != DependencyStatus.Available) {
-            Debug.LogError("[Firebase] Not Available after fix; check resolver output.");
-            return;
-        }
-
-        #if UNITY_ANDROID || UNITY_IOS
-        try {
-            var auth = FirebaseAuth.DefaultInstance;
-            Debug.Log("[Firebase] About to sign in anonymously...");
-            var res = await auth.SignInAnonymouslyAsync();
-            Debug.Log($"[Firebase] Signed in. UID={res.User?.UserId}");
-        }
-        catch (FirebaseException fe) {
-            // FirebaseException often wraps an AuthError code
-            Debug.LogError($"[Firebase] Auth error: {fe.Message}");
-        }
-        catch (System.Exception e) {
-            Debug.LogError($"[Firebase] Unexpected sign-in error: {e}");
-        }
-        #else
-        Debug.Log("[Firebase] Desktop/PC build - authentication handled by FirebaseBootstrap");
-        #endif
-        #endif
+        // FirebaseProbe is now deprecated in favor of FirebaseBootstrap
+        // FirebaseBootstrap handles initialization for all platforms including Editor
+        Debug.Log("[Firebase] FirebaseProbe - initialization is now handled by FirebaseBootstrap");
+        await System.Threading.Tasks.Task.CompletedTask;
     }
 }

@@ -31,11 +31,12 @@ namespace DLS.Levels
 		public int maxSequenceSteps = 100;
 		public bool requireStableOutputs = true;
 		
-		[Serializable] public struct TestSequence { 
-			public string name;  // e.g., "Reset sequence", "Count up sequence"
-			public TestVector[] vectors;  // Sequence of input/output pairs
-		}
-		public TestSequence[] testSequences;
+	[Serializable] public struct TestSequence { 
+		public string name;  // e.g., "Reset sequence", "Count up sequence"
+		public string[] setup;  // Optional: Input patterns to apply before testing (for initialization)
+		public TestVector[] vectors;  // Sequence of input/output pairs
+	}
+	public TestSequence[] testSequences;
 		
 		public System.Collections.Generic.List<string> hints;
 	}

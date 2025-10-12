@@ -23,6 +23,7 @@ namespace DLS.Graphics
 	static string projectCreationErrorMessage = "";
 	static List<string> projectCreationDebugLogs = new List<string>();
 	static int selectedPatchNoteIndex = 0; // Track which patch note version is selected
+	static PatchNotesData patchNotesData;
 
 	static readonly UIHandle ID_ProjectNameInput = new("MainMenu_ProjectNameInputField");
 	static readonly UIHandle ID_DisplayResolutionWheel = new("MainMenu_DisplayResolutionWheel");
@@ -255,6 +256,12 @@ namespace DLS.Graphics
 			activeMenuScreen = MenuScreen.Main;
 			activePopup = PopupKind.None;
 			selectedProjectIndex = -1;
+			
+			// Load patch notes data when menu opens
+			if (patchNotesData == null)
+			{
+				patchNotesData = PatchNotesLoader.LoadPatchNotes();
+			}
 		}
 
 		static void DrawMainScreen()
@@ -892,127 +899,122 @@ namespace DLS.Graphics
 		}
 	}
 
-	static void DrawPatchNotesPopup()
-	{
-		DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
-
-		Seb.Vis.UI.UI.StartNewLayer();
-		Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
-
-		using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+		static void DrawPatchNotesPopup()
 		{
-			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
-			
-			#if UNITY_ANDROID || UNITY_IOS
-			Vector2 popupSize = new(85, 45);
-			#else
-			Vector2 popupSize = new(70, 40);
-			#endif
-			
-			Vector2 pos = Seb.Vis.UI.UI.Centre;
-			
-			// Title at top
-			Seb.Vis.UI.UI.DrawText("What's New in Digital Logic Sim", theme.FontRegular, theme.FontSizeRegular * 1.2f, pos + Vector2.up * (popupSize.y / 2 - 3), Anchor.CentreTop, Color.white);
-			
-			// Calculate split positions
-			float leftPanelWidth = popupSize.x * 0.65f;  // Patch notes detail (wider)
-			float rightPanelWidth = popupSize.x * 0.30f; // Version selector (narrower)
-			float panelHeight = popupSize.y - 12; // Leave space for title and buttons
-			float gap = 1f; // Gap between panels
-			
-			// Calculate top-left positions for both panels
-			float contentTop = pos.y + (popupSize.y / 2) - 7; // Below title
-			float leftPanelLeft = pos.x - (popupSize.x / 2) + 2; // Left edge of popup + padding
-			float rightPanelLeft = leftPanelLeft + leftPanelWidth + gap; // After left panel + gap
-			
-			// LEFT panel - Scrollable patch notes detail for SELECTED version
-			Vector2 leftScrollViewPos = new Vector2(leftPanelLeft, contentTop);
-			Vector2 leftScrollViewSize = new(leftPanelWidth - 2, panelHeight);
-			
-			Seb.Vis.UI.UI.DrawScrollView(ID_PatchNotesScrollView, leftScrollViewPos, leftScrollViewSize, Anchor.TopLeft, theme.ScrollTheme, (topLeft, width, isLayoutPass) =>
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				float spacing = 0.5f;
-				float sectionSpacing = 1.0f; // Extra spacing before section headers
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 				
-				// Version 2.1.6.9 - Combined patch notes
-				Seb.Vis.UI.UI.DrawText("Version 2.1.6.9", theme.FontRegular, theme.FontSizeRegular * 1.0f, topLeft, Anchor.TopLeft, new Color(0.98f, 0.76f, 0.26f));
-				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.3f;
+				#if UNITY_ANDROID || UNITY_IOS
+				Vector2 popupSize = new(85, 45);
+				#else
+				Vector2 popupSize = new(70, 40);
+				#endif
 				
-				Seb.Vis.UI.UI.DrawText("Release Date: October 9, 2025", theme.FontRegular, theme.FontSizeRegular * 0.6f, topLeft, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
-				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * sectionSpacing;
+				Vector2 pos = Seb.Vis.UI.UI.Centre;
 				
-				Seb.Vis.UI.UI.DrawText("New Features:", theme.FontRegular, theme.FontSizeRegular * 0.8f, topLeft, Anchor.TopLeft, new Color(0.6f, 0.9f, 0.6f));
-				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.3f;
+				// Title at top
+				Seb.Vis.UI.UI.DrawText("What's New in Digital Logic Sim", theme.FontRegular, theme.FontSizeRegular * 1.2f, pos + Vector2.up * (popupSize.y / 2 - 3), Anchor.CentreTop, Color.white);
 				
-				string features = WrapText(
-					"Drag and Drop Control Scheme - New intuitive chip placement mode. Simply drag chips from the bottom bar and drop them directly onto the canvas. Toggle between classic 'Drag and Lock' and new 'Drag and Drop' modes in preferences.\n\n" +
-					"Hierarchical Collection Organization - Create and manage sub folders within collections for better chip organization.\n\n" +
-					"PC Version - Full mobile features now available on PC with mouse and keyboard support.\n\n" +
-					"Solution Sharing - Upload and view complete solutions from leaderboard entries.\n\n" +
-					"User Names - Add custom names when uploading scores to leaderboards.\n\n" +
-					"iOS Platform Support - Full iOS support with project import/export and Firebase integration.",
-					(int)(width / (theme.FontSizeRegular * 0.6f * 0.5f)));
-				Seb.Vis.UI.UI.DrawText(features, theme.FontRegular, theme.FontSizeRegular * 0.6f, topLeft, Anchor.TopLeft, Color.white);
-				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * sectionSpacing;
+				// Calculate split positions
+				float leftPanelWidth = popupSize.x * 0.65f;  // Patch notes detail (wider)
+				float rightPanelWidth = popupSize.x * 0.30f; // Version selector (narrower)
+				float panelHeight = popupSize.y - 12; // Leave space for title and buttons
+				float gap = 1f; // Gap between panels
 				
-				Seb.Vis.UI.UI.DrawText("Improvements:", theme.FontRegular, theme.FontSizeRegular * 0.8f, topLeft, Anchor.TopLeft, new Color(0.6f, 0.8f, 1f));
-				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.3f;
+				// Calculate top-left positions for both panels
+				float contentTop = pos.y + (popupSize.y / 2) - 7; // Below title
+				float leftPanelLeft = pos.x - (popupSize.x / 2) + 2; // Left edge of popup + padding
+				float rightPanelLeft = leftPanelLeft + leftPanelWidth + gap; // After left panel + gap
 				
-				string improvements = WrapText(
-					"PC Firebase Integration - Full Firebase functionality now works on PC builds (Windows, macOS, Linux). PC users can now upload scores, view leaderboards, share solutions, and set user names just like mobile users. All online features are now available across all platforms.\n\n" +
-					"Enhanced Level System - Expanded with more challenging levels and progressive difficulty.\n\n" +
-					"Improved UI Navigation - Better folder browsing and collection management.\n\n" +
-					"Clearer Score Explanation - Updated scoring information to better explain how nested NAND gates are counted.\n\n" +
-					"Auto-Open Edit Tool - Single component selected + wrench press now automatically opens the edit menu.\n\n" +
-					"Selectable Chapters in Levels Menu - Chapters now show educational descriptions when selected.",
-					(int)(width / (theme.FontSizeRegular * 0.6f * 0.5f)));
-				Seb.Vis.UI.UI.DrawText(improvements, theme.FontRegular, theme.FontSizeRegular * 0.6f, topLeft, Anchor.TopLeft, Color.white);
-				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * sectionSpacing;
+				// LEFT panel - Scrollable patch notes detail for SELECTED version
+				Vector2 leftScrollViewPos = new Vector2(leftPanelLeft, contentTop);
+				Vector2 leftScrollViewSize = new(leftPanelWidth - 2, panelHeight);
 				
-				Seb.Vis.UI.UI.DrawText("Bug Fixes:", theme.FontRegular, theme.FontSizeRegular * 0.8f, topLeft, Anchor.TopLeft, new Color(1f, 0.6f, 0.6f));
-				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.3f;
+				// Get available versions and selected version
+				var availableVersions = PatchNotesLoader.GetAvailableVersions();
+				var selectedVersion = patchNotesData?.versions != null && selectedPatchNoteIndex >= 0 && selectedPatchNoteIndex < patchNotesData.versions.Count 
+					? patchNotesData.versions[selectedPatchNoteIndex] 
+					: null;
 				
-				string fixes = WrapText(
-					"Fixed iOS file picker for importing project zip files. Various stability improvements and performance optimizations.",
-					(int)(width / (theme.FontSizeRegular * 0.6f * 0.5f)));
-				Seb.Vis.UI.UI.DrawText(fixes, theme.FontRegular, theme.FontSizeRegular * 0.6f, topLeft, Anchor.TopLeft, Color.white);
-			});
-			
-			// RIGHT panel - Version selector buttons
-			Vector2 rightPanelPos = new Vector2(rightPanelLeft, contentTop);
-			
-			// Draw version selection buttons
-			string[] versionNames = { "Version 2.1.6.9" };
-			
-			Vector2 versionButtonPos = rightPanelPos;
-			Vector2 versionButtonSize = new Vector2(rightPanelWidth - 2, 3);
-			
-			for (int i = 0; i < versionNames.Length; i++)
-			{
-				bool isSelected = selectedPatchNoteIndex == i;
-				ButtonTheme.StateCols buttonCols = isSelected 
-					? new ButtonTheme.StateCols(new Color(0.98f, 0.76f, 0.26f, 0.3f), new Color(0.98f, 0.76f, 0.26f, 0.5f), new Color(0.98f, 0.76f, 0.26f, 0.6f), Color.gray)
-					: theme.MainMenuButtonTheme.buttonCols;
-				
-				if (Seb.Vis.UI.UI.Button(versionNames[i], theme.MainMenuButtonTheme, versionButtonPos, versionButtonSize, true, false, true, buttonCols, Anchor.TopLeft))
+				Seb.Vis.UI.UI.DrawScrollView(ID_PatchNotesScrollView, leftScrollViewPos, leftScrollViewSize, Anchor.TopLeft, theme.ScrollTheme, (topLeft, width, isLayoutPass) =>
 				{
-					selectedPatchNoteIndex = i;
+					if (selectedVersion == null)
+					{
+						Seb.Vis.UI.UI.DrawText("No patch notes available", theme.FontRegular, theme.FontSizeRegular * 0.8f, topLeft, Anchor.TopLeft, Color.red);
+						return;
+					}
+					
+					float spacing = 0.5f;
+					float sectionSpacing = 1.0f; // Extra spacing before section headers
+					
+					// Version header
+					Seb.Vis.UI.UI.DrawText($"Version {selectedVersion.version}", theme.FontRegular, theme.FontSizeRegular * 1.0f, topLeft, Anchor.TopLeft, new Color(0.98f, 0.76f, 0.26f));
+					topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.3f;
+					
+					Seb.Vis.UI.UI.DrawText($"Release Date: {selectedVersion.releaseDate}", theme.FontRegular, theme.FontSizeRegular * 0.6f, topLeft, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
+					topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * sectionSpacing;
+					
+					// Draw sections dynamically
+					DrawPatchNotesSection("New Features:", selectedVersion.sections?.newFeatures, theme, ref topLeft, width, new Color(0.6f, 0.9f, 0.6f), sectionSpacing);
+					DrawPatchNotesSection("Improvements:", selectedVersion.sections?.improvements, theme, ref topLeft, width, new Color(0.6f, 0.8f, 1f), sectionSpacing);
+					DrawPatchNotesSection("Bug Fixes:", selectedVersion.sections?.bugFixes, theme, ref topLeft, width, new Color(1f, 0.6f, 0.6f), sectionSpacing);
+				});
+				
+				// RIGHT panel - Version selector buttons
+				Vector2 rightPanelPos = new Vector2(rightPanelLeft, contentTop);
+				
+				// Draw version selection buttons
+				Vector2 versionButtonPos = rightPanelPos;
+				Vector2 versionButtonSize = new Vector2(rightPanelWidth - 2, 3);
+				
+				for (int i = 0; i < availableVersions.Count; i++)
+				{
+					bool isSelected = selectedPatchNoteIndex == i;
+					ButtonTheme.StateCols buttonCols = isSelected 
+						? new ButtonTheme.StateCols(new Color(0.98f, 0.76f, 0.26f, 0.3f), new Color(0.98f, 0.76f, 0.26f, 0.5f), new Color(0.98f, 0.76f, 0.26f, 0.6f), Color.gray)
+						: theme.MainMenuButtonTheme.buttonCols;
+					
+					string versionDisplayName = $"Version {availableVersions[i]}";
+					if (Seb.Vis.UI.UI.Button(versionDisplayName, theme.MainMenuButtonTheme, versionButtonPos, versionButtonSize, true, false, true, buttonCols, Anchor.TopLeft))
+					{
+						selectedPatchNoteIndex = i;
+					}
+					
+					versionButtonPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.5f;
 				}
 				
-				versionButtonPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.5f;
+				// Close button at bottom
+				Vector2 buttonPos = pos + Vector2.down * (popupSize.y / 2 - 3);
+				
+				if (Seb.Vis.UI.UI.Button("Close", theme.MainMenuButtonTheme, buttonPos, Vector2.zero, true, true, true, theme.MainMenuButtonTheme.buttonCols) || KeyboardShortcuts.CancelShortcutTriggered)
+				{
+					activePopup = PopupKind.None;
+				}
+				
+				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
 			}
-			
-			// Close button at bottom
-			Vector2 buttonPos = pos + Vector2.down * (popupSize.y / 2 - 3);
-			
-			if (Seb.Vis.UI.UI.Button("Close", theme.MainMenuButtonTheme, buttonPos, Vector2.zero, true, true, true, theme.MainMenuButtonTheme.buttonCols) || KeyboardShortcuts.CancelShortcutTriggered)
-			{
-				activePopup = PopupKind.None;
-			}
-			
-			Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
 		}
-	}
+		
+		static void DrawPatchNotesSection(string sectionTitle, List<string> items, DrawSettings.UIThemeDLS theme, ref Vector2 topLeft, float width, Color titleColor, float sectionSpacing)
+		{
+			if (items == null || items.Count == 0) return;
+			
+			// Section header
+			Seb.Vis.UI.UI.DrawText(sectionTitle, theme.FontRegular, theme.FontSizeRegular * 0.8f, topLeft, Anchor.TopLeft, titleColor);
+			topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.3f;
+			
+			// Section items
+			string combinedText = string.Join("\n\n", items);
+			string wrappedText = WrapText(combinedText, (int)(width / (theme.FontSizeRegular * 0.6f * 0.6f)));
+			Seb.Vis.UI.UI.DrawText(wrappedText, theme.FontRegular, theme.FontSizeRegular * 0.6f, topLeft, Anchor.TopLeft, Color.white);
+			topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * sectionSpacing;
+		}
 
 
 	static void DrawVersionInfo()

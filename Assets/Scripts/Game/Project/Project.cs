@@ -56,6 +56,11 @@ namespace DLS.Game
 		// String representation of the viewed chips stack for display purposes
 		public string viewedChipsString = string.Empty;
 
+		// Leaderboard solution viewing state
+		public bool isViewingLeaderboardSolution = false;
+		public string leaderboardSolutionUserName = "";
+		public string leaderboardSolutionLevelName = "";
+
 		// The chip currently being edited. (This is not necessarily the currently viewed chip)
 		DevChipInstance editModeChip;
 		public AudioState audioState;
@@ -152,7 +157,22 @@ namespace DLS.Game
 				controller.CancelEverything();
 				UpdateViewedChipsString();
 
-				if (chipViewStack.Count == 1) Simulator.useCaching = true; // Left View mode, so turn caching back on
+				if (chipViewStack.Count == 1) 
+				{
+					Simulator.useCaching = true; // Left View mode, so turn caching back on
+					
+					// If we were viewing a leaderboard solution, return to leaderboard instead of normal view
+					if (isViewingLeaderboardSolution)
+					{
+						ResetLeaderboardViewingState();
+						// Reopen leaderboard with cached data (preserves scores and level title)
+						LeaderboardPopup.ReopenWithCachedData();
+						return;
+					}
+					
+					// Reset leaderboard viewing state when returning to root chip
+					ResetLeaderboardViewingState();
+				}
 			}
 		}
 		
@@ -179,6 +199,32 @@ namespace DLS.Game
 			UpdateViewedChipsString();
 			
 			Debug.Log($"[Project] Now viewing: {viewedChipsString}");
+		}
+
+		/// <summary>
+		/// Set the leaderboard solution viewing state with user and level information
+		/// </summary>
+		/// <param name="userName">The name of the user whose solution is being viewed</param>
+		/// <param name="levelName">The name of the level the solution is for</param>
+		public void SetLeaderboardViewingState(string userName, string levelName)
+		{
+			isViewingLeaderboardSolution = true;
+			leaderboardSolutionUserName = userName ?? "Anonymous";
+			leaderboardSolutionLevelName = levelName ?? "Unknown Level";
+			UpdateViewedChipsString();
+			Debug.Log($"[Project] Set leaderboard viewing state: {userName}'s solution to {levelName}");
+		}
+
+		/// <summary>
+		/// Reset the leaderboard solution viewing state
+		/// </summary>
+		public void ResetLeaderboardViewingState()
+		{
+			isViewingLeaderboardSolution = false;
+			leaderboardSolutionUserName = "";
+			leaderboardSolutionLevelName = "";
+			UpdateViewedChipsString();
+			Debug.Log("[Project] Reset leaderboard viewing state");
 		}
 
 		public bool AlwaysDrawDevPinNames => AlwaysDrawPinNames(description.Prefs_MainPinNamesDisplayMode);
@@ -208,8 +254,24 @@ namespace DLS.Game
 
 		void UpdateViewedChipsString()
 		{
-			string[] viewedChipNames = chipViewStack.Select(c => c.ChipName).SkipLast(1).Reverse().ToArray();
-			viewedChipsString = "\t\tViewing: " + string.Join(" > ", viewedChipNames);
+			if (isViewingLeaderboardSolution)
+			{
+				// Enhanced text for leaderboard solution viewing
+				string baseText = "Viewing: " + leaderboardSolutionUserName + "'s solution to level \"" + leaderboardSolutionLevelName + "\"";
+				// Show the actual chip hierarchy (same logic as default case)
+				string[] viewedChipNames = chipViewStack.Select(c => c.ChipName).SkipLast(1).Reverse().ToArray();
+				if (viewedChipNames.Length > 0)
+				{
+					baseText += string.Join(" > ", viewedChipNames);
+				}
+				viewedChipsString = "\t\t" + baseText;
+			}
+			else
+			{
+				// Default viewing text
+				string[] viewedChipNames = chipViewStack.Select(c => c.ChipName).SkipLast(1).Reverse().ToArray();
+				viewedChipsString = "\t\tViewing: " + string.Join(" > ", viewedChipNames);
+			}
 		}
 
 

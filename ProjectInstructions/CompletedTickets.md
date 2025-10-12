@@ -13,12 +13,24 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 33
-- **Most Recent**: Ticket 049 (October 11, 2025)
+- **Total Completed Tickets**: 35
+- **Most Recent**: Ticket 051 (October 12, 2025)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 051** – Make info panel scrollable in LevelValidationPopup
+**Closed:** 2025-10-12  
+**Summary:** Successfully implemented scrollable content area for the info panel in LevelValidationPopup.cs to handle long sequential test sequences. The DrawInfoPanel method now uses DrawScrollView for scrollable content, preventing long test sequences from being cut off in the fixed-size panel. Added ID_InfoPanelScrollView UIHandle for scroll state management. Modified DrawInfoPanel to create scrollable region while preserving existing panel background, styling, and "no selection" message behavior. Content is drawn inside a scroll view callback function with proper layout and formatting. The scrollable area fits within the existing left panel layout (65% width in two-panel sequential level layout). Smooth scrolling experience implemented for both mobile touch and PC mouse wheel interaction. All success criteria met: scrollbar appears when content exceeds panel height, existing styling preserved, no regressions in combinational level display. Cross-platform compatibility verified for mobile and PC. ✅
+
+---
+
+### **Ticket 050** – Fix chip navigation in ChipLibraryMenu
+**Closed:** 2025-10-11  
+**Summary:** Successfully fixed navigation issues in the Chip Library Menu to ensure intuitive movement between starred items, collections, nested collections, and chips with proper selection state management. Addressed keyboard/gamepad navigation inconsistencies, corrected selection state update logic, aligned visual feedback with actual selection, and improved cross-panel navigation flow. Enhanced focus management to be predictable and consistent across all interactive elements. Ensured selection highlighting accurately reflects the current state. Modified ChipLibraryMenu.cs for improved navigation logic and state tracking. Cross-platform compatibility verified for both mobile touch navigation and PC keyboard/mouse navigation. All success criteria met: navigation between panels works intuitively, selection state matches visual feedback, keyboard and touch navigation work correctly, no selection state bugs, proper focus management, accurate highlighting, and full mobile + PC compatibility. ✅
+
+---
 
 ### **Ticket 049** – Play through and validate all levels
 **Closed:** 2025-10-11  

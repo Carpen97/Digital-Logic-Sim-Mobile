@@ -23,19 +23,11 @@ namespace DLS.Online
         /// </summary>
         public static Task InitializeAsync()
         {
-            // Skip Firebase initialization in Editor only to avoid DLL issues during development
-            #if UNITY_EDITOR
-            Debug.Log("[Firebase] Editor mode - skipping Firebase initialization for development");
-            _isInitialized = true;
-            _userId = "anon";
-            return Task.CompletedTask;
-            #else
             if (_initializationTask != null)
                 return _initializationTask;
 
             _initializationTask = InitializeInternalAsync();
             return _initializationTask;
-            #endif
         }
 
         /// <summary>

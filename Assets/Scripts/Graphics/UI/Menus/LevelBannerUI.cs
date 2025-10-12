@@ -49,7 +49,7 @@ namespace DLS.Graphics
 			}
 
 			// Draw level title
-			Seb.Vis.UI.UI.DrawText($" <color=#ffffff> {LevelManager.Instance.Current.name}", MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular*1.25f, panelBounds.Centre + Vector2.up*1.5f, Anchor.TextCentre, Color.yellow);
+			Seb.Vis.UI.UI.DrawText($" <color=#ffffff> {LevelManager.Instance.Current.name}", MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular*1.25f, panelBounds.Centre + Vector2.up*1.5f+ Vector2.left*1.0f, Anchor.TextCentre, Color.yellow);
 			
 			// Draw level description (closer to title for PC)
 			Seb.Vis.UI.UI.DrawText($"{LevelManager.Instance.Current.description}", MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular*0.8f, panelBounds.Centre + Vector2.down*0.5f, Anchor.TextCentre, Color.yellow);

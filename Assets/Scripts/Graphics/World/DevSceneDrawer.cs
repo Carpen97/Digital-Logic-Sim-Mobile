@@ -1013,7 +1013,7 @@ namespace DLS.Graphics
 			{
 				WireInstance.BitWire bitWire = wire.BitWires[bitIndex];
 				Color col = wire.GetColour(bitIndex);
-				float sqrInteractDst = WireDrawer.DrawWire(bitWire.Points, thickness, col, mousePos);
+				float sqrInteractDst = WireDrawer.DrawWire(bitWire.Points, thickness, col, mousePos, isMulti:true);
 				if (canInteract && sqrInteractDst < sqrDstThreshold) InteractionState.NotifyElementUnderMouse(wire);
 			}
 

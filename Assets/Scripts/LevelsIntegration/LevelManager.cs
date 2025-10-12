@@ -149,6 +149,120 @@ namespace DLS.Game.LevelsIntegration
             return report;
         }
 
+        /// <summary>
+        /// Generates test vectors by exhaustively testing all possible input combinations.
+        /// Returns JSON string containing the test vectors.
+        /// </summary>
+        public string GenerateTestVectors()
+        {
+            if (!IsActive || Current == null)
+            {
+                Debug.LogWarning("[LevelManager] GenerateTestVectors called while level not active.");
+                return null;
+            }
+
+            int inputCount = Current.inputCount;
+            int outputCount = Current.outputCount;
+            
+            // Calculate total combinations (2^inputCount)
+            int totalCombinations = 1 << inputCount; // 2^inputCount
+            
+            Debug.Log($"[LevelManager] Generating {totalCombinations} test vectors for {inputCount} inputs, {outputCount} outputs");
+            
+            // List to store all test vectors
+            var testVectors = new List<TestVectorData>();
+            
+            // Loop through all possible input combinations
+            for (int i = 0; i < totalCombinations; i++)
+            {
+                // Convert index to binary input string
+                string inputBits = "";
+                for (int bit = inputCount - 1; bit >= 0; bit--)
+                {
+                    inputBits += ((i >> bit) & 1) == 1 ? "1" : "0";
+                }
+                
+                // Apply inputs to circuit
+                var inputVector = BitVector.FromString(inputBits);
+                _sim.ApplyInputs(inputVector);
+                
+                // Let circuit settle
+                _sim.SettleWithin(5, out _);
+                
+                // Read outputs
+                var outputVector = _sim.ReadOutputs();
+                string outputBits = outputVector.ToString();
+                
+                // Store test vector
+                testVectors.Add(new TestVectorData
+                {
+                    inputs = inputBits,
+                    expected = outputBits
+                });
+            }
+            
+            // Create wrapper object for JSON export
+            var wrapper = new TestVectorsWrapper
+            {
+                levelId = Current.id,
+                levelName = Current.name,
+                inputCount = inputCount,
+                outputCount = outputCount,
+                testVectors = testVectors.ToArray()
+            };
+            
+            // Convert to JSON
+            string json = JsonUtility.ToJson(wrapper, true);
+            
+            Debug.Log($"[LevelManager] Generated {testVectors.Count} test vectors");
+            
+            // Save to file
+            #if UNITY_EDITOR
+            try
+            {
+                string directoryPath = "Assets/GeneratedTestVectors";
+                if (!System.IO.Directory.Exists(directoryPath))
+                {
+                    System.IO.Directory.CreateDirectory(directoryPath);
+                    Debug.Log($"[LevelManager] Created directory: {directoryPath}");
+                }
+                
+                string fileName = $"{Current.id}_testvectors.json";
+                string filePath = System.IO.Path.Combine(directoryPath, fileName);
+                
+                System.IO.File.WriteAllText(filePath, json);
+                Debug.Log($"[LevelManager] Test vectors saved to: {filePath}");
+                
+                // Refresh Unity's asset database to show the new file
+                UnityEditor.AssetDatabase.Refresh();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[LevelManager] Failed to save test vectors: {e.Message}");
+            }
+            #endif
+            
+            return json;
+        }
+        
+        // Data structures for test vector generation
+        [Serializable]
+        private class TestVectorsWrapper
+        {
+            public string levelId;
+            public string levelName;
+            public int inputCount;
+            public int outputCount;
+            public TestVectorData[] testVectors;
+        }
+        
+        [Serializable]
+        private class TestVectorData
+        {
+            public string inputs;
+            public string expected;
+        }
+
         // ------------------------ Internals ------------------------
 
         // Spawns I/O and returns the created pins (inputs + outputs)

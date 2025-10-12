@@ -17,6 +17,32 @@ namespace DLS.Online
     {
         private const string COLLECTION_NAME = "scores";
         private const string COMPLETE_SOLUTIONS_COLLECTION = "completeSolutions";
+        
+        /// <summary>
+        /// Set to true to use local mock storage in Editor instead of real Firebase.
+        /// Useful for offline development or testing without Firebase connectivity.
+        /// IMPORTANT: Firebase crashes in Unity Editor on Windows when Android is the build target.
+        /// This flag is automatically set to true when in Editor with Android/iOS build target.
+        /// </summary>
+        public static bool UseLocalStorageInEditor
+        {
+            get
+            {
+#if UNITY_EDITOR
+                // CRITICAL: Firebase C++ SDK crashes on Windows Editor when build target is Android
+                // Automatically use local storage in Editor for mobile platforms to prevent crashes
+                var buildTarget = UnityEditor.EditorUserBuildSettings.activeBuildTarget;
+                return buildTarget == UnityEditor.BuildTarget.Android || 
+                       buildTarget == UnityEditor.BuildTarget.iOS;
+#else
+                return false;
+#endif
+            }
+            set
+            {
+                // Property is read-only - value determined by platform
+            }
+        }
 
         /// <summary>
         /// Save a score for a level. Optionally include screenshot and solution JSON.
@@ -34,20 +60,27 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Saving score for level {levelId}: {score}");
                 
-                // Use local storage in Editor for testing
+                // Use local storage in Editor if UseLocalStorageInEditor is enabled
                 #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - using local storage for testing");
-                
-                // Initialize local storage if needed
-                EditorLocalStorage.Initialize();
-                
-                // Save to local storage
-                EditorLocalStorage.SaveScore(levelId, score, userName ?? "EditorUser", completeSolutionId);
-                
-                Debug.Log($"[Leaderboard] Score saved to local storage for level {levelId} with score {score}");
-                await Task.Delay(100); // Simulate network delay
-                return;
-                #else
+                if (UseLocalStorageInEditor)
+                {
+                    Debug.Log($"[Leaderboard] Editor mode with local storage enabled - using mock storage");
+                    
+                    // Initialize local storage if needed
+                    EditorLocalStorage.Initialize();
+                    
+                    // Save to local storage
+                    EditorLocalStorage.SaveScore(levelId, score, userName ?? "EditorUser", completeSolutionId);
+                    
+                    Debug.Log($"[Leaderboard] Score saved to local storage for level {levelId} with score {score}");
+                    await Task.Delay(100); // Simulate network delay
+                    return;
+                }
+                else
+                {
+                    Debug.Log($"[Leaderboard] Editor mode with real Firebase enabled - connecting to Firebase");
+                }
+                #endif
                 
                 // Add timeout to the entire operation
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
@@ -62,7 +95,6 @@ namespace DLS.Online
                         throw new TimeoutException("Leaderboard save operation timed out");
                     }
                 }
-                #endif
             }
             catch (Exception ex)
             {
@@ -180,47 +212,49 @@ namespace DLS.Online
             try
             {
                 Debug.Log($"[Leaderboard] Getting top {limit} scores for level {levelId}");
-                Debug.Log($"[Leaderboard] UNITY_EDITOR defined: #if UNITY_EDITOR");
 
-                // Use local storage in Editor for testing
+                // Use local storage in Editor if UseLocalStorageInEditor is enabled
                 #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - using local storage for score retrieval");
-                
-                // Initialize local storage if needed
-                EditorLocalStorage.Initialize();
-                
-                // Get scores from local storage
-                var localScores = EditorLocalStorage.GetTopScores(levelId, limit);
-                var scoreEntries = new List<ScoreEntry>();
-                
-                foreach (var scoreData in localScores)
+                if (UseLocalStorageInEditor)
                 {
-                    var scoreDict = (Dictionary<string, object>)scoreData;
+                    Debug.Log($"[Leaderboard] Editor mode with local storage enabled - using mock storage");
                     
-                    // Debug: Log all keys in the score data
-                    Debug.Log($"[Leaderboard] Score data keys: {string.Join(", ", scoreDict.Keys)}");
-                    Debug.Log($"[Leaderboard] Score completeSolutionId: '{scoreDict["completeSolutionId"]?.ToString()}'");
+                    // Initialize local storage if needed
+                    EditorLocalStorage.Initialize();
                     
-                    var scoreEntry = new ScoreEntry
+                    // Get scores from local storage
+                    var localScores = EditorLocalStorage.GetTopScores(levelId, limit);
+                    var scoreEntries = new List<ScoreEntry>();
+                    
+                    foreach (var scoreData in localScores)
                     {
-                        id = scoreDict["id"]?.ToString(),
-                        levelId = scoreDict["levelId"]?.ToString(),
-                        userId = scoreDict["userId"]?.ToString(),
-                        userName = scoreDict["userName"]?.ToString(),
-                        score = Convert.ToInt32(scoreDict["score"]),
-                        submittedAtUtc = DateTime.Parse(scoreDict["submittedAt"]?.ToString() ?? DateTime.UtcNow.ToString()),
-                        solutionJsonPath = null,
-                        solutionImagePath = null,
-                        completeSolutionId = scoreDict["completeSolutionId"]?.ToString()
-                    };
-                    scoreEntries.Add(scoreEntry);
+                        var scoreDict = (Dictionary<string, object>)scoreData;
+                        
+                        var scoreEntry = new ScoreEntry
+                        {
+                            id = scoreDict["id"]?.ToString(),
+                            levelId = scoreDict["levelId"]?.ToString(),
+                            userId = scoreDict["userId"]?.ToString(),
+                            userName = scoreDict["userName"]?.ToString(),
+                            score = Convert.ToInt32(scoreDict["score"]),
+                            submittedAtUtc = DateTime.Parse(scoreDict["submittedAt"]?.ToString() ?? DateTime.UtcNow.ToString()),
+                            solutionJsonPath = null,
+                            solutionImagePath = null,
+                            completeSolutionId = scoreDict["completeSolutionId"]?.ToString()
+                        };
+                        scoreEntries.Add(scoreEntry);
+                    }
+                    
+                    Debug.Log($"[Leaderboard] Retrieved {scoreEntries.Count} scores from local storage");
+                    await Task.Delay(100); // Simulate network delay
+                    return scoreEntries;
                 }
+                else
+                {
+                    Debug.Log($"[Leaderboard] Editor mode with real Firebase enabled - connecting to Firebase");
+                }
+                #endif
                 
-                Debug.Log($"[Leaderboard] Retrieved {scoreEntries.Count} scores from local storage");
-                await Task.Delay(100); // Simulate network delay
-                return scoreEntries;
-                #else
-                Debug.Log($"[Leaderboard] NOT Editor mode - using Firebase for score retrieval");
                 // Ensure Firebase is initialized
                 await FirebaseBootstrap.InitializeAsync();
                 if (!FirebaseBootstrap.IsInitialized)
@@ -273,7 +307,6 @@ namespace DLS.Online
 
                 Debug.Log($"[Leaderboard] Retrieved {scores.Count} scores for level {levelId}");
                 return scores;
-                #endif
             }
             catch (Exception ex)
             {
@@ -320,9 +353,21 @@ namespace DLS.Online
                     {
                         return dateTime.ToUniversalTime();
                     }
+                    else if (value is string stringValue)
+                    {
+                        // Handle string timestamps from Firebase (ISO 8601 format)
+                        if (DateTime.TryParse(stringValue, out DateTime parsedDateTime))
+                        {
+                            return parsedDateTime.ToUniversalTime();
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[Leaderboard] Failed to parse timestamp string '{stringValue}' for {key}");
+                        }
+                    }
                     else if (value != null)
                     {
-                        Debug.LogWarning($"[Leaderboard] Unexpected timestamp type for {key}: {value.GetType()}");
+                        Debug.LogWarning($"[Leaderboard] Unexpected timestamp type for {key}: {value.GetType()}, value: {value}");
                     }
                 }
             }
@@ -346,20 +391,27 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Saving complete solution for level {solution.LevelId}: {solution.Score}");
                 
-                // Use local storage in Editor for testing
+                // Use local storage in Editor if UseLocalStorageInEditor is enabled
                 #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - using local storage for complete solution");
-                
-                // Initialize local storage if needed
-                EditorLocalStorage.Initialize();
-                
-                // Save to local storage
-                var solutionId = EditorLocalStorage.SaveCompleteSolution(solution);
-                
-                Debug.Log($"[Leaderboard] Complete solution saved to local storage with ID: {solutionId}");
-                await Task.Delay(500); // Simulate network delay
-                return solutionId;
-                #else
+                if (UseLocalStorageInEditor)
+                {
+                    Debug.Log($"[Leaderboard] Editor mode with local storage enabled - using mock storage for complete solution");
+                    
+                    // Initialize local storage if needed
+                    EditorLocalStorage.Initialize();
+                    
+                    // Save to local storage
+                    var solutionId = EditorLocalStorage.SaveCompleteSolution(solution);
+                    
+                    Debug.Log($"[Leaderboard] Complete solution saved to local storage with ID: {solutionId}");
+                    await Task.Delay(500); // Simulate network delay
+                    return solutionId;
+                }
+                else
+                {
+                    Debug.Log($"[Leaderboard] Editor mode with real Firebase enabled - connecting to Firebase");
+                }
+                #endif
                 
                 // Add timeout to the entire operation
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60))) // Longer timeout for complete solutions
@@ -374,7 +426,6 @@ namespace DLS.Online
                         throw new TimeoutException("Complete solution save operation timed out");
                     }
                 }
-                #endif
             }
             catch (Exception ex)
             {
@@ -502,15 +553,22 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Getting complete solutions for level {levelId}");
 
-                // Use local storage in Editor for testing
+                // Use local storage in Editor if UseLocalStorageInEditor is enabled
                 #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - simulating complete solution retrieval for level {levelId}");
-                await Task.Delay(100); // Simulate network delay
-                
-                // Return mock data for Editor
-                var mockSolutions = new List<CompleteSolution>();
-                return mockSolutions;
-                #else
+                if (UseLocalStorageInEditor)
+                {
+                    Debug.Log($"[Leaderboard] Editor mode with local storage enabled - using mock data");
+                    await Task.Delay(100); // Simulate network delay
+                    
+                    // Return mock data for Editor
+                    var mockSolutions = new List<CompleteSolution>();
+                    return mockSolutions;
+                }
+                else
+                {
+                    Debug.Log($"[Leaderboard] Editor mode with real Firebase enabled - connecting to Firebase");
+                }
+                #endif
                 
                 // Ensure Firebase is initialized
                 await FirebaseBootstrap.InitializeAsync();
@@ -556,7 +614,6 @@ namespace DLS.Online
 
                 Debug.Log($"[Leaderboard] Retrieved {solutions.Count} complete solutions for level {levelId}");
                 return solutions;
-                #endif
             }
             catch (Exception ex)
             {
@@ -576,30 +633,35 @@ namespace DLS.Online
             {
                 Debug.Log($"[Leaderboard] Getting complete solution {solutionId}");
 
-                // Use local storage in Editor for testing
+                // Use local storage in Editor if UseLocalStorageInEditor is enabled
                 #if UNITY_EDITOR
-                Debug.Log($"[Leaderboard] Editor mode - using local storage for complete solution retrieval");
-                
-                // Initialize local storage if needed
-                EditorLocalStorage.Initialize();
-                
-                // Load from local storage
-                var solution = EditorLocalStorage.GetCompleteSolution(solutionId);
-                
-                if (solution != null)
+                if (UseLocalStorageInEditor)
                 {
-                    Debug.Log($"[Leaderboard] Loaded solution from local storage: {solutionId}");
+                    Debug.Log($"[Leaderboard] Editor mode with local storage enabled - using mock storage");
+                    
+                    // Initialize local storage if needed
+                    EditorLocalStorage.Initialize();
+                    
+                    // Load from local storage
+                    var solution = EditorLocalStorage.GetCompleteSolution(solutionId);
+                    
+                    if (solution != null)
+                    {
+                        Debug.Log($"[Leaderboard] Loaded solution from local storage: {solutionId}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Leaderboard] Solution not found in local storage: {solutionId}");
+                    }
+                    
+                    await Task.Delay(200); // Simulate network delay
+                    return solution;
                 }
                 else
                 {
-                    Debug.LogWarning($"[Leaderboard] Solution not found in local storage: {solutionId}");
+                    Debug.Log($"[Leaderboard] Editor mode with real Firebase enabled - connecting to Firebase");
                 }
-                
-                await Task.Delay(200); // Simulate network delay
-                return solution;
-                #else
-                
-                Debug.Log($"[Leaderboard] Running on device - attempting Firebase retrieval");
+                #endif
                 
                 // Ensure Firebase is initialized
                 await FirebaseBootstrap.InitializeAsync();
@@ -639,16 +701,15 @@ namespace DLS.Online
                 Debug.Log($"[Leaderboard] Found solution JSON, length: {solutionJson.Length}");
                 Debug.Log($"[Leaderboard] First 200 chars of JSON: {solutionJson.Substring(0, Math.Min(200, solutionJson.Length))}");
 
-                var solution = SolutionSerializer.DeserializeCompleteSolution(solutionJson);
-                if (solution == null)
+                var deserializedSolution = SolutionSerializer.DeserializeCompleteSolution(solutionJson);
+                if (deserializedSolution == null)
                 {
                     Debug.LogError("[Leaderboard] Deserialization returned null");
                     return null;
                 }
 
-                Debug.Log($"[Leaderboard] Deserialized solution - LevelId: {solution.LevelId}, MainSolution: {(solution.MainSolution != null ? "exists" : "null")}");
-                return solution;
-                #endif
+                Debug.Log($"[Leaderboard] Deserialized solution - LevelId: {deserializedSolution.LevelId}, MainSolution: {(deserializedSolution.MainSolution != null ? "exists" : "null")}");
+                return deserializedSolution;
             }
             catch (Exception ex)
             {

@@ -242,14 +242,16 @@ namespace DLS.Graphics
 					// UI Theme option removed - only Squiggles Theme is used
 				}
 
-				DrawCollapsibleHeader("EDITING:", ID_EditingSection, IsEditingSectionExpanded, ToggleEditingSection);
-				if (IsEditingSectionExpanded())
-				{
-					DrawNextWheel("Show Pin indicators",PinIndicators, ID_PinIndicators);
-					DrawNextWheel("Snap to grid", SnappingOptions, ID_Snapping);
-					DrawNextWheel("Straight wires", StraightWireOptions, ID_StraightWires);
-					DrawNextWheel("Control scheme", ControlSchemeOptions, ID_ControlScheme);
-				}
+			DrawCollapsibleHeader("EDITING:", ID_EditingSection, IsEditingSectionExpanded, ToggleEditingSection);
+			if (IsEditingSectionExpanded())
+			{
+				DrawNextWheel("Show Pin indicators",PinIndicators, ID_PinIndicators);
+				DrawNextWheel("Snap to grid", SnappingOptions, ID_Snapping);
+				DrawNextWheel("Straight wires", StraightWireOptions, ID_StraightWires);
+				#if UNITY_ANDROID || UNITY_IOS
+				DrawNextWheel("Control scheme", ControlSchemeOptions, ID_ControlScheme);
+				#endif
+			}
 
 				DrawCollapsibleHeader("SIMULATION:", ID_SimulationSection, IsSimulationSectionExpanded, ToggleSimulationSection);
 				if (IsSimulationSectionExpanded())
@@ -283,10 +285,14 @@ namespace DLS.Graphics
 				int multiWireLayoutAlgorithm = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_MultiWireLayoutAlgorithm).index : project.description.Prefs_MultiWireLayoutAlgorithm;
 				// UIThemeMode removed - only Squiggles Theme is used
 				
-				int pinIndicatorsMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_PinIndicators).index : project.description.Perfs_PinIndicators;
-				int snappingMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_Snapping).index : project.description.Prefs_Snapping;
-				int straightWireMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_StraightWires).index : project.description.Prefs_StraightWires;
-				int controlSchemeMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_ControlScheme).index : (project.description.Prefs_UseDragAndDropMode ? 1 : 0);
+			int pinIndicatorsMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_PinIndicators).index : project.description.Perfs_PinIndicators;
+			int snappingMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_Snapping).index : project.description.Prefs_Snapping;
+			int straightWireMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_StraightWires).index : project.description.Prefs_StraightWires;
+			#if UNITY_ANDROID || UNITY_IOS
+			int controlSchemeMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_ControlScheme).index : (project.description.Prefs_UseDragAndDropMode ? 1 : 0);
+			#else
+			int controlSchemeMode = project.description.Prefs_UseDragAndDropMode ? 1 : 0; // Always use existing value on PC
+			#endif
 				
 				bool pauseSim = IsSimulationSectionExpanded() ? (Seb.Vis.UI.UI.GetWheelSelectorState(ID_SimStatus).index == 1) : project.description.Prefs_SimPaused;
 				InputFieldState clockSpeedInputFieldState = IsSimulationSectionExpanded() ? Seb.Vis.UI.UI.GetInputFieldState(ID_ClockSpeedInput) : new InputFieldState();

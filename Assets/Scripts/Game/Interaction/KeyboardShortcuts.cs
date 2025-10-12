@@ -25,6 +25,11 @@ namespace DLS.Game
 	// ---- Level shortcuts ----
 	public static bool ValidateLevelShortcutTriggered => CtrlShortcutTriggered(KeyCode.V);
 	public static bool ClearLevelProgressShortcutTriggered => CtrlShortcutTriggered(KeyCode.X);
+	
+	#if UNITY_EDITOR
+	// ---- Dev-only shortcuts (Editor only) ----
+	public static bool GenerateTestVectorsShortcutTriggered => InputHelper.IsKeyDownThisFrame(KeyCode.G);
+	#endif
 
 		// ---- Misc shortcuts ----
 		public static bool DuplicateShortcutTriggered => MultiModeHeld && InputHelper.IsKeyDownThisFrame(KeyCode.D);

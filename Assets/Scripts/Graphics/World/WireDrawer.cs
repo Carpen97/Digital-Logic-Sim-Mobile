@@ -10,8 +10,8 @@ namespace DLS.Graphics
         public static bool CurvedWires = true;
 
 
-        public static float DrawWire(Vector2[] points, float thickness, Color col, Vector2 interactPos){
-			if(Project.ActiveProject.description.Prefs_WireCurvatureMode == 0 || Project.ActiveProject.description.Prefs_MultiWireLayoutAlgorithm == 1){
+        public static float DrawWire(Vector2[] points, float thickness, Color col, Vector2 interactPos, bool isMulti = false){
+			if(Project.ActiveProject.description.Prefs_WireCurvatureMode == 0 || (isMulti && Project.ActiveProject.description.Prefs_MultiWireLayoutAlgorithm == 1) ){
         		return DrawWireStraight(points, thickness, col, interactPos);
 			}else{
         		return DrawWireCurved(points, thickness, col, interactPos);

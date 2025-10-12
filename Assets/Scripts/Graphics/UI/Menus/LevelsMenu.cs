@@ -237,23 +237,20 @@ namespace DLS.Graphics
 						levelDisplayName += " ●";
 					}
 					
-					bool levelPressed = Seb.Vis.UI.UI.Button(levelDisplayName, activeLevelTheme, levelLabelPos, new Vector2(width - nestedInset, 2), true, false, false, activeLevelTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling || disableHover);
-					if (levelPressed)
-					{
-						bool alreadySelected = _selectedLevelIndex == levelIndex && packHighlighted;
+				bool levelPressed = Seb.Vis.UI.UI.Button(levelDisplayName, activeLevelTheme, levelLabelPos, new Vector2(width - nestedInset, 2), true, false, false, activeLevelTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling || disableHover);
+				if (levelPressed)
+				{
+					bool alreadySelected = _selectedLevelIndex == levelIndex && packHighlighted;
 
-						if (alreadySelected) 
-						{
-							_selectedLevelIndex = -1;
-						}
-						else
-						{
-							_selectedLevelPackIndex = packIndex;
-							_selectedLevelIndex = levelIndex;
-							// Update the global level list for the selected level
-							UpdateSelectedLevel();
-						}
+					if (!alreadySelected) 
+					{
+						_selectedLevelPackIndex = packIndex;
+						_selectedLevelIndex = levelIndex;
+						// Update the global level list for the selected level
+						UpdateSelectedLevel();
 					}
+					// If already selected, do nothing (keep it selected)
+				}
 				}
 			}
 		}

@@ -65,6 +65,8 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 **Improvements:**
 - **Level selection behavior** - Improved UI interaction in levels menu
 - **Validation performance** - 25x faster validation for complex levels with comprehensive coverage
+- **Fixed Chip Library Navigation** - Improved navigation in Chip Library Menu with consistent selection states, proper focus management, and intuitive movement between starred items, collections, and nested folders
+- **Scrollable Sequential Test Details** - Info panel in level validation popup now scrolls for long sequential test sequences, preventing content from being cut off
 
 ---
 

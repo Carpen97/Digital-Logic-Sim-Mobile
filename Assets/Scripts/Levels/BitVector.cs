@@ -26,16 +26,16 @@ namespace DLS.Levels
 
 		public ulong Raw => _bits;
 
-		public static BitVector FromString(string bitString)
+	public static BitVector FromString(string bitString)
+	{
+		ulong v = 0;
+		int len = bitString.Length;
+		for (int i = 0; i < len; i++)
 		{
-			ulong v = 0;
-			int len = bitString.Length;
-			for (int i = 0; i < len; i++)
-			{
-				char c = bitString[i];
-				if (c == '1') v |= (1UL << i);
-			}
-			return new BitVector(v, len);
+			char c = bitString[i];
+			if (c == '1') v |= (1UL << (len - 1 - i));
 		}
+		return new BitVector(v, len);
+	}
 	}
 }

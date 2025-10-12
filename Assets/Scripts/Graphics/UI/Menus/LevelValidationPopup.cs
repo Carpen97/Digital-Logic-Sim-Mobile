@@ -85,8 +85,10 @@ namespace DLS.Graphics
 		static bool _isUploading = false;
 		static string _uploadStatus = "";
 
-		static readonly UIHandle ID_LevelValidationPopup = new("LevelValidationPopup_Scrollbar");
-		static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc DrawRowFunc = DrawRow;
+	static readonly UIHandle ID_LevelValidationPopup = new("LevelValidationPopup_Scrollbar");
+	static readonly UIHandle ID_InfoPanelScrollView = new("InfoPanelScrollView");
+	static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc DrawRowFunc = DrawRow;
+	static readonly Seb.Vis.UI.UI.ScrollViewDrawContentFunc DrawInfoPanelContentFunc = DrawInfoPanelContent;
 
 		static bool isDraggingScrollbar;
 
@@ -572,20 +574,43 @@ namespace DLS.Graphics
 				ColHelper.MakeCol(0.08f)
 			);
 
-			// Draw info content - position closer to top of panel
-			Vector2 contentPos = panelPos - panelSize * 0.5f + new Vector2(1f, panelSize.y - 1f);
+			// Create scrollable content area with small margin from panel edges
+			float margin = 1f;
+			Vector2 contentPos = panelPos - panelSize * 0.5f + new Vector2(margin, panelSize.y - margin);
+			Vector2 contentSize = panelSize - new Vector2(margin * 2, margin * 2);
+
+			// Draw scrollable content using DrawScrollView with custom black background
+			var theme = DrawSettings.ActiveUITheme;
+			var customScrollTheme = theme.ScrollTheme;
+			customScrollTheme.backgroundCol = Color.black; // Pure black background
 			
-			if (_selectedIndex >= 0 && _selectedIndex < _rows.Count)
+			ScrollBarState scrollState = Seb.Vis.UI.UI.DrawScrollView(
+				ID_InfoPanelScrollView,
+				contentPos,
+				contentSize,
+				Anchor.TopLeft,
+				customScrollTheme,
+				DrawInfoPanelContentFunc
+			);
+		}
+
+		static void DrawInfoPanelContent(Vector2 topLeft, float width, bool isLayoutPass)
+		{
+			// Calculate content height dynamically based on actual content
+			float contentHeight = CalculateContentHeight();
+			
+			if (!isLayoutPass)
 			{
-				// Show selected test details
-				var r = _rows[_selectedIndex];
-				var details = new StringBuilder();
-				
-	
+				if (_selectedIndex >= 0 && _selectedIndex < _rows.Count)
+				{
+					// Show selected test details
+					var r = _rows[_selectedIndex];
+					var details = new StringBuilder();
+					
 					// Show sequence details with fixed cell width
 					const int cellWidth = 10;
-					details.AppendLine("  | Input    | Output   | Expected");
-					
+					details.AppendLine(" Step | Input    | Output   | Expected");
+					int stepCount = 0;
 					foreach (var step in r.SequenceSteps)
 					{
 						string stepStatus = step.Passed ? "<color=#44ff44>✓</color>" : "<color=#ff2222>✗</color>";
@@ -593,45 +618,96 @@ namespace DLS.Graphics
 						
 						// Convert binary strings to colored dots
 						string inputs = string.IsNullOrEmpty(step.Inputs) ? "-" : " "+BinaryToColoredDots(step.Inputs);
-						string expected = string.IsNullOrEmpty(step.Expected) ? "-" : " "+BinaryToColoredDots(step.Expected);
 						string got = string.IsNullOrEmpty(step.Got) ? "-" : " "+BinaryToColoredDots(step.Got);
+						string expected = string.IsNullOrEmpty(step.Expected) ? "-" : " "+BinaryToColoredDots(step.Expected);
 						
 						// Apply fixed cell width padding
 						string paddedInputs = inputs + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(inputs)));
+						string paddedGot = got + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(got)-2)) +stepStatus + " ";
 						string paddedExpected = expected + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(expected)));
-						string paddedGot = got + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(got)));
-						
-						details.AppendLine($" {stepStatus}|{paddedInputs}|{paddedGot}|{paddedExpected}");
+						string stepText = $"{stepCount++}";
+						stepText = stepText.PadLeft(5) + " "; // Left-pad to 5 chars, then add 1 space on right
+						details.AppendLine($"{stepText}|{paddedInputs}|{paddedGot}|{paddedExpected}");
 					}
-				
 
-				MenuHelper.DrawTopLeftAlignTextWithBackground(
-					details.ToString(),
-					contentPos,
-					panelSize - new Vector2(2f, 2f),
-					Anchor.TopLeft,
-					Color.white,
-					ColHelper.MakeCol(0.0f), // Transparent background since panel already has one
-					bold: false,
-					textPadX: 0.5f
-				);
+					// Draw text directly without background (panel already has background)
+					MenuHelper.DrawText(details.ToString(), topLeft, Anchor.TopLeft, Color.white, bold: false);
+				}
+				else
+				{
+					// Show default message when no test is selected
+					string defaultMessage = "Select a test from the\nlist to view details...";
+					
+					// Draw text directly without background (panel already has background)
+					MenuHelper.DrawText(defaultMessage, topLeft, Anchor.TopLeft, Color.gray, bold: false);
+				}
 			}
 			else
 			{
-				// Show default message when no test is selected
-				string defaultMessage = "Select a test from the\nlist to view details...";
-				
-				MenuHelper.DrawTopLeftAlignTextWithBackground(
-					defaultMessage,
-					contentPos,
-					panelSize - new Vector2(2f, 2f),
-					Anchor.TopLeft,
-					Color.gray,
-					ColHelper.MakeCol(0.0f), // Transparent background
-					bold: false,
-					textPadX: 0.5f
-				);
+				// Layout pass - draw invisible content with calculated height
+				if (_selectedIndex >= 0 && _selectedIndex < _rows.Count)
+				{
+					var r = _rows[_selectedIndex];
+					var details = new StringBuilder();
+					
+					// Build the same content as the render pass for accurate height calculation
+					const int cellWidth = 10;
+					details.AppendLine("  | Input    | Output   | Expected");
+					
+					foreach (var step in r.SequenceSteps)
+					{
+						string stepStatus = step.Passed ? "✓" : "✗"; // Simplified for layout
+						string inputs = string.IsNullOrEmpty(step.Inputs) ? "-" : " "+BinaryToColoredDots(step.Inputs);
+						string got = string.IsNullOrEmpty(step.Got) ? "-" : " "+BinaryToColoredDots(step.Got);
+						string expected = string.IsNullOrEmpty(step.Expected) ? "-" : " "+BinaryToColoredDots(step.Expected);
+						
+						string paddedInputs = inputs + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(inputs)));
+						string paddedGot = got + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(got)));
+						string paddedExpected = expected + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(expected)));
+						
+						details.AppendLine($" {stepStatus}|{paddedInputs}|{paddedGot}|{paddedExpected}");
+					}
+
+					// Draw invisible text to calculate bounds
+					MenuHelper.DrawText(details.ToString(), topLeft, Anchor.TopLeft, Color.clear, bold: false);
+				}
+				else
+				{
+					// Default message height - draw invisible text to calculate bounds
+					string defaultMessage = "Select a test from the\nlist to view details...";
+					
+					MenuHelper.DrawText(defaultMessage, topLeft, Anchor.TopLeft, Color.clear, bold: false);
+				}
 			}
+		}
+
+		static float CalculateContentHeight()
+		{
+			if (_selectedIndex >= 0 && _selectedIndex < _rows.Count)
+			{
+				var r = _rows[_selectedIndex];
+				if (r.SequenceSteps != null)
+				{
+					// Calculate height using real font metrics
+					var theme = DrawSettings.ActiveUITheme;
+					
+					// Get actual line height from the font system
+					Vector2 sampleTextSize = Seb.Vis.UI.UI.CalculateTextSize("M", theme.FontSizeRegular, theme.FontRegular);
+					float lineHeight = sampleTextSize.y * 1.3f; // LineHeightEM from TextLayoutHelper (1.3f)
+					
+					// Header line + sequence steps + padding
+					float headerHeight = lineHeight; // "  | Input    | Output   | Expected" header
+					float stepHeight = r.SequenceSteps.Count * lineHeight; // Each step
+					float padding = 2f; // Some padding
+					
+					return headerHeight + stepHeight + padding;
+				}
+			}
+			
+			// Default message height using real font metrics
+			var defaultTheme = DrawSettings.ActiveUITheme;
+			Vector2 defaultTextSize = Seb.Vis.UI.UI.CalculateTextSize("Select a test from the\nlist to view details...", defaultTheme.FontSizeRegular, defaultTheme.FontRegular);
+			return defaultTextSize.y + 1f; // Add some padding
 		}
 
 

@@ -21,17 +21,28 @@ namespace DLS.Graphics
         static string _errorMessage = "";
         static int _selectedIndex = -1;
 
-        // UI constants (copied from LevelValidationPopup)
-        const float ListWidthFrac = 0.72f;
-        const float ListHeightFrac = 0.40f;  // Reduced to make room for button
-        const float RowHeight = 6.0f;        // Increased row spacing
-        const float OkBtnWidthFrac = 0.30f;
-        const float OkBtnHeightMul = 1.5f;
+        // UI constants (inspired by PreferencesMenu)
+        const float menuWidth = 70f; // Wider panel
+        const float entrySpacing = 0.2f; // Like PreferencesMenu
+        const float headerSpacing = 2.0f; // Large spacing like PreferencesMenu
+        const float titleSpacing = 3.0f;
+        const float sectionSpacing = 1.5f;
+        const float buttonSpacing = 2.0f;
+        const float RowHeight = 4.2f;
+
+        //Column horizontal spacing
+        const float rankOffset = 2f;
+        const float scoreOffset = 10f;
+        const float userOffset = 17f;
+        const float dateOffset = 50f;
 
         // UI handles (copied from LevelValidationPopup)
         static readonly UIHandle ID_LeaderboardPopup = new("LeaderboardPopup_Scrollbar");
         static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc DrawRowFunc = DrawRow;
         static bool isDraggingScrollbar;
+        
+        // Current position tracking (inspired by PreferencesMenu)
+        static Vector2 currentPos;
 
         // ---------- Public API ----------
         public static void Open(string levelId)
@@ -45,6 +56,24 @@ namespace DLS.Graphics
             _ = LoadScoresAsync();
             
             UIDrawer.SetActiveMenu(UIDrawer.MenuType.Leaderboard);
+        }
+
+        /// <summary>
+        /// Reopen the leaderboard with cached data (preserves scores, selection, and state)
+        /// </summary>
+        public static void ReopenWithCachedData()
+        {
+            if (string.IsNullOrEmpty(_levelId))
+            {
+                Debug.LogWarning("[Leaderboard] Cannot reopen with cached data - no level ID");
+                return;
+            }
+            
+            // Keep everything - scores, selection, and state
+            _isLoading = false; // Scores are already loaded
+            
+            UIDrawer.SetActiveMenu(UIDrawer.MenuType.Leaderboard);
+            Debug.Log($"[Leaderboard] Reopened with cached data for level {_levelId} ({_scores.Count} scores, selection: {_selectedIndex})");
         }
 
         static async System.Threading.Tasks.Task LoadScoresAsync()
@@ -73,16 +102,19 @@ namespace DLS.Graphics
             using (Seb.Vis.UI.UI.BeginBoundsScope(true))
             {
                 Draw.ID panelBG = Seb.Vis.UI.UI.ReservePanel();
-                Draw.ID titleBG = Seb.Vis.UI.UI.ReservePanel();
+                
+                // Initialize position tracking with generous margins like PreferencesMenu
+                Vector2 topLeft = Seb.Vis.UI.UI.Centre + new Vector2(-menuWidth / 2, 22f);
+                currentPos = topLeft;
+                Color headerCol = new(0.46f, 1, 0.54f); // Green like PreferencesMenu
+                Color labelCol = Color.white;
 
-                // --- Title banner ---
-                Vector2 titlePos = Seb.Vis.UI.UI.CentreTop + Vector2.down * 8f;
-                string title = $"Leaderboard - {_levelId}";
-                Color headerCol = ColHelper.MakeCol255(44, 92, 62);
-                Seb.Vis.UI.UI.DrawText(title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 2f, titlePos, Anchor.TextCentre, headerCol);
-                Seb.Vis.UI.UI.ModifyPanel(titleBG, Bounds2D.Grow(Seb.Vis.UI.UI.PrevBounds, 3f), Color.clear);
+                // --- LEADERBOARD header (centered like other popups) ---
+                string title = $"LEADERBOARD - {_levelId}";
+                Seb.Vis.UI.UI.DrawText(title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, Seb.Vis.UI.UI.Centre + Vector2.up * 22f, Anchor.TextCentre, headerCol);
+                AddHeaderSpacing(); // Large spacing like PreferencesMenu
 
-                // --- Status row ---
+                // --- Status row (centered) ---
                 {
                     string statusStr = _isLoading ? "Loading scores..." : 
                                      !string.IsNullOrEmpty(_errorMessage) ? $"Error: {_errorMessage}" :
@@ -91,109 +123,91 @@ namespace DLS.Graphics
                                      !string.IsNullOrEmpty(_errorMessage) ? Color.red :
                                      _scores.Count == 0 ? Color.gray : ColHelper.MakeCol255(245, 212, 67);
 
-                    Vector2 statusPos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + new Vector2(0f, -1.4f);
-                    Seb.Vis.UI.UI.DrawText(statusStr, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, statusPos, Anchor.TextCentre, statusCol);
+                    Seb.Vis.UI.UI.DrawText(statusStr, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, Seb.Vis.UI.UI.Centre + Vector2.up * 19f, Anchor.TextCentre, statusCol);
+                    AddHeaderSpacing(); // Large spacing between status and content
                 }
 
-                // --- Table header ---
+                // --- Table header and scores ---
                 if (!_isLoading && string.IsNullOrEmpty(_errorMessage) && _scores.Count > 0)
                 {
+
+                    AddHeaderSpacing();
+                    // Draw table header
                     DrawTableHeader();
-                }
 
-                // --- Scrollable list of scores ---
-                if (!_isLoading && string.IsNullOrEmpty(_errorMessage) && _scores.Count > 0)
-                {
-                    float listW = Seb.Vis.UI.UI.Width * ListWidthFrac;
-                    float listH = Seb.Vis.UI.UI.Height * ListHeightFrac;
+                    // Draw scrollable list - match button width
+                    float listW = menuWidth; // Full width to match buttons
+                    float listH = 30f; // Generous height
                     Vector2 listSize = new(listW, listH);
-
-                    var theme = DrawSettings.ActiveUITheme;
 
                     ScrollBarState sv = Seb.Vis.UI.UI.DrawScrollView(
                         ID_LeaderboardPopup,
-                        Seb.Vis.UI.UI.Centre + Vector2.down*2f,
+                        currentPos,
                         listSize,
                         UILayoutHelper.DefaultSpacing,
-                        Anchor.Centre,
-                        theme.ScrollTheme,
+                        Anchor.TopLeft,
+                        DrawSettings.ActiveUITheme.ScrollTheme,
                         DrawRowFunc,
                         _scores.Count
                     );
                     isDraggingScrollbar = sv.isDragging;
+                    currentPos.y -= listH; // Update position
                 }
 
-                // --- Footer: View and Close buttons ---
-                float buttonWidth = Seb.Vis.UI.UI.Width * OkBtnWidthFrac;
-                float buttonHeight = ButtonHeight * OkBtnHeightMul;
-                float buttonSpacing = 2f;
-                float totalWidth = (buttonWidth * 2) + buttonSpacing;
-                Vector2 buttonsStart = Seb.Vis.UI.UI.PrevBounds.CentreBottom + Vector2.left * totalWidth / 2f;
-
-                // View button (left)
-                Vector2 viewButtonPos = buttonsStart;
-                bool viewPressed = Seb.Vis.UI.UI.Button(
-                    "View",
+                // --- Footer: View and Cancel buttons using HorizontalButtonGroup for proper styling ---
+                Vector2 buttonTopLeft = new(currentPos.x, Seb.Vis.UI.UI.PrevBounds.Bottom - entrySpacing*5);
+                float buttonRegionWidth = menuWidth;
+                
+                // Use custom button names for HorizontalButtonGroup
+                string[] buttonNames = { "VIEW", "CANCEL" };
+                bool[] buttonStates = { _selectedIndex >= 0 && _selectedIndex < _scores.Count, true };
+                
+                int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(
+                    buttonNames,
+                    buttonStates,
                     MenuHelper.Theme.ButtonTheme,
-                    viewButtonPos,
-                    new Vector2(buttonWidth, buttonHeight),
-                    _selectedIndex >= 0 && _selectedIndex < _scores.Count,
-                    false,
-                    false,
-                    MenuHelper.Theme.ButtonTheme.buttonCols,
+                    buttonTopLeft,
+                    buttonRegionWidth,
+                    DrawSettings.DefaultButtonSpacing,
+                    0,
                     Anchor.TopLeft
                 );
-
-                // Close button (right)
-                Vector2 closeButtonPos = buttonsStart + Vector2.right * (buttonWidth + buttonSpacing);
-                bool closePressed = Seb.Vis.UI.UI.Button(
-                    "Close",
-                    MenuHelper.Theme.ButtonTheme,
-                    closeButtonPos,
-                    new Vector2(buttonWidth, buttonHeight),
-                    true,
-                    false,
-                    false,
-                    MenuHelper.Theme.ButtonTheme.buttonCols,
-                    Anchor.TopLeft
-                );
-
-                if (viewPressed && _selectedIndex >= 0 && _selectedIndex < _scores.Count)
+                
+                // Handle button results
+                if (buttonIndex == 1) // CANCEL
+                {
+                    UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+                }
+                else if (buttonIndex == 0 && _selectedIndex >= 0 && _selectedIndex < _scores.Count) // VIEW
                 {
                     ViewSelectedSolution();
                 }
 
-                if (closePressed)
-                {
-                    UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
-                }
+                // --- Draw main panel background with proper border effect ---
+                Bounds2D fullPanelBounds = Seb.Vis.UI.UI.GetCurrentBoundsScope();
+                MenuHelper.DrawReservedMenuPanel(panelBG, fullPanelBounds);
             }
         }
 
         static void DrawTableHeader()
         {
-            // Calculate header position (above the scrollable list)
-            float listW = Seb.Vis.UI.UI.Width * ListWidthFrac;
-            Vector2 headerStart = Seb.Vis.UI.UI.Centre + Vector2.up * Seb.Vis.UI.UI.Height * ListHeightFrac * 0.6f ;
+            // Clean header like PreferencesMenu - no background, just text
+            float listW = menuWidth; // Full width to match list and buttons
             
-            // Header background
-            Bounds2D headerBounds = new Bounds2D(
-                headerStart + Vector2.left * (listW * 0.5f),
-                headerStart + Vector2.right * (listW * 0.5f) + Vector2.down * RowHeight * 0.7f
-            );
-            Seb.Vis.UI.UI.DrawPanel(headerBounds, ColHelper.MakeCol255(50, 50, 50));
+            // Draw header text with original positioning
+            Vector2 rankPos = currentPos + Vector2.right * rankOffset;
+            Vector2 scorePos = currentPos + Vector2.right * scoreOffset;
+            Vector2 userPos = currentPos + Vector2.right * userOffset;
+            Vector2 datePos = currentPos + Vector2.right * dateOffset;
             
-            // Header text positions (matching the row layout you fixed)
-            Vector2 rankPos = headerBounds.Min + Vector2.right * 0.5f + Vector2.up * (headerBounds.Height * 0.3f);
-            Vector2 scorePos = headerBounds.Min + Vector2.right * 8f + Vector2.up * (headerBounds.Height * 0.3f);
-            Vector2 userPos = headerBounds.Min + Vector2.right * 20f + Vector2.up * (headerBounds.Height * 0.3f);
-            Vector2 datePos = headerBounds.Min + Vector2.right * 55f + Vector2.up * (headerBounds.Height * 0.3f);
+            // Draw header text (like setting labels in PreferencesMenu)
+            Seb.Vis.UI.UI.DrawText("Rank", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, rankPos, Anchor.TextCentreLeft, Color.white);
+            Seb.Vis.UI.UI.DrawText("Score", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TextCentreLeft, Color.yellow);
+            Seb.Vis.UI.UI.DrawText("User", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, userPos + Vector2.right*4, Anchor.TextCentreLeft, Color.cyan);
+            Seb.Vis.UI.UI.DrawText("Date", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, datePos + Vector2.right*4, Anchor.TextCentreLeft, Color.white);
             
-            // Draw header text
-            Seb.Vis.UI.UI.DrawText("Rank", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, rankPos, Anchor.TopLeft, Color.white);
-            Seb.Vis.UI.UI.DrawText("Score", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TopLeft, Color.yellow);
-            Seb.Vis.UI.UI.DrawText("User", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, userPos, Anchor.TopLeft, Color.cyan);
-            Seb.Vis.UI.UI.DrawText("Date", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, datePos, Anchor.TopLeft, Color.gray);
+            // Update current position with spacing
+            currentPos.y -= DrawSettings.ButtonHeight * 0.5f;
         }
 
         static void DrawRow(Vector2 rowTopLeft, float width, int index, bool isLayoutPass)
@@ -203,54 +217,52 @@ namespace DLS.Graphics
             var score = _scores[index];
             bool isSelected = index == _selectedIndex;
             
-            // Row background (copied from LevelValidationPopup)
-            Color rowCol = index % 2 == 0 ? ColHelper.MakeCol255(30, 30, 30) : ColHelper.MakeCol255(40, 40, 40);
-            if (isSelected)
-            {
-                rowCol = ColHelper.MakeCol255(60, 100, 60); // Highlight selected row
-            }
-            Bounds2D rowBounds = new Bounds2D(rowTopLeft, rowTopLeft + Vector2.right * width + Vector2.down * RowHeight);
-            Seb.Vis.UI.UI.DrawPanel(rowBounds, rowCol);
+            // Use different button themes for selection (like ChipLibraryMenu)
+            ButtonTheme rowTheme = isSelected ? ActiveUITheme.ChipLibraryChipToggleOn : ActiveUITheme.ChipLibraryChipToggleOff;
+            
+            // Create invisible button for selection only (no text)
+            bool rowPressed = Seb.Vis.UI.UI.Button(
+                "", // Empty text - we just want the click area
+                rowTheme,
+                rowTopLeft,
+                new Vector2(width, RowHeight * 0.8f), // Halved row height
+                true,
+                false,
+                false,
+                rowTheme.buttonCols,
+                Anchor.TopLeft,
+                ignoreInputs: isDraggingScrollbar
+            );
 
-            // Score data
+            if (rowPressed)
+            {
+                _selectedIndex = index;
+            }
+
+            // Score data with original colors and positions
             string rankText = $"#{index + 1}";
             string scoreText = score.score.ToString();
             string userText = GetDisplayUserName(score);
-            string dateText = score.submittedAtUtc.ToString("MM/dd HH:mm");
+            string dateText = FormatDate(score.submittedAtUtc);
 
-            // Position elements (copied from LevelValidationPopup pattern)
-            Vector2 rankPos = rowBounds.Min + Vector2.right * 0.7f + Vector2.up * (rowBounds.Height * 0.5f);
-            Vector2 scorePos = rowBounds.Min + Vector2.right * 9f + Vector2.up * (rowBounds.Height * 0.5f);
-            Vector2 userPos = rowBounds.Min + Vector2.right * 19f + Vector2.up * (rowBounds.Height * 0.5f);
-            Vector2 datePos = rowBounds.Min + Vector2.right * 50f + Vector2.up * (rowBounds.Height * 0.5f);
+            // Position elements (matching the header positions)
+            Bounds2D rowBounds = new Bounds2D(rowTopLeft, rowTopLeft + Vector2.right * width + Vector2.down * (RowHeight * 0.5f));
+            Vector2 rankPos = rowBounds.Min + Vector2.right * rankOffset + Vector2.up * (rowBounds.Height * 0.5f);
+            Vector2 scorePos = rowBounds.Min + Vector2.right * scoreOffset + Vector2.up * (rowBounds.Height * 0.5f);
+            #if UNITY_ANDROID || UNITY_IOS
+            Vector2 userPos = rowBounds.Min + Vector2.right * (userOffset +  2f) + Vector2.up * (rowBounds.Height * 0.5f);
+            #else
+            Vector2 userPos = rowBounds.Min + Vector2.right * (userOffset +  2f) + Vector2.up * (rowBounds.Height * 0.5f);
+            #endif
 
-            // Draw text (copied from LevelValidationPopup pattern)
+
+            Vector2 datePos = rowBounds.Min + Vector2.right * dateOffset + Vector2.up * (rowBounds.Height * 0.5f);
+
+            // Draw text with original colors
             Seb.Vis.UI.UI.DrawText(rankText, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, rankPos, Anchor.TopLeft, Color.white);
             Seb.Vis.UI.UI.DrawText(scoreText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TopLeft, Color.yellow);
             Seb.Vis.UI.UI.DrawText(userText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, userPos, Anchor.TopLeft, Color.cyan);
-            Seb.Vis.UI.UI.DrawText(dateText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, datePos, Anchor.TopLeft, Color.gray);
-
-            // Add invisible button for row selection
-            if (!isLayoutPass)
-            {
-                bool rowPressed = Seb.Vis.UI.UI.Button(
-                    "", // Empty text - we just want the click area
-                    MenuHelper.Theme.ButtonTheme,
-                    rowTopLeft,
-                    new Vector2(width, RowHeight),
-                    true,
-                    false,
-                    false,
-                    MenuHelper.Theme.ButtonTheme.buttonCols,
-                    Anchor.TopLeft,
-                    ignoreInputs: isDraggingScrollbar
-                );
-
-                if (rowPressed)
-                {
-                    _selectedIndex = index;
-                }
-            }
+            Seb.Vis.UI.UI.DrawText(dateText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, datePos, Anchor.TopLeft, Color.white);
         }
 
 
@@ -261,21 +273,49 @@ namespace DLS.Graphics
             {
                 return TruncateUserName(score.userName);
             }
-            return TruncateUserId(score.userId);
+            return "Anonymous";
+            //return TruncateUserId(score.userId);
         }
         
         static string TruncateUserName(string userName)
         {
             if (string.IsNullOrEmpty(userName)) return "Anonymous";
-            if (userName.Length <= 12) return userName;
-            return userName.Substring(0, 12) + "...";
+            if (userName.Length <= 36) return userName; // 3x larger (12 -> 36)
+            return userName.Substring(0, 36) + "...";
         }
         
         static string TruncateUserId(string userId)
         {
             if (string.IsNullOrEmpty(userId)) return "anon";
-            if (userId.Length <= 8) return userId;
-            return userId.Substring(0, 8) + "...";
+            if (userId.Length <= 24) return userId; // 3x larger (8 -> 24)
+            return userId.Substring(0, 24) + "...";
+        }
+
+        static string FormatDate(DateTime dateTime)
+        {
+            // Format as MM/dd HH:mm but handle different dates properly
+            return dateTime.ToString("MM/dd HH:mm");
+        }
+        
+        // Spacing helper methods (inspired by PreferencesMenu)
+        static void AddSpacing()
+        {
+            currentPos.y -= entrySpacing;
+        }
+        
+        static void AddHeaderSpacing()
+        {
+            currentPos.y -= headerSpacing;
+        }
+        
+        static void AddTitleSpacing()
+        {
+            currentPos.y -= titleSpacing;
+        }
+        
+        static void AddSectionSpacing()
+        {
+            currentPos.y -= sectionSpacing;
         }
 
         static async void ViewSelectedSolution()
@@ -320,6 +360,11 @@ namespace DLS.Graphics
                 if (success)
                 {
                     Debug.Log("[Leaderboard] Solution loaded successfully");
+                    
+                    // Set leaderboard viewing state to show enhanced viewing text
+                    string displayUserName = GetDisplayUserName(selectedScore);
+                    project.SetLeaderboardViewingState(displayUserName, _levelId);
+                    
                     UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
                 }
                 else

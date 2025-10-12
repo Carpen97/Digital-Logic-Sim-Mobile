@@ -31,6 +31,7 @@ namespace DLS.Graphics
 			ChipLabelPopup,
 			SpecialChipMaker,
 			Overwrite,
+			DeleteConfirmation,
 			Levels,
 			LevelValidationResult,
 			LevelCompleted,
@@ -76,7 +77,9 @@ namespace DLS.Graphics
 			if (menuToDraw != MenuType.ChipCustomization) BottomBarUI.DrawUI(project);
 
 			bool aMenuIsOpen = true;
-			if (menuToDraw == MenuType.ChipSave) ChipSaveMenu.DrawMenu();
+			
+			if (menuToDraw == MenuType.DeleteConfirmation) DeleteConfirmationPopup.DrawMenu();
+			else if (menuToDraw == MenuType.ChipSave) ChipSaveMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLibrary) ChipLibraryMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ChipCustomization) ChipCustomizationMenu.DrawMenu();
 			else if (menuToDraw == MenuType.Preferences) PreferencesMenu.DrawMenu(project);
@@ -162,6 +165,7 @@ namespace DLS.Graphics
 		{
 			ActiveMenu = type;
 		}
+
 
 		public static void Reset()
 		{

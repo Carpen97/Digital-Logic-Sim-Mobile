@@ -1,11 +1,15 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using DLS.Levels.Host;
 
 namespace DLS.Levels
 {
 	public sealed class LevelValidator
 	{
-		private readonly ISimulationAdapter _sim;
+	private readonly ISimulationAdapter _sim;
+	private readonly Random _random = new Random();
+	private const int MAX_COMBINATIONAL_TESTS = 40;
 
 		public LevelValidator(ISimulationAdapter sim) => _sim = sim;
 
@@ -32,47 +36,60 @@ namespace DLS.Levels
 			return report;
 		}
 
-		private void ValidateCombinational(LevelDefinition def, ValidationReport report)
+	private void ValidateCombinational(LevelDefinition def, ValidationReport report)
+	{
+		var vectors = def.testVectors;
+
+		// Initialize AllTestResults for combinational levels
+		report.AllTestResults = new List<TestResult>();
+
+		// Randomly select up to MAX_COMBINATIONAL_TESTS vectors if there are too many
+		LevelDefinition.TestVector[] vectorsToTest;
+		if (vectors.Length > MAX_COMBINATIONAL_TESTS)
 		{
-			var vectors = def.testVectors;
+			// Use LINQ OrderBy with random guid to shuffle, then take first MAX_COMBINATIONAL_TESTS
+			vectorsToTest = vectors.OrderBy(x => _random.Next()).Take(MAX_COMBINATIONAL_TESTS).ToArray();
+			UnityEngine.Debug.Log($"[LevelValidator] Testing {MAX_COMBINATIONAL_TESTS} randomly selected vectors out of {vectors.Length} available");
+		}
+		else
+		{
+			vectorsToTest = vectors;
+		}
 
-			// Initialize AllTestResults for combinational levels
-			report.AllTestResults = new List<TestResult>();
+		// Correctness
+		foreach (var tv in vectorsToTest)
+		{
+			var iv = BitVector.FromString(tv.inputs);
+			_sim.ApplyInputs(iv);
 
-			// Correctness
-			foreach (var tv in vectors)
+			// ✅ ensure propagation before sampling outputs
+			_sim.SettleWithin(2, out _);   // 1–2 steps is plenty for combinational logic
+
+			var ov = _sim.ReadOutputs();
+			var expected = BitVector.FromString(tv.expected);
+			bool passed = (ov.Length == expected.Length && ov.Raw == expected.Raw);
+
+			// Create test result for this vector
+			var testResult = new TestResult
 			{
-				var iv = BitVector.FromString(tv.inputs);
-				_sim.ApplyInputs(iv);
+				Inputs = tv.inputs,
+				Expected = tv.expected,
+				Actual = ov.ToString(),
+				Passed = passed,
+				SequenceName = "", // Not used for combinational
+				StepIndex = 0, // Not used for combinational
+				IsClockEdge = false // Not used for combinational
+			};
 
-				// ✅ ensure propagation before sampling outputs
-				_sim.SettleWithin(2, out _);   // 1–2 steps is plenty for combinational logic
+			report.AllTestResults.Add(testResult);
 
-				var ov = _sim.ReadOutputs();
-				var expected = BitVector.FromString(tv.expected);
-				bool passed = (ov.Length == expected.Length && ov.Raw == expected.Raw);
-
-				// Create test result for this vector
-				var testResult = new TestResult
-				{
-					Inputs = tv.inputs,
-					Expected = tv.expected,
-					Actual = ov.ToString(),
-					Passed = passed,
-					SequenceName = "", // Not used for combinational
-					StepIndex = 0, // Not used for combinational
-					IsClockEdge = false // Not used for combinational
-				};
-
-				report.AllTestResults.Add(testResult);
-
-				if (!passed)
-				{
-					report.PassedAll = false;
-					report.Failures.Add(new CaseFail(tv.inputs, $"Expected {expected}, got {ov}"));
-				}
+			if (!passed)
+			{
+				report.PassedAll = false;
+				report.Failures.Add(new CaseFail(tv.inputs, $"Expected {expected}, got {ov}"));
 			}
 		}
+	}
 
 		private void ValidateSequences(LevelDefinition def, ValidationReport report)
 		{
@@ -86,12 +103,23 @@ namespace DLS.Levels
 			// Initialize AllTestResults
 			report.AllTestResults = new List<TestResult>();
 
-			ResetCircuitStateEnhanced();
+		ResetCircuitStateEnhanced();
 
-			foreach (var sequence in def.testSequences)
+		foreach (var sequence in def.testSequences)
+		{
+			// Apply setup vectors if provided (for circuit initialization)
+			if (sequence.setup != null && sequence.setup.Length > 0)
 			{
-				// Apply the entire test sequence step by step
-				for (int i = 0; i < sequence.vectors.Length; i++)
+				foreach (var setupInput in sequence.setup)
+				{
+					var setupIv = BitVector.FromString(setupInput);
+					_sim.ApplyInputs(setupIv);
+					_sim.SettleWithin(def.settleStepsPerVector, out _);
+				}
+			}
+			
+			// Apply the entire test sequence step by step
+			for (int i = 0; i < sequence.vectors.Length; i++)
 				{
 					var vector = sequence.vectors[i];
 					
