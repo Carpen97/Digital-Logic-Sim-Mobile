@@ -876,7 +876,7 @@ namespace DLS.Graphics
 		if (Seb.Vis.UI.UI.Button("", theme, discordButtonPos, buttonSize2, true, false, false, discordButtonCols))
 		{
 			BackToMain();
-			Application.OpenURL("https://discord.com/channels/1361307968276136007/1366859789711315106");
+			Application.OpenURL("https://discord.com/channels/1361307968276136007/1426249925544382595");
 		}
 
 		// Back button - stays centered at bottom

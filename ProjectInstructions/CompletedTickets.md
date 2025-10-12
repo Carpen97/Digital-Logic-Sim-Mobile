@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 35
-- **Most Recent**: Ticket 051 (October 12, 2025)
+- **Total Completed Tickets**: 36
+- **Most Recent**: Ticket 052 (October 12, 2025)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 052** – Add "Coming Soon" placeholder chapter
+**Closed:** 2025-10-12  
+**Summary:** Successfully added "Coming Soon" placeholder chapter to the level pack to provide a teaser for future content and set user expectations. Added new chapter entry to levels.json with engaging, student-friendly description that encourages return visits and includes community feedback channel information (@Carpen# Discord). Modified LevelsMenu.cs to properly handle and display chapters with empty levels arrays. The placeholder chapter appears at the end of the level pack and seamlessly integrates with existing chapter selection UI from Ticket 048. When selected, displays encouraging message about future content without showing play buttons (empty levels array handled correctly). All success criteria met: chapter is selectable, description is engaging and student-friendly, no errors with empty levels array, PLAY buttons appropriately disabled, matches existing chapter styling, and sets positive expectations for future content. Cross-platform compatibility verified for mobile and PC. ✅
+
+---
 
 ### **Ticket 051** – Make info panel scrollable in LevelValidationPopup
 **Closed:** 2025-10-12  

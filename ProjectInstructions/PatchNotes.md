@@ -61,6 +61,7 @@ After each ticket completion, ask: **"Should this be noted in patch notes?"**
 - **Test Vector Generator** (Developer Tool) - Press 'G' key to automatically generate comprehensive test vectors from working circuits
 - **Random Test Sampling** - Performance optimization caps validation at 40 tests for complex levels
 - **Setup Phase Support** - Sequential circuits can now initialize state before validation begins
+- **"Coming Soon" Chapter** - New placeholder chapter teases future content and includes community feedback channel for level suggestions
 
 **Improvements:**
 - **Level selection behavior** - Improved UI interaction in levels menu

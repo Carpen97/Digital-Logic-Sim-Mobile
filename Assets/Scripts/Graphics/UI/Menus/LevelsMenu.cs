@@ -508,11 +508,9 @@ namespace DLS.Graphics
 							levelPack.levels.Add(def);
 						}
 						
-						if (levelPack.levels.Count > 0)
-						{
-							_levelPacks.Add(levelPack);
-							Debug.Log($"[LevelsMenu] Added level pack: {levelPack.name} with {levelPack.levels.Count} levels");
-						}
+						// Allow chapters with empty levels arrays (for placeholder chapters like "Coming Soon")
+						_levelPacks.Add(levelPack);
+						Debug.Log($"[LevelsMenu] Added level pack: {levelPack.name} with {levelPack.levels.Count} levels");
 					}
 					_loaded = true;
 					return;
