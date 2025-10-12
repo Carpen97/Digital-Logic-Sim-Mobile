@@ -3,52 +3,101 @@
     {
       "version": "2.1.6.10",
       "releaseDate": "2025-10-12",
-      "sections": {
-        "newFeatures": [
-          "Added D Latch level - New educational level fills gap in sequential logic progression",
-          "Test Vector Generator (Developer Tool) - Press 'G' key to automatically generate comprehensive test vectors from working circuits",
-          "Random Test Sampling - Performance optimization caps validation at 40 tests for complex levels",
-          "Setup Phase Support - Sequential circuits can now initialize state before validation begins"
-        ],
-        "improvements": [
-          "Level selection behavior - Improved UI interaction in levels menu",
-          "Validation performance - 25x faster validation for complex levels with comprehensive coverage",
-          "Fixed Chip Library Navigation - Improved navigation in Chip Library Menu with consistent selection states, proper focus management, and intuitive movement between starred items, collections, and nested folders"
-        ],
-        "bugFixes": [
-          "CRITICAL: Fixed bit order bug in level validation - Resolved game-breaking bug where inputs/outputs were being reversed during validation, affecting all 26 levels. Game now correctly validates solutions.",
-          "Fixed D Flip-Flop level - Corrected output count mismatch that made the level unplayable",
-          "Fixed 4-bit Subtractor - Corrected all 26 test vectors for accurate validation",
-          "Fixed Simple ALU - Regenerated 27 test vectors with correct validation logic",
-          "Enhanced Complete 4-bit ALU - Expanded test coverage from 21 to 1024 vectors with optimized random sampling (40 tests for 25x faster validation)"
-        ]
-      }
+      "newFeatures": [],
+      "improvements": [
+        {
+          "text": "Fixed Chip Library Navigation - Improved navigation in Chip Library Menu with consistent selection states, proper focus management, and intuitive movement between starred items, collections, and nested folders",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Level validation popup improvements - Test results now scroll properly for complex circuits",
+          "userFacing": true,
+          "editNotes": ""
+        }
+      ],
+      "bugFixes": [
+        {
+          "text": "CRITICAL: Fixed bit order bug in level validation - Resolved game-breaking bug where inputs/outputs were being reversed during validation, affecting all 26 levels. Game now correctly validates solutions.",
+          "userFacing": true,
+          "editNotes": ""
+        }
+      ]
     },
     {
       "version": "2.1.6.9",
-      "releaseDate": "October 9, 2025",
-      "sections": {
-        "newFeatures": [
-          "Drag and Drop Control Scheme - New intuitive chip placement mode. Simply drag chips from the bottom bar and drop them directly onto the canvas. Toggle between classic 'Drag and Lock' and new 'Drag and Drop' modes in preferences.",
-          "Hierarchical Collection Organization - Create and manage sub folders within collections for better chip organization.",
-          "PC Version - Full mobile features now available on PC with mouse and keyboard support.",
-          "Solution Sharing - Upload and view complete solutions from leaderboard entries.",
-          "User Names - Add custom names when uploading scores to leaderboards.",
-          "iOS Platform Support - Full iOS support with project import/export and Firebase integration.",
-          "Patch Notes Popup - View 'What's New' directly from the About menu! See recent features, improvements, and bug fixes with color-coded sections. Easy to navigate with version selection and scrollable content."
-        ],
-        "improvements": [
-          "PC Firebase Integration - Full Firebase functionality now works on PC builds (Windows, macOS, Linux). PC users can now upload scores, view leaderboards, share solutions, and set user names just like mobile users. All online features are now available across all platforms.",
-          "Enhanced Level System - Expanded with more challenging levels and progressive difficulty.",
-          "Improved UI Navigation - Better folder browsing and collection management.",
-          "Clearer Score Explanation - Updated scoring information to better explain how nested NAND gates are counted.",
-          "Auto-Open Edit Tool - Single component selected + wrench press now automatically opens the edit menu.",
-          "Selectable Chapters in Levels Menu - Chapters now show educational descriptions when selected."
-        ],
-        "bugFixes": [
-          "Fixed iOS file picker for importing project zip files. Various stability improvements and performance optimizations."
-        ]
-      }
+      "releaseDate": "2025-10-09",
+      "newFeatures": [
+        {
+          "text": "Drag and Drop Control Scheme - New intuitive chip placement mode. Simply drag chips from the bottom bar and drop them directly onto the canvas. Toggle between classic 'Drag and Lock' and new 'Drag and Drop' modes in preferences.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Hierarchical Collection Organization - Create and manage sub folders within collections for better chip organization.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "PC Version - Full mobile features now available on PC with mouse and keyboard support.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Solution Sharing - Upload and view complete solutions from leaderboard entries.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "User Names - Add custom names when uploading scores to leaderboards.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "iOS Platform Support - Full iOS support with project import/export and Firebase integration.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Patch Notes Popup - View 'What's New' directly from the About menu! See recent features, improvements, and bug fixes with color-coded sections. Easy to navigate with version selection and scrollable content.",
+          "userFacing": true,
+          "editNotes": ""
+        }
+      ],
+      "improvements": [
+        {
+          "text": "PC Firebase Integration - Full Firebase functionality now works on PC builds (Windows, macOS, Linux). PC users can now upload scores, view leaderboards, share solutions, and set user names just like mobile users. All online features are now available across all platforms.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Enhanced Level System - Expanded with more challenging levels and progressive difficulty.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Improved UI Navigation - Better folder browsing and collection management.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Clearer Score Explanation - Updated scoring information to better explain how nested NAND gates are counted.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Auto-Open Edit Tool - Single component selected + wrench press now automatically opens the edit menu.",
+          "userFacing": true,
+          "editNotes": ""
+        }
+      ],
+      "bugFixes": [
+        {
+          "text": "Fixed iOS file picker for importing project zip files. Various stability improvements and performance optimizations.",
+          "userFacing": true,
+          "editNotes": ""
+        }
+      ]
     }
   ]
 }

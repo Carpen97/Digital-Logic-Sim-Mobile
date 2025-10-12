@@ -28,7 +28,9 @@ namespace DLS.Graphics
 
 		// -------- ScrollView plumbing --------
 		static readonly UIHandle ID_LevelsScrollbar = new("LevelsMenu_LevelsScrollbar");
+		static readonly UIHandle ID_PreviewScrollbar = new("LevelsMenu_PreviewScrollbar");
 		static readonly Seb.Vis.UI.UI.ScrollViewDrawElementFunc drawLevelPackEntry = DrawLevelPackEntry;
+		static readonly Seb.Vis.UI.UI.ScrollViewDrawContentFunc drawPreviewContent = DrawPreviewContent;
 		static bool isScrolling;
 		static bool disableHover; // Disable hover on touch devices to prevent phantom hover states
 
@@ -278,21 +280,14 @@ namespace DLS.Graphics
 			Seb.Vis.UI.UI.DrawPanel(previewTopLeft, new Vector2(previewWidth, previewHeight), previewBgCol, Anchor.TopLeft);
 			Bounds2D bgBounds = Seb.Vis.UI.UI.PrevBounds;
 			
-			// Draw text with smaller font size and adjusted padding
+			// Create scrollable content area
 			const float textPadX = 1.5f;
 			const float textPadYTop = 2f; // More padding at the top
-			float fontSize = ActiveUITheme.FontSizeRegular * 0.75f; // Smaller font for better fit
+			Vector2 scrollViewPos = bgBounds.TopLeft + Vector2.right * textPadX + Vector2.down * textPadYTop;
+			Vector2 scrollViewSize = new Vector2(previewWidth - textPadX * 2, previewHeight - textPadYTop * 2);
 			
-			if (!string.IsNullOrEmpty(selectedEntry.description))
-			{
-				// Calculate approximate characters per line based on panel width
-				float charWidth = fontSize * 0.6f; // Approximate character width
-				int maxCharsPerLine = Mathf.Max(1, Mathf.FloorToInt((previewWidth - textPadX * 2) / charWidth));
-				
-				// Apply text wrapping
-				string wrappedText = Seb.Vis.UI.UI.LineBreakByCharCount(selectedEntry.description, maxCharsPerLine);
-				Seb.Vis.UI.UI.DrawText(wrappedText, ActiveUITheme.FontRegular, fontSize, bgBounds.TopLeft + Vector2.right * textPadX + Vector2.down * textPadYTop, Anchor.TopLeft, Color.white);
-			}
+			// Draw scrollable text content
+			Seb.Vis.UI.UI.DrawScrollView(ID_PreviewScrollbar, scrollViewPos, scrollViewSize, Anchor.TopLeft, ActiveUITheme.ScrollTheme, drawPreviewContent);
 			
 			Seb.Vis.UI.UI.OverridePreviousBounds(bgBounds);
 			ret = Seb.Vis.UI.UI.PrevBounds.BottomLeft;
@@ -304,6 +299,28 @@ namespace DLS.Graphics
 			MenuHelper.DrawLeftAlignTextWithBackground("", previewTopLeft, new Vector2(previewWidth, previewHeight), Anchor.TopLeft, Color.white, previewBgCol, true);
 			ret = Seb.Vis.UI.UI.PrevBounds.BottomLeft;
 			return ret;
+		}
+	}
+
+	static void DrawPreviewContent(Vector2 topLeft, float width, bool isLayoutPass)
+	{
+		// Check if we have a selected level or chapter
+		if (_allLevels.Count > 0)
+		{
+			var selectedEntry = _allLevels[0]; // Always use index 0 since _allLevels only contains the current selection
+			
+			if (!string.IsNullOrEmpty(selectedEntry.description))
+			{
+				float fontSize = ActiveUITheme.FontSizeRegular * 0.75f; // Smaller font for better fit
+				
+				// Calculate approximate characters per line based on panel width
+				float charWidth = fontSize * 0.6f; // Approximate character width
+				int maxCharsPerLine = Mathf.Max(1, Mathf.FloorToInt(width / charWidth));
+				
+				// Apply text wrapping
+				string wrappedText = Seb.Vis.UI.UI.LineBreakByCharCount(selectedEntry.description, maxCharsPerLine);
+				Seb.Vis.UI.UI.DrawText(wrappedText, ActiveUITheme.FontRegular, fontSize, topLeft, Anchor.TopLeft, Color.white);
+			}
 		}
 	}
 

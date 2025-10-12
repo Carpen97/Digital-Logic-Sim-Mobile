@@ -6,11 +6,11 @@ You now have a **visual HTML editor** for managing patch notes with a single-sou
 
 ---
 
-## 📁 Files Created
+## 📁 Files
 
 ```
-ProjectInstructions/
-  └── PatchNotes.yaml         ← Single source of truth (edit this!)
+Assets/Resources/
+  └── patchNotes.json         ← Single source of truth (edit via HTML editor)
 
 Scripts/
   ├── PatchNotesEditor.html   ← Visual editor (open in browser)
@@ -20,15 +20,15 @@ Scripts/
 
 ---
 
-## ⚡ Getting Started (3 Steps)
+## ⚡ Getting Started (2 Steps)
 
 ### Step 1: Open the Editor
 
-Navigate to `Scripts/` folder and **double-click** `PatchNotesEditor.html`
+Just **double-click** `Scripts/PatchNotesEditor.html` in your file explorer
 
 ### Step 2: Load Your Data
 
-Click **"📁 Load YAML"** → Select `ProjectInstructions/PatchNotes.yaml`
+Click **"📁 Load patchNotes.json"** → Navigate to `Assets/Resources/patchNotes.json`
 
 ### Step 3: Start Editing!
 
@@ -42,19 +42,10 @@ Click **"📁 Load YAML"** → Select `ProjectInstructions/PatchNotes.yaml`
 
 ## 💾 When You're Done
 
-1. **Save YAML**
-   - Click **"💾 Save YAML"**
-   - Overwrites `PatchNotes.yaml`
-
-2. **Export for Game**
-   - Click **"📦 Export JSON (Game)"**
-   - Save as `patchNotes.json`
-   - Move to `Assets/Resources/patchNotes.json`
-
-3. **Export Docs** (optional)
-   - Click **"📄 Export Markdown"**
-   - Save as `PatchNotes.md`
-   - Move to `ProjectInstructions/PatchNotes.md`
+1. **Save JSON**
+   - Click **"💾 Save YAML"** (saves as JSON)
+   - Overwrites `Assets/Resources/patchNotes.json`
+   - **Done!** Game will load your changes automatically
 
 ---
 
@@ -69,16 +60,16 @@ Click **"📁 Load YAML"** → Select `ProjectInstructions/PatchNotes.yaml`
 - Still saved in YAML (for your records)
 - Useful for internal notes like "Refactored code structure"
 
-**Example:**
-```yaml
-- text: "New undo/redo system"
-  userFacing: true       # ← Show to users
-  editNotes: ""          # ← Ready to publish
-  
-- text: "Refactored ChipValidator class"
-  userFacing: false      # ← Internal only
-  editNotes: "Maybe mention benefits?"
+**Example (in JSON file):**
+```json
+{
+  "text": "New undo/redo system",
+  "userFacing": true,
+  "editNotes": ""
+}
 ```
+
+The HTML editor shows this visually with checkboxes and text fields.
 
 ---
 
@@ -102,19 +93,13 @@ Each version shows:
 
 ---
 
-## 🔄 Current Workflow
+## 🔄 Workflow
 
-### Old Way (Problem):
 ```
-Edit PatchNotes.md → Copy to patchNotes.json → Keep in sync 😰
-```
-
-### New Way (Solution):
-```
-Edit PatchNotes.yaml → Export JSON/MD automatically ✅
+Edit patchNotes.json (via HTML editor) → Save → Game loads it ✅
 ```
 
-**No more duplication!** One file to rule them all. 👑
+**One file!** No conversion, no duplication. 👑
 
 ---
 
@@ -130,16 +115,13 @@ Edit PatchNotes.yaml → Export JSON/MD automatically ✅
 ## 🎬 Try It Now!
 
 1. Open `Scripts/PatchNotesEditor.html`
-2. Load `ProjectInstructions/PatchNotes.yaml`
+2. Load `Assets/Resources/patchNotes.json`
 3. Look at Version 2.1.6.10
-4. See the two items with Edit Notes?
-   - "Coming Soon" Chapter (editNotes: "Maybe too meta for users?")
-   - "Scrollable Sequential Test Details" (editNotes: "Too technical? Maybe simplify.")
-5. These have notes because we weren't sure about wording
-6. You can now:
-   - Edit the text based on the notes
-   - Clear the Edit Notes field when done
-   - Or uncheck "User-Facing" to exclude from game
+4. Edit any text directly
+5. Toggle "User-Facing" checkbox
+6. Add Edit Notes for items that need review
+7. Click "💾 Save YAML" (saves to JSON)
+8. **Done!** Game will show your changes
 
 ---
 
@@ -155,14 +137,11 @@ See `Scripts/README_PatchNotesEditor.md` for:
 
 ## ❓ Questions?
 
-**Q: Do I still need the old files?**  
-A: You can keep `PatchNotes.md` and `patchNotes.json` for now, but they should be **generated** from YAML going forward.
-
-**Q: Can I edit YAML directly?**  
-A: Yes! YAML is human-readable. But the HTML editor is more visual and safer.
+**Q: Can I edit JSON directly?**  
+A: Yes! But the HTML editor is more visual, safer, and easier to use.
 
 **Q: What if I mess up?**  
-A: Git to the rescue! `git checkout PatchNotes.yaml` to undo.
+A: Git to the rescue! `git checkout Assets/Resources/patchNotes.json` to undo.
 
 **Q: Can I add custom fields?**  
 A: Yes! Add any fields you want to YAML. The editor won't break.

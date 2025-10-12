@@ -479,25 +479,21 @@
     <div class="container">
         <div class="header">
             <h1>📝 Patch Notes Editor</h1>
-            <p>Digital Logic Sim - Single Source of Truth</p>
+            <p>Digital Logic Sim - Edit patchNotes.json Visually</p>
         </div>
 
         <div class="toolbar">
-            <label for="fileInput" class="btn btn-primary">
-                📁 Load YAML
-            </label>
-            <input type="file" id="fileInput" class="file-input" accept=".yaml,.yml">
-            
-            <button class="btn btn-success" onclick="saveYAML()">
-                💾 Save YAML
+            <button class="btn btn-primary" onclick="openPatchNotesFile()">
+                📁 Load patchNotes.json
             </button>
+            <input type="file" id="fileInput" class="file-input" accept=".json" style="display: none;">
             
-            <button class="btn btn-warning" onclick="exportJSON()">
-                📦 Export JSON (Game)
+            <button class="btn btn-success" onclick="saveJSON()">
+                💾 Save JSON
             </button>
             
             <button class="btn btn-info" onclick="exportMarkdown()">
-                📄 Export Markdown
+                📄 Export Markdown (Optional)
             </button>
             
             <button class="btn btn-primary" onclick="showPreview()">
@@ -514,7 +510,10 @@
                 <div class="empty-state">
                     <div class="empty-state-icon">📋</div>
                     <div class="empty-state-text">No patch notes loaded</div>
-                    <p>Click "Load YAML" to get started!</p>
+                    <p><strong>Click "📁 Load patchNotes.json" above</strong></p>
+                    <p style="font-size: 12px; color: #6b7280; margin-top: 10px;">
+                        Navigate to: <code>Assets/Resources/patchNotes.json</code>
+                    </p>
                 </div>
             </div>
         </div>
@@ -523,18 +522,59 @@
     <script>
         let patchNotesData = { versions: [] };
 
-        // Load file
+        // Open file picker for patchNotes.json
+        function openPatchNotesFile() {
+            document.getElementById('fileInput').click();
+        }
+
+        // Convert game format to editor format
+        function convertGameFormatToEditor(gameData) {
+            return {
+                versions: gameData.versions.map(v => ({
+                    version: v.version,
+                    releaseDate: v.releaseDate,
+                    newFeatures: (v.sections?.newFeatures || []).map(text => ({
+                        text: text,
+                        userFacing: true,
+                        editNotes: ""
+                    })),
+                    improvements: (v.sections?.improvements || []).map(text => ({
+                        text: text,
+                        userFacing: true,
+                        editNotes: ""
+                    })),
+                    bugFixes: (v.sections?.bugFixes || []).map(text => ({
+                        text: text,
+                        userFacing: true,
+                        editNotes: ""
+                    }))
+                }))
+            };
+        }
+
+        // Load file via file picker
         document.getElementById('fileInput').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
             try {
                 const text = await file.text();
-                patchNotesData = jsyaml.load(text);
+                const rawData = JSON.parse(text);
+                
+                // Check if it's game format (has sections) or editor format
+                if (rawData.versions && rawData.versions[0] && rawData.versions[0].sections) {
+                    // Game format - convert to editor format
+                    patchNotesData = convertGameFormatToEditor(rawData);
+                    showMessage('✅ Game format detected - converted to editor format', 'success');
+                } else {
+                    // Editor format - use as is
+                    patchNotesData = rawData;
+                    showMessage('✅ Editor format detected - loaded directly', 'success');
+                }
+                
                 renderVersions();
-                showMessage('✅ YAML loaded successfully!', 'success');
             } catch (error) {
-                showMessage('❌ Error loading YAML: ' + error.message, 'error');
+                showMessage('❌ Error loading JSON: ' + error.message, 'error');
             }
         });
 
@@ -727,19 +767,9 @@
             }
         }
 
-        function saveYAML() {
+        function saveJSON() {
             try {
-                const yaml = jsyaml.dump(patchNotesData, { lineWidth: -1, quotingType: '"' });
-                downloadFile(yaml, 'PatchNotes.yaml', 'text/yaml');
-                showMessage('✅ YAML saved!', 'success');
-            } catch (error) {
-                showMessage('❌ Error: ' + error.message, 'error');
-            }
-        }
-
-        function exportJSON() {
-            try {
-                // Only include user-facing items
+                // Convert to game format (only user-facing items, simple strings)
                 const gameData = {
                     versions: patchNotesData.versions.map(v => ({
                         version: v.version,
@@ -760,11 +790,12 @@
                 
                 const json = JSON.stringify(gameData, null, 2);
                 downloadFile(json, 'patchNotes.json', 'application/json');
-                showMessage('✅ JSON exported (user-facing only)!', 'success');
+                showMessage('✅ JSON saved! Copy to Assets/Resources/', 'success');
             } catch (error) {
                 showMessage('❌ Error: ' + error.message, 'error');
             }
         }
+
 
         function exportMarkdown() {
             try {
@@ -873,21 +904,7 @@
             return div.innerHTML;
         }
 
-        // Auto-load from relative path if available
-        window.addEventListener('load', async () => {
-            try {
-                const response = await fetch('../ProjectInstructions/PatchNotes.yaml');
-                if (response.ok) {
-                    const text = await response.text();
-                    patchNotesData = jsyaml.load(text);
-                    renderVersions();
-                    showMessage('✅ Auto-loaded PatchNotes.yaml', 'success');
-                }
-            } catch (e) {
-                // Couldn't auto-load, that's okay
-                console.log('Could not auto-load YAML (this is normal if opening as file://)');
-            }
-        });
+        // No auto-load needed - user clicks "Load File" button
     </script>
 </body>
 </html>
