@@ -3,7 +3,7 @@
 # 
 # Fields:
 #   userFacing: true/false - Include in the in-game popup?
-#   needsEdit: true/false - Needs rephrasing or review?
+#   editNotes: string - Notes for AI to read and act on (leave blank if ready)
 #   category: optional - bug-fix, feature, improvement, internal, etc.
 
 versions:
@@ -13,64 +13,62 @@ versions:
     bugFixes:
       - text: "CRITICAL: Fixed bit order bug in level validation - Resolved game-breaking bug where inputs/outputs were being reversed during validation, affecting all 26 levels. Game now correctly validates solutions."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Fixed D Flip-Flop level - Corrected output count mismatch that made the level unplayable"
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Fixed 4-bit Subtractor - Corrected all 26 test vectors for accurate validation"
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Fixed Simple ALU - Regenerated 27 test vectors with correct validation logic"
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Enhanced Complete 4-bit ALU - Expanded test coverage from 21 to 1024 vectors with optimized random sampling (40 tests for 25x faster validation)"
         userFacing: true
-        needsEdit: false
+        editNotes: ""
     
     newFeatures:
       - text: "Added D Latch level - New educational level fills gap in sequential logic progression"
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Test Vector Generator (Developer Tool) - Press 'G' key to automatically generate comprehensive test vectors from working circuits"
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         category: "developer-tool"
         
       - text: "Random Test Sampling - Performance optimization caps validation at 40 tests for complex levels"
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Setup Phase Support - Sequential circuits can now initialize state before validation begins"
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: '"Coming Soon" Chapter - New placeholder chapter teases future content and includes community feedback channel for level suggestions'
         userFacing: false
-        needsEdit: true
-        notes: "Maybe too meta for users? Not sure how to phrase this."
+        editNotes: "Maybe too meta for users? Not sure how to phrase this."
     
     improvements:
       - text: "Level selection behavior - Improved UI interaction in levels menu"
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Validation performance - 25x faster validation for complex levels with comprehensive coverage"
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Fixed Chip Library Navigation - Improved navigation in Chip Library Menu with consistent selection states, proper focus management, and intuitive movement between starred items, collections, and nested folders"
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Scrollable Sequential Test Details - Info panel in level validation popup now scrolls for long sequential test sequences, preventing content from being cut off"
         userFacing: false
-        needsEdit: true
-        notes: "Too technical? Maybe simplify."
+        editNotes: "Too technical? Maybe simplify."
 
   - version: "2.1.6.9"
     releaseDate: "2025-10-09"
@@ -78,59 +76,59 @@ versions:
     newFeatures:
       - text: "Drag and Drop Control Scheme - New intuitive chip placement mode. Simply drag chips from the bottom bar and drop them directly onto the canvas. Toggle between classic 'Drag and Lock' and new 'Drag and Drop' modes in preferences."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Hierarchical Collection Organization - Create and manage sub folders within collections for better chip organization."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "PC Version - Full mobile features now available on PC with mouse and keyboard support."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Solution Sharing - Upload and view complete solutions from leaderboard entries."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "User Names - Add custom names when uploading scores to leaderboards."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "iOS Platform Support - Full iOS support with project import/export and Firebase integration."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Patch Notes Popup - View 'What's New' directly from the About menu! See recent features, improvements, and bug fixes with color-coded sections. Easy to navigate with version selection and scrollable content."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
     
     improvements:
       - text: "PC Firebase Integration - Full Firebase functionality now works on PC builds (Windows, macOS, Linux). PC users can now upload scores, view leaderboards, share solutions, and set user names just like mobile users. All online features are now available across all platforms."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Enhanced Level System - Expanded with more challenging levels and progressive difficulty."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Improved UI Navigation - Better folder browsing and collection management."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Clearer Score Explanation - Updated scoring information to better explain how nested NAND gates are counted."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Auto-Open Edit Tool - Single component selected + wrench press now automatically opens the edit menu."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
         
       - text: "Selectable Chapters in Levels Menu - Chapters now show educational descriptions when selected."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
     
     bugFixes:
       - text: "Fixed iOS file picker for importing project zip files. Various stability improvements and performance optimizations."
         userFacing: true
-        needsEdit: false
+        editNotes: ""
 

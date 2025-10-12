@@ -219,11 +219,6 @@
             box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
         }
 
-        .item.needs-edit {
-            border-left: 4px solid #f59e0b;
-            background: #fffbeb;
-        }
-
         .item.not-user-facing {
             opacity: 0.6;
             background: #f3f4f6;
@@ -267,15 +262,29 @@
             user-select: none;
         }
 
-        .item-notes {
+        .edit-notes {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #fbbf24;
+            padding: 10px;
+            border: 1px solid #d1d5db;
             border-radius: 4px;
-            font-size: 12px;
-            background: #fffbeb;
-            margin-top: 8px;
+            font-size: 13px;
+            background: #fef3c7;
+            margin-top: 10px;
             font-style: italic;
+            resize: vertical;
+            min-height: 40px;
+            color: #78350f;
+        }
+
+        .edit-notes::placeholder {
+            color: #a16207;
+            opacity: 0.6;
+        }
+
+        .edit-notes:focus {
+            outline: none;
+            border-color: #f59e0b;
+            background: #fef3c7;
         }
 
         .btn-small {
@@ -580,14 +589,14 @@
             const sections = ['bugFixes', 'newFeatures', 'improvements'];
             let totalItems = 0;
             let userFacingCount = 0;
-            let needsEditCount = 0;
+            let hasEditNotesCount = 0;
 
             sections.forEach(section => {
                 if (version[section]) {
                     version[section].forEach(item => {
                         totalItems++;
                         if (item.userFacing) userFacingCount++;
-                        if (item.needsEdit) needsEditCount++;
+                        if (item.editNotes && item.editNotes.trim().length > 0) hasEditNotesCount++;
                     });
                 }
             });
@@ -603,8 +612,8 @@
                         <div class="stat-value" style="color: #10b981;">${userFacingCount}</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-label">Needs Edit</div>
-                        <div class="stat-value" style="color: #f59e0b;">${needsEditCount}</div>
+                        <div class="stat-label">Has Edit Notes</div>
+                        <div class="stat-value" style="color: #f59e0b;">${hasEditNotesCount}</div>
                     </div>
                     <div class="stat">
                         <div class="stat-label">Internal Only</div>
@@ -635,7 +644,6 @@
 
         function renderItem(item, vIdx, sectionKey, iIdx) {
             const classes = ['item'];
-            if (item.needsEdit) classes.push('needs-edit');
             if (!item.userFacing) classes.push('not-user-facing');
 
             return `
@@ -652,29 +660,15 @@
                             <label for="uf_${vIdx}_${sectionKey}_${iIdx}">👥 User-Facing</label>
                         </div>
                         
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="ne_${vIdx}_${sectionKey}_${iIdx}"
-                                   ${item.needsEdit ? 'checked' : ''}
-                                   onchange="updateItem(${vIdx}, '${sectionKey}', ${iIdx}, 'needsEdit', this.checked)">
-                            <label for="ne_${vIdx}_${sectionKey}_${iIdx}">✏️ Needs Edit</label>
-                        </div>
-                        
                         <button class="btn-small btn-danger" onclick="deleteItem(${vIdx}, '${sectionKey}', ${iIdx})">
                             🗑️ Delete
                         </button>
                     </div>
                     
-                    ${item.notes ? `
-                        <input type="text" class="item-notes" 
-                               placeholder="Internal notes..."
-                               value="${item.notes}"
-                               onchange="updateItem(${vIdx}, '${sectionKey}', ${iIdx}, 'notes', this.value)">
-                    ` : `
-                        <button class="btn-small" style="background: #fbbf24; color: white; margin-top: 8px;"
-                                onclick="addNotes(${vIdx}, '${sectionKey}', ${iIdx})">
-                            💭 Add Notes
-                        </button>
-                    `}
+                    <textarea class="edit-notes" 
+                              placeholder="✏️ Edit notes for AI (leave blank if ready)..."
+                              onchange="updateItem(${vIdx}, '${sectionKey}', ${iIdx}, 'editNotes', this.value)"
+                    >${item.editNotes || ''}</textarea>
                 </div>
             `;
         }
@@ -697,7 +691,7 @@
             patchNotesData.versions[vIdx][sectionKey].push({
                 text: 'New item - edit me!',
                 userFacing: true,
-                needsEdit: true
+                editNotes: 'New item needs text'
             });
             renderVersions();
             showMessage('✅ Item added', 'success');
@@ -711,10 +705,6 @@
             }
         }
 
-        function addNotes(vIdx, sectionKey, iIdx) {
-            patchNotesData.versions[vIdx][sectionKey][iIdx].notes = '';
-            renderVersions();
-        }
 
         function addNewVersion() {
             const today = new Date().toISOString().split('T')[0];
