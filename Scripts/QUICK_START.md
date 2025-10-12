@@ -34,9 +34,9 @@ Click **"📁 Load YAML"** → Select `ProjectInstructions/PatchNotes.yaml`
 
 - ✏️ Edit text directly in the browser
 - ☑️ Toggle **User-Facing** (show in game?) 
-- ☑️ Toggle **Needs Edit** (needs review?)
+- 📝 Add **Edit Notes** for AI to read and improve
 - ➕ Add new items with "Add Item" button
-- 💭 Add internal notes for context
+- 🗑️ Delete items you don't need
 
 ---
 
@@ -72,10 +72,12 @@ Click **"📁 Load YAML"** → Select `ProjectInstructions/PatchNotes.yaml`
 **Example:**
 ```yaml
 - text: "New undo/redo system"
-  userFacing: true    # ← Show to users
+  userFacing: true       # ← Show to users
+  editNotes: ""          # ← Ready to publish
   
 - text: "Refactored ChipValidator class"
-  userFacing: false   # ← Internal only
+  userFacing: false      # ← Internal only
+  editNotes: "Maybe mention benefits?"
 ```
 
 ---
@@ -84,8 +86,8 @@ Click **"📁 Load YAML"** → Select `ProjectInstructions/PatchNotes.yaml`
 
 | Look | Meaning |
 |------|---------|
-| **White background** | Normal, ready to publish |
-| **Yellow border** | ⚠️ Needs editing/review |
+| **White background** | Normal item |
+| **Yellow textbox** | Edit Notes field (for AI to read) |
 | **Gray, faded** | Internal only (not user-facing) |
 
 ---
@@ -95,7 +97,7 @@ Click **"📁 Load YAML"** → Select `ProjectInstructions/PatchNotes.yaml`
 Each version shows:
 - **Total Items** - All notes
 - **User-Facing** - Will appear in game (green)
-- **Needs Edit** - Flagged for review (orange)
+- **Has Edit Notes** - Items with AI instructions (orange)
 - **Internal Only** - Hidden from users (gray)
 
 ---
@@ -119,8 +121,8 @@ Edit PatchNotes.yaml → Export JSON/MD automatically ✅
 ## 💡 Quick Tips
 
 1. **Don't delete items** - Just uncheck "User-Facing" to hide them
-2. **Use "Needs Edit" flag** - Mark items that need better wording
-3. **Add notes** - Internal comments help during review
+2. **Use Edit Notes** - Add instructions for AI to improve wording
+3. **Leave notes blank** - When an item is ready to publish
 4. **Preview before export** - Click "👁️ Preview All" to see outputs
 
 ---
@@ -130,12 +132,13 @@ Edit PatchNotes.yaml → Export JSON/MD automatically ✅
 1. Open `Scripts/PatchNotesEditor.html`
 2. Load `ProjectInstructions/PatchNotes.yaml`
 3. Look at Version 2.1.6.10
-4. See the two items marked with "Needs Edit"?
-   - "Coming Soon" Chapter (has notes)
-   - "Scrollable Sequential Test Details" (has notes)
-5. These are flagged because we weren't sure about wording
-6. You can now decide:
-   - Edit the text and uncheck "Needs Edit"
+4. See the two items with Edit Notes?
+   - "Coming Soon" Chapter (editNotes: "Maybe too meta for users?")
+   - "Scrollable Sequential Test Details" (editNotes: "Too technical? Maybe simplify.")
+5. These have notes because we weren't sure about wording
+6. You can now:
+   - Edit the text based on the notes
+   - Clear the Edit Notes field when done
    - Or uncheck "User-Facing" to exclude from game
 
 ---
