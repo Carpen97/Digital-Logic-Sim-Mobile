@@ -71,7 +71,7 @@ Mobile Port (origin)
 
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 047 | Add toggleable eraser tool | In Progress | Create eraser mode that toggles via trash icon. Delete components/wires immediately on touch. Banner with "wires only" mode toggle. Streamline deletion workflow. |
+| None currently | - | - | All tickets are either Open or Completed. |
 
 ---
 
@@ -146,5 +146,5 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **4 Open Tickets** available for selection
-- **1 In Progress** ticket (Ticket 047 - Eraser tool)
+- **0 In Progress** tickets
 - **Project ready** for next instructions

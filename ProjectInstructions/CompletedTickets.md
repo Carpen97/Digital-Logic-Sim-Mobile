@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 41
-- **Most Recent**: Ticket 056 (October 13, 2025)
+- **Total Completed Tickets**: 42
+- **Most Recent**: Ticket 047 (October 13, 2025)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 047** – Add toggleable eraser tool
+**Closed:** 2025-10-13  
+**Summary:** Successfully implemented toggleable eraser tool that dramatically streamlines the deletion workflow for mobile circuit editing. **Key Feature**: Always-visible trash icon toggles eraser mode on/off, enabling continuous deletion by dragging finger over components/wires. **Two Modes**: Delete All (components + wires) and Wires Only (preserves components), switchable via tappable top banner. **Major UX Improvement**: Reduced deletion from 2 taps per item (select → delete) to 1 continuous drag gesture after activation, enabling rapid circuit cleanup. **Smart Features**: Camera panning automatically disabled during eraser mode to prevent accidental movement, wrench and multiselect tools hidden when eraser active to avoid conflicts, eraser banner takes priority over simulation/level banners for clear mode indication. **Implementation**: Always-visible trash icon in mobile UI, top banner displaying current mode with tap-to-toggle functionality, continuous deletion logic supporting drag-over-to-delete behavior, mode state management (off/deleteAll/wiresOnly), protected elements (level pins) remain safe from deletion. **Integration**: Fully integrated with undo/redo system, all deletions can be undone, proper state cleanup when toggling modes. **Code Quality**: No linter errors, clean mobile-optimized implementation, well-documented. **Success Criteria Met**: All 11 success criteria achieved including always-visible trash icon, immediate deletion, banner display and toggling, wires-only mode, visual feedback, zero regressions, cross-platform compatibility. **Mobile-Only Feature**: Optimized specifically for touch-based circuit editing workflow. Production-ready and tested. Major productivity enhancement for mobile users! ✅
+
+---
 
 ### **Ticket 056** – Make scroll views draggable by content (not just scrollbar)
 **Closed:** 2025-10-13  
@@ -261,10 +267,10 @@ This document contains a historical record of all completed tickets from the Dig
 ---
 
 ## 📊 **Statistics**
-- **Total Completed Tickets:** 41
+- **Total Completed Tickets:** 42
 - **Latest Completion:** 2025-10-13
-- **Most Recent:** Make scroll views draggable by content
-- **Key Achievements:** Multi-platform releases, Content-draggable scroll views, ROM Editor graphical mode, Level chip restrictions, Security updates, Community integration, Levels system, UI fixes, Performance optimizations, Mobile UX improvements, Library enhancements, iOS platform support, PC Firebase integration, Educational enhancements, Critical bug fixes, Patch notes management system
+- **Most Recent:** Add toggleable eraser tool
+- **Key Achievements:** Multi-platform releases, Eraser tool, Content-draggable scroll views, ROM Editor graphical mode, Level chip restrictions, Security updates, Community integration, Levels system, UI fixes, Performance optimizations, Mobile UX improvements, Library enhancements, iOS platform support, PC Firebase integration, Educational enhancements, Critical bug fixes, Patch notes management system
 
 ---
 

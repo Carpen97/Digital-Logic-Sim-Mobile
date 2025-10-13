@@ -8,6 +8,11 @@
           "text": "ROM Editor Graphical Mode - Revolutionary new way to edit ROM data! Click individual bits to toggle them on/off using intuitive colored dots (red for high, dark for low). Visual grid pattern makes it easy to track bits. Works seamlessly alongside text-based modes (Binary, HEX, Decimal).",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Eraser Tool (Mobile) - Toggleable eraser mode for rapid circuit cleanup! Tap the always-visible trash icon to activate eraser mode, then drag your finger over components/wires to delete them continuously. Two modes available: 'Delete All' removes everything you touch, 'Wires Only' preserves components. Tap the top banner to switch modes. Camera panning disabled while erasing to prevent accidents. Huge productivity boost for mobile editing!",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "improvements": [
