@@ -120,17 +120,21 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 ### **📝 Patch Notes Workflow:**
 - **Location:** `Assets/Resources/patchNotes.json` (single source of truth)
 - **Version Tracking:** All new changes go into the NEXT version (currently 2.1.6.11)
+- **Philosophy:** Log everything, refine before release
 - **After Each Release:** 
   1. Update "Current Version Information" section above with new released version and next version number
   2. Create new version entry in patchNotes.json for next release
 - **For Each Completed Ticket:**
-  1. PM asks: "Should this be in patch notes?"
-  2. If yes, add to appropriate section (newFeatures, improvements, or bugFixes) in NEXT version
-  3. Mark as userFacing: true
+  1. **PM MUST proactively add to patch notes** if user-facing (use common sense)
+  2. Log to appropriate section (newFeatures, improvements, or bugFixes) in NEXT version
+  3. **Always mark userFacing: true** for obvious user-facing changes
+  4. **Log everything** - user reviews and refines before release
+  5. **Better too much detail than too little** - can be scaled down later
 - **Categories:**
   - `newFeatures` - New functionality users can try
   - `improvements` - Enhancements to existing features
   - `bugFixes` - Fixes to broken functionality
+- **Before Release:** User reviews all entries, decides what users see and how to present it
 
 ### **Key Rules:**
 - ❌ **Never move tickets** without explicit instruction
