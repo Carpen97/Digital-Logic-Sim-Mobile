@@ -71,7 +71,7 @@ Mobile Port (origin)
 
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| None currently | - | - | All tickets are either Open or Completed. |
+| 047 | Add toggleable eraser tool | In Progress | Create eraser mode that toggles via trash icon. Delete components/wires immediately on touch. Banner with "wires only" mode toggle. Streamline deletion workflow. |
 
 ---
 
@@ -84,7 +84,6 @@ Mobile Port (origin)
 | 026 | Perpendicular guide for straight lines | Open   | When straight line mode is toggled, draw a perpendicular guide line to assist alignment.                                                                                                                                              |
 | 039 | Show dotted wire preview on mobile wire creation| Open   | When creating new wires on mobile, display a preview of the wire path as a dotted line to show where the wire will be placed. Enhance user experience by providing visual feedback during wire creation process. Implement dotted wire rendering for wire preview state before wire is confirmed. Mobile-specific enhancement for touch-based wire creation workflow. |
 | 046 | Add donation button | Open   | Add a donation button to support development of the Digital Logic Sim Mobile project. Button should be accessible from an appropriate location (e.g., About menu, main menu, or settings). Integrate with a donation platform (PayPal, Ko-fi, Buy Me a Coffee, or similar). Design should be unobtrusive but visible, matching the existing UI theme. Include optional thank you message for supporters. Consider mobile-optimized placement and ensure it opens donation link in external browser or platform-specific handler. |
-| 047 | Add toggleable eraser tool | Open   | Create a special eraser tool that toggles using the existing trash icon. Make the trash icon always visible (currently only shows when component is selected). When toggled, display banner text explaining eraser mode is active. In eraser mode, touching any component on screen will delete it immediately without requiring selection first. Banner should be tappable to switch to "wires only" mode, where only wires can be deleted. Streamline deletion workflow for faster circuit editing. Mobile-optimized tool for efficient component and wire removal. |
 
 ---
 
@@ -146,6 +145,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - 🚨 **CRITICAL: Unity Scene Safety** - **PM MUST ALWAYS warn user to save Unity scenes BEFORE any git branch operations (checkout, merge, switch, etc.)**
 
 ### **Current Status:**
-- **5 Open Tickets** available for selection
-- **0 In Progress** tickets
+- **4 Open Tickets** available for selection
+- **1 In Progress** ticket (Ticket 047 - Eraser tool)
 - **Project ready** for next instructions
