@@ -71,7 +71,7 @@ Mobile Port (origin)
 
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| None currently | - | - | All tickets are either Open or Completed. |
+| 056 | Make scroll views draggable by content | In Progress | Add mobile-style content dragging to all scroll views. Enhance UI.cs DrawScrollView/DrawScrollbar with touch-drag scrolling for natural mobile experience. |
 
 ---
 
@@ -85,7 +85,6 @@ Mobile Port (origin)
 | 039 | Show dotted wire preview on mobile wire creation| Open   | When creating new wires on mobile, display a preview of the wire path as a dotted line to show where the wire will be placed. Enhance user experience by providing visual feedback during wire creation process. Implement dotted wire rendering for wire preview state before wire is confirmed. Mobile-specific enhancement for touch-based wire creation workflow. |
 | 046 | Add donation button | Open   | Add a donation button to support development of the Digital Logic Sim Mobile project. Button should be accessible from an appropriate location (e.g., About menu, main menu, or settings). Integrate with a donation platform (PayPal, Ko-fi, Buy Me a Coffee, or similar). Design should be unobtrusive but visible, matching the existing UI theme. Include optional thank you message for supporters. Consider mobile-optimized placement and ensure it opens donation link in external browser or platform-specific handler. |
 | 047 | Add toggleable eraser tool | Open   | Create a special eraser tool that toggles using the existing trash icon. Make the trash icon always visible (currently only shows when component is selected). When toggled, display banner text explaining eraser mode is active. In eraser mode, touching any component on screen will delete it immediately without requiring selection first. Banner should be tappable to switch to "wires only" mode, where only wires can be deleted. Streamline deletion workflow for faster circuit editing. Mobile-optimized tool for efficient component and wire removal. |
-| 056 | Make scroll views draggable by content (not just scrollbar) | Open   | Enhance scrollable content areas to support direct content dragging in addition to scrollbar interaction, providing more intuitive mobile-style scrolling. Current implementation (UI.cs DrawScrollView/DrawScrollbar) only allows scrolling via scrollbar drag or mouse wheel. Add touch/click-and-drag scrolling directly on content area for more natural mobile experience. Implementation: (1) Detect mouse/touch down events within scroll view content area (scrollArea bounds), (2) Track drag delta while mouse/touch is held down, (3) Update ScrollBarState.scrollY based on drag movement with appropriate sensitivity/momentum, (4) Add drag state to ScrollBarState to track content dragging vs scrollbar dragging, (5) Prevent interference with other UI interactions (buttons, input fields within scroll view should still work), (6) Add smooth drag-to-scroll with optional momentum/inertia for natural feel, (7) Ensure scrollbar visual updates correctly during content drag, (8) Support both vertical scrolling (current) and potentially horizontal scrolling in future. Benefits all scroll views: ROM editor, chip library, search popup, levels menu, leaderboards, patch notes, collection browser. Mobile-first enhancement that also improves PC usability. Key file: Assets/Scripts/Seb/SebVis/UI/UI.cs (DrawScrollView and DrawScrollbar methods). Consider drag threshold to distinguish between click and drag intent. |
 
 ---
 
@@ -147,6 +146,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - 🚨 **CRITICAL: Unity Scene Safety** - **PM MUST ALWAYS warn user to save Unity scenes BEFORE any git branch operations (checkout, merge, switch, etc.)**
 
 ### **Current Status:**
-- **6 Open Tickets** available for selection
-- **0 In Progress** tickets
+- **5 Open Tickets** available for selection
+- **1 In Progress** ticket (Ticket 056 - Draggable scroll views)
 - **Project ready** for next instructions
