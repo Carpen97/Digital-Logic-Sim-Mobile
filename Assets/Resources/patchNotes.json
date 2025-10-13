@@ -15,6 +15,11 @@
           "text": "ROM Editor Mobile Optimization - Enhanced ROM editing with mobile-first design: larger touch-friendly buttons, vertical layout for easy access, row selection system (click row numbers to select), context-aware Fill 0s/Fill 1s operations, optimized spacing and responsive layout for all screen sizes.",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Level Mode Chip Restrictions - Special chips (ROM, displays, pulse generators, clocks, buttons, etc.) are now disabled in level mode to maintain educational focus. Players must build circuits from fundamental logic gates (NAND, tri-state buffers) and basic components. Custom user chips remain available. Prevents trivial solutions and ensures fair leaderboard comparisons while promoting deeper understanding of digital logic design.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "bugFixes": []

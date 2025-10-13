@@ -71,7 +71,7 @@ Mobile Port (origin)
 
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 055 | Disable special chips in level mode | In Progress | Prevent players from using special chips (ROM, displays, pulse, etc.) in levels to maintain educational focus. Filter chip library based on LevelManager.IsActive state. |
+| None currently | - | - | All tickets are either Open or Completed. |
 
 ---
 
@@ -148,5 +148,5 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **6 Open Tickets** available for selection
-- **1 In Progress** ticket (Ticket 055 - Disable special chips in levels)
+- **0 In Progress** tickets
 - **Project ready** for next instructions
