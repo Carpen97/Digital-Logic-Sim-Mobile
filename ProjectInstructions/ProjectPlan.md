@@ -71,7 +71,7 @@ Mobile Port (origin)
 
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 056 | Make scroll views draggable by content | In Progress | Add mobile-style content dragging to all scroll views. Enhance UI.cs DrawScrollView/DrawScrollbar with touch-drag scrolling for natural mobile experience. |
+| None currently | - | - | All tickets are either Open or Completed. |
 
 ---
 
@@ -147,5 +147,5 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **5 Open Tickets** available for selection
-- **1 In Progress** ticket (Ticket 056 - Draggable scroll views)
+- **0 In Progress** tickets
 - **Project ready** for next instructions

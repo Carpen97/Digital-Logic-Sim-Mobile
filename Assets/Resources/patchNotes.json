@@ -20,6 +20,11 @@
           "text": "Level Mode Chip Restrictions - Special chips (ROM, displays, pulse generators, clocks, buttons, etc.) are now disabled in level mode to maintain educational focus. Players must build circuits from fundamental logic gates (NAND, tri-state buffers) and basic components. Custom user chips remain available. Prevents trivial solutions and ensures fair leaderboard comparisons while promoting deeper understanding of digital logic design.",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Draggable Scroll Views - All scrollable lists and menus now support mobile-style content dragging! Simply touch/click anywhere in the content area and drag to scroll - no need to target the tiny scrollbar. Works in ROM editor, chip library, search results, levels menu, leaderboards, patch notes, and everywhere else. Natural mobile app experience with smart threshold to prevent accidental scrolling. Scrollbar and mouse wheel still work as before.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "bugFixes": []
