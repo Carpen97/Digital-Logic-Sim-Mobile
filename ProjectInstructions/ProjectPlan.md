@@ -72,6 +72,7 @@ Mobile Port (origin)
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | 044 | Unity Security Vulnerability Patch (CVE-2025-59489) | In Progress | **CRITICAL SECURITY UPDATE** - Update Unity Editor and rebuild for all platforms. Time-sensitive security patch. |
+| 054 | Improve ROM editing popup UI/UX | In Progress | Enhance ROM editing popup for better mobile usability and user experience. Focus on touch optimization, visual clarity, and workflow improvements. |
 
 ---
 
@@ -121,5 +122,5 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **5 Open Tickets** available for selection
-- **1 In Progress** ticket (Security Update)
+- **2 In Progress** tickets (Security Update + ROM UI Enhancement)
 - **Project ready** for next instructions
