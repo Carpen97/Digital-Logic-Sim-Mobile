@@ -92,6 +92,13 @@ Mobile Port (origin)
 
 ## 📋 **Project Manager Workflow**
 
+### **📦 Current Version Information:**
+- **Latest Released Version:** 2.1.6.10 (Released: 2025-10-12)
+- **Next Version:** 2.1.6.11 (In Development)
+- **Update this section after each release!**
+
+---
+
 ### **Role Definition:**
 The Project Manager coordinates workflow, manages ticket status, and maintains project documentation. **Code implementation is delegated to development teams.**
 
@@ -108,7 +115,22 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 2. **In Progress** → Moved only when PM receives explicit instruction
 3. **Completed** → Moved to CompletedTickets.md with closure details
 4. **🔴 MANDATORY: Git Commit** → **PM MUST remind user to commit completed tickets immediately with descriptive commit messages**
-5. **📝 MANDATORY: Patch Notes Review** → **PM MUST ask: "Should this be noted in patch notes?" and update PatchNotes.md for user-facing changes**
+5. **📝 MANDATORY: Patch Notes Review** → **PM MUST ask: "Should this be noted in patch notes?" for user-facing changes**
+
+### **📝 Patch Notes Workflow:**
+- **Location:** `Assets/Resources/patchNotes.json` (single source of truth)
+- **Version Tracking:** All new changes go into the NEXT version (currently 2.1.6.11)
+- **After Each Release:** 
+  1. Update "Current Version Information" section above with new released version and next version number
+  2. Create new version entry in patchNotes.json for next release
+- **For Each Completed Ticket:**
+  1. PM asks: "Should this be in patch notes?"
+  2. If yes, add to appropriate section (newFeatures, improvements, or bugFixes) in NEXT version
+  3. Mark as userFacing: true
+- **Categories:**
+  - `newFeatures` - New functionality users can try
+  - `improvements` - Enhancements to existing features
+  - `bugFixes` - Fixes to broken functionality
 
 ### **Key Rules:**
 - ❌ **Never move tickets** without explicit instruction
