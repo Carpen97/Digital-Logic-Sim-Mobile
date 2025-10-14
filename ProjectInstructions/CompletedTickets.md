@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 42
-- **Most Recent**: Ticket 047 (October 13, 2025)
+- **Total Completed Tickets**: 43
+- **Most Recent**: Ticket 058 (October 14, 2025)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 058** – Unify ROM visibility and naming
+**Closed:** 2025-10-14  
+**Summary:** Successfully unified ROM chip visibility and naming system to improve user clarity and prevent confusion. **Chip Library Simplification**: Chip library now shows a single entry "ROM 256×16" instead of displaying all ROM variants separately, reducing clutter and preventing duplication in the chip selection interface. **Clear In-Game Labeling**: Every ROM chip now displays a consistent two-line label format - "ROM" on the first line and the active memory grouping configuration on the second line (e.g., "256×(2x8)", "256×(1x16)", "256×(16x1)", "256×(4x4)"). **Smart Defaults**: Freshly spawned ROM chips default to "256×(2x8)" configuration and automatically update their labels correctly after editing in the ROM editor. **Consistency Improvements**: Editor view and runtime view now show identical ROM representations, eliminating confusion between different ROM display modes. **Benefits**: Improved user clarity by showing exactly what configuration each ROM is using, prevented chip library duplication by hiding internal ROM variants, maintained all underlying ROM functionality without breaking changes, consistent labeling across all ROM operations (spawn, edit, save, load). **Implementation**: Unified ROM naming logic, automatic label updates on configuration changes, single chip library entry with proper variant handling. **User Experience**: Users see one ROM chip type in the library, spawn it with sensible defaults, immediately understand the configuration from the label, edit configurations with instant visual feedback. Clean, professional appearance that matches user expectations. Production-ready with zero regressions. ✅
+
+---
 
 ### **Ticket 047** – Add toggleable eraser tool
 **Closed:** 2025-10-13  

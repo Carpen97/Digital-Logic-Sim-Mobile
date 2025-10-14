@@ -17,6 +17,11 @@
       ],
       "improvements": [
         {
+          "text": "Unified ROM Visibility and Naming - ROM chips now display with clear, consistent labeling throughout the game. The chip library shows a single 'ROM 256×16' entry instead of multiple confusing variants. Every ROM chip displays a two-line label showing 'ROM' on the first line and its active configuration on the second (e.g., '256×(2x8)', '256×(1x16)', '256×(16x1)', '256×(4x4)'). Freshly spawned ROMs default to '256×(2x8)' and automatically update their labels after editing. This eliminates confusion between editor and runtime views, prevents chip library duplication, and makes it instantly clear what configuration each ROM is using.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
           "text": "ROM Editor Mobile Optimization - Enhanced ROM editing with mobile-first design: larger touch-friendly buttons, vertical layout for easy access, row selection system (click row numbers to select), context-aware Fill 0s/Fill 1s operations, optimized spacing and responsive layout for all screen sizes.",
           "userFacing": true,
           "editNotes": ""
