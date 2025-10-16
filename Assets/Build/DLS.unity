@@ -150,6 +150,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   openSaveDirectory: 0
   openInMainMenu: 0
+  startInLevel: 1
+  startLevelId: lvl.comparator.1
+  continueLevelFromSave: 1
   testProjectName: TEST
   openA: 1
   chipToOpenA: NOT
@@ -2048,7 +2051,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 824, y: -322}
+  m_AnchoredPosition: {x: 1200, y: -322}
   m_SizeDelta: {x: 160, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1339259632
@@ -2500,6 +2503,7 @@ MonoBehaviour:
   hintTool: {fileID: 1339259630}
   isHintToolActive: 0
   isShowingPlacementButtons: 0
+  isEraserModeActive: 0
   validateButton: {fileID: 815780245}
   text: {fileID: 1840052660}
 --- !u!1 &1840052658

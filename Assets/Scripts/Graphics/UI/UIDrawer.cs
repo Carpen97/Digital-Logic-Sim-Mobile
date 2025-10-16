@@ -107,11 +107,17 @@ namespace DLS.Graphics
 			else
 			{
 				bool showSimPausedBanner = project.simPaused;
-				if (showSimPausedBanner) SimPausedUI.DrawPausedBanner();
 				bool showLevelBanner = LevelManager.Instance.IsActive;
-				if (showLevelBanner && !showSimPausedBanner) LevelBannerUI.DrawLevelBanner();
+				bool showEraserBanner = DLS.Game.EraserModeController.IsActive;
+				
+				// Priority order: Eraser > SimPaused > Level
+				if (showEraserBanner) EraserModeBanner.DrawBanner();
+				else if (showSimPausedBanner) SimPausedUI.DrawPausedBanner();
+				else if (showLevelBanner) LevelBannerUI.DrawLevelBanner();
+				
 				if (project.chipViewStack.Count > 1) ViewedChipsBar.DrawViewedChipsBanner(project, showSimPausedBanner);
 				if (SimChip.isCreatingACache) CreateCacheUI.DrawCreatingCacheInfo();
+				
 				aMenuIsOpen = false;
 			}
 			// Cancel current caching process when a menu gets opened

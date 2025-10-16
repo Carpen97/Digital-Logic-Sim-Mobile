@@ -52,8 +52,8 @@ nesting level.
 NAND gates are fundamental building blocks that can be used
 to create any other logic gate.";
 
-				Vector2 textPos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + Vector2.down * 5f;
-				Seb.Vis.UI.UI.DrawText(contentText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, textPos, Anchor.CentreTop, Color.white);
+				Vector2 textPos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + Vector2.down * 1f;
+				Seb.Vis.UI.UI.DrawText(contentText, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular*0.95f, textPos, Anchor.CentreTop, Color.white);
 
 				// --- Footer: Close button ---
 				float closeWidth = Seb.Vis.UI.UI.Width * OkBtnWidthFrac;

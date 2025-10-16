@@ -497,7 +497,8 @@ namespace DLS.Simulation
 
 					break;
 				}
-				case ChipType.Rom_256x16:
+				case ChipType.Rom_256x16:  // Legacy - kept for backwards compatibility
+				case ChipType.Rom_2x8:     // 2x8-bit ROM
 				{
 					const uint mask = 0x00ff;
 					uint address = chip.InputPins[0].State.GetShortValues();
@@ -507,6 +508,58 @@ namespace DLS.Simulation
 					chip.OutputPins[1].State.SetShort(data & mask);
 			
                     break;
+				}
+
+				case ChipType.Rom_4x4:     // 4x4-bit ROM
+				{
+					const uint mask = 0x0f;
+					uint address = chip.InputPins[0].State.GetShortValues();
+					uint data = chip.InternalState[address];
+
+					chip.OutputPins[0].State.SetShort((data >> 12) & mask);
+					chip.OutputPins[1].State.SetShort((data >> 8) & mask);
+					chip.OutputPins[2].State.SetShort((data >> 4) & mask);
+					chip.OutputPins[3].State.SetShort(data & mask);
+			
+                    break;
+				}
+
+				{
+					const uint mask = 0x03;
+					uint address = chip.InputPins[0].State.GetShortValues();
+					uint data = chip.InternalState[address];
+
+					chip.OutputPins[0].State.SetShort((data >> 14) & mask);
+					chip.OutputPins[1].State.SetShort((data >> 12) & mask);
+					chip.OutputPins[2].State.SetShort((data >> 10) & mask);
+					chip.OutputPins[3].State.SetShort((data >> 8) & mask);
+					chip.OutputPins[4].State.SetShort((data >> 6) & mask);
+					chip.OutputPins[5].State.SetShort((data >> 4) & mask);
+					chip.OutputPins[6].State.SetShort((data >> 2) & mask);
+					chip.OutputPins[7].State.SetShort(data & mask);
+			
+                    break;
+				}
+
+				case ChipType.Rom_16x1:    // 16x1-bit ROM
+				{
+					uint address = chip.InputPins[0].State.GetShortValues();
+					uint data = chip.InternalState[address];
+
+					for (int i = 0; i < 16; i++)
+					{
+						chip.OutputPins[i].State.SmallSet((data >> (15 - i)) & 1);
+					}
+			
+                    break;
+				}
+
+				case ChipType.Rom_1x16:    // 1x16-bit ROM
+				{
+					uint address = chip.InputPins[0].State.GetShortValues();
+					uint data = chip.InternalState[address];
+					chip.OutputPins[0].State.SetShort(data);
+					break;
 				}
 
 				case ChipType.EEPROM_256x16:

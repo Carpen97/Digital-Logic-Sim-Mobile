@@ -18,14 +18,24 @@ namespace DLS.Graphics
 		{
 			MenuHelper.DrawBackgroundOverlay();
 
-			Vector2 textPos = Seb.Vis.UI.UI.Centre + Vector2.up * 5;
+		Vector2 textPos = Seb.Vis.UI.UI.Centre + Vector2.up * 5;
 
-			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
-			{
-				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
-				Draw.ID textBGPanelID = Seb.Vis.UI.UI.ReservePanel();
-				Seb.Vis.UI.UI.DrawText(deleteMessage, DrawSettings.ActiveUITheme.FontRegular, DrawSettings.ActiveUITheme.FontSizeRegular, textPos, Anchor.TextCentre, messageColor);
-				Seb.Vis.UI.UI.ModifyPanel(textBGPanelID, Bounds2D.Grow(Seb.Vis.UI.UI.PrevBounds, 1.5f), ColHelper.MakeCol(0.11f));
+		using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+		{
+			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+			Draw.ID textBGPanelID = Seb.Vis.UI.UI.ReservePanel();
+			
+			// Calculate max width for text wrapping
+			float maxWidth = Seb.Vis.UI.UI.Width * 0.5f; // 50% of screen width
+			float fontSize = DrawSettings.ActiveUITheme.FontSizeRegular;
+			float charWidth = fontSize * 0.6f; // Approximate character width
+			int maxCharsPerLine = Mathf.Max(1, Mathf.FloorToInt(maxWidth / charWidth));
+			
+			// Apply text wrapping
+			string wrappedMessage = Seb.Vis.UI.UI.LineBreakByCharCount(deleteMessage, maxCharsPerLine);
+			
+			Seb.Vis.UI.UI.DrawText(wrappedMessage, DrawSettings.ActiveUITheme.FontRegular, fontSize, textPos, Anchor.TextCentre, messageColor);
+			Seb.Vis.UI.UI.ModifyPanel(textBGPanelID, Bounds2D.Grow(Seb.Vis.UI.UI.PrevBounds, 1.5f), ColHelper.MakeCol(0.11f));
 
 				Vector2 topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 1;
 				MenuHelper.CancelConfirmResult button = MenuHelper.DrawCancelConfirmButtons(topLeft, Seb.Vis.UI.UI.PrevBounds.Width, false);

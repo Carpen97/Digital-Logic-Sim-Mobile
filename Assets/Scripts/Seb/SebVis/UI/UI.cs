@@ -251,6 +251,9 @@ namespace Seb.Vis.UI
 				Vector2 scrollbarMax = bounds.TopRight;
 				Bounds2D scrollbarArea = new(scrollbarMin, scrollbarMax);
 
+				// Handle content area dragging (mobile-style scroll)
+				HandleContentDrag(scrollArea, scrollbarArea, contentBounds.Height, scrollState);
+
 				DrawScrollbar(scrollArea, scrollbarArea, contentBounds.Height, theme, scrollID);
 
 				// If in bounds scope, restore its state from before the layout calculations
@@ -272,6 +275,77 @@ namespace Seb.Vis.UI
 				{
 					drawFunc.Invoke(topLeft, scrollArea.Width, isLayoutPass);
 					return GetCurrentBoundsScope();
+				}
+			}
+
+			// Handle content area dragging (mobile-style scroll)
+			static void HandleContentDrag(Bounds2D scrollArea, Bounds2D scrollbarArea, float contentHeight, ScrollBarState scrollState)
+			{
+				const float DRAG_THRESHOLD_PIXELS = 5f;
+				float maxScrollOffsetY = Mathf.Max(0, contentHeight - scrollArea.Height);
+				
+				// Convert to screen space for mouse interaction
+				(Vector2 centre, Vector2 size) scrollArea_ss = UIToScreenSpace(scrollArea.Centre, scrollArea.Size);
+				(Vector2 centre, Vector2 size) scrollbarArea_ss = UIToScreenSpace(scrollbarArea.Centre, scrollbarArea.Size);
+				
+				bool mouseOverScrollArea = InputHelper.MouseInBounds_ScreenSpace(scrollArea_ss.centre, scrollArea_ss.size);
+				bool mouseOverScrollbarArea = InputHelper.MouseInBounds_ScreenSpace(scrollbarArea_ss.centre, scrollbarArea_ss.size);
+				
+				// DEBUG: Log mouse down events
+				if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
+				{
+					Debug.Log($"[ContentDrag] Mouse down detected. MousePos: {InputHelper.MousePos}, OverScrollArea: {mouseOverScrollArea}, OverScrollbar: {mouseOverScrollbarArea}, IsMouseOverUI: {IsMouseOverUIThisFrame}");
+					Debug.Log($"[ContentDrag] ScrollArea_ss: centre={scrollArea_ss.centre}, size={scrollArea_ss.size}");
+				}
+				
+				// Start content drag
+				if (InputHelper.IsMouseDownThisFrame(MouseButton.Left) && mouseOverScrollArea && !mouseOverScrollbarArea)
+				{
+					scrollState.isContentDragging = true;
+					scrollState.contentDragStartMousePos = InputHelper.MousePos;
+					scrollState.contentDragStartScrollY = scrollState.scrollY;
+					scrollState.hasExceededDragThreshold = false;
+					
+					Debug.Log($"[ContentDrag] DRAG STARTED! MousePos: {InputHelper.MousePos}, ScrollY: {scrollState.scrollY:F2}");
+				}
+				
+				// During content drag
+				if (scrollState.isContentDragging)
+				{
+					Vector2 mouseDelta = InputHelper.MousePos - scrollState.contentDragStartMousePos;
+					
+					// Check if drag threshold exceeded
+					if (!scrollState.hasExceededDragThreshold && mouseDelta.magnitude > DRAG_THRESHOLD_PIXELS)
+					{
+						scrollState.hasExceededDragThreshold = true;
+						Debug.Log($"[ContentDrag] Threshold exceeded! Delta: {mouseDelta}, Magnitude: {mouseDelta.magnitude}");
+					}
+					
+					// Update scroll position if threshold exceeded
+					// Keep the content under the mouse fixed by moving scroll with mouse movement
+					// Convert mouse delta from screen space to UI space
+					if (scrollState.hasExceededDragThreshold)
+					{
+						float newScrollY = scrollState.contentDragStartScrollY + mouseDelta.y / scale;
+						float oldScrollY = scrollState.scrollY;
+						scrollState.scrollY = Mathf.Max(0, Mathf.Min(maxScrollOffsetY, newScrollY));
+						
+						if (Mathf.Abs(scrollState.scrollY - oldScrollY) > 0.01f)
+						{
+							Debug.Log($"[ContentDrag] Scrolling! Old: {oldScrollY:F2}, New: {scrollState.scrollY:F2}, MouseDelta: {mouseDelta.y:F2}, Scale: {scale:F2}");
+						}
+					}
+				}
+				
+				// End content drag
+				if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
+				{
+					if (scrollState.isContentDragging)
+					{
+						Debug.Log($"[ContentDrag] DRAG ENDED. Final scrollY: {scrollState.scrollY}");
+					}
+					scrollState.isContentDragging = false;
+					scrollState.hasExceededDragThreshold = false;
 				}
 			}
 		}
@@ -347,6 +421,92 @@ namespace Seb.Vis.UI
 			return state;
 		}
 
+		public static ScrollBarState DrawScrollbarHorizontal(Bounds2D scrollViewArea, Bounds2D scrollbarArea, float contentWidth, ScrollViewTheme theme, UIHandle id)
+		{
+			ScrollBarState state = GetScrollbarState(id);
+
+			if (IsRendering)
+			{
+				(Vector2 centre, Vector2 size) barArea_ss = UIToScreenSpace(scrollbarArea.Centre, scrollbarArea.Size);
+				Draw.Quad(barArea_ss.centre, barArea_ss.size, theme.scrollBarColBackground);
+
+				float contentOverflow = scrollViewArea.Width >= contentWidth || contentWidth <= 0 ? 1 : contentWidth / scrollViewArea.Width;
+				float scrollT = contentWidth <= scrollViewArea.Width || contentWidth <= 0 ? 0 : state.scrollX / (contentWidth - scrollViewArea.Width);
+				float scrollBarWidth = scrollbarArea.Width / contentOverflow;
+				float scrollHandleLeftAtMax = scrollbarArea.Right - scrollBarWidth;
+				float scrollHandleLeft = Mathf.Lerp(scrollbarArea.Left, scrollHandleLeftAtMax, scrollT);
+				Color scrollBarCol = contentOverflow > 1 ? theme.scrollBarColNormal : theme.scrollBarColInactive;
+
+				Vector2 scrollbarSize = new(scrollBarWidth, scrollbarArea.Height);
+				Vector2 scrollbarCentre = CalculateCentre(new Vector2(scrollHandleLeft, scrollbarArea.Top), scrollbarSize, Anchor.TopLeft);
+				(Vector2 centre, Vector2 size) scrollbar_ss = UIToScreenSpace(scrollbarCentre, scrollbarSize);
+
+				bool mouseOverScrollbarArea = InputHelper.MouseInBounds_ScreenSpace(barArea_ss.centre, barArea_ss.size);
+				bool mouseOverScrollbar = InputHelper.MouseInBounds_ScreenSpace(scrollbar_ss.centre, scrollbar_ss.size);
+
+				if (InputHelper.IsMouseUpThisFrame(MouseButton.Left) || InputHelper.IsKeyDownThisFrame(KeyCode.Escape))
+					state.isDragging = false;
+
+				if (mouseOverScrollbarArea && contentOverflow > 1)
+				{
+					if (mouseOverScrollbar) scrollBarCol = theme.scrollBarColHover;
+					if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
+					{
+						state.isDragging = true;
+						state.dragScrollOffset = InputHelper.MousePos.x - scrollbar_ss.centre.x;
+					}
+				}
+
+				if (state.isDragging)
+				{
+					scrollBarCol = theme.scrollBarColPressed;
+					float inputPosMin = barArea_ss.centre.x - barArea_ss.size.x / 2 + scrollbar_ss.size.x / 2;
+					float inputPosMax = barArea_ss.centre.x + barArea_ss.size.x / 2 - scrollbar_ss.size.x / 2;
+					float mouseX = InputHelper.MousePos.x - state.dragScrollOffset;
+					state.scrollX = Mathf.InverseLerp(inputPosMin, inputPosMax, mouseX) * Mathf.Max(0, contentWidth - scrollViewArea.Width);
+				}
+                // Note: Do NOT apply mouse wheel to horizontal scrolling (requested behavior)
+
+				// Content drag (grab the content area horizontally)
+				(Vector2 centre, Vector2 size) scrollArea_ss = UIToScreenSpace(scrollViewArea.Centre, scrollViewArea.Size);
+				bool mouseOverScrollArea = InputHelper.MouseInBounds_ScreenSpace(scrollArea_ss.centre, scrollArea_ss.size);
+                if (InputHelper.IsMouseDownThisFrame(MouseButton.Left)
+                    && mouseOverScrollArea
+                    && !mouseOverScrollbarArea
+                    && !state.isDragging
+                    && !state.isContentDraggingX)
+				{
+					state.isContentDraggingX = true;
+					state.contentDragStartMousePosX = InputHelper.MousePos;
+					state.contentDragStartScrollX = state.scrollX;
+				}
+                if (state.isContentDraggingX && !state.isDragging)
+				{
+                    Vector2 delta = InputHelper.MousePos - state.contentDragStartMousePosX;
+					if (!state.hasExceededDragThresholdX && Mathf.Abs(delta.x) > 5f)
+					{
+						state.hasExceededDragThresholdX = true;
+					}
+					if (state.hasExceededDragThresholdX)
+					{
+                        // Convert from screen pixels to UI units (match vertical behavior)
+                        float newScroll = state.contentDragStartScrollX - (delta.x / scale);
+						state.scrollX = Mathf.Clamp(newScroll, 0, Mathf.Max(0, contentWidth - scrollViewArea.Width));
+					}
+				}
+				if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
+				{
+					state.isContentDraggingX = false;
+					state.hasExceededDragThresholdX = false;
+				}
+
+				Draw.Quad(scrollbar_ss.centre, scrollbar_ss.size, scrollBarCol);
+			}
+
+			OnFinishedDrawingUIElement(scrollbarArea.Centre, scrollbarArea.Size);
+			return state;
+		}
+
 		public static void DrawText(string text, FontType font, float fontSize, Vector2 pos, Anchor anchor, Color col)
 		{
 			if (IsRendering)
@@ -360,60 +520,34 @@ namespace Seb.Vis.UI
 
 		public static Vector2 CalculateTextSize(ReadOnlySpan<char> text, float fontSize, FontType font) => Draw.CalculateTextBoundsSize(text, fontSize, font);
 
-		public static InputFieldState InputField(UIHandle id, InputFieldTheme theme, Vector2 pos, Vector2 size, string defaultText, Anchor anchor, float textPad, Func<string, bool> validation = null, bool forceFocus = false)
+	public static InputFieldState InputField(UIHandle id, InputFieldTheme theme, Vector2 pos, Vector2 size, string defaultText, Anchor anchor, float textPad, Func<string, bool> validation = null, bool forceFocus = false)
+	{
+		InputFieldState state = GetInputFieldState(id);
+
+		Vector2 centre = CalculateCentre(pos, size, anchor);
+		(Vector2 centre, Vector2 size) ss = UIToScreenSpace(centre, size);
+
+		bool isDisabled = forceInteractionDisabled;
+
+		if (IsRendering)
 		{
-			InputFieldState state = GetInputFieldState(id);
+			Vector2 textCentreLeft_ss = ss.centre + Vector2.right * (-ss.size.x / 2 + textPad * scale);
+			Draw.Quad(ss.centre, ss.size, theme.bgCol);
 
-			Vector2 centre = CalculateCentre(pos, size, anchor);
-			(Vector2 centre, Vector2 size) ss = UIToScreenSpace(centre, size);
+			// Focus input
+			bool mouseInBounds = InputHelper.MouseInBounds_ScreenSpace(ss.centre, ss.size);
 
-			if (IsRendering)
+			if (InputHelper.IsMouseDownThisFrame(MouseButton.Left) && !isDisabled)
 			{
-				Vector2 textCentreLeft_ss = ss.centre + Vector2.right * (-ss.size.x / 2 + textPad * scale);
-				Draw.Quad(ss.centre, ss.size, theme.bgCol);
-
-				// Focus input
-				bool mouseInBounds = InputHelper.MouseInBounds_ScreenSpace(ss.centre, ss.size);
-
-				if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
-				{
-					state.SetFocus(mouseInBounds);
-					state.isMouseDownInBounds = mouseInBounds;
-					#if UNITY_ANDROID || UNITY_IOS
-					if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
-					{
-						bool mouseInsideMask = Draw.IsPointInsideActiveMask(InputHelper.MousePos);
-						bool mouseOver = mouseInsideMask && InputHelper.MouseInBounds_ScreenSpace(ss.centre, ss.size);
-
-						if (mouseOver && keyboard == null && !keyboardWasClosedThisFrame)
-						{
-							keyboard = TouchScreenKeyboard.Open(state.text, TouchScreenKeyboardType.Default);
-							lastSyncedText = state.text;
-						}
-					}
-					#endif
-
-					// Set caret pos based on mouse position
-					if (mouseInBounds) state.SetCursorIndex(CharIndexBeforeMouse(textCentreLeft_ss.x), InputHelper.ShiftIsHeld);
-				}
-
-				// Hold-drag left mouse to select
-				if (state.focused && InputHelper.IsMouseHeld(MouseButton.Left) && state.isMouseDownInBounds)
-				{
-					state.SetCursorIndex(CharIndexBeforeMouse(textCentreLeft_ss.x), true);
-				}
-
-				if (forceFocus && !state.focused)
-				{
-					state.SetFocus(true);
-				}
-			
+				state.SetFocus(mouseInBounds);
+				state.isMouseDownInBounds = mouseInBounds;
 				#if UNITY_ANDROID || UNITY_IOS
 				if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
 				{
 					bool mouseInsideMask = Draw.IsPointInsideActiveMask(InputHelper.MousePos);
 					bool mouseOver = mouseInsideMask && InputHelper.MouseInBounds_ScreenSpace(ss.centre, ss.size);
-					if (mouseOver && keyboard == null)
+
+					if (mouseOver && keyboard == null && !keyboardWasClosedThisFrame)
 					{
 						keyboard = TouchScreenKeyboard.Open(state.text, TouchScreenKeyboardType.Default);
 						lastSyncedText = state.text;
@@ -421,10 +555,44 @@ namespace Seb.Vis.UI
 				}
 				#endif
 
-				if (state.focused)
-				{
-					const float outlineWidth = 0.05f;
-					Draw.QuadOutline(ss.centre, ss.size, outlineWidth * scale, theme.focusBorderCol);
+				// Set caret pos based on mouse position
+				if (mouseInBounds) state.SetCursorIndex(CharIndexBeforeMouse(textCentreLeft_ss.x), InputHelper.ShiftIsHeld);
+			}
+
+			// Hold-drag left mouse to select
+			if (state.focused && InputHelper.IsMouseHeld(MouseButton.Left) && state.isMouseDownInBounds && !isDisabled)
+			{
+				state.SetCursorIndex(CharIndexBeforeMouse(textCentreLeft_ss.x), true);
+			}
+
+			if (forceFocus && !state.focused && !isDisabled)
+			{
+				state.SetFocus(true);
+			}
+		
+		#if UNITY_ANDROID || UNITY_IOS
+		if (InputHelper.IsMouseDownThisFrame(MouseButton.Left) && !isDisabled)
+		{
+			bool mouseInsideMask = Draw.IsPointInsideActiveMask(InputHelper.MousePos);
+			bool mouseOver = mouseInsideMask && InputHelper.MouseInBounds_ScreenSpace(ss.centre, ss.size);
+			if (mouseOver && keyboard == null)
+			{
+				keyboard = TouchScreenKeyboard.Open(state.text, TouchScreenKeyboardType.Default);
+				lastSyncedText = state.text;
+			}
+		}
+		#endif
+
+			// Unfocus if disabled while focused
+			if (state.focused && isDisabled)
+			{
+				state.SetFocus(false);
+			}
+
+			if (state.focused && !isDisabled)
+			{
+				const float outlineWidth = 0.05f;
+				Draw.QuadOutline(ss.centre, ss.size, outlineWidth * scale, theme.focusBorderCol);
 					#if UNITY_ANDROID || UNITY_IOS
 					if (keyboard != null && keyboard.status == TouchScreenKeyboard.Status.Visible)
 					{
@@ -1061,7 +1229,7 @@ namespace Seb.Vis.UI
 				// Draw text
 				using (CreateMaskScope(Bounds2D.CreateFromCentreAndSize(centre, backgroundPanelSize)))
 				{
-					DrawText(elements[elementIndex], theme.buttonTheme.font, theme.buttonTheme.fontSize, centre, Anchor.TextFirstLineCentre, enabled ? theme.textCol : theme.inactiveTextCol);
+					DrawText(elements[elementIndex], theme.buttonTheme.font, theme.buttonTheme.fontSize, centre, Anchor.TextCentre, enabled ? theme.textCol : theme.inactiveTextCol);
 				}
 
 				// Draw left/right buttons

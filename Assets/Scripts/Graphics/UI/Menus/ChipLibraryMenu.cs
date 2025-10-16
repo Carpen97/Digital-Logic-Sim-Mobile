@@ -254,7 +254,9 @@ namespace DLS.Graphics
 			interactableStates_starredList[0] = index < project.description.StarredList.Count - 1; // can move down
 			interactableStates_starredList[1] = index > 0; // can move up
 
-			bool entryPressed = Seb.Vis.UI.UI.Button(starredItem.Name, theme, topLeft, new Vector2(width, 2), true, false, false, theme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+			// Display unified ROM name if a legacy ROM variant was starred
+			string displayName = GetLibraryDisplayName(starredItem.Name);
+			bool entryPressed = Seb.Vis.UI.UI.Button(displayName, theme, topLeft, new Vector2(width, 2), true, false, false, theme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 			if (entryPressed)
 			{
 				selectedStarredItemIndex = index;
@@ -452,18 +454,22 @@ namespace DLS.Graphics
 						}
 					}
 
-					// Draw nested collection contents if open
+				// Draw nested collection contents if open
 					if (nestedCollection.IsToggledOpen)
 					{
 						const float nestedCollectionInset = 1.75f;
-						for (int chipIndex = 0; chipIndex < nestedCollection.Chips.Count; chipIndex++)
+					for (int chipIndex = 0; chipIndex < nestedCollection.Chips.Count; chipIndex++)
 						{
-							string chipName = nestedCollection.Chips[chipIndex];
+						string chipName = nestedCollection.Chips[chipIndex];
+						// Hide ROM variants from UI (only show the default ROM 256×16)
+						if (ShouldHideRomVariantByName(chipName)) continue;
+
+						string displayChipName = GetLibraryDisplayName(chipName);
 							// Check if this chip is selected
-							bool chipHighlighted = (chipIndex == selectedChipInNestedCollectionIndex) && (nestedIndex == selectedNestedCollectionIndex) && (collectionIndex == selectedCollectionIndex);
+						bool chipHighlighted = (chipIndex == selectedChipInNestedCollectionIndex) && (nestedIndex == selectedNestedCollectionIndex) && (collectionIndex == selectedCollectionIndex);
 							ButtonTheme activeChipTheme = chipHighlighted ? ActiveUITheme.ChipLibraryChipToggleOn : ActiveUITheme.ChipLibraryChipToggleOff;
 							Vector2 chipLabelPos = new(topLeft.x + nestedInset + nestedCollectionInset, Seb.Vis.UI.UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
-							bool chipPressed = Seb.Vis.UI.UI.Button(chipName, activeChipTheme, chipLabelPos, new Vector2(width - nestedInset - nestedCollectionInset, 2), true, false, false, activeChipTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+						bool chipPressed = Seb.Vis.UI.UI.Button(displayChipName, activeChipTheme, chipLabelPos, new Vector2(width - nestedInset - nestedCollectionInset, 2), true, false, false, activeChipTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 							if (chipPressed)
 							{
 								// Update selection indices - this allows cross-collection selection
@@ -482,9 +488,13 @@ namespace DLS.Graphics
 				for (int chipIndex = 0; chipIndex < collection.Chips.Count; chipIndex++)
 				{
 					string chipName = collection.Chips[chipIndex];
+					// Hide ROM variants from UI (only show the default ROM 256×16)
+					if (ShouldHideRomVariantByName(chipName)) continue;
+
+					string displayChipName = GetLibraryDisplayName(chipName);
 					ButtonTheme activeChipTheme = collectionIndex == selectedCollectionIndex && chipIndex == selectedChipInCollectionIndex ? ActiveUITheme.ChipLibraryChipToggleOn : ActiveUITheme.ChipLibraryChipToggleOff;
 					Vector2 chipLabelPos = new(topLeft.x + nestedInset, Seb.Vis.UI.UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
-					bool chipPressed = Seb.Vis.UI.UI.Button(chipName, activeChipTheme, chipLabelPos, new Vector2(width - nestedInset, 2), true, false, false,activeChipTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
+					bool chipPressed = Seb.Vis.UI.UI.Button(displayChipName, activeChipTheme, chipLabelPos, new Vector2(width - nestedInset, 2), true, false, false,activeChipTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 					if (chipPressed)
 					{
 						bool alreadySelected = selectedChipInCollectionIndex == chipIndex && collectionHighlighted;
@@ -503,6 +513,58 @@ namespace DLS.Graphics
 					}
 				}
 			}
+		}
+
+		static bool ShouldHideRomVariantByName(string chipName)
+		{
+			// If the name exists in the library, hide all ROM variants except the default 256×16
+			if (project.chipLibrary.TryGetChipDescription(chipName, out ChipDescription desc))
+			{
+				return ChipTypeHelper.IsRomType(desc.ChipType) && desc.ChipType != ChipType.Rom_256x16;
+			}
+
+			// If the name doesn't resolve (e.g., legacy collection entries), hide known legacy ROM variant labels
+			// Normalize: remove spaces, unify ×/x, upper-case
+			string normalized = chipName.Replace(" ", string.Empty).Replace("\u00d7", "x").Replace("×", "x").ToUpperInvariant();
+			return normalized is "ROM2X8" or "ROM4X4" or "ROM16X1" or "ROM1X16" or "ROM8X2" or
+			       "ROM2X8_VARIANT" or "ROM4X4_VARIANT" or "ROM16X1_VARIANT" or "ROM1X16_VARIANT" or "ROM8X2_VARIANT";
+		}
+
+		static string GetLibraryDisplayName(string chipName)
+		{
+			if (project.chipLibrary.TryGetChipDescription(chipName, out ChipDescription desc))
+			{
+				if (ChipTypeHelper.IsRomType(desc.ChipType))
+				{
+					return $"ROM 256\u00d716"; // Always show a single ROM name in the library
+				}
+			}
+
+			// Map legacy variant names to unified display name
+			string normalized = chipName.Replace(" ", string.Empty).Replace("\u00d7", "x").Replace("×", "x").ToUpperInvariant();
+			if (normalized.StartsWith("ROM") && (normalized.Contains("2X8") || normalized.Contains("4X4") || normalized.Contains("16X1") || normalized.Contains("1X16") || normalized.Contains("8X2")))
+			{
+				return $"ROM 256\u00d716";
+			}
+
+			return chipName;
+		}
+
+		// Resolve a chip name coming from collections/starred to a real library name
+		// Used to prevent KeyNotFound exceptions for legacy ROM variant entries
+		static string ResolveLibraryChipName(string chipName)
+		{
+			if (project.chipLibrary.TryGetChipDescription(chipName, out _)) return chipName;
+
+			string normalized = chipName.Replace(" ", string.Empty).Replace("\u00d7", "x").Replace("×", "x").ToUpperInvariant();
+			bool isLegacyRomVariant = normalized is "ROM2X8" or "ROM4X4" or "ROM16X1" or "ROM1X16" or "ROM8X2" or
+			                       "ROM2X8_VARIANT" or "ROM4X4_VARIANT" or "ROM16X1_VARIANT" or "ROM1X16_VARIANT" or "ROM8X2_VARIANT";
+			if (isLegacyRomVariant)
+			{
+				return DLS.Description.ChipTypeHelper.GetName(DLS.Description.ChipType.Rom_256x16);
+			}
+
+			return chipName;
 		}
 
 		static void DrawSelectedItemPanel(Vector2 topLeft, Vector2 size)
@@ -822,19 +884,18 @@ namespace DLS.Graphics
 							selectedChipInCollectionIndex = collection.Chips.Count - 1;
 							Debug.Log($"Moved nested chip '{selectedChipName}' to parent collection");
 						}
-						else if (jumpUp) // JUMP UP - move to previous nested collection above
+					else if (jumpUp) // JUMP UP - move to previous nested collection above
+					{
+						// Find the previous nested collection above the current one
+						ChipCollection targetNestedCollection = null;
+						int targetNestedIndex = -1;
+						
+						// Look for nested collections above the current one within the same parent
+						if (selectedNestedCollectionIndex - 1 >= 0)
 						{
-							// Find the previous nested collection above the current one
-							ChipCollection targetNestedCollection = null;
-							int targetNestedIndex = -1;
-							
-							// Look for nested collections above the current one within the same parent
-							for (int i = selectedNestedCollectionIndex - 1; i >= 0; i--)
-							{
-								targetNestedCollection = collection.NestedCollections[i];
-								targetNestedIndex = i;
-								break; // Take the first (closest) nested collection above
-							}
+							targetNestedIndex = selectedNestedCollectionIndex - 1;
+							targetNestedCollection = collection.NestedCollections[targetNestedIndex];
+						}
 							
 					if (targetNestedCollection != null)
 					{
@@ -862,11 +923,10 @@ namespace DLS.Graphics
 						int targetNestedIndex = -1;
 						
 						// Look for nested collections below the current one within the same parent
-						for (int i = selectedNestedCollectionIndex + 1; i < collection.NestedCollections.Count; i++)
+						if (selectedNestedCollectionIndex + 1 < collection.NestedCollections.Count)
 						{
-							targetNestedCollection = collection.NestedCollections[i];
-							targetNestedIndex = i;
-							break; // Take the first (closest) nested collection below
+							targetNestedIndex = selectedNestedCollectionIndex + 1;
+							targetNestedCollection = collection.NestedCollections[targetNestedIndex];
 						}
 						
 					if (targetNestedCollection != null)
@@ -1223,7 +1283,9 @@ namespace DLS.Graphics
 
 				if (chipActionIndex == 0) // use
 				{
-					project.controller.StartPlacing(project.chipLibrary.GetChipDescription(selectedChipName));
+					// Resolve legacy ROM variant names to default ROM to avoid missing keys
+					string resolvedName = ResolveLibraryChipName(selectedChipName);
+					project.controller.StartPlacing(project.chipLibrary.GetChipDescription(resolvedName));
 					ExitLibrary();
 				}
 				else if (chipActionIndex == 1) // open
@@ -1521,6 +1583,8 @@ namespace DLS.Graphics
 							LevelManager.Instance.SaveCurrentProgress();
 						}
 						
+						// Resolve legacy ROM variant names to the default ROM before opening
+						chipToOpenName = ResolveLibraryChipName(chipToOpenName);
 						project.LoadDevChipOrCreateNewIfDoesntExist(chipToOpenName);
 						ExitLibrary();
 						LevelManager.Instance?.ExitLevel();
@@ -1528,6 +1592,8 @@ namespace DLS.Graphics
 					else if (option == 2) // Continue without Saving
 					{
 						// Open chip without saving level progress
+						// Resolve legacy ROM variant names to the default ROM before opening
+						chipToOpenName = ResolveLibraryChipName(chipToOpenName);
 						project.LoadDevChipOrCreateNewIfDoesntExist(chipToOpenName);
 						ExitLibrary();
 						LevelManager.Instance?.ExitLevel();

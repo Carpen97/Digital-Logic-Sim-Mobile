@@ -24,6 +24,50 @@ namespace DLS.Game
 			#endif
 		}
 
+	static bool ShouldHideChipInLevel(ChipType chipType)
+	{
+		var lm = DLS.Game.LevelsIntegration.LevelManager.Instance;
+		bool isLevelActive = lm != null && lm.IsActive;
+		return isLevelActive
+			&& (chipType == ChipType.In_Pin || chipType == ChipType.Out_Pin);
+	}
+
+	static bool IsSpecialChipDisabledInLevel(ChipType chipType)
+	{
+		var lm = DLS.Game.LevelsIntegration.LevelManager.Instance;
+		if (lm == null || !lm.IsActive) return false;
+		
+		// Check if chip type is in our "special" list
+		return chipType == ChipType.Rom_256x16 ||
+		       chipType == ChipType.EEPROM_256x16 ||
+		       chipType == ChipType.dev_Ram_8Bit ||
+		       chipType == ChipType.SevenSegmentDisplay ||
+		       chipType == ChipType.DisplayRGB ||
+		       chipType == ChipType.DisplayRGBTouch ||
+		       chipType == ChipType.DisplayDot ||
+		       chipType == ChipType.DisplayLED ||
+		       chipType == ChipType.Pulse ||
+		       chipType == ChipType.Clock ||
+		       chipType == ChipType.Key ||
+		       chipType == ChipType.Button ||
+		       chipType == ChipType.Toggle ||
+		       chipType == ChipType.Detector ||
+		       chipType == ChipType.Buzzer ||
+		       chipType == ChipType.RTC ||
+		       chipType == ChipType.SPS ||
+		       chipType == ChipType.Constant_8Bit;
+	}
+
+		static void ShowInputOutputDisabledMessage()
+		{
+			SimpleMessagePopup.Open("Adding input/output pins is disabled for this level");
+		}
+		
+		static void ShowSpecialChipDisabledMessage()
+		{
+			SimpleMessagePopup.Open("This chip type is disabled for this level");
+		}
+
 		// ---- Control scheme settings ----
 		public bool UseDragAndDropMode => project.description.Prefs_UseDragAndDropMode;
 
@@ -146,27 +190,76 @@ namespace DLS.Game
 			DeleteElements(new List<IMoveable>(new[] { element }));
 		}
 
-		void DeleteElements(List<IMoveable> elements, bool clearSelection = true)
+	void DeleteElements(List<IMoveable> elements, bool clearSelection = true)
+	{
+		if (!HasControl) return;
+		List<IMoveable> elementsToDelete = elements.Concat(GetNonIncludedLinkedBusElements(elements)).ToList();
+		
+		// Check for anchored pins and disabled chips in level mode
+		bool shouldCancel = false;
+		for (int i = elementsToDelete.Count - 1; i >= 0; i--)
 		{
-			if (!HasControl) return;
-			List<IMoveable> elementsToDelete = elements.Concat(GetNonIncludedLinkedBusElements(elements)).ToList();
-			int skippedAnchoredPins = elementsToDelete.RemoveAll(e => e is DevPinInstance dp && dp.anchoredToLevel);
-			if (skippedAnchoredPins > 0)
+			IMoveable element = elementsToDelete[i];
+			
+			// Check for anchored pins (level-provided)
+			if (element is DevPinInstance dp && dp.anchoredToLevel)
 			{
-				FinishMovingElements();
-				return;
+				elementsToDelete.RemoveAt(i);
+				shouldCancel = true;
+				continue;
 			}
-			ActiveDevChip.UndoController.RecordDeleteElements(elementsToDelete);
-
-			foreach (IMoveable element in elementsToDelete)
+			
+			// Check for Input/Output pins or special chips in level mode
+			ChipType chipType;
+			if (element is SubChipInstance subChip)
 			{
-				Debug.Log($"Deleting {element}");
-				if (element is SubChipInstance subChip) ActiveDevChip.DeleteSubChip(subChip);
-				else if (element is DevPinInstance devPin) ActiveDevChip.DeleteDevPin(devPin);
+				chipType = subChip.ChipType;
 			}
-
-			if (clearSelection) SelectedElements.Clear();
+			else if (element is DevPinInstance devPin)
+			{
+				chipType = devPin.IsInputPin ? ChipType.In_Pin : ChipType.Out_Pin;
+			}
+			else
+			{
+				continue;
+			}
+			
+			if (ShouldHideChipInLevel(chipType))
+			{
+				ShowInputOutputDisabledMessage();
+				elementsToDelete.RemoveAt(i);
+				shouldCancel = true;
+				continue;
+			}
+			
+			if (IsSpecialChipDisabledInLevel(chipType))
+			{
+				ShowSpecialChipDisabledMessage();
+				elementsToDelete.RemoveAt(i);
+				shouldCancel = true;
+				continue;
+			}
 		}
+		
+		if (shouldCancel)
+		{
+			FinishMovingElements();
+			return;
+		}
+		
+		if (elementsToDelete.Count == 0) return;
+		
+		ActiveDevChip.UndoController.RecordDeleteElements(elementsToDelete);
+
+		foreach (IMoveable element in elementsToDelete)
+		{
+			Debug.Log($"Deleting {element}");
+			if (element is SubChipInstance subChip) ActiveDevChip.DeleteSubChip(subChip);
+			else if (element is DevPinInstance devPin) ActiveDevChip.DeleteDevPin(devPin);
+		}
+
+		if (clearSelection) SelectedElements.Clear();
+	}
 
 		public void DeleteSelected()
 		{
@@ -198,6 +291,70 @@ namespace DLS.Game
 					wireToEdit.DeleteWirePoint(wireEditPointIndex);
 					wireEditPointIndex = -1;
 					isMovingWireEditPoint = false;
+				}
+			}
+		}
+
+		// Track elements deleted during current drag to avoid duplicate deletions
+		// Use object references for wires (no ID property), and IDs for IMoveable elements
+		private HashSet<object> elementsDeletedThisDrag = new HashSet<object>();
+
+		/// <summary>
+		/// Handles tap/drag when eraser mode is active - performs immediate deletion (mobile only)
+		/// </summary>
+		void HandleEraserModeTap()
+		{
+			if (!EraserModeController.IsActive) return;
+			if (!HasControl) return;
+
+			var elementUnderMouse = InteractionState.ElementUnderMouse;
+
+			// Don't delete if tapping/dragging on empty space
+			if (elementUnderMouse == null) return;
+
+			// Get element identifier to track if we've already deleted it this drag
+			object elementIdentifier = null;
+			if (elementUnderMouse is IMoveable moveableElement)
+			{
+				elementIdentifier = moveableElement.ID;
+			}
+			else if (elementUnderMouse is WireInstance wire)
+			{
+				// Use object reference for wires (they don't have an ID property)
+				elementIdentifier = wire;
+			}
+
+			// Skip if we've already deleted this element during the current drag
+			if (elementIdentifier != null && elementsDeletedThisDrag.Contains(elementIdentifier))
+			{
+				return;
+			}
+
+			// Handle different eraser modes
+			if (EraserModeController.CurrentMode == EraserModeController.EraserMode.WiresOnly)
+			{
+				// Only delete wires in WiresOnly mode
+				if (elementUnderMouse is WireInstance wire && wire != wireToEdit)
+				{
+					DeleteWire(wire);
+					elementsDeletedThisDrag.Add(wire);
+					Debug.Log("[EraserMode] Deleted wire (WiresOnly mode)");
+				}
+			}
+			else // DeleteAll mode
+			{
+				// Delete any element
+				if (elementUnderMouse is IMoveable moveable)
+				{
+					Delete(moveable);
+					elementsDeletedThisDrag.Add(moveable.ID);
+					Debug.Log($"[EraserMode] Deleted {moveable.GetType().Name} (DeleteAll mode)");
+				}
+				else if (elementUnderMouse is WireInstance wire && wire != wireToEdit)
+				{
+					DeleteWire(wire);
+					elementsDeletedThisDrag.Add(wire);
+					Debug.Log("[EraserMode] Deleted wire (DeleteAll mode)");
 				}
 			}
 		}
@@ -280,7 +437,15 @@ namespace DLS.Game
 				if(touch.phase == TouchPhase.Began){
 					HandleSingleTap();
 				}else if(touch.phase == TouchPhase.Moved){
-					if (HasControl) UpdatePositionsToMouse();
+					// In eraser mode, continuously delete elements while dragging
+					if (EraserModeController.IsActive)
+					{
+						HandleEraserModeTap();
+					}
+					else if (HasControl)
+					{
+						UpdatePositionsToMouse();
+					}
 				}else if(touch.phase == TouchPhase.Ended){
 					HandleTouchEnd();
 				}
@@ -393,23 +558,60 @@ namespace DLS.Game
 			}
 		}
 
-		void DuplicateElements(List<IMoveable> elements)
+	void DuplicateElements(List<IMoveable> elements)
+	{
+		if (elements.Count == 0) return;
+		IMoveable[] elementsToDuplicate = elements.Concat(GetNonIncludedLinkedBusElements(elements)).ToArray();
+
+		List<IMoveable> duplicatedElements = new(elementsToDuplicate.Length);
+		Dictionary<int, int> duplicatedElementIDFromOriginalID = new();
+
+		// Get description of each element, and start placing a copy of it
+		foreach (IMoveable element in elementsToDuplicate)
 		{
-			if (elements.Count == 0) return;
-			IMoveable[] elementsToDuplicate = elements.Concat(GetNonIncludedLinkedBusElements(elements)).ToArray();
-
-			List<IMoveable> duplicatedElements = new(elementsToDuplicate.Length);
-			Dictionary<int, int> duplicatedElementIDFromOriginalID = new();
-
-			// Get description of each element, and start placing a copy of it
-			foreach (IMoveable element in elementsToDuplicate)
+			// Check if this element should be disabled in level mode
+			ChipType chipType;
+			if (element is SubChipInstance subChip)
 			{
-				IMoveable duplicatedElement = CreateElementFromDuplicationSource(element);
-				StartPlacing(duplicatedElement, element.Position, true);
-				duplicatedElement.StraightLineReferencePoint = element.Position;
-				duplicatedElements.Add(duplicatedElement);
-				duplicatedElementIDFromOriginalID.Add(element.ID, duplicatedElement.ID);
+				chipType = subChip.ChipType;
 			}
+			else if (element is DevPinInstance devPin)
+			{
+				chipType = devPin.IsInputPin ? ChipType.In_Pin : ChipType.Out_Pin;
+			}
+			else
+			{
+				// Unknown element type, skip
+				continue;
+			}
+			
+			// Check if trying to duplicate Input/Output pins in a level
+			if (ShouldHideChipInLevel(chipType))
+			{
+				ShowInputOutputDisabledMessage();
+				continue; // Skip this element
+			}
+			
+			// Check if trying to duplicate special chips in a level
+			if (IsSpecialChipDisabledInLevel(chipType))
+			{
+				ShowSpecialChipDisabledMessage();
+				continue; // Skip this element
+			}
+			
+			IMoveable duplicatedElement = CreateElementFromDuplicationSource(element);
+			StartPlacing(duplicatedElement, element.Position, true);
+			duplicatedElement.StraightLineReferencePoint = element.Position;
+			duplicatedElements.Add(duplicatedElement);
+			duplicatedElementIDFromOriginalID.Add(element.ID, duplicatedElement.ID);
+		}
+
+		// If no elements were duplicated (all were skipped), cancel the duplication process
+		if (duplicatedElements.Count == 0)
+		{
+			CancelEverything();
+			return;
+		}
 
 			LinkDuplicatedBuses(duplicatedElements, elementsToDuplicate);
 
@@ -544,6 +746,15 @@ namespace DLS.Game
 		}
 
 		void HandleSingleTap(){
+			
+			// Check if eraser mode is active - handle immediate deletion
+			if (EraserModeController.IsActive)
+			{
+				// Clear the drag tracking set when starting a new tap/drag
+				elementsDeletedThisDrag.Clear();
+				HandleEraserModeTap();
+				return; // Don't proceed with normal selection logic
+			}
 			
 			//WorldDrawer.DrawWorld(Project.ActiveProject);
 			if (wireToEdit != null)
@@ -1209,24 +1420,38 @@ namespace DLS.Game
 			StartPlacing(chipDescription, InputHelper.MousePosWorld, false);
 		}
 
-		public IMoveable StartPlacing(ChipDescription chipDescription, Vector2 position, bool isDuplicating)
+	public IMoveable StartPlacing(ChipDescription chipDescription, Vector2 position, bool isDuplicating)
+	{
+		// Check if trying to add Input/Output pins in a level
+		if (ShouldHideChipInLevel(chipDescription.ChipType))
 		{
-			#if UNITY_ANDROID || UNITY_IOS
-			// Only show placement buttons in drag and lock mode
-			if (!UseDragAndDropMode)
-			{
-				#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
-				MobileUIControllerWrapper.ShowPlacementButtons(
-					FinishPlacingNewElements,
-					CancelPlacingItems
-				);
-				#endif
-			}
-			#endif
-			IMoveable elementToPlace = CreateElementFromChipDescription(chipDescription);
-			StartPlacing(elementToPlace, position, isDuplicating);
-			return elementToPlace;
+			ShowInputOutputDisabledMessage();
+			return null;
 		}
+		
+		// Check if trying to add special chips in a level
+		if (IsSpecialChipDisabledInLevel(chipDescription.ChipType))
+		{
+			ShowSpecialChipDisabledMessage();
+			return null;
+		}
+		
+		#if UNITY_ANDROID || UNITY_IOS
+		// Only show placement buttons in drag and lock mode
+		if (!UseDragAndDropMode)
+		{
+			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+			MobileUIControllerWrapper.ShowPlacementButtons(
+				FinishPlacingNewElements,
+				CancelPlacingItems
+			);
+			#endif
+		}
+		#endif
+		IMoveable elementToPlace = CreateElementFromChipDescription(chipDescription);
+		StartPlacing(elementToPlace, position, isDuplicating);
+		return elementToPlace;
+	}
 
 		void StartPlacing(IMoveable elementToPlace, Vector2 position, bool isDuplicating)
 		{
@@ -1353,6 +1578,17 @@ namespace DLS.Game
 			IsCreatingSelectionBox = false;
 			isPlacingNewElements = false;
 			ExitWireEditMode();
+			
+			// Disable eraser mode when canceling
+			EraserModeController.DisableEraserMode();
+			
+			// Sync MobileUIController state
+			#if UNITY_ANDROID || UNITY_IOS
+			if (MobileUIController.Instance != null)
+			{
+				MobileUIController.Instance.isEraserModeActive = false;
+			}
+			#endif
 		}
 
 		void ClearSelection()

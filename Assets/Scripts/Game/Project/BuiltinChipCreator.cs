@@ -32,10 +32,14 @@ namespace DLS.Game
 				CreateConstant_8(),
 				CreateDetector(),
 
-				// ---- Memory ----
-				dev_CreateRAM_8(),
-				CreateROM_8(),
-				CreateEEPROM_8(),
+			// ---- Memory ----
+			dev_CreateRAM_8(),
+			CreateROM_8(),
+			CreateROM_2x8(),
+			CreateROM_4x4(),
+			CreateROM_16x1(),
+			CreateROM_1x16(),
+			CreateEEPROM_8(),
 
 				// ---- Merge / Split ----
 
@@ -262,7 +266,93 @@ namespace DLS.Game
 			return CreateBuiltinChipDescription(ChipType.Rom_256x16, size, col, inputPins, outputPins);
 		}
 
-        static ChipDescription CreateEEPROM_8()
+		static ChipDescription CreateROM_2x8()
+		{
+			PinDescription[] inputPins =
+			{
+				CreatePinDescription("ADDRESS", 0, PinBitCount.Bit8)
+			};
+			PinDescription[] outputPins =
+			{
+                CreatePinDescription("OUT B", 1, PinBitCount.Bit8),
+                CreatePinDescription("OUT A", 2, PinBitCount.Bit8)
+            };
+
+			Color col = GetColor(new(0.25f, 0.35f, 0.5f));
+			Vector2 size = new(GridSize * 12, SubChipInstance.MinChipHeightForPins(inputPins, outputPins));
+
+			return CreateBuiltinChipDescription(ChipType.Rom_2x8, size, col, inputPins, outputPins);
+		}
+
+		static ChipDescription CreateROM_4x4()
+		{
+			PinDescription[] inputPins =
+			{
+				CreatePinDescription("ADDRESS", 0, PinBitCount.Bit8)
+			};
+			PinDescription[] outputPins =
+			{
+                CreatePinDescription("OUT 0", 1, PinBitCount.Bit4),
+                CreatePinDescription("OUT 1", 2, PinBitCount.Bit4),
+                CreatePinDescription("OUT 2", 3, PinBitCount.Bit4),
+                CreatePinDescription("OUT 3", 4, PinBitCount.Bit4)
+            };
+
+			Color col = GetColor(new(0.25f, 0.35f, 0.5f));
+			Vector2 size = new(GridSize * 12, SubChipInstance.MinChipHeightForPins(inputPins, outputPins));
+
+			return CreateBuiltinChipDescription(ChipType.Rom_4x4, size, col, inputPins, outputPins);
+		}
+
+
+		static ChipDescription CreateROM_16x1()
+		{
+			PinDescription[] inputPins =
+			{
+				CreatePinDescription("ADDRESS", 0, PinBitCount.Bit8)
+			};
+			PinDescription[] outputPins =
+			{
+                CreatePinDescription("OUT 0", 1, PinBitCount.Bit1),
+                CreatePinDescription("OUT 1", 2, PinBitCount.Bit1),
+                CreatePinDescription("OUT 2", 3, PinBitCount.Bit1),
+                CreatePinDescription("OUT 3", 4, PinBitCount.Bit1),
+                CreatePinDescription("OUT 4", 5, PinBitCount.Bit1),
+                CreatePinDescription("OUT 5", 6, PinBitCount.Bit1),
+                CreatePinDescription("OUT 6", 7, PinBitCount.Bit1),
+                CreatePinDescription("OUT 7", 8, PinBitCount.Bit1),
+                CreatePinDescription("OUT 8", 9, PinBitCount.Bit1),
+                CreatePinDescription("OUT 9", 10, PinBitCount.Bit1),
+                CreatePinDescription("OUT 10", 11, PinBitCount.Bit1),
+                CreatePinDescription("OUT 11", 12, PinBitCount.Bit1),
+                CreatePinDescription("OUT 12", 13, PinBitCount.Bit1),
+                CreatePinDescription("OUT 13", 14, PinBitCount.Bit1),
+                CreatePinDescription("OUT 14", 15, PinBitCount.Bit1),
+                CreatePinDescription("OUT 15", 16, PinBitCount.Bit1)
+            };
+
+			Color col = GetColor(new(0.25f, 0.35f, 0.5f));
+			Vector2 size = new(GridSize * 12, SubChipInstance.MinChipHeightForPins(inputPins, outputPins));
+
+		return CreateBuiltinChipDescription(ChipType.Rom_16x1, size, col, inputPins, outputPins);
+	}
+
+	static ChipDescription CreateROM_1x16()
+	{
+		PinDescription[] inputPins =
+		{
+			CreatePinDescription("ADDRESS", 0, PinBitCount.Bit8)
+		};
+		PinDescription[] outputPins =
+		{
+			CreatePinDescription("OUT", 1, PinBitCount.Bit16)
+		};
+		Color col = GetColor(new(0.25f, 0.35f, 0.5f));
+		Vector2 size = new(GridSize * 12, SubChipInstance.MinChipHeightForPins(inputPins, outputPins));
+		return CreateBuiltinChipDescription(ChipType.Rom_1x16, size, col, inputPins, outputPins);
+	}
+
+	static ChipDescription CreateEEPROM_8()
         {
             PinDescription[] inputPins =
             {

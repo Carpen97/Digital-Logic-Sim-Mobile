@@ -93,17 +93,42 @@ namespace DLS.Graphics
 
 		static bool MenuButtonsAndShortcutsEnabled => Project.ActiveProject.CanEditViewedChip;
 
-		static bool ShouldHideChipInLevel(ChipDescription desc)
-		{
-			var lm = LevelManager.Instance;
-			bool isLevelActive = lm != null && lm.IsActive;
-			return isLevelActive
-				&& desc != null
-				&& (desc.ChipType == ChipType.In_Pin || desc.ChipType == ChipType.Out_Pin);
-		}
+	static bool ShouldHideChipInLevel(ChipType chipType)
+	{
+		var lm = LevelManager.Instance;
+		bool isLevelActive = lm != null && lm.IsActive;
+		return isLevelActive
+			&& (chipType == ChipType.In_Pin || chipType == ChipType.Out_Pin);
+	}
+
+	static bool IsSpecialChipDisabledInLevel(ChipType chipType)
+	{
+		var lm = LevelManager.Instance;
+		if (lm == null || !lm.IsActive) return false;
+		
+		// Check if chip type is in our "special" list
+		return chipType == ChipType.Rom_256x16 ||
+		       chipType == ChipType.EEPROM_256x16 ||
+		       chipType == ChipType.dev_Ram_8Bit ||
+		       chipType == ChipType.SevenSegmentDisplay ||
+		       chipType == ChipType.DisplayRGB ||
+		       chipType == ChipType.DisplayRGBTouch ||
+		       chipType == ChipType.DisplayDot ||
+		       chipType == ChipType.DisplayLED ||
+		       chipType == ChipType.Pulse ||
+		       chipType == ChipType.Clock ||
+		       chipType == ChipType.Key ||
+		       chipType == ChipType.Button ||
+		       chipType == ChipType.Toggle ||
+		       chipType == ChipType.Detector ||
+		       chipType == ChipType.Buzzer ||
+		       chipType == ChipType.RTC ||
+		       chipType == ChipType.SPS ||
+		       chipType == ChipType.Constant_8Bit;
+	}
 
 
-		public static void DrawUI(Project project)
+	public static void DrawUI(Project project)
 		{
 			DrawBottomBar(project);
 
@@ -805,33 +830,48 @@ namespace DLS.Graphics
 
 		static bool MouseIsOverBar() => InputHelper.MouseInBounds_ScreenSpace(barBounds_ScreenSpace);
 		
-		/// <summary>
-		/// Try to start placing a chip. If it's an Input/Output pin in a level, show a message instead.
-		/// </summary>
-		static void TryStartPlacing(Project project, string chipName)
+	/// <summary>
+	/// Try to start placing a chip. If it's an Input/Output pin or special chip in a level, show a message instead.
+	/// </summary>
+	static void TryStartPlacing(Project project, string chipName)
+	{
+		ChipDescription desc = project.chipLibrary.GetChipDescription(chipName);
+		
+		// Check if trying to add Input/Output pins in a level
+		if (ShouldHideChipInLevel(desc.ChipType))
 		{
-			ChipDescription desc = project.chipLibrary.GetChipDescription(chipName);
-			
-			// Check if trying to add Input/Output pins in a level
-			if (ShouldHideChipInLevel(desc))
-			{
-				ShowInputOutputDisabledMessage();
-				return;
-			}
-			
-			// Proceed with normal placement
-			project.controller.StartPlacing(desc);
+			ShowInputOutputDisabledMessage();
+			return;
 		}
 		
-		/// <summary>
-		/// Shows a simple message that adding input/output pins is disabled for levels
-		/// </summary>
-		static void ShowInputOutputDisabledMessage()
+		// Check if trying to add special chips in a level
+		if (IsSpecialChipDisabledInLevel(desc.ChipType))
 		{
-			SimpleMessagePopup.Open("Adding input/output pins is disabled for this level");
+			ShowSpecialChipDisabledMessage();
+			return;
 		}
+		
+		// Proceed with normal placement
+		project.controller.StartPlacing(desc);
+	}
+		
+	/// <summary>
+	/// Shows a simple message that adding input/output pins is disabled for levels
+	/// </summary>
+	static void ShowInputOutputDisabledMessage()
+	{
+		SimpleMessagePopup.Open("Adding input/output pins is disabled for this level");
+	}
+	
+	/// <summary>
+	/// Shows a simple message that this chip type is disabled for levels
+	/// </summary>
+	static void ShowSpecialChipDisabledMessage()
+	{
+		SimpleMessagePopup.Open("This chip type is disabled for this level");
+	}
 
-		static void ExitToMainMenu()
+	static void ExitToMainMenu()
 		{
 			if (Project.ActiveProject.ActiveChipHasUnsavedChanges()) UnsavedChangesPopup.OpenPopup(ExitIfTrue);
 			else ExitIfTrue(true);

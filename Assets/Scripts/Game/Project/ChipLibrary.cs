@@ -19,7 +19,8 @@ namespace DLS.Game
 			foreach (ChipDescription chip in builtinChips)
 			{
 				// Bus terminus chip should not be shown to the user (it is created automatically upon placement of a bus start point)
-				bool hidden = ChipTypeHelper.IsBusTerminusType(chip.ChipType);
+				// ROM variants should not be shown to the user (they are accessible through the ROM editor's pin configuration selector)
+				bool hidden = ChipTypeHelper.IsBusTerminusType(chip.ChipType) || ShouldHideRomVariant(chip.ChipType);
 
 				AddChipToLibrary(chip, hidden);
 				builtinChipNames.Add(chip.Name);
@@ -39,12 +40,18 @@ namespace DLS.Game
 			descriptionFromNameLookup.Clear();
 			foreach (ChipDescription desc in allChips)
 			{
-				descriptionFromNameLookup.Add(desc.Name, desc);
+				// Use TryAdd to avoid duplicate key exceptions
+				if (!descriptionFromNameLookup.TryAdd(desc.Name, desc))
+				{
+					// If key already exists, keep the first one (prioritize visible chips)
+					// This handles cases where multiple ROM variants might have the same display name
+				}
 			}
 
 			foreach (ChipDescription desc in hiddenChips)
 			{
-				descriptionFromNameLookup.Add(desc.Name, desc);
+				// Use TryAdd for hidden chips too, but they won't override visible ones
+				descriptionFromNameLookup.TryAdd(desc.Name, desc);
 			}
 		}
 
@@ -150,6 +157,16 @@ namespace DLS.Game
 			if(description.ChipType != ChipType.Custom) builtinChipNames.Add(description.Name);
 			if (hidden) hiddenChips.Add(description);
 			else allChips.Add(description);
+		}
+
+		static bool ShouldHideRomVariant(ChipType chipType)
+		{
+			// Hide ROM variants - only show the original ROM 256x16 in the library
+			// Users can access other pin configurations through the ROM editor's pin configuration selector
+			return chipType == ChipType.Rom_2x8 || 
+			       chipType == ChipType.Rom_1x16 || 
+			       chipType == ChipType.Rom_4x4 || 
+			       chipType == ChipType.Rom_16x1;
 		}
 	}
 }

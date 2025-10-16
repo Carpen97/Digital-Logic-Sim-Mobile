@@ -17,9 +17,13 @@ namespace DLS.Description
 			{ ChipType.TriStateBuffer, "3-STATE BUFFER" },
 			{ ChipType.Constant_8Bit, "CONST" },
 			{ ChipType.Detector, "DETECTOR" },
-			// ---- Memory ----
-			{ ChipType.dev_Ram_8Bit, "RAM-8" },
-			{ ChipType.Rom_256x16, $"ROM 256{mulSymbol}16" },
+		// ---- Memory ----
+		{ ChipType.dev_Ram_8Bit, "RAM-8" },
+		{ ChipType.Rom_256x16, $"ROM 256{mulSymbol}16" },
+		{ ChipType.Rom_2x8, $"ROM 2{mulSymbol}8_Variant" },
+		{ ChipType.Rom_4x4, $"ROM 4{mulSymbol}4_Variant" },
+		{ ChipType.Rom_16x1, $"ROM 16{mulSymbol}1_Variant" },
+		{ ChipType.Rom_1x16, $"ROM 1{mulSymbol}16_Variant" },
             { ChipType.EEPROM_256x16, $"EEPROM 256{mulSymbol}16" },
 
 			// ---- Displays -----
@@ -52,7 +56,22 @@ namespace DLS.Description
 
 		public static bool IsBusTerminusType(ChipType type) => type is ChipType.BusTerminus;
 
-		public static bool IsRomType(ChipType type) => type == ChipType.Rom_256x16 || type == ChipType.EEPROM_256x16;
+		public static bool IsRomType(ChipType type) => type == ChipType.Rom_256x16 || type == ChipType.Rom_2x8 || type == ChipType.Rom_4x4 || type == ChipType.Rom_16x1 || type == ChipType.Rom_1x16 || type == ChipType.EEPROM_256x16;
+
+		/// <summary>
+		/// Gets the display name for a chip type, with special handling for ROM variants
+		/// </summary>
+		public static string GetDisplayName(ChipType type)
+		{
+			// All ROM variants display as "ROM 256×16" to the user
+			if (IsRomType(type))
+			{
+				return $"ROM 256{mulSymbol}16";
+			}
+			
+			// For all other chips, use the regular name
+			return GetName(type);
+		}
 
 		public static (bool isInput, bool isOutput, PinBitCount numBits) IsInputOrOutputPin(ChipDescription chip)
 		{

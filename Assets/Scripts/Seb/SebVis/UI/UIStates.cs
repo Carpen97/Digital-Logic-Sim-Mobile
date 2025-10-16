@@ -14,6 +14,21 @@ namespace Seb.Vis.UI
 		public float dragScrollOffset;
 		public bool isDragging;
 		public float scrollY;
+		public float scrollX;
+		
+		// Content drag tracking
+		public bool isContentDragging;
+		public Vector2 contentDragStartMousePos;
+		public float contentDragStartScrollY;
+		public bool hasExceededDragThreshold;
+		// Horizontal content drag tracking
+		public bool isContentDraggingX;
+		public Vector2 contentDragStartMousePosX;
+		public float contentDragStartScrollX;
+		public bool hasExceededDragThresholdX;
+		
+		// Constants
+		private const float DRAG_THRESHOLD_PIXELS = 5f;
 	}
 
 	public struct SliderState

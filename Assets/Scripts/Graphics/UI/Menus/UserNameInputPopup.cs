@@ -120,26 +120,44 @@ namespace DLS.Graphics
                 inputState.SetText("Anonymous", false);
             }
             
-            // Draw input field
             var inputTheme = MenuHelper.Theme.ChipNameInputField;
             inputTheme.fontSize = ActiveUITheme.FontSizeRegular;
             
-            Seb.Vis.UI.UI.InputField(
-                ID_UserNameInput,
-                inputTheme,
-                inputPos,
-                inputSize,
-                "Enter your name...",
-                Anchor.Centre,
-                1f,
-                ValidateUserName,
-                false
-            );
-            
-            // Disable input when anonymous is selected
+            // Only use disabled scope when actually anonymous
             if (_uploadAsAnonymous)
             {
-                Seb.Vis.UI.UI.DrawPanel(inputPos, inputSize, new Color(0, 0, 0, 0.3f), Anchor.Centre);
+                using (Seb.Vis.UI.UI.BeginDisabledScope(true))
+                {
+                    Seb.Vis.UI.UI.InputField(
+                        ID_UserNameInput,
+                        inputTheme,
+                        inputPos,
+                        inputSize,
+                        "Enter your name...",
+                        Anchor.Centre,
+                        1f,
+                        ValidateUserName,
+                        false
+                    );
+                    
+                    // Draw overlay for visual feedback
+                    Seb.Vis.UI.UI.DrawPanel(inputPos, inputSize, new Color(0, 0, 0, 0.3f), Anchor.Centre);
+                }
+            }
+            else
+            {
+                // Normal input field without disabled scope
+                Seb.Vis.UI.UI.InputField(
+                    ID_UserNameInput,
+                    inputTheme,
+                    inputPos,
+                    inputSize,
+                    "Enter your name...",
+                    Anchor.Centre,
+                    1f,
+                    ValidateUserName,
+                    true  // forceFocus = true like other working input fields
+                );
             }
         }
         

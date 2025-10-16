@@ -27,6 +27,7 @@ public class MobileUIController : MonoBehaviour
 	public GameObject hintTool;
 	public bool isHintToolActive;
 	public bool isShowingPlacementButtons;
+	public bool isEraserModeActive;
 
 	[Header("Level Mode")]
 	public GameObject validateButton;	// round dark "Validate" button (assign in Inspector)
@@ -36,6 +37,7 @@ public class MobileUIController : MonoBehaviour
 	private Image wrenchImage;
 	private Image boxSelectImage;
 	private Image hintImage;
+	private Image trashCanImage;
 
 	private System.Action onConfirmCallback;
 	private System.Action onAddWirePointCallback;
@@ -86,6 +88,7 @@ public class MobileUIController : MonoBehaviour
 			wrenchImage = wrenchTool.GetComponent<Image>();
 			boxSelectImage = boxSelectTool.GetComponent<Image>();
 			hintImage = hintTool.GetComponent<Image>();
+			trashCanImage = trashCanTool.GetComponent<Image>();
 			
 			// Apply Squiggles Theme immediately
 			Debug.Log($"[MobileUIController] Checking IconThemeManager - Instance: {(IconThemeManager.Instance != null ? "EXISTS" : "NULL")}, CurrentTheme: {(IconThemeManager.Instance?.CurrentTheme != null ? IconThemeManager.Instance.CurrentTheme.name : "NULL")}");
@@ -114,13 +117,22 @@ public class MobileUIController : MonoBehaviour
 		bool defaultState = UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup;
 		if (defaultState)
 		{
-			wrenchTool.SetActive(true);
+			// Check if eraser mode is active
+			bool eraserModeActive = DLS.Game.EraserModeController.IsActive;
+			
+			// Hide wrench and multiselect tools when eraser mode is active
+			wrenchTool.SetActive(!eraserModeActive);
+			boxSelectTool.SetActive(!eraserModeActive);
+			
 			if (Project.ActiveProject != null && Project.ActiveProject.CanEditViewedChip)
 			{
-				boxSelectTool.SetActive(true);
-				bool temp = Project.ActiveProject.controller.SelectedElements.Count > 0 && !Project.ActiveProject.controller.IsPlacingElements;
-				trashCanTool.SetActive(temp);
-				copyTool.SetActive(temp);
+				// Trash can is now always visible when in edit mode
+				trashCanTool.SetActive(true);
+				
+				// Copy tool only shows when selection exists (for normal deletion workflow)
+				bool hasSelectionForCopy = Project.ActiveProject.controller.SelectedElements.Count > 0 && !Project.ActiveProject.controller.IsPlacingElements;
+				copyTool.SetActive(hasSelectionForCopy);
+				
 				if (!isShowingPlacementButtons)
 				{
 					redoButton.SetActive(true);
@@ -152,14 +164,14 @@ public class MobileUIController : MonoBehaviour
 			}
 
 			// Show Hint button only in Level Mode, when nothing is selected (no trash/copy tools visible)
-			bool hasSelection = Project.ActiveProject != null && Project.ActiveProject.controller.SelectedElements.Count > 0 && !Project.ActiveProject.controller.IsPlacingElements;
+			bool hasSelectionForHint = Project.ActiveProject != null && Project.ActiveProject.controller.SelectedElements.Count > 0 && !Project.ActiveProject.controller.IsPlacingElements;
 			bool shouldShowHint = _levelManager != null && _levelManager.IsActive && Project.ActiveProject != null && Project.ActiveProject.CanEditViewedChip && !isShowingPlacementButtons
-			&& UIDrawer.ActiveMenu != UIDrawer.MenuType.BottomBarMenuPopup && !hasSelection;
+			&& UIDrawer.ActiveMenu != UIDrawer.MenuType.BottomBarMenuPopup && !hasSelectionForHint;
 			
 			// Debug logging
 			if (hintTool.activeSelf != shouldShowHint)
 			{
-				Debug.Log($"Hint button visibility changed: {shouldShowHint} (LevelActive: {_levelManager?.IsActive}, CanEdit: {Project.ActiveProject?.CanEditViewedChip}, HasSelection: {hasSelection})");
+				Debug.Log($"Hint button visibility changed: {shouldShowHint} (LevelActive: {_levelManager?.IsActive}, CanEdit: {Project.ActiveProject?.CanEditViewedChip}, HasSelection: {hasSelectionForHint})");
 			}
 			
 			hintTool.SetActive(shouldShowHint);
@@ -172,10 +184,13 @@ public class MobileUIController : MonoBehaviour
 			hintTool.SetActive(false);
 			validateButton.SetActive(false);
 		}
-		else
+			else
 		{
 			HideAll();
 		}
+
+		// Update eraser mode visual state
+		UpdateEraserModeVisualState();
 
     }
 
@@ -466,9 +481,24 @@ public class MobileUIController : MonoBehaviour
 	}
 	public void OnTrashCanPress()
 	{
-		Project.ActiveProject.controller.DeleteSelected();
-		HidePlacementButtons();
-		ShowUndoButtons();
+		// Toggle eraser mode instead of deleting immediately
+		// Check actual state from EraserModeController to keep in sync
+		bool currentlyActive = DLS.Game.EraserModeController.IsActive;
+		
+		if (!currentlyActive)
+		{
+			// Activate eraser mode (DeleteAll)
+			DLS.Game.EraserModeController.ToggleEraserMode();
+			isEraserModeActive = true;
+			Debug.Log("[MobileUIController] Eraser mode activated");
+		}
+		else
+		{
+			// Deactivate eraser mode
+			DLS.Game.EraserModeController.DisableEraserMode();
+			isEraserModeActive = false;
+			Debug.Log("[MobileUIController] Eraser mode deactivated");
+		}
 	}
 	
 
@@ -564,5 +594,23 @@ public class MobileUIController : MonoBehaviour
 	public void OnCancelButtonPressed()
 	{
 		onCancelCallback?.Invoke();
+	}
+
+	/// <summary>
+	/// Updates the visual state of the trash icon based on eraser mode
+	/// </summary>
+	private void UpdateEraserModeVisualState()
+	{
+		if (trashCanImage == null) return;
+
+		// Highlight trash icon when eraser mode is active
+		if (DLS.Game.EraserModeController.IsActive)
+		{
+			trashCanImage.color = Color.yellow; // Yellow highlight like wrench tool
+		}
+		else
+		{
+			trashCanImage.color = Color.white; // Normal color
+		}
 	}
 }

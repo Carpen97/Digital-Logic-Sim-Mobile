@@ -199,7 +199,8 @@ namespace DLS.Game
 				if (TouchInputHelper.Instance != null &&
 					TouchInputHelper.Instance.Dragging &&
 					Project.ActiveProject.controller.SelectedElements.Count == 0 &&
-					!MobileUIControllerWrapper.IsBoxSelectToolActive
+					!MobileUIControllerWrapper.IsBoxSelectToolActive &&
+					!DLS.Game.EraserModeController.IsActive  // Disable camera panning when eraser mode is active
 				)
 				{
 					if (!isTouchPanning)

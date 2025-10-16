@@ -1,4 +1,7 @@
 using DLS.Graphics;
+using DLS.Levels;
+using DLS.Game.LevelsIntegration;
+using UnityEngine.SceneManagement;
 using DLS.Simulation;
 using Seb.Helpers;
 using Seb.Vis;
@@ -12,6 +15,14 @@ namespace DLS.Game
 		[Header("Dev Settings (editor only)")]
 		public bool openSaveDirectory;
 		public bool openInMainMenu;
+		#if UNITY_EDITOR
+		[Tooltip("When enabled in editor, skips menus and starts this level id after project load")]
+		public bool startInLevel;
+		[Tooltip("Level id from Resources/levels.json (e.g. lvl.halfadder.1)")]
+		public string startLevelId;
+		[Tooltip("If true and progress exists, keep it; otherwise clear progress for this level before start")]
+		public bool continueLevelFromSave = true;
+		#endif
 
 		public string testProjectName;
 		public bool openA = true;
@@ -83,6 +94,28 @@ namespace DLS.Game
 
 		if (openInMainMenu || !Application.isEditor) Main.LoadMainMenu();
 		else Main.CreateOrLoadProject(testProjectName, openA ? chipToOpenA : chipToOpenB);
+
+		#if UNITY_EDITOR
+		// In editor: optionally start directly in a specific level
+		if (Application.isEditor && startInLevel)
+		{
+			var def = TryFindLevelById(startLevelId);
+			if (def != null)
+			{
+				var mgr = GetOrCreateLevelManager();
+				if (!continueLevelFromSave && !string.IsNullOrEmpty(def.id))
+				{
+					DLS.Levels.LevelProgressService.ClearLevelProgress(def.id);
+				}
+				mgr.StartLevel(def);
+				UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+			}
+			else
+			{
+				Debug.LogWarning($"[UnityMain] startInLevel enabled but level id not found: '{startLevelId}'");
+			}
+		}
+		#endif
 
 	}
 
@@ -189,6 +222,91 @@ namespace DLS.Game
 			CameraController.Reset();
 			WorldDrawer.Reset();
 		}
+
+		#if UNITY_EDITOR
+		static LevelDefinition TryFindLevelById(string levelId)
+		{
+			if (string.IsNullOrEmpty(levelId)) return null;
+			var levelsText = Resources.Load<TextAsset>("levels");
+			if (levelsText == null)
+			{
+				Debug.LogWarning("[UnityMain] Resources/levels.json not found (Resources key 'levels')");
+				return null;
+			}
+			try
+			{
+				// Try parse as LocalLevelPack structure
+				var pack = JsonUtility.FromJson<DLS.Levels.LocalLevelPack>(levelsText.text);
+				if (pack?.chapters != null)
+				{
+					foreach (var ch in pack.chapters)
+					{
+						if (ch?.levels == null) continue;
+						foreach (var def in ch.levels)
+						{
+							if (def != null && def.id == levelId) return def;
+						}
+					}
+				}
+			}
+			catch { /* will try fallbacks below */ }
+
+			try
+			{
+				// Fallback wrapper { "levels": [...] }
+				var wrapper = JsonUtility.FromJson<DefsWrapper>(levelsText.text);
+				if (wrapper?.levels != null)
+				{
+					foreach (var def in wrapper.levels)
+						if (def != null && def.id == levelId) return def;
+				}
+			}
+			catch { }
+
+			try
+			{
+				// Fallback top-level array
+				var arr = FromJsonArray<LevelDefinition>(levelsText.text);
+				if (arr != null)
+				{
+					foreach (var def in arr)
+						if (def != null && def.id == levelId) return def;
+				}
+			}
+			catch { }
+
+			return null;
+		}
+
+		// Mirrors LevelsMenu utility
+		static LevelManager GetOrCreateLevelManager()
+		{
+			var runner = Object.FindFirstObjectByType<LevelManager>();
+			if (runner != null) return runner;
+			var go = new GameObject("LevelManager");
+			Object.DontDestroyOnLoad(go);
+			return go.AddComponent<LevelManager>();
+		}
+
+		// Local wrapper to support fallback parse
+		[System.Serializable]
+		class DefsWrapper { public LevelDefinition[] levels; }
+
+		[System.Serializable]
+		class ArrayWrapper<T> { public T[] Items; }
+		static T[] FromJsonArray<T>(string json)
+		{
+			if (string.IsNullOrEmpty(json)) return null;
+			try
+			{
+				// Wrap the array to make it parsable by JsonUtility
+				string wrapped = "{\"Items\":" + json + "}";
+				var wrapper = JsonUtility.FromJson<ArrayWrapper<T>>(wrapped);
+				return wrapper?.Items;
+			}
+			catch { return null; }
+		}
+		#endif
 
 		[System.Serializable]
 		public struct NoteTest

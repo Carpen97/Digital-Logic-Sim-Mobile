@@ -337,14 +337,38 @@ namespace DLS.Graphics
 			{
 				// Display on single line if name fits comfortably, otherwise use 'formatted' version (split across multiple lines)
 				string displayName = isKeyChip ? subchip.activationKeyString : subchip.MultiLineName;
-				if (Draw.CalculateTextBoundsSize(subchip.Description.Name, FontSizeChipName, FontBold).x < subchip.Size.x - PinRadius * 2.5f)
-				{
-					displayName = subchip.Description.Name;
-				}
-
+				// Compute anchor/position first as ROM branch needs them
 				bool nameCentre = desc.NameLocation == NameDisplayLocation.Centre || isKeyChip;
 				Anchor textAnchor = nameCentre ? Anchor.TextCentre : Anchor.CentreTop;
 				Vector2 textPos = nameCentre ? pos : pos + Vector2.up * (subchip.Size.y / 2 - GridSize / 2);
+
+				if (ChipTypeHelper.IsRomType(subchip.ChipType))
+				{
+					// Build descriptive two-line name for ROM variants in-game
+					string line1 = "ROM";
+					string grouping = subchip.ChipType switch
+					{
+						ChipType.Rom_2x8 => "2x8",
+						ChipType.Rom_1x16 => "1x16",
+						ChipType.Rom_16x1 => "16x1",
+						ChipType.Rom_4x4 => "4x4",
+						ChipType.Rom_256x16 => "2x8", // default ROM should show grouping (2x8)
+						_ => "2x8"
+					};
+					string line2 = $"256×({grouping})";
+
+					// Draw two lines separately to guarantee perfect centering
+					float fs = FontSizeChipName;
+					float halfGap = fs * 0.6f; // visual spacing between lines
+					Draw.Text(FontBold, line1, fs, textPos + Vector2.up * halfGap, textAnchor, nameTextCol, ChipNameLineSpacing);
+					Draw.Text(FontBold, line2, fs, textPos - Vector2.up * halfGap, textAnchor, nameTextCol, ChipNameLineSpacing);
+					// Skip default single-call draw below
+					return;
+				}
+				else if (Draw.CalculateTextBoundsSize(subchip.Description.Name, FontSizeChipName, FontBold).x < subchip.Size.x - PinRadius * 2.5f)
+				{
+					displayName = subchip.Description.Name;
+				}
 
 				// Draw background band behind text if placed at top (so it doesn't look out of place..)
 				if (desc.NameLocation == NameDisplayLocation.Top)

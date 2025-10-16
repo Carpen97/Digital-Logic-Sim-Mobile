@@ -10,10 +10,18 @@ namespace DLS.Levels
 		public string chapterId;
 		public string name;
 		public string description;
-		public int inputCount;
-		public int outputCount;
-		public System.Collections.Generic.List<string> inputLabels;
-		public System.Collections.Generic.List<string> outputLabels;
+	public int inputCount;
+	public int outputCount;
+	public System.Collections.Generic.List<string> inputLabels;
+	public System.Collections.Generic.List<string> outputLabels;
+	
+	// Enhanced label system with both long descriptive names and short abbreviations
+	[Serializable] public struct PinLabel {
+		public string name;  // Long descriptive name (e.g., "A > B")
+		public string abbr;  // Short abbreviation for report header (max 3 chars, e.g., "GT")
+	}
+	public PinLabel[] inputPinLabels;
+	public PinLabel[] outputPinLabels;
 		
 		// Enhanced test data structures
 		[Serializable] public struct TestVector { 
