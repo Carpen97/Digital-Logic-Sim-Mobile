@@ -359,9 +359,10 @@ namespace DLS.Graphics
 				if (_isSequentialLevel)
 				{
 					// Sequential levels: Info Panel | Right Sidebar (with test selector wheel)
+					// Sidebar is narrower (0.22 instead of 0.26) to give more space to info panel
 					float panelSpacing = 2f;
 					float totalWidth = Seb.Vis.UI.UI.Width * ListWidthFrac - panelSpacing;
-					float sidebarW = totalWidth * 0.26f;
+					float sidebarW = totalWidth * 0.22f;
 					float infoW = totalWidth - sidebarW;
 					float panelH = Seb.Vis.UI.UI.Height * ListHeightFrac;
 
@@ -1000,8 +1001,8 @@ namespace DLS.Graphics
 			float buttonHeight = ButtonHeight * 1.0f;
 			float spacing = 1.2f;
 
-			// Start position - adjust based on whether we need space for selector wheel
-			float initialOffset = _isSequentialLevel ? -RowHeight * 0.8f : -RowHeight * 1.4f;
+			// Start position - for sequential, we have selector wheel but no zoom buttons, so same offset as combinational
+			float initialOffset = -RowHeight * 1.4f;
 			Vector2 nextRowPos = scorePos + new Vector2(0f, initialOffset);
 
 			// For sequential levels: Add test selector wheel above zoom buttons
