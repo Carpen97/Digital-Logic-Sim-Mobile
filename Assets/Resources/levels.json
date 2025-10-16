@@ -620,13 +620,13 @@
           "description": "Basic memory element. Set when S=1, Reset when R=1, Hold when both are 0.",
           "inputCount": 2,
           "outputCount": 2,
-          "inputLabels": [
-            "R",
-            "S"
+          "inputPinLabels": [
+            {"name": "Reset", "abbr": "R"},
+            {"name": "Set", "abbr": "S"}
           ],
-          "outputLabels": [
-            "Q",
-            "Qn"
+          "outputPinLabels": [
+            {"name": "Output", "abbr": "Q"},
+            {"name": "Output Inverted", "abbr": "Q'"}
           ],
           "isSequential": true,
           "settleStepsPerVector": 2,
@@ -686,13 +686,13 @@
           "description": "Level-triggered memory element. When Enable=1, Q follows D. When Enable=0, Q holds its value (latched).",
           "inputCount": 2,
           "outputCount": 2,
-          "inputLabels": [
-            "D",
-            "Enable"
+          "inputPinLabels": [
+            {"name": "Data", "abbr": "D"},
+            {"name": "Enable", "abbr": "En"}
           ],
-          "outputLabels": [
-            "Q",
-            "Q'"
+          "outputPinLabels": [
+            {"name": "Output", "abbr": "Q"},
+            {"name": "Output Inverted", "abbr": "Q'"}
           ],
           "isSequential": true,
           "settleStepsPerVector": 2,
@@ -765,13 +765,13 @@
           "description": "Data storage element. Q follows D on rising clock edge. Q' is the complement of Q. When CLK goes high, Q captures the value of D and holds it until the next rising edge.",
           "inputCount": 2,
           "outputCount": 2,
-          "inputLabels": [
-            "D",
-            "CLK"
+          "inputPinLabels": [
+            {"name": "Data", "abbr": "D"},
+            {"name": "Clock", "abbr": "CLK"}
           ],
-          "outputLabels": [
-            "Q",
-            "Q'"
+          "outputPinLabels": [
+            {"name": "Output", "abbr": "Q"},
+            {"name": "Output Inverted", "abbr": "Q'"}
           ],
           "isSequential": true,
           "clockInputIndex": 1,
@@ -867,9 +867,9 @@
             "B",
             "A"
           ],
-          "outputLabels": [
-            "Sum",
-            "Carry"
+          "outputPinLabels": [
+            {"name": "Sum", "abbr": "S"},
+            {"name": "Carry", "abbr": "C"}
           ],
           "testVectors": [
             {
@@ -901,14 +901,14 @@
           "description": "Add two bits plus carry-in. Output is sum and carry-out.",
           "inputCount": 3,
           "outputCount": 2,
-          "inputLabels": [
-            "Cin",
-            "B",
-            "A"
+          "inputPinLabels": [
+            {"name": "Carry In", "abbr": "Cin"},
+            {"name": "Input B", "abbr": "B"},
+            {"name": "Input A", "abbr": "A"}
           ],
-          "outputLabels": [
-            "Sum",
-            "Cout"
+          "outputPinLabels": [
+            {"name": "Sum", "abbr": "S"},
+            {"name": "Carry Out", "abbr": "Co"}
           ],
           "testVectors": [
             {
@@ -967,12 +967,12 @@
             "A1",
             "A0"
           ],
-          "outputLabels": [
-            "Sum3",
-            "Sum2",
-            "Sum1",
-            "Sum0",
-            "Carry"
+          "outputPinLabels": [
+            {"name": "Sum Bit 3", "abbr": "S3"},
+            {"name": "Sum Bit 2", "abbr": "S2"},
+            {"name": "Sum Bit 1", "abbr": "S1"},
+            {"name": "Sum Bit 0", "abbr": "S0"},
+            {"name": "Carry Out", "abbr": "Co"}
           ],
           "testVectors": [
             {
@@ -1054,12 +1054,12 @@
             "B1",
             "B0"
           ],
-          "outputLabels": [
-            "Diff3",
-            "Diff2",
-            "Diff1",
-            "Diff0",
-            "Borrow"
+          "outputPinLabels": [
+            {"name": "Difference 3", "abbr": "D3"},
+            {"name": "Difference 2", "abbr": "D2"},
+            {"name": "Difference 1", "abbr": "D1"},
+            {"name": "Difference 0", "abbr": "D0"},
+            {"name": "Borrow", "abbr": "Bo"}
           ],
           "testVectors": [
             {
@@ -1190,10 +1190,10 @@
             "A1",
             "A0"
           ],
-          "outputLabels": [
-            "A > B",
-            "A = B",
-            "A < B"
+          "outputPinLabels": [
+            {"name": "A > B", "abbr": "GT"},
+            {"name": "A = B", "abbr": "EQ"},
+            {"name": "A < B", "abbr": "LT"}
           ],
           "testVectors": [
             {
@@ -1318,12 +1318,12 @@
             "A1",
             "A0"
           ],
-          "outputLabels": [
-            "Result3",
-            "Result2",
-            "Result1",
-            "Result0",
-            "Carry/Borrow"
+          "outputPinLabels": [
+            {"name": "Result Bit 3", "abbr": "R3"},
+            {"name": "Result Bit 2", "abbr": "R2"},
+            {"name": "Result Bit 1", "abbr": "R1"},
+            {"name": "Result Bit 0", "abbr": "R0"},
+            {"name": "Carry/Borrow", "abbr": "C/B"}
           ],
           "testVectors": [
             {
@@ -1460,12 +1460,12 @@
             "A1",
             "A0"
           ],
-          "outputLabels": [
-            "Result3",
-            "Result2",
-            "Result1",
-            "Result0",
-            "Flag"
+          "outputPinLabels": [
+            {"name": "Result Bit 3", "abbr": "R3"},
+            {"name": "Result Bit 2", "abbr": "R2"},
+            {"name": "Result Bit 1", "abbr": "R1"},
+            {"name": "Result Bit 0", "abbr": "R0"},
+            {"name": "Flag", "abbr": "F"}
           ],
           "testVectors": [
     {
@@ -2900,14 +2900,14 @@
           "description": "Count from 0 to 15 and repeat. Use clock input.",
           "inputCount": 1,
           "outputCount": 4,
-          "inputLabels": [
-            "CLK"
+          "inputPinLabels": [
+            {"name": "Clock", "abbr": "CLK"}
           ],
-          "outputLabels": [
-            "Q3",
-            "Q2",
-            "Q1",
-            "Q0"
+          "outputPinLabels": [
+            {"name": "Count Bit 3", "abbr": "Q3"},
+            {"name": "Count Bit 2", "abbr": "Q2"},
+            {"name": "Count Bit 1", "abbr": "Q1"},
+            {"name": "Count Bit 0", "abbr": "Q0"}
           ],
           "isSequential": true,
           "clockInputIndex": 0,
