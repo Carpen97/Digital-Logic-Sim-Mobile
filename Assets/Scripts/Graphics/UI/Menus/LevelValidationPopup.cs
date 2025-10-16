@@ -358,49 +358,29 @@ namespace DLS.Graphics
 
 				if (_isSequentialLevel)
 				{
-					// Sequential levels: Info | Tests | Right Sidebar
+					// Sequential levels: Info Panel | Right Sidebar (with test selector wheel)
 					float panelSpacing = 2f;
-					float totalWidth = Seb.Vis.UI.UI.Width * ListWidthFrac - panelSpacing * 2f;
-					float sidebarW = totalWidth * 0.24f;
-					float testsW = totalWidth * 0.32f;
-					float infoW = totalWidth - sidebarW - testsW;
+					float totalWidth = Seb.Vis.UI.UI.Width * ListWidthFrac - panelSpacing;
+					float sidebarW = totalWidth * 0.26f;
+					float infoW = totalWidth - sidebarW;
 					float panelH = Seb.Vis.UI.UI.Height * ListHeightFrac;
 
 					Vector2 infoSize = new(infoW, panelH);
-					Vector2 testsSize = new(testsW, panelH);
 					Vector2 sidebarSize = new(sidebarW, panelH);
 
-					float startX = Seb.Vis.UI.UI.Centre.x - (infoW + testsW + sidebarW + panelSpacing * 2f) * 0.5f;
 					Vector2 rowCentre = Seb.Vis.UI.UI.Centre + Vector2.up * LayoutYOffset;
+					Vector2 infoPos = new Vector2(rowCentre.x - (sidebarW + panelSpacing) * 0.5f, rowCentre.y);
+					Vector2 sidebarPos = new Vector2(rowCentre.x + (infoW + panelSpacing) * 0.5f, rowCentre.y);
 
 					// Left: Info
-					Vector2 infoPos = new Vector2(startX + infoW * 0.5f, rowCentre.y);
 					DrawInfoPanel(infoPos, infoSize);
 
-					// Middle: Tests list
-					Vector2 testsPos = new Vector2(startX + infoW + panelSpacing + testsW * 0.5f, rowCentre.y);
-					ScrollBarState sv = Seb.Vis.UI.UI.DrawScrollView(
-						ID_LevelValidationPopup,
-						testsPos,
-						testsSize,
-						UILayoutHelper.DefaultSpacing,
-						Anchor.Centre,
-						theme.ScrollTheme,
-						DrawRowFunc,
-						_rows.Count
-					);
-					isDraggingScrollbar = sv.isDragging;
-
-					// Right: Sidebar
-					Vector2 sidebarPos = new Vector2(startX + infoW + panelSpacing + testsW + panelSpacing + sidebarW * 0.5f, rowCentre.y);
+					// Right: Sidebar (includes test selector wheel)
                     DrawRightSidebar(sidebarPos, sidebarSize);
 
                     overallBounds = Bounds2D.Grow(
                         Bounds2D.CreateFromCentreAndSize(infoPos, infoSize),
-                        Bounds2D.Grow(
-                            Bounds2D.CreateFromCentreAndSize(testsPos, testsSize),
-                            Bounds2D.CreateFromCentreAndSize(sidebarPos, sidebarSize)
-                        )
+                        Bounds2D.CreateFromCentreAndSize(sidebarPos, sidebarSize)
                     );
 				}
 				else
@@ -778,16 +758,13 @@ namespace DLS.Graphics
 			
 			if (currentLevel != null)
 			{
-				// Use new PinLabel system if available - format as "GT (A > B)"
+				// Use new PinLabel system if available - use abbreviation only for header
 				if (currentLevel.inputPinLabels != null && currentLevel.inputPinLabels.Length > 0)
 				{
 					_inputLabelChars = currentLevel.inputPinLabels.Select(l => {
+						// Use abbr if available, otherwise take first 3 chars of name
 						string abbr = l.abbr ?? l.name?.Substring(0, Mathf.Min(3, l.name.Length)) ?? "";
-						string fullName = l.name ?? "";
-						// Format: "GT (A > B)" if both exist, otherwise just use what's available
-						if (!string.IsNullOrEmpty(abbr) && !string.IsNullOrEmpty(fullName))
-							return $"{abbr} ({fullName})";
-						return abbr ?? fullName;
+						return abbr;
 					}).ToArray();
 				}
 				else if (currentLevel.inputLabels != null && currentLevel.inputLabels.Count > 0)
@@ -799,12 +776,9 @@ namespace DLS.Graphics
 				if (currentLevel.outputPinLabels != null && currentLevel.outputPinLabels.Length > 0)
 				{
 					_outputLabelChars = currentLevel.outputPinLabels.Select(l => {
+						// Use abbr if available, otherwise take first 3 chars of name
 						string abbr = l.abbr ?? l.name?.Substring(0, Mathf.Min(3, l.name.Length)) ?? "";
-						string fullName = l.name ?? "";
-						// Format: "GT (A > B)" if both exist, otherwise just use what's available
-						if (!string.IsNullOrEmpty(abbr) && !string.IsNullOrEmpty(fullName))
-							return $"{abbr} ({fullName})";
-						return abbr ?? fullName;
+						return abbr;
 					}).ToArray();
 				}
 				else if (currentLevel.outputLabels != null && currentLevel.outputLabels.Count > 0)
@@ -1026,10 +1000,91 @@ namespace DLS.Graphics
 			float buttonHeight = ButtonHeight * 1.0f;
 			float spacing = 1.2f;
 
+			Vector2 nextRowPos = scorePos + new Vector2(0f, -RowHeight * 1.4f);
+
+			// For sequential levels: Add test selector wheel above zoom buttons
+			if (_isSequentialLevel && _rows.Count > 0)
+			{
+				// Test selector wheel (left arrow, text, right arrow)
+				float arrowBtnW = buttonHeight * 1.2f;
+				float textW = buttonWidth - 2f * arrowBtnW - spacing * 2f;
+				
+				Vector2 leftArrowPos = nextRowPos;
+				Vector2 textPos = new Vector2(nextRowPos.x + arrowBtnW + spacing, nextRowPos.y);
+				Vector2 rightArrowPos = new Vector2(nextRowPos.x + arrowBtnW + spacing + textW + spacing, nextRowPos.y);
+
+				bool leftPressed = Seb.Vis.UI.UI.Button(
+					"<",
+					MenuHelper.Theme.ButtonTheme,
+					leftArrowPos,
+					new Vector2(arrowBtnW, buttonHeight),
+					_selectedIndex > 0,
+					false,
+					false,
+					MenuHelper.Theme.ButtonTheme.buttonCols,
+					Anchor.TopLeft
+				);
+
+				// Display current test name
+				string testName = _selectedIndex >= 0 && _selectedIndex < _rows.Count 
+					? _rows[_selectedIndex].SequenceName 
+					: (_rows.Count > 0 ? _rows[0].SequenceName : "");
+				
+				// Truncate if too long
+				const int maxChars = 20;
+				if (testName.Length > maxChars)
+					testName = testName.Substring(0, maxChars - 3) + "...";
+
+				Seb.Vis.UI.UI.DrawPanel(
+					Bounds2D.CreateFromTopLeftAndSize(textPos, new Vector2(textW, buttonHeight)),
+					ColHelper.MakeCol(0.12f)
+				);
+				Seb.Vis.UI.UI.DrawText(
+					testName,
+					ActiveUITheme.FontRegular,
+					ActiveUITheme.FontSizeRegular,
+					textPos + new Vector2(textW * 0.5f, -buttonHeight * 0.5f),
+					Anchor.Centre,
+					Color.white
+				);
+
+				bool rightPressed = Seb.Vis.UI.UI.Button(
+					">",
+					MenuHelper.Theme.ButtonTheme,
+					rightArrowPos,
+					new Vector2(arrowBtnW, buttonHeight),
+					_selectedIndex < _rows.Count - 1,
+					false,
+					false,
+					MenuHelper.Theme.ButtonTheme.buttonCols,
+					Anchor.TopLeft
+				);
+
+				if (leftPressed && _selectedIndex > 0)
+				{
+					_selectedIndex--;
+					RememberSelection();
+				}
+				if (rightPressed && _selectedIndex < _rows.Count - 1)
+				{
+					_selectedIndex++;
+					RememberSelection();
+				}
+
+				// Ensure a test is selected by default
+				if (_selectedIndex < 0 && _rows.Count > 0)
+				{
+					_selectedIndex = 0;
+					RememberSelection();
+				}
+
+				nextRowPos += Vector2.down * (buttonHeight + spacing);
+			}
+
             // Row: scale controls (-  +) sharing the same row (match half width like Levels/Next)
 			{
                 float halfW = (buttonWidth - spacing) * 0.5f;
-				Vector2 rowY = scorePos + new Vector2(0f, -RowHeight * 1.4f);
+				Vector2 rowY = nextRowPos;
 				Vector2 minusPos = rowY;
 				Vector2 plusPos = new Vector2(rowY.x + halfW + spacing, rowY.y);
 
@@ -1059,7 +1114,7 @@ namespace DLS.Graphics
                 if (plusPressed) SetValidationScale(ValidationScale + 0.1f);
 			}
 
-			Vector2 btnPos = scorePos + new Vector2(0f, -RowHeight * 1.4f - (buttonHeight + spacing));
+			Vector2 btnPos = nextRowPos + new Vector2(0f, -(buttonHeight + spacing));
 
 			bool levelPassed = _rows.Count > 0 && _rows.All(r => r.Passed);
 			bool hasValidSelection = _selectedIndex >= 0 && _selectedIndex < _rows.Count;
