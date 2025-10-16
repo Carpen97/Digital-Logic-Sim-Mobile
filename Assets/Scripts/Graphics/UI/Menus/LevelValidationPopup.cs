@@ -1000,7 +1000,9 @@ namespace DLS.Graphics
 			float buttonHeight = ButtonHeight * 1.0f;
 			float spacing = 1.2f;
 
-			Vector2 nextRowPos = scorePos + new Vector2(0f, -RowHeight * 1.4f);
+			// Start position - adjust based on whether we need space for selector wheel
+			float initialOffset = _isSequentialLevel ? -RowHeight * 0.8f : -RowHeight * 1.4f;
+			Vector2 nextRowPos = scorePos + new Vector2(0f, initialOffset);
 
 			// For sequential levels: Add test selector wheel above zoom buttons
 			if (_isSequentialLevel && _rows.Count > 0)
@@ -1330,25 +1332,35 @@ namespace DLS.Graphics
 
 					// Show sequence details with fixed cell width
 					const int cellWidth = 10;
-					details.AppendLine(" Step | Input    | Output   | Expected");
+					// First header line with column titles (reordered: IN, EXPECTED, OUT)
+					details.AppendLine(" Step | Input    | Expected | Output");
+					
+					// Second header line with bit labels
+					string inputLabels = string.Join("", _inputLabelChars.Reverse());
+					string outputLabels = string.Join("", _outputLabelChars.Reverse());
+					string paddedInputLabels = " " + inputLabels + new string(' ', Math.Max(0, cellWidth - inputLabels.Length - 1));
+					string paddedExpectedLabels = " " + outputLabels + new string(' ', Math.Max(0, cellWidth - outputLabels.Length - 1));
+					string paddedOutputLabels = " " + outputLabels + new string(' ', Math.Max(0, cellWidth - outputLabels.Length - 1));
+					details.AppendLine($"      |{paddedInputLabels}|{paddedExpectedLabels}|{paddedOutputLabels}");
+					
 					int stepCount = 0;
 					foreach (var step in r.SequenceSteps)
 					{
 						string stepStatus = step.Passed ? "<color=#44ff44>✓</color>" : "<color=#ff2222>✗</color>";
 						string clockIndicator = step.IsClockEdge ? " [CLK]" : "";
 
-						// Convert binary strings to colored dots
+						// Convert binary strings to colored dots (reordered: IN, EXPECTED, OUT)
 						string inputs = string.IsNullOrEmpty(step.Inputs) ? "-" : " " + BinaryToColoredDots(step.Inputs);
-						string got = string.IsNullOrEmpty(step.Got) ? "-" : " " + BinaryToColoredDots(step.Got);
 						string expected = string.IsNullOrEmpty(step.Expected) ? "-" : " " + BinaryToColoredDots(step.Expected);
+						string got = string.IsNullOrEmpty(step.Got) ? "-" : " " + BinaryToColoredDots(step.Got);
 
-						// Apply fixed cell width padding
+						// Apply fixed cell width padding (reordered: IN, EXPECTED, OUT)
 						string paddedInputs = inputs + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(inputs)));
-						string paddedGot = got + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(got) - 2)) + stepStatus + " ";
 						string paddedExpected = expected + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(expected)));
+						string paddedGot = got + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(got) - 2)) + stepStatus + " ";
 						string stepText = $"{stepCount++}";
 						stepText = stepText.PadLeft(5) + " "; // Left-pad to 5 chars, then add 1 space on right
-						details.AppendLine($"{stepText}|{paddedInputs}|{paddedGot}|{paddedExpected}");
+						details.AppendLine($"{stepText}|{paddedInputs}|{paddedExpected}|{paddedGot}");
 					}
 
 					// Draw text directly without background (panel already has background)
@@ -1373,20 +1385,29 @@ namespace DLS.Graphics
 
 					// Build the same content as the render pass for accurate height calculation
 					const int cellWidth = 10;
-					details.AppendLine("  | Input    | Output   | Expected");
+					// First header line (reordered: IN, EXPECTED, OUT)
+					details.AppendLine(" Step | Input    | Expected | Output");
+					
+					// Second header line with bit labels
+					string inputLabels = string.Join("", _inputLabelChars.Reverse());
+					string outputLabels = string.Join("", _outputLabelChars.Reverse());
+					string paddedInputLabels = " " + inputLabels + new string(' ', Math.Max(0, cellWidth - inputLabels.Length - 1));
+					string paddedExpectedLabels = " " + outputLabels + new string(' ', Math.Max(0, cellWidth - outputLabels.Length - 1));
+					string paddedOutputLabels = " " + outputLabels + new string(' ', Math.Max(0, cellWidth - outputLabels.Length - 1));
+					details.AppendLine($"      |{paddedInputLabels}|{paddedExpectedLabels}|{paddedOutputLabels}");
 
 					foreach (var step in r.SequenceSteps)
 					{
 						string stepStatus = step.Passed ? "✓" : "✗"; // Simplified for layout
 						string inputs = string.IsNullOrEmpty(step.Inputs) ? "-" : " " + BinaryToColoredDots(step.Inputs);
-						string got = string.IsNullOrEmpty(step.Got) ? "-" : " " + BinaryToColoredDots(step.Got);
 						string expected = string.IsNullOrEmpty(step.Expected) ? "-" : " " + BinaryToColoredDots(step.Expected);
+						string got = string.IsNullOrEmpty(step.Got) ? "-" : " " + BinaryToColoredDots(step.Got);
 
 						string paddedInputs = inputs + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(inputs)));
-						string paddedGot = got + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(got)));
 						string paddedExpected = expected + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(expected)));
+						string paddedGot = got + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(got)));
 
-						details.AppendLine($" {stepStatus}|{paddedInputs}|{paddedGot}|{paddedExpected}");
+						details.AppendLine($" {stepStatus}|{paddedInputs}|{paddedExpected}|{paddedGot}");
 					}
 
 					// Draw invisible text to calculate bounds
@@ -1416,8 +1437,8 @@ namespace DLS.Graphics
 					Vector2 sampleTextSize = Seb.Vis.UI.UI.CalculateTextSize("M", theme.FontSizeRegular, theme.FontRegular);
 					float lineHeight = sampleTextSize.y * 1.3f; // LineHeightEM from TextLayoutHelper (1.3f)
 
-					// Header line + sequence steps + padding
-					float headerHeight = lineHeight; // "  | Input    | Output   | Expected" header
+					// Two header lines + sequence steps + padding
+					float headerHeight = lineHeight * 2f; // Column titles + bit labels
 					float stepHeight = r.SequenceSteps.Count * lineHeight; // Each step
 					float padding = 2f; // Some padding
 
