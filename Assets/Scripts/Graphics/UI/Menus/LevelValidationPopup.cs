@@ -359,10 +359,10 @@ namespace DLS.Graphics
 				if (_isSequentialLevel)
 				{
 					// Sequential levels: Info Panel | Right Sidebar (with test selector wheel)
-					// Sidebar is narrower (0.22 instead of 0.26) to give more space to info panel
+					// Sidebar is wider (0.30 instead of 0.26) to have more space for controls
 					float panelSpacing = 2f;
 					float totalWidth = Seb.Vis.UI.UI.Width * ListWidthFrac - panelSpacing;
-					float sidebarW = totalWidth * 0.22f;
+					float sidebarW = totalWidth * 0.30f;
 					float infoW = totalWidth - sidebarW;
 					float panelH = Seb.Vis.UI.UI.Height * ListHeightFrac;
 
@@ -815,35 +815,68 @@ namespace DLS.Graphics
 			return cleanText.Length;
 		}
 
-		/// <summary>
-		/// Converts a binary string (e.g., "1010") to colored dot symbols using the game's state colors
-		/// </summary>
-		static string BinaryToColoredDots(string binary)
-		{
-			if (string.IsNullOrEmpty(binary)) return "-";
+	/// <summary>
+	/// Converts a binary string (e.g., "1010") to colored dot symbols using the game's state colors
+	/// </summary>
+	static string BinaryToColoredDots(string binary)
+	{
+		if (string.IsNullOrEmpty(binary)) return "-";
 
-			// Use the game's state colors - index 0 is red for high, dark red for low
-			string result = "";
-			foreach (char bit in binary)
+		// Use the game's state colors - index 0 is red for high, dark red for low
+		string result = "";
+		foreach (char bit in binary)
+		{
+			if (bit == '1')
 			{
-				if (bit == '1')
-				{
-					// High state - use red color (index 0 from StateHighCol)
-					result += "<color=#f24d4f>●</color>";
-				}
-				else if (bit == '0')
-				{
-					// Low state - use dark red color (index 0 from StateLowCol)  
-					result += "<color=#331a1a>●</color>";
-				}
-				else
-				{
-					// Non-binary character, keep as-is
-					result += bit;
-				}
+				// High state - use red color (index 0 from StateHighCol)
+				result += "<color=#f24d4f>●</color>";
 			}
-			return result;
+			else if (bit == '0')
+			{
+				// Low state - use dark red color (index 0 from StateLowCol)  
+				result += "<color=#331a1a>●</color>";
+			}
+			else
+			{
+				// Non-binary character, keep as-is
+				result += bit;
+			}
 		}
+		return result;
+	}
+
+	/// <summary>
+	/// Converts a binary string to colored dots with spaces between them for better alignment
+	/// </summary>
+	static string BinaryToColoredDotsWithSpacing(string binary)
+	{
+		if (string.IsNullOrEmpty(binary)) return "-";
+
+		string result = "";
+		for (int i = 0; i < binary.Length; i++)
+		{
+			char bit = binary[i];
+			if (bit == '1')
+			{
+				result += "<color=#f24d4f>●</color>";
+			}
+			else if (bit == '0')
+			{
+				result += "<color=#331a1a>●</color>";
+			}
+			else
+			{
+				result += bit;
+			}
+			
+			// Add space between dots (but not after the last one)
+			if (i < binary.Length - 1)
+			{
+				result += " ";
+			}
+		}
+		return result;
+	}
 
 		// ---------- Helpers ----------
 		static void RememberSelection()
@@ -1224,15 +1257,12 @@ namespace DLS.Graphics
 			);
 
 			// Handle actions for this row
-			if (nextPressed) PlayNextLevel();
-			if (levelsPressed)
-			{
-				var levelManager = LevelManager.Instance;
-				if (levelManager?.IsActive == true && levelManager.HasUnsavedChanges())
-					LevelUnsavedChangesPopup.OpenPopup(HandleLevelsButtonAfterUnsavedCheck);
-				else
-					UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
-			}
+		if (nextPressed) PlayNextLevel();
+		if (levelsPressed)
+		{
+			// Just open the levels menu - unsaved changes check will happen when user actually selects a new level
+			UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
+		}
 
 			btnPos += Vector2.down * (buttonHeight + spacing);
 		}
@@ -1335,17 +1365,30 @@ namespace DLS.Graphics
 					var r = _rows[_selectedIndex];
 					var details = new StringBuilder();
 
-					// Show sequence details with fixed cell width
-					const int cellWidth = 10;
-					// First header line with column titles (reordered: IN, EXPECTED, OUT)
-					details.AppendLine(" Step | Input    | Expected | Output");
+					// Calculate cell width based on content
+					// Base width on "Expected" header (8 chars) + 1 space padding on each side
+					int baseCellWidth = 10; // "Expected" length + 2 spaces
+					// Add space for each bit: each bit is 1 char + 1 space (except last)
+					int inputBits = _in_len;
+					int outputBits = _out_len;
+					int maxBits = Math.Max(inputBits, outputBits);
 					
-					// Second header line with bit labels
-					string inputLabels = string.Join("", _inputLabelChars.Reverse());
-					string outputLabels = string.Join("", _outputLabelChars.Reverse());
-					string paddedInputLabels = " " + inputLabels + new string(' ', Math.Max(0, cellWidth - inputLabels.Length - 1));
-					string paddedExpectedLabels = " " + outputLabels + new string(' ', Math.Max(0, cellWidth - outputLabels.Length - 1));
-					string paddedOutputLabels = " " + outputLabels + new string(' ', Math.Max(0, cellWidth - outputLabels.Length - 1));
+					// Cell width = base width or (number of bits * 2 - 1) + 2 for padding, whichever is larger
+					int contentWidth = maxBits * 2 - 1 + 2; // dots with spaces between + padding
+					int cellWidth = Math.Max(baseCellWidth, contentWidth);
+					
+					// First header line with column titles (reordered: IN, EXPECTED, OUT)
+					string inputHeader = " Input".PadRight(cellWidth);
+					string expectedHeader = " Expected".PadRight(cellWidth);
+					string outputHeader = " Output".PadRight(cellWidth);
+					details.AppendLine($" Step |{inputHeader}|{expectedHeader}|{outputHeader}");
+					
+					// Second header line with bit labels (add spaces between letters for alignment with dots)
+					string inputLabels = " " + string.Join(" ", _inputLabelChars.Reverse());
+					string outputLabels = " " + string.Join(" ", _outputLabelChars.Reverse());
+					string paddedInputLabels = inputLabels.PadRight(cellWidth);
+					string paddedExpectedLabels = outputLabels.PadRight(cellWidth);
+					string paddedOutputLabels = outputLabels.PadRight(cellWidth);
 					details.AppendLine($"      |{paddedInputLabels}|{paddedExpectedLabels}|{paddedOutputLabels}");
 					
 					int stepCount = 0;
@@ -1354,15 +1397,21 @@ namespace DLS.Graphics
 						string stepStatus = step.Passed ? "<color=#44ff44>✓</color>" : "<color=#ff2222>✗</color>";
 						string clockIndicator = step.IsClockEdge ? " [CLK]" : "";
 
-						// Convert binary strings to colored dots (reordered: IN, EXPECTED, OUT)
-						string inputs = string.IsNullOrEmpty(step.Inputs) ? "-" : " " + BinaryToColoredDots(step.Inputs);
-						string expected = string.IsNullOrEmpty(step.Expected) ? "-" : " " + BinaryToColoredDots(step.Expected);
-						string got = string.IsNullOrEmpty(step.Got) ? "-" : " " + BinaryToColoredDots(step.Got);
+						// Convert binary strings to colored dots with spaces between them (reordered: IN, EXPECTED, OUT)
+						string inputs = string.IsNullOrEmpty(step.Inputs) ? " -" : " " + BinaryToColoredDotsWithSpacing(step.Inputs);
+						string expected = string.IsNullOrEmpty(step.Expected) ? " -" : " " + BinaryToColoredDotsWithSpacing(step.Expected);
+						string got = string.IsNullOrEmpty(step.Got) ? " -" : " " + BinaryToColoredDotsWithSpacing(step.Got);
 
-						// Apply fixed cell width padding (reordered: IN, EXPECTED, OUT)
-						string paddedInputs = inputs + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(inputs)));
-						string paddedExpected = expected + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(expected)));
-						string paddedGot = got + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(got) - 2)) + stepStatus + " ";
+						// Apply dynamic cell width padding using PadRight for consistency (reordered: IN, EXPECTED, OUT)
+						// Note: PadRight doesn't work with colored tags, so we need to manually pad
+						int inputsVisLen = GetVisibleLength(inputs);
+						int expectedVisLen = GetVisibleLength(expected);
+						int gotVisLen = GetVisibleLength(got);
+						
+						string paddedInputs = inputs + new string(' ', Math.Max(0, cellWidth - inputsVisLen));
+						string paddedExpected = expected + new string(' ', Math.Max(0, cellWidth - expectedVisLen));
+						string paddedGot = got + " " +stepStatus + new string(' ', Math.Max(0, cellWidth - gotVisLen - 2));
+						
 						string stepText = $"{stepCount++}";
 						stepText = stepText.PadLeft(5) + " "; // Left-pad to 5 chars, then add 1 space on right
 						details.AppendLine($"{stepText}|{paddedInputs}|{paddedExpected}|{paddedGot}");
@@ -1388,29 +1437,42 @@ namespace DLS.Graphics
 					var r = _rows[_selectedIndex];
 					var details = new StringBuilder();
 
-					// Build the same content as the render pass for accurate height calculation
-					const int cellWidth = 10;
-					// First header line (reordered: IN, EXPECTED, OUT)
-					details.AppendLine(" Step | Input    | Expected | Output");
+					// Calculate cell width based on content (same as render pass)
+					int baseCellWidth = 10;
+					int inputBits = _in_len;
+					int outputBits = _out_len;
+					int maxBits = Math.Max(inputBits, outputBits);
+					int contentWidth = maxBits * 2 - 1 + 2;
+					int cellWidth = Math.Max(baseCellWidth, contentWidth);
 					
-					// Second header line with bit labels
-					string inputLabels = string.Join("", _inputLabelChars.Reverse());
-					string outputLabels = string.Join("", _outputLabelChars.Reverse());
-					string paddedInputLabels = " " + inputLabels + new string(' ', Math.Max(0, cellWidth - inputLabels.Length - 1));
-					string paddedExpectedLabels = " " + outputLabels + new string(' ', Math.Max(0, cellWidth - outputLabels.Length - 1));
-					string paddedOutputLabels = " " + outputLabels + new string(' ', Math.Max(0, cellWidth - outputLabels.Length - 1));
+					// First header line (reordered: IN, EXPECTED, OUT)
+					string inputHeader = " Input".PadRight(cellWidth);
+					string expectedHeader = " Expected".PadRight(cellWidth);
+					string outputHeader = " Output".PadRight(cellWidth);
+					details.AppendLine($" Step |{inputHeader}|{expectedHeader}|{outputHeader}");
+					
+					// Second header line with bit labels (add spaces between letters)
+					string inputLabels = " " + string.Join(" ", _inputLabelChars.Reverse());
+					string outputLabels = " " + string.Join(" ", _outputLabelChars.Reverse());
+					string paddedInputLabels = inputLabels.PadRight(cellWidth);
+					string paddedExpectedLabels = outputLabels.PadRight(cellWidth);
+					string paddedOutputLabels = outputLabels.PadRight(cellWidth);
 					details.AppendLine($"      |{paddedInputLabels}|{paddedExpectedLabels}|{paddedOutputLabels}");
 
 					foreach (var step in r.SequenceSteps)
 					{
 						string stepStatus = step.Passed ? "✓" : "✗"; // Simplified for layout
-						string inputs = string.IsNullOrEmpty(step.Inputs) ? "-" : " " + BinaryToColoredDots(step.Inputs);
-						string expected = string.IsNullOrEmpty(step.Expected) ? "-" : " " + BinaryToColoredDots(step.Expected);
-						string got = string.IsNullOrEmpty(step.Got) ? "-" : " " + BinaryToColoredDots(step.Got);
+						string inputs = string.IsNullOrEmpty(step.Inputs) ? " -" : " " + BinaryToColoredDotsWithSpacing(step.Inputs);
+						string expected = string.IsNullOrEmpty(step.Expected) ? " -" : " " + BinaryToColoredDotsWithSpacing(step.Expected);
+						string got = string.IsNullOrEmpty(step.Got) ? " -" : " " + BinaryToColoredDotsWithSpacing(step.Got);
 
-						string paddedInputs = inputs + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(inputs)));
-						string paddedExpected = expected + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(expected)));
-						string paddedGot = got + new string(' ', Math.Max(0, cellWidth - GetVisibleLength(got)));
+						int inputsVisLen = GetVisibleLength(inputs);
+						int expectedVisLen = GetVisibleLength(expected);
+						int gotVisLen = GetVisibleLength(got);
+						
+						string paddedInputs = inputs + new string(' ', Math.Max(0, cellWidth - inputsVisLen));
+						string paddedExpected = expected + new string(' ', Math.Max(0, cellWidth - expectedVisLen));
+						string paddedGot = got + new string(' ', Math.Max(0, cellWidth - gotVisLen)) + " " + stepStatus;
 
 						details.AppendLine($" {stepStatus}|{paddedInputs}|{paddedExpected}|{paddedGot}");
 					}
@@ -1723,18 +1785,8 @@ namespace DLS.Graphics
 
 			if (levelsPressed)
 			{
-				// Check for unsaved changes before opening levels menu
-				var levelManager = LevelManager.Instance;
-				if (levelManager?.IsActive == true && levelManager.HasUnsavedChanges())
-				{
-					Debug.Log("[LevelValidationPopup] Levels button: Showing level unsaved changes popup");
-					LevelUnsavedChangesPopup.OpenPopup(HandleLevelsButtonAfterUnsavedCheck);
-				}
-				else
-				{
-					// Open the levels menu
-					UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
-				}
+				// Just open the levels menu - unsaved changes check will happen when user actually selects a new level
+				UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
 			}
 
 			if (closePressed)
@@ -2070,35 +2122,7 @@ namespace DLS.Graphics
 			}
 		}
 
-		/// <summary>
-		/// Handle unsaved changes callback when opening Levels menu
-		/// </summary>
-		static void HandleLevelsButtonAfterUnsavedCheck(int option)
-		{
-			if (option == 0) // Cancel
-			{
-				// Do nothing, stay in validation popup
-				UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
-				return;
-			}
-			else if (option == 1) // Save and Continue
-			{
-				// Save level progress before opening levels menu
-				var levelManager = LevelManager.Instance;
-				if (levelManager?.IsActive == true)
-				{
-					levelManager.SaveCurrentProgress();
-					Debug.Log($"[LevelValidationPopup] Saved level progress before opening levels menu");
-				}
-				UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
-			}
-			else if (option == 2) // Continue without Saving
-			{
-				UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels);
-			}
-		}
-
-		/// <summary>
+	/// <summary>
 		/// Actually start the next level
 		/// </summary>
 		static void StartNextLevel(LevelDefinition nextLevel)

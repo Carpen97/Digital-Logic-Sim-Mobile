@@ -40,6 +40,11 @@
           "text": "Draggable Scroll Views - All scrollable lists and menus now support mobile-style content dragging! Simply touch/click anywhere in the content area and drag to scroll - no need to target the tiny scrollbar. Works in ROM editor, chip library, search results, levels menu, leaderboards, patch notes, and everywhere else. Natural mobile app experience with smart threshold to prevent accidental scrolling. Scrollbar and mouse wheel still work as before.",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Input State Preservation - Level validation now preserves your circuit's input states! After running validation tests, your input pins return to exactly how they were before you clicked 'Validate'. No more confusing randomly flipped inputs - the circuit looks exactly as you left it, while still showing accurate test results. This improves the polish and makes validation feel seamless.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "bugFixes": []

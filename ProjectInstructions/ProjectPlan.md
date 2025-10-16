@@ -87,7 +87,6 @@ Mobile Port (origin)
 | 059 | Hall of Fame view for level leaderboards | Open   | Create a "Hall of Fame" view that aggregates and displays top scores from all levels in an engaging, visually appealing format. Show summary statistics, top performers across levels, personal bests, and global rankings. Design should be eye-catching and celebratory, highlighting achievements and fostering competition. Consider podium displays, trophy icons, animated transitions, and sortable views (by level, by player, by score). Accessible from levels menu or main menu. Should pull data from Firebase leaderboards and present it in a unified, cool interface that makes players feel accomplished and motivated. |
 | 060 | Enable single-finger camera panning during wire placement (mobile) | Open   | Currently on mobile, users must use two fingers to pan the camera while placing wires, which is awkward and interrupts workflow. Enable single-finger camera panning during wire placement mode to allow seamless navigation while routing wires. Should work intuitively: drag empty space to pan, tap pins to place wire anchors. Consider adding visual feedback to distinguish panning from wire placement. Mobile-specific UX improvement for smoother wire routing experience. |
 | 061 | Username reservation and authentication system | Open   | **Security Issue:** Currently users can impersonate others by entering any username on leaderboards. Implement username reservation system with authentication to prevent impersonation. Consider: (1) Token-based authentication per user, (2) Device ID binding, (3) Firebase Authentication integration, (4) Username claiming/registration flow, (5) Username uniqueness enforcement, (6) Optional: Allow username changes with history tracking. Related to existing Ticket 019 (server validation). Community feedback indicates this is a trust/security concern affecting leaderboard credibility. |
-| 062 | Restore input states after level validation | Open   | **UX Issue:** After running level validation tests, the circuit's input pins remain in whatever state the last test left them. This is visually confusing - users see inputs randomly flipped after validation completes. Solution: Save input pin states before running validation tests, then restore them after tests complete. User should not notice that tests were running - circuit should look exactly as it did before clicking "Validate". Apply to both combinational and sequential test validation. Improves polish and user experience by maintaining circuit state consistency. |
 
 ---
 
@@ -149,6 +148,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - 🚨 **CRITICAL: Unity Scene Safety** - **PM MUST ALWAYS warn user to save Unity scenes BEFORE any git branch operations (checkout, merge, switch, etc.)**
 
 ### **Current Status:**
-- **8 Open Tickets** available for selection
+- **7 Open Tickets** available for selection
 - **0 In Progress** tickets
 - Ready for next ticket selection
