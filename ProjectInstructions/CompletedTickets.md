@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 43
-- **Most Recent**: Ticket 058 (October 14, 2025)
+- **Total Completed Tickets**: 44
+- **Most Recent**: Ticket 057 (October 16, 2025)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 057** – Update pin names in levels & validation popup
+**Closed:** 2025-10-16  
+**Summary:** Successfully implemented custom pin naming for level mode with synchronized display in validation results. **Core Feature**: Users can now rename input/output pins in level mode via the existing pin edit menu (right-click → Edit). **Data Synchronization**: Pin name changes in level mode now persist back to the `LevelDefinition` data structure (`inputLabels` and `outputLabels` lists), ensuring names are saved with the level. **Validation Display**: `LevelValidationPopup` now displays custom pin names as column headers instead of generic "IN", "OUT", "EXPECTED" labels. **Smart Formatting**: Long pin names are truncated with ellipsis ("...") to maintain table readability and prevent overflow. **Integration Points**: Modified `PinEditMenu.cs` Confirm() method to detect level mode and sync changes back to `LevelDefinition`, updated `LevelValidationPopup.cs` DrawCombinationalHeader() and DrawSequentialHeader() methods to use custom pin names from level data, added helper method `GetTruncatedPinName()` for consistent truncation logic. **User Experience**: Pin renaming works seamlessly in level mode, validation results show meaningful column headers matching user's custom pin names, improved educational value by allowing descriptive names like "CarryIn", "Sum", "Clock", etc., maintains all existing pin functionality (display mode, toggling). **Data Flow**: User renames pin → `PinEditMenu` updates `DevPinInstance.Pin.Name` → Syncs to `LevelDefinition.inputLabels/outputLabels` → `LevelValidationPopup` reads from `LevelDefinition` → Displays custom names as headers. **Backwards Compatibility**: Works with existing levels that don't have custom names (uses empty strings or defaults), all existing pin editing functionality preserved. **Educational Impact**: Level designers can now create more descriptive and educational level experiences with meaningful pin names that appear in test results. Production-ready with full level mode integration. ✅
+
+---
 
 ### **Ticket 058** – Unify ROM visibility and naming
 **Closed:** 2025-10-14  

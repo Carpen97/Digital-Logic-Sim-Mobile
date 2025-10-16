@@ -71,7 +71,7 @@ Mobile Port (origin)
 
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 057 | Update pin names in levels & validation popup | In Progress | Enable pin name editing in level mode and display pin names as column headers in LevelValidationPopup. |
+| -   | -                             | -          | No tickets currently in progress                                                                                                         |
 
 ---
 
@@ -150,5 +150,5 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **8 Open Tickets** available for selection
-- **1 In Progress** ticket (057)
-- **Ticket 057 kicked off** - awaiting implementation
+- **0 In Progress** tickets
+- Ready for next ticket selection

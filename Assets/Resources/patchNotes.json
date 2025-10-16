@@ -17,6 +17,11 @@
       ],
       "improvements": [
         {
+          "text": "Custom Pin Names in Level Mode - You can now rename input/output pins when playing levels! Right-click any level I/O pin and choose 'Edit' to give it a custom name. Your custom pin names appear as column headers in the validation results table, making it easier to understand test results. Perfect for educational levels where descriptive names like 'CarryIn', 'Sum', 'Clock' help students understand circuit functionality. Pin names are saved with your solution.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
           "text": "Unified ROM Visibility and Naming - ROM chips now display with clear, consistent labeling throughout the game. The chip library shows a single 'ROM 256×16' entry instead of multiple confusing variants. Every ROM chip displays a two-line label showing 'ROM' on the first line and its active configuration on the second (e.g., '256×(2x8)', '256×(1x16)', '256×(16x1)', '256×(4x4)'). Freshly spawned ROMs default to '256×(2x8)' and automatically update their labels after editing. This eliminates confusion between editor and runtime views, prevents chip library duplication, and makes it instantly clear what configuration each ROM is using.",
           "userFacing": true,
           "editNotes": ""
