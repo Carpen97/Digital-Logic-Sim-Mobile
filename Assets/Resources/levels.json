@@ -626,7 +626,7 @@
           ],
           "outputPinLabels": [
             {"name": "Output", "abbr": "Q"},
-            {"name": "Output Inverted", "abbr": "Q'"}
+            {"name": "Output Inverted", "abbr": "Q̄"}
           ],
           "isSequential": true,
           "settleStepsPerVector": 2,
@@ -688,11 +688,11 @@
           "outputCount": 2,
           "inputPinLabels": [
             {"name": "Data", "abbr": "D"},
-            {"name": "Enable", "abbr": "En"}
+            {"name": "Enable", "abbr": "E"}
           ],
           "outputPinLabels": [
             {"name": "Output", "abbr": "Q"},
-            {"name": "Output Inverted", "abbr": "Q'"}
+            {"name": "Output Inverted", "abbr": "Q̄"}
           ],
           "isSequential": true,
           "settleStepsPerVector": 2,
@@ -767,11 +767,11 @@
           "outputCount": 2,
           "inputPinLabels": [
             {"name": "Data", "abbr": "D"},
-            {"name": "Clock", "abbr": "CLK"}
+            {"name": "Clock", "abbr": "C"}
           ],
           "outputPinLabels": [
             {"name": "Output", "abbr": "Q"},
-            {"name": "Output Inverted", "abbr": "Q'"}
+            {"name": "Output Inverted", "abbr": "Q̄"}
           ],
           "isSequential": true,
           "clockInputIndex": 1,
@@ -2901,13 +2901,13 @@
           "inputCount": 1,
           "outputCount": 4,
           "inputPinLabels": [
-            {"name": "Clock", "abbr": "CLK"}
+            {"name": "Clock", "abbr": "C"}
           ],
           "outputPinLabels": [
-            {"name": "Count Bit 3", "abbr": "Q3"},
-            {"name": "Count Bit 2", "abbr": "Q2"},
-            {"name": "Count Bit 1", "abbr": "Q1"},
-            {"name": "Count Bit 0", "abbr": "Q0"}
+            {"name": "Count Bit 3", "abbr": "3"},
+            {"name": "Count Bit 2", "abbr": "2"},
+            {"name": "Count Bit 1", "abbr": "1"},
+            {"name": "Count Bit 0", "abbr": "0"}
           ],
           "isSequential": true,
           "clockInputIndex": 0,

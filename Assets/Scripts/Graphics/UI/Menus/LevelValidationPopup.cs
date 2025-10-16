@@ -1083,7 +1083,8 @@ namespace DLS.Graphics
 				nextRowPos += Vector2.down * (buttonHeight + spacing);
 			}
 
-            // Row: scale controls (-  +) sharing the same row (match half width like Levels/Next)
+            // Row: scale controls (-  +) sharing the same row (only for combinational levels)
+			if (!_isSequentialLevel)
 			{
                 float halfW = (buttonWidth - spacing) * 0.5f;
 				Vector2 rowY = nextRowPos;
@@ -1114,9 +1115,12 @@ namespace DLS.Graphics
 				);
                 if (minusPressed) SetValidationScale(ValidationScale - 0.1f);
                 if (plusPressed) SetValidationScale(ValidationScale + 0.1f);
+
+				nextRowPos += Vector2.down * (buttonHeight + spacing);
 			}
 
-			Vector2 btnPos = nextRowPos + new Vector2(0f, -(buttonHeight + spacing));
+			// For sequential, start right after selector wheel; for combinational, after zoom buttons
+			Vector2 btnPos = nextRowPos;
 
 			bool levelPassed = _rows.Count > 0 && _rows.All(r => r.Passed);
 			bool hasValidSelection = _selectedIndex >= 0 && _selectedIndex < _rows.Count;
