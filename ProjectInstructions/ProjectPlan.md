@@ -71,7 +71,7 @@ Mobile Port (origin)
 
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 061 | Username reservation and authentication system | In Progress | Implement authentication system to prevent username impersonation on leaderboards. INCLUDES: Device-based token generation, username claiming/validation, username change system with confirmation popup, leaderboard entry migration when username changes, keep "Remember my name" enabled after claiming, editable input field for username changes. Migration must update all existing solutions from old to new username atomically. Old usernames remain reserved to prevent confusion/impersonation. |
+| _No tickets currently in progress_ | | | |
 
 ---
 
@@ -150,5 +150,5 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **8 Open Tickets** available for selection
-- **1 In Progress** ticket (061)
-- **Ticket 061 kicked off** - awaiting implementation
+- **0 In Progress** tickets
+- **Ready to start next ticket!**
