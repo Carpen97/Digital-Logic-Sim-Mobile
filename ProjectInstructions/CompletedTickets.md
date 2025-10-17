@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 46
-- **Most Recent**: Ticket 061 (October 17, 2025)
+- **Total Completed Tickets**: 47
+- **Most Recent**: Ticket 060 (October 17, 2025)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 060** – Require two-finger panning during wire placement (mobile)
+**Closed:** 2025-10-17  
+**Summary:** Successfully eliminated accidental camera panning during wire placement by requiring two-finger gestures for camera movement, plus added comprehensive wire placement banner with interactive straight wires control. **Problem Solved**: Users were constantly fighting accidental single-finger camera pans while trying to route wires, causing frustration and imprecise wire placement. **Core Implementation**: Modified `CameraController.cs` to detect wire placement mode and require 2 fingers for camera panning during wire placement (1 finger outside wire mode for normal behavior), pinch-to-zoom continues to work perfectly, mobile-specific with proper platform checks. **Wire Placement Banner** (Bonus Feature): New top-screen banner displaying "Placing Wire" status with highest priority over other banners (eraser, level, sim paused), interactive toggle for straight wires override (tap banner to toggle like holding Shift on PC), yellow text and tint for visual feedback when override active, smart behavior respecting user preferences - shows "ON (pref)" with "(Change in prefs)" message when preference forces straight wires (not clickable), shows "OFF" or "ON" with "(Tap to toggle)" when preference allows toggling (clickable), touch protection prevents adding wire points when tapping banner. **Trash Can Enhancement**: Pressing trash icon while placing wire now exits wire placement mode instead of toggling eraser, providing intuitive way to cancel wire routing. **Files Created**: `WirePlacementBanner.cs` (177 lines) with complete banner logic. **Files Modified**: `CameraController.cs` (two-finger detection), `UIDrawer.cs` (banner priority integration), `Project.cs` (ForceStraightWires property), `MobileUIController.cs` (trash can behavior), `ChipInteractionController.cs` (touch input protection). **Success Criteria**: All 13 criteria met including functional requirements (proper finger detection, wire interactions, zoom preservation), user experience (no accidental panning, smooth routing, clear visual feedback), and technical quality (no performance impact, mobile-specific, no regressions, no linter errors). **Banner States**: Three distinct states with appropriate visuals and interactivity based on preference settings and override status. **User Experience Impact**: Eliminated the single most frustrating aspect of mobile wire routing, added desktop-parity feature (Shift key equivalent) with mobile-optimized touch interface, clear visual feedback for current wire placement mode, intuitive cancellation via trash icon. **Mobile-Only Feature**: Properly scoped to Android + iOS platforms, maintains existing PC behavior. Production-ready with comprehensive UX polish and zero regressions. Major mobile usability enhancement! ✅
+
+---
 
 ### **Ticket 061** – Username reservation and authentication system
 **Closed:** 2025-10-17  

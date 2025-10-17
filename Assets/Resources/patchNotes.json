@@ -22,6 +22,21 @@
       ],
       "improvements": [
         {
+          "text": "Two-Finger Panning During Wire Placement (Mobile) - No more accidental camera panning while routing wires! During wire placement, single-finger drags now only interact with wire points and pins - the camera stays put. To pan the camera while placing a wire, use two fingers. This eliminates the most frustrating aspect of mobile wire routing and makes placement precise and smooth. Normal camera panning (outside wire placement) still works with one finger.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Wire Placement Banner (Mobile) - New top-screen banner appears when placing wires showing 'Placing Wire' status and current straight wires mode. Tap the banner to toggle straight wires override on/off (mobile equivalent of holding Shift on PC). Banner shows yellow tint when override is active. Respects your straight wires preference setting - if preference forces straight wires, banner shows 'ON (pref)' and isn't clickable. Provides clear visual feedback and desktop-parity control for mobile wire routing.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Trash Can Exits Wire Placement (Mobile) - Pressing the trash icon while placing a wire now cancels wire placement mode, providing an intuitive way to exit wire routing. Outside wire placement, trash icon continues to toggle eraser mode as before.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
           "text": "Custom Pin Names in Level Mode - You can now rename input/output pins when playing levels! Right-click any level I/O pin and choose 'Edit' to give it a custom name. Your custom pin names appear as column headers in the validation results table, making it easier to understand test results. Perfect for educational levels where descriptive names like 'CarryIn', 'Sum', 'Clock' help students understand circuit functionality. Pin names are saved with your solution.",
           "userFacing": true,
           "editNotes": ""

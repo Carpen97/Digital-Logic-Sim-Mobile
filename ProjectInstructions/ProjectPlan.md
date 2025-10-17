@@ -71,7 +71,7 @@ Mobile Port (origin)
 
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 060 | Require two-finger panning during wire placement (mobile) | In Progress | Prevent accidental camera panning during wire placement by requiring two-finger gestures for camera movement. Single-finger should only interact with pins/wire anchors. |
+| _No tickets currently in progress_ | | | |
 
 ---
 
@@ -149,5 +149,5 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **7 Open Tickets** available for selection
-- **1 In Progress** ticket (060)
-- **Ticket 060 kicked off** - implementing two-finger panning requirement during wire placement
+- **0 In Progress** tickets
+- **Ready to start next ticket!**
