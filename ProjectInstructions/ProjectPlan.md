@@ -71,7 +71,7 @@ Mobile Port (origin)
 
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| _No tickets currently in progress_ | | | |
+| 060 | Require two-finger panning during wire placement (mobile) | In Progress | Prevent accidental camera panning during wire placement by requiring two-finger gestures for camera movement. Single-finger should only interact with pins/wire anchors. |
 
 ---
 
@@ -85,7 +85,6 @@ Mobile Port (origin)
 | 039 | Show dotted wire preview on mobile wire creation| Open   | When creating new wires on mobile, display a preview of the wire path as a dotted line to show where the wire will be placed. Enhance user experience by providing visual feedback during wire creation process. Implement dotted wire rendering for wire preview state before wire is confirmed. Mobile-specific enhancement for touch-based wire creation workflow. |
 | 046 | Add donation button | Open   | Add a donation button to support development of the Digital Logic Sim Mobile project. Button should be accessible from an appropriate location (e.g., About menu, main menu, or settings). Integrate with a donation platform (PayPal, Ko-fi, Buy Me a Coffee, or similar). Design should be unobtrusive but visible, matching the existing UI theme. Include optional thank you message for supporters. Consider mobile-optimized placement and ensure it opens donation link in external browser or platform-specific handler. |
 | 059 | Hall of Fame view for level leaderboards | Open   | Create a "Hall of Fame" view that aggregates and displays top scores from all levels in an engaging, visually appealing format. Show summary statistics, top performers across levels, personal bests, and global rankings. Design should be eye-catching and celebratory, highlighting achievements and fostering competition. Consider podium displays, trophy icons, animated transitions, and sortable views (by level, by player, by score). Accessible from levels menu or main menu. Should pull data from Firebase leaderboards and present it in a unified, cool interface that makes players feel accomplished and motivated. |
-| 060 | Enable single-finger camera panning during wire placement (mobile) | Open   | Currently on mobile, users must use two fingers to pan the camera while placing wires, which is awkward and interrupts workflow. Enable single-finger camera panning during wire placement mode to allow seamless navigation while routing wires. Should work intuitively: drag empty space to pan, tap pins to place wire anchors. Consider adding visual feedback to distinguish panning from wire placement. Mobile-specific UX improvement for smoother wire routing experience. |
 | 063 | Discord integration investigation | Open   | Investigate and implement Discord integration features: (1) Discord overlay support - display Discord overlay within DLS game interface for chat, voice, and notifications. (2) Discord Rich Presence - show current DLS activity (level being played, simulation status, custom circuit info) in Discord status. Research Unity/C# Discord libraries, evaluate Rich Presence API capabilities, design overlay integration approach, and implement seamless Discord experience. Community-requested feature to enhance social gaming experience. |
 | 064 | Replace buzzer text with graphical speaker icon | Open   | Replace the current text "BUZZER" display with a graphical speaker icon. Design a visual speaker representation that clearly indicates audio output state (on/off). Should be intuitive, visually appealing, and match the game's aesthetic. Consider animated states (speaker waves when active, static when silent). Mobile-optimized design with clear visual feedback. Improves visual consistency and makes buzzers more recognizable at a glance. |
 
@@ -149,6 +148,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - 🚨 **CRITICAL: Unity Scene Safety** - **PM MUST ALWAYS warn user to save Unity scenes BEFORE any git branch operations (checkout, merge, switch, etc.)**
 
 ### **Current Status:**
-- **8 Open Tickets** available for selection
-- **0 In Progress** tickets
-- **Ready to start next ticket!**
+- **7 Open Tickets** available for selection
+- **1 In Progress** ticket (060)
+- **Ticket 060 kicked off** - implementing two-finger panning requirement during wire placement
