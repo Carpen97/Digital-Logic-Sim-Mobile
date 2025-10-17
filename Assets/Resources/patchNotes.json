@@ -27,6 +27,11 @@
       ],
       "improvements": [
         {
+          "text": "Hexagon Grid Option - Choose your aesthetic! New grid type preference in Settings > Display allows you to switch between the classic square grid and a beautiful hexagon honeycomb grid. The hexagon grid uses proper mathematical tessellation with point-top hexagons, creating a seamless honeycomb pattern that scales perfectly at all zoom levels. Your preference is saved with your project and persists across sessions. Try it out for a fresh visual experience while designing circuits!",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
           "text": "Two-Finger Panning During Wire Placement (Mobile) - No more accidental camera panning while routing wires! During wire placement, single-finger drags now only interact with wire points and pins - the camera stays put. To pan the camera while placing a wire, use two fingers. This eliminates the most frustrating aspect of mobile wire routing and makes placement precise and smooth. Normal camera panning (outside wire placement) still works with one finger.",
           "userFacing": true,
           "editNotes": ""
