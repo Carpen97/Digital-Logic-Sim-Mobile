@@ -5,6 +5,11 @@
       "releaseDate": "TBD",
       "newFeatures": [
         {
+          "text": "Hall of Fame - Celebrate your achievements! New Hall of Fame view showcases global leaderboard champions and your personal accomplishments across all levels. Three main views: 'Top Players' shows the top 20 global competitors with their total scores, levels completed, and championship counts; 'Your Stats' displays your personal achievements including levels completed, average ranking, best scores, and detailed breakdown per level; 'Level Records' highlights the top 3 champions for each individual level with gold/silver/bronze medals. Accessible from the levels menu. See who's dominating the leaderboards, track your progress, and get motivated to improve your scores! 🏆",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
           "text": "Username Authentication System - Your leaderboard identity is now secure! Each device gets a unique authentication token, allowing you to claim a username that's permanently tied to your device. No more impersonation - only you can post scores under your name. You can change your username anytime through a simple confirmation dialog, and all your existing leaderboard entries automatically migrate to your new name. Old usernames remain reserved to prevent confusion. This establishes trust and competitive integrity for the leaderboard system. Seamless setup on first launch with optional 'Remember my name' feature.",
           "userFacing": true,
           "editNotes": ""
