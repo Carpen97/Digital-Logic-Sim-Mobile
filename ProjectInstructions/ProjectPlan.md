@@ -72,6 +72,7 @@ Mobile Port (origin)
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | 063 | Discord integration investigation | In Progress | Investigate Discord overlay support and Rich Presence integration for showing DLS activity in Discord status. |
+| 065 | Create advanced 8-bit chapter for levels | In Progress | Design new chapter introducing 8-bit inputs/outputs to teach multi-bit circuit design with progressive difficulty. |
 
 ---
 
@@ -85,7 +86,6 @@ Mobile Port (origin)
 | 039 | Show dotted wire preview on mobile wire creation| Open   | When creating new wires on mobile, display a preview of the wire path as a dotted line to show where the wire will be placed. Enhance user experience by providing visual feedback during wire creation process. Implement dotted wire rendering for wire preview state before wire is confirmed. Mobile-specific enhancement for touch-based wire creation workflow. |
 | 046 | Add donation button | Open   | Add a donation button to support development of the Digital Logic Sim Mobile project. Button should be accessible from an appropriate location (e.g., About menu, main menu, or settings). Integrate with a donation platform (PayPal, Ko-fi, Buy Me a Coffee, or similar). Design should be unobtrusive but visible, matching the existing UI theme. Include optional thank you message for supporters. Consider mobile-optimized placement and ensure it opens donation link in external browser or platform-specific handler. |
 | 064 | Replace buzzer text with graphical speaker icon | Open   | Replace the current text "BUZZER" display with a graphical speaker icon. Design a visual speaker representation that clearly indicates audio output state (on/off). Should be intuitive, visually appealing, and match the game's aesthetic. Consider animated states (speaker waves when active, static when silent). Mobile-optimized design with clear visual feedback. Improves visual consistency and makes buzzers more recognizable at a glance. |
-| 065 | Create advanced 8-bit chapter for levels | Open   | Design and implement new chapter of levels introducing 8-bit inputs and outputs to increase difficulty and teach multi-bit circuit design. Create educational progression from simple 8-bit operations (pass-through, inversion, basic gates) to complex 8-bit circuits (adders, comparators, ALUs, shifters). Generate comprehensive test vectors for validation. Introduce bus connections and multi-bit thinking. Level ideas: 8-bit NOT, 8-bit AND/OR/XOR, 8-bit adder, 8-bit comparator (equal/greater/less), 8-bit multiplexer, 8-bit shifter, 8-bit ALU subset. Educational goal: transition from single-bit logic to practical multi-bit data processing circuits. Scoring should reward efficiency (fewer components) and correctness. Position chapter after current advanced levels but before "Coming Soon". |
 
 ---
 
@@ -147,6 +147,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - 🚨 **CRITICAL: Unity Scene Safety** - **PM MUST ALWAYS warn user to save Unity scenes BEFORE any git branch operations (checkout, merge, switch, etc.)**
 
 ### **Current Status:**
-- **6 Open Tickets** available for selection
-- **1 In Progress** ticket (063)
-- **Ticket 063 kicked off** - investigating Discord overlay and Rich Presence integration
+- **5 Open Tickets** available for selection
+- **2 In Progress** tickets (063, 065)
+- **Ticket 063** - investigating Discord integration
+- **Ticket 065 kicked off** - creating advanced 8-bit chapter for levels
