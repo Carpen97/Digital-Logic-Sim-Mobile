@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DLS.Game;
 using DLS.Game.LevelsIntegration;
 using DLS.SaveSystem;
@@ -62,11 +63,17 @@ namespace DLS.Graphics
 
 		}
 
-		static void OnValidateButtonPressed()
-		{
-			if (LevelManager.Instance == null || !LevelManager.Instance.IsActive)
-				return;
+	static void OnValidateButtonPressed()
+	{
+		if (LevelManager.Instance == null || !LevelManager.Instance.IsActive)
+			return;
 
+		// Save input pin states before validation
+		var viewedChip = Project.ActiveProject?.ViewedChip;
+		var savedStates = SaveInputPinStates(viewedChip);
+
+		try
+		{
 			var report = LevelManager.Instance.RunValidation();
 			LevelValidationPopup.Open(report);
 
@@ -87,5 +94,64 @@ namespace DLS.Graphics
 					Debug.Log($"• constraint: {m}");
 			}
 		}
+		finally
+		{
+			// Restore input pin states after validation
+			RestoreInputPinStates(viewedChip, savedStates);
+		}
+	}
+
+	/// <summary>
+	/// Saves the current states of all input pins.
+	/// </summary>
+	static Dictionary<object, bool> SaveInputPinStates(DevChipInstance viewedChip)
+	{
+		var originalStates = new Dictionary<object, bool>();
+		
+		if (viewedChip == null)
+		{
+			return originalStates;
+		}
+		
+		var inputPins = viewedChip.GetInputPins();
+		if (inputPins != null)
+		{
+			foreach (var inputPin in inputPins)
+			{
+				if (inputPin?.Pin != null)
+				{
+					originalStates[inputPin.Pin] = inputPin.Pin.PlayerInputState.FirstBitHigh();
+				}
+			}
+		}
+		
+		return originalStates;
+	}
+	
+	/// <summary>
+	/// Restores the input pin states to their original values.
+	/// </summary>
+	static void RestoreInputPinStates(DevChipInstance viewedChip, Dictionary<object, bool> originalStates)
+	{
+		if (viewedChip == null || originalStates == null)
+		{
+			return;
+		}
+		
+		var inputPins = viewedChip.GetInputPins();
+		if (inputPins == null)
+		{
+			return;
+		}
+		
+		foreach (var inputPin in inputPins)
+		{
+			if (inputPin?.Pin != null && originalStates.TryGetValue(inputPin.Pin, out bool originalState))
+			{
+				// Restore the original state using PlayerInputState
+				inputPin.Pin.PlayerInputState.SetFirstBit(originalState);
+			}
+		}
+	}
 	}
 }

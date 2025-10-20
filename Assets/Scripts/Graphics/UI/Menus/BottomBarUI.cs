@@ -15,11 +15,11 @@ namespace DLS.Graphics
 {
 	public static class BottomBarUI
 	{
-		#if UNITY_ANDROID || UNITY_IOS
+#if UNITY_ANDROID || UNITY_IOS
 		public const float barHeight = 5;
-		#else
+#else
 		public const float barHeight = 3;
-		#endif
+#endif
 		const float padY = 0.3f;
 		public const float buttonSpacing = 0.25f;
 		const float buttonHeight = barHeight - padY * 2;
@@ -28,7 +28,7 @@ namespace DLS.Graphics
 
 		const float scrollButtonWidth = 1.2f;
 		public static int showScrollingButtons = 0;
-		#if UNITY_ANDROID || UNITY_IOS
+#if UNITY_ANDROID || UNITY_IOS
 
 		static readonly string[] menuButtonNames =
 		{
@@ -42,7 +42,7 @@ namespace DLS.Graphics
 			$"  LEVELS  ",
 			$"  QUIT  "
 		};
-		#else
+#else
 		static readonly string[] menuButtonNames =
 		{
 			$"NEW CHIP     {shortcutTextCol}Ctrl+N",
@@ -55,7 +55,7 @@ namespace DLS.Graphics
 			$"LEVELS       {shortcutTextCol}Ctrl+E",
 			$"QUIT         {shortcutTextCol}Ctrl+Q"
 		};
-		#endif
+#endif
 
 		const int NewChipButtonIndex = 0;
 		const int SaveChipButtonIndex = 1;
@@ -77,58 +77,56 @@ namespace DLS.Graphics
 		static int toggleMenuFrame;
 		static int collectionInteractFrame;
 		static ChipCollection activeCollection;
-		static Vector2 collectionPopupBottomLeft;
+        private static string hoveredNestedCollectionName;
+        static Vector2 collectionPopupBottomLeft;
 		static Bounds2D barBounds_ScreenSpace;
-		
+
 		// Nested collection expansion state
 		static ChipCollection activeNestedCollection;
 		static Vector2 nestedCollectionPopupBottomLeft;
 		static int nestedCollectionInteractFrame;
 		static float clickedItemY; // Track Y position of the clicked item for alignment
-		
-		// Hover state tracking to prevent flicker
-		static string hoveredNestedCollectionName;
 		static int hoverStartFrame;
-		static int hoverDelayFrames = 30; // Frames to wait before expanding on hover
+		static float hoverDelayFrames; 
 
 		static bool MenuButtonsAndShortcutsEnabled => Project.ActiveProject.CanEditViewedChip;
 
-	static bool ShouldHideChipInLevel(ChipType chipType)
-	{
-		var lm = LevelManager.Instance;
-		bool isLevelActive = lm != null && lm.IsActive;
-		return isLevelActive
-			&& (chipType == ChipType.In_Pin || chipType == ChipType.Out_Pin);
-	}
+		static bool ShouldHideChipInLevel(ChipType chipType)
+		{
+			var lm = LevelManager.Instance;
+			bool isLevelActive = lm != null && lm.IsActive;
+			return isLevelActive
+				&& (chipType == ChipType.In_Pin || chipType == ChipType.Out_Pin);
+		}
 
-	static bool IsSpecialChipDisabledInLevel(ChipType chipType)
-	{
-		var lm = LevelManager.Instance;
-		if (lm == null || !lm.IsActive) return false;
-		
-		// Check if chip type is in our "special" list
-		return chipType == ChipType.Rom_256x16 ||
-		       chipType == ChipType.EEPROM_256x16 ||
-		       chipType == ChipType.dev_Ram_8Bit ||
-		       chipType == ChipType.SevenSegmentDisplay ||
-		       chipType == ChipType.DisplayRGB ||
-		       chipType == ChipType.DisplayRGBTouch ||
-		       chipType == ChipType.DisplayDot ||
-		       chipType == ChipType.DisplayLED ||
-		       chipType == ChipType.Pulse ||
-		       chipType == ChipType.Clock ||
-		       chipType == ChipType.Key ||
-		       chipType == ChipType.Button ||
-		       chipType == ChipType.Toggle ||
-		       chipType == ChipType.Detector ||
-		       chipType == ChipType.Buzzer ||
-		       chipType == ChipType.RTC ||
-		       chipType == ChipType.SPS ||
-		       chipType == ChipType.Constant_8Bit;
-	}
+		static bool IsSpecialChipDisabledInLevel(ChipType chipType)
+		{
+			var lm = LevelManager.Instance;
+			if (lm == null || !lm.IsActive) return false;
+
+			// Check if chip type is in our "special" list
+			return chipType == ChipType.Rom_256x16 ||
+				   chipType == ChipType.EEPROM_256x16 ||
+				   chipType == ChipType.dev_Ram_8Bit ||
+				   chipType == ChipType.SevenSegmentDisplay ||
+				   chipType == ChipType.DisplayRGB ||
+				   chipType == ChipType.DisplayRGBTouch ||
+				   chipType == ChipType.DisplayDot ||
+				   chipType == ChipType.DisplayLED ||
+				   chipType == ChipType.Pulse ||
+				   chipType == ChipType.Clock ||
+				   chipType == ChipType.Key ||
+				   chipType == ChipType.Button ||
+				   chipType == ChipType.Toggle ||
+				   chipType == ChipType.Detector ||
+				   chipType == ChipType.Buzzer ||
+				   chipType == ChipType.RTC ||
+				   chipType == ChipType.SPS ||
+				   chipType == ChipType.Constant_8Bit;
+		}
 
 
-	public static void DrawUI(Project project)
+		public static void DrawUI(Project project)
 		{
 			DrawBottomBar(project);
 
@@ -149,7 +147,7 @@ namespace DLS.Graphics
 			float menuWidth = Draw.CalculateTextBoundsSize(menuButtonNames[0].AsSpan(), theme.fontSize, theme.font).x + 1;
 
 			Vector2 pos = new(buttonSpacing, barHeight + buttonSpacing);
-			Vector2 size = new(menuWidth*1.3f, buttonHeight*1f);;
+			Vector2 size = new(menuWidth * 1.3f, buttonHeight * 1f); ;
 			Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
 
 			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
@@ -158,13 +156,13 @@ namespace DLS.Graphics
 				{
 					bool buttonEnabled = MenuButtonsAndShortcutsEnabled || i is QuitButtonIndex or OptionsButtonIndex;
 					string text = menuButtonNames[i];
-					
+
 					// Show "Save" instead of "Save Chip" when in a level
 					if (i == SaveChipButtonIndex && LevelManager.Instance?.IsActive == true)
 					{
 						text = text.Replace("SAVE CHIP    ", "SAVE         ").Replace("Save Chip", "Save");
 					}
-					
+
 					if (Seb.Vis.UI.UI.Button(text, theme, pos, size, buttonEnabled, false, false, theme.buttonCols, Anchor.BottomLeft))
 					{
 						ButtonPressed(i);
@@ -240,7 +238,7 @@ namespace DLS.Graphics
 			}
 
 
-			#if UNITY_ANDROID || UNITY_IOS
+#if UNITY_ANDROID || UNITY_IOS
 			if(showScrollingButtons!=2){
 				float scrollAmount = 15f; // Adjust as needed for responsiveness
 				if(showScrollingButtons == 1) scrollAmount *= -1; //invert
@@ -255,7 +253,7 @@ namespace DLS.Graphics
 					scrollX = Mathf.Clamp(scrollX + scrollAmount, Mathf.Min(0, chipButtonRegionWidth - chipBarTotalWidthLastFrame), 0);
 				}
 			}
-			#endif
+#endif
 
 			// Chips
 			ButtonTheme buttonTheme = theme.ChipButton;
@@ -371,13 +369,13 @@ namespace DLS.Graphics
 
 			// Build combined list of all items (chips first, then nested collections, since popup displays top-to-bottom)
 			var allItems = new System.Collections.Generic.List<(string name, bool isNestedCollection, int originalIndex)>();
-			
+
 			// Add chips first (will appear at bottom of popup)
 			for (int i = 0; i < activeCollection.Chips.Count; i++)
 			{
 				allItems.Add((activeCollection.Chips[i], false, i));
 			}
-			
+
 			// Add nested collections (will appear at top of popup)
 			for (int i = 0; i < activeCollection.NestedCollections.Count; i++)
 			{
@@ -391,31 +389,31 @@ namespace DLS.Graphics
 			Vector2 layoutOrigin = collectionPopupBottomLeft + new Vector2(0, 0);
 			bool expandLeft = layoutOrigin.x > Seb.Vis.UI.UI.HalfWidth;
 			bool openedContextMenu = false;
-			
+
 
 			// Calculate how many items can fit in the available space
 			float availableHeight = Seb.Vis.UI.UI.Height - barHeight - 0.1f;
 			float itemHeight = buttonHeight + buttonSpacing;
 			int maxItemsPerColumn = Mathf.FloorToInt(availableHeight / itemHeight);
-			
+
 			// Calculate total items and determine if we need two columns
 			int totalItems = allItems.Count;
 			bool needsTwoColumns = totalItems > maxItemsPerColumn;
-			
+
 			if (needsTwoColumns)
 			{
 				// Two-column layout
 				int itemsInFirstColumn = Mathf.CeilToInt(totalItems / 2f);
 				int itemsInSecondColumn = totalItems - itemsInFirstColumn;
-				
+
 				// Draw first column
 				Vector2 firstColumnPos = layoutOrigin;
 				Bounds2D firstColumnBounds = DrawTwoColumnSection(firstColumnPos, 0, itemsInFirstColumn, allItems, theme, ref openedContextMenu, project, ref pressedIndex);
-				
+
 				// Draw second column
 				Vector2 secondColumnPos = new Vector2(firstColumnBounds.Right + buttonSpacing, layoutOrigin.y);
 				Bounds2D secondColumnBounds = DrawTwoColumnSection(secondColumnPos, itemsInFirstColumn, itemsInSecondColumn, allItems, theme, ref openedContextMenu, project, ref pressedIndex);
-				
+
 				// Draw background panel for the entire two-column area
 				Bounds2D combinedBounds = new Bounds2D(
 					new Vector2(Mathf.Min(firstColumnBounds.Min.x, secondColumnBounds.Min.x), Mathf.Min(firstColumnBounds.Min.y, secondColumnBounds.Min.y)),
@@ -430,7 +428,7 @@ namespace DLS.Graphics
 				// Single column layout
 				Vector2 singleColumnPos = layoutOrigin;
 				Bounds2D singleColumnBounds = DrawTwoColumnSection(singleColumnPos, 0, totalItems, allItems, theme, ref openedContextMenu, project, ref pressedIndex);
-				
+
 				// Draw background panel for the single column
 				Bounds2D panelBounds = Bounds2D.Grow(singleColumnBounds, buttonSpacing * 2);
 				panelBounds = new Bounds2D(new Vector2(panelBounds.Min.x, barHeight), panelBounds.Max);
@@ -483,7 +481,7 @@ namespace DLS.Graphics
 			Vector2 currentPos = startPos;
 			Bounds2D sectionBounds = default;
 
-			int maxCharLength = 0;	
+			int maxCharLength = 0;
 			for (int i = 0; i < count; i++)
 			{
 				int itemIndex = startIndex + i;
@@ -491,27 +489,27 @@ namespace DLS.Graphics
 				var item = allItems[itemIndex];
 				maxCharLength = Math.Max(item.name.Length, maxCharLength);
 			}
-			
+
 			for (int i = 0; i < count; i++)
 			{
 				int itemIndex = startIndex + i;
 				if (itemIndex >= allItems.Count) break;
-				
+
 				var item = allItems[itemIndex];
 				//string displayName = item.isNestedCollection ? $"{item.name} ►" : item.name;
 
 				string displayName = item.isNestedCollection ? $"{item.name.PadRight(maxCharLength)} ►" : item.name;
-				
+
 				// Calculate button width
 				float buttonWidth = Draw.CalculateTextBoundsSize(displayName.AsSpan(), DrawSettings.ActiveUITheme.ChipButton.fontSize, DrawSettings.ActiveUITheme.ChipButton.font).x + 1;
-				
+
 				// Draw the button
 				bool buttonPressed = Seb.Vis.UI.UI.Button(displayName, DrawSettings.ActiveUITheme.ChipButton, currentPos, new Vector2(buttonWidth, buttonHeight), true, false, false, DrawSettings.ActiveUITheme.ChipButton.buttonCols, Anchor.BottomLeft, true, 0.55f);
-				
+
 				// Handle nested collection expansion
 				if (item.isNestedCollection)
 				{
-					#if UNITY_ANDROID || UNITY_IOS
+#if UNITY_ANDROID || UNITY_IOS
 					// On mobile, require click/tap for expansion
 					if (buttonPressed)
 					{
@@ -519,16 +517,16 @@ namespace DLS.Graphics
 						// Store the Y position of the clicked item for proper alignment
 						clickedItemY = currentPos.y;
 					}
-					#else
+#else
 					// On PC, expand on hover with anti-flicker logic
 					bool isHovering = Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds);
-					
+
 					// Allow hover expansion if:
 					// 1. No nested collection is currently active, OR
 					// 2. We're hovering over a different nested collection
-					bool canHoverExpand = activeNestedCollection == null || 
+					bool canHoverExpand = activeNestedCollection == null ||
 						(activeNestedCollection != null && !ChipDescription.NameMatch(activeNestedCollection.Name, item.name));
-					
+
 					if (isHovering && canHoverExpand)
 					{
 						// Start or continue hover tracking
@@ -537,7 +535,7 @@ namespace DLS.Graphics
 							hoveredNestedCollectionName = item.name;
 							hoverStartFrame = Time.frameCount;
 						}
-						
+
 						// Only expand after hover delay to prevent flicker
 						if (Time.frameCount - hoverStartFrame >= hoverDelayFrames)
 						{
@@ -554,7 +552,7 @@ namespace DLS.Graphics
 							hoveredNestedCollectionName = null;
 						}
 					}
-					
+
 					// Always allow click for expansion on PC
 					if (buttonPressed)
 					{
@@ -562,7 +560,7 @@ namespace DLS.Graphics
 						// Store the Y position of the clicked item for proper alignment
 						clickedItemY = currentPos.y;
 					}
-					#endif
+#endif
 				}
 				else
 				{
@@ -571,8 +569,8 @@ namespace DLS.Graphics
 					{
 						pressedIndex = itemIndex;
 					}
-					
-					#if !UNITY_ANDROID && !UNITY_IOS
+
+#if !UNITY_ANDROID && !UNITY_IOS
 					// On PC, close nested collection when hovering over regular chips
 					bool isHovering = Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds);
 					if (isHovering && activeNestedCollection != null)
@@ -580,17 +578,17 @@ namespace DLS.Graphics
 						// Close the nested collection when hovering over a regular chip
 						activeNestedCollection = null;
 					}
-					#endif
+#endif
 				}
-				
+
 				// Handle right-click context menu
 				if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds))
 				{
 					ContextMenu.OpenBottomBarContextMenu(item.name, item.isNestedCollection, true);
 					openedContextMenu = true;
 				}
-				
-				
+
+
 				// Update bounds
 				if (sectionBounds.Min == Vector2.zero && sectionBounds.Max == Vector2.zero)
 				{
@@ -603,11 +601,11 @@ namespace DLS.Graphics
 						new Vector2(Mathf.Max(sectionBounds.Max.x, Seb.Vis.UI.UI.PrevBounds.Max.x), Mathf.Max(sectionBounds.Max.y, Seb.Vis.UI.UI.PrevBounds.Max.y))
 					);
 				}
-				
+
 				// Move to next position
 				currentPos = Seb.Vis.UI.UI.PrevBounds.TopLeft + Vector2.up * buttonSpacing;
 			}
-			
+
 			return sectionBounds;
 		}
 
@@ -621,7 +619,7 @@ namespace DLS.Graphics
 
 			// Build list of items for the nested collection (all are regular chips, no nested collections)
 			var allItems = new System.Collections.Generic.List<(string name, bool isNestedCollection, int originalIndex)>();
-			
+
 			// Add all chips from the nested collection
 			for (int i = 0; i < activeNestedCollection.Chips.Count; i++)
 			{
@@ -638,11 +636,11 @@ namespace DLS.Graphics
 			float availableHeight = Seb.Vis.UI.UI.Height - barHeight - 0.1f;
 			float itemHeight = buttonHeight + buttonSpacing;
 			int maxItemsPerColumn = Mathf.FloorToInt(availableHeight / itemHeight);
-			
+
 			// Calculate total items and determine if we need two columns
 			int totalItems = allItems.Count;
 
-			while (layoutOrigin.y - (totalItems-1) * itemHeight < BottomBarUI.barHeight)
+			while (layoutOrigin.y - (totalItems - 1) * itemHeight < BottomBarUI.barHeight)
 			{
 				layoutOrigin += Vector2.up * itemHeight;
 			}
@@ -652,7 +650,7 @@ namespace DLS.Graphics
 			Vector2 singleColumnPos = layoutOrigin;
 			Bounds2D singleColumnBounds = DrawNestedCollectionSection(singleColumnPos, 0, totalItems, allItems, theme, ref openedContextMenu, project, ref pressedIndex);
 			Debug.Log("Pressed index: " + pressedIndex);
-				
+
 			// Draw background panel for the single column
 			Bounds2D panelBounds = Bounds2D.Grow(singleColumnBounds, buttonSpacing * 2);
 			panelBounds = new Bounds2D(panelBounds.Min, panelBounds.Max);
@@ -683,34 +681,34 @@ namespace DLS.Graphics
 		{
 			Vector2 currentPos = startPos;
 			Bounds2D sectionBounds = default;
-			
+
 			for (int i = 0; i < count; i++)
 			{
 				int itemIndex = startIndex + i;
 				if (itemIndex >= allItems.Count) break;
-				
+
 				var item = allItems[itemIndex];
 				string displayName = item.name; // No "►" prefix for nested collection items
-				
+
 				// Calculate button width
 				float buttonWidth = Draw.CalculateTextBoundsSize(displayName.AsSpan(), DrawSettings.ActiveUITheme.ChipButton.fontSize, DrawSettings.ActiveUITheme.ChipButton.font).x + 1;
-				
+
 				// Draw the button
 				bool buttonPressed = Seb.Vis.UI.UI.Button(displayName, DrawSettings.ActiveUITheme.ChipButton, currentPos, new Vector2(buttonWidth, buttonHeight), true, false, false, DrawSettings.ActiveUITheme.ChipButton.buttonCols, Anchor.TopLeft, true, 0.55f);
-				
+
 				// Handle button press
 				if (buttonPressed)
 				{
 					pressedIndex = itemIndex;
 				}
-				
+
 				// Handle right-click context menu
 				if (InputHelper.IsMouseDownThisFrame(MouseButton.Right) && Seb.Vis.UI.UI.MouseInsideBounds(Seb.Vis.UI.UI.PrevBounds))
 				{
 					ContextMenu.OpenBottomBarContextMenu(item.name, false, true);
 					openedContextMenu = true;
 				}
-				
+
 				// Update bounds
 				if (sectionBounds.Min == Vector2.zero && sectionBounds.Max == Vector2.zero)
 				{
@@ -723,11 +721,11 @@ namespace DLS.Graphics
 						new Vector2(Mathf.Max(sectionBounds.Max.x, Seb.Vis.UI.UI.PrevBounds.Max.x), Mathf.Max(sectionBounds.Max.y, Seb.Vis.UI.UI.PrevBounds.Max.y))
 					);
 				}
-				
+
 				// Move to next position - GROW DOWNWARDS (not upwards like main popup)
 				currentPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * buttonSpacing;
 			}
-			
+
 			return sectionBounds;
 		}
 
@@ -751,13 +749,13 @@ namespace DLS.Graphics
 
 			// Build the same list as in DrawCollectionsPopup
 			var allItems = new System.Collections.Generic.List<(string name, bool isNestedCollection, int originalIndex)>();
-			
+
 			// Add chips first
 			for (int i = 0; i < activeCollection.Chips.Count; i++)
 			{
 				allItems.Add((activeCollection.Chips[i], false, i));
 			}
-			
+
 			// Add nested collections
 			for (int i = 0; i < activeCollection.NestedCollections.Count; i++)
 			{
@@ -770,23 +768,23 @@ namespace DLS.Graphics
 			float availableHeight = Seb.Vis.UI.UI.Height - barHeight - 0.1f;
 			float itemHeight = buttonHeight + buttonSpacing;
 			int maxItemsPerColumn = Mathf.FloorToInt(availableHeight / itemHeight);
-			
+
 			// Calculate total items and determine if we need two columns
 			int totalItems = allItems.Count;
 			bool needsTwoColumns = totalItems > maxItemsPerColumn;
-			
+
 			if (needsTwoColumns)
 			{
 				// Two-column layout - calculate width of both columns
 				int itemsInFirstColumn = Mathf.CeilToInt(totalItems / 2f);
 				int itemsInSecondColumn = totalItems - itemsInFirstColumn;
-				
+
 				// Calculate width of first column
 				float firstColumnWidth = CalculateColumnWidth(allItems, 0, itemsInFirstColumn);
-				
+
 				// Calculate width of second column
 				float secondColumnWidth = CalculateColumnWidth(allItems, itemsInFirstColumn, itemsInSecondColumn);
-				
+
 				// Total width is first column + spacing + second column + padding
 				return firstColumnWidth + buttonSpacing + secondColumnWidth + buttonSpacing * 2;
 			}
@@ -802,7 +800,7 @@ namespace DLS.Graphics
 		{
 			float maxWidth = 0f;
 
-			int maxCharLength = 0;	
+			int maxCharLength = 0;
 			for (int i = 0; i < count; i++)
 			{
 				int itemIndex = startIndex + i;
@@ -810,68 +808,68 @@ namespace DLS.Graphics
 				var item = allItems[itemIndex];
 				maxCharLength = Math.Max(item.name.Length, maxCharLength);
 			}
-			
+
 			for (int i = 0; i < count; i++)
-				{
-					int itemIndex = startIndex + i;
-					if (itemIndex >= allItems.Count) break;
+			{
+				int itemIndex = startIndex + i;
+				if (itemIndex >= allItems.Count) break;
 
-					var item = allItems[itemIndex];
-					//string displayName = item.isNestedCollection ? $"{itemName} ►" : itemName;
-					string displayName = item.isNestedCollection ? $"{item.name.PadRight(maxCharLength)} ►" : item.name;
+				var item = allItems[itemIndex];
+				//string displayName = item.isNestedCollection ? $"{itemName} ►" : itemName;
+				string displayName = item.isNestedCollection ? $"{item.name.PadRight(maxCharLength)} ►" : item.name;
 
-					// Calculate button width
-					float buttonWidth = Draw.CalculateTextBoundsSize(displayName.AsSpan(), DrawSettings.ActiveUITheme.ChipButton.fontSize, DrawSettings.ActiveUITheme.ChipButton.font).x + 1;
-					maxWidth = Mathf.Max(maxWidth, buttonWidth);
-				}
-			
+				// Calculate button width
+				float buttonWidth = Draw.CalculateTextBoundsSize(displayName.AsSpan(), DrawSettings.ActiveUITheme.ChipButton.fontSize, DrawSettings.ActiveUITheme.ChipButton.font).x + 1;
+				maxWidth = Mathf.Max(maxWidth, buttonWidth);
+			}
+
 			return maxWidth;
 		}
 
 		static bool MouseIsOverBar() => InputHelper.MouseInBounds_ScreenSpace(barBounds_ScreenSpace);
-		
-	/// <summary>
-	/// Try to start placing a chip. If it's an Input/Output pin or special chip in a level, show a message instead.
-	/// </summary>
-	static void TryStartPlacing(Project project, string chipName)
-	{
-		ChipDescription desc = project.chipLibrary.GetChipDescription(chipName);
-		
-		// Check if trying to add Input/Output pins in a level
-		if (ShouldHideChipInLevel(desc.ChipType))
-		{
-			ShowInputOutputDisabledMessage();
-			return;
-		}
-		
-		// Check if trying to add special chips in a level
-		if (IsSpecialChipDisabledInLevel(desc.ChipType))
-		{
-			ShowSpecialChipDisabledMessage();
-			return;
-		}
-		
-		// Proceed with normal placement
-		project.controller.StartPlacing(desc);
-	}
-		
-	/// <summary>
-	/// Shows a simple message that adding input/output pins is disabled for levels
-	/// </summary>
-	static void ShowInputOutputDisabledMessage()
-	{
-		SimpleMessagePopup.Open("Adding input/output pins is disabled for this level");
-	}
-	
-	/// <summary>
-	/// Shows a simple message that this chip type is disabled for levels
-	/// </summary>
-	static void ShowSpecialChipDisabledMessage()
-	{
-		SimpleMessagePopup.Open("This chip type is disabled for this level");
-	}
 
-	static void ExitToMainMenu()
+		/// <summary>
+		/// Try to start placing a chip. If it's an Input/Output pin or special chip in a level, show a message instead.
+		/// </summary>
+		static void TryStartPlacing(Project project, string chipName)
+		{
+			ChipDescription desc = project.chipLibrary.GetChipDescription(chipName);
+
+			// Check if trying to add Input/Output pins in a level
+			if (ShouldHideChipInLevel(desc.ChipType))
+			{
+				ShowInputOutputDisabledMessage();
+				return;
+			}
+
+			// Check if trying to add special chips in a level
+			if (IsSpecialChipDisabledInLevel(desc.ChipType))
+			{
+				ShowSpecialChipDisabledMessage();
+				return;
+			}
+
+			// Proceed with normal placement
+			project.controller.StartPlacing(desc);
+		}
+
+		/// <summary>
+		/// Shows a simple message that adding input/output pins is disabled for levels
+		/// </summary>
+		static void ShowInputOutputDisabledMessage()
+		{
+			SimpleMessagePopup.Open("Adding input/output pins is disabled for this level");
+		}
+
+		/// <summary>
+		/// Shows a simple message that this chip type is disabled for levels
+		/// </summary>
+		static void ShowSpecialChipDisabledMessage()
+		{
+			SimpleMessagePopup.Open("This chip type is disabled for this level");
+		}
+
+		static void ExitToMainMenu()
 		{
 			if (Project.ActiveProject.ActiveChipHasUnsavedChanges()) UnsavedChangesPopup.OpenPopup(ExitIfTrue);
 			else ExitIfTrue(true);
@@ -880,7 +878,7 @@ namespace DLS.Graphics
 			{
 				if (exit)
 				{
-					LevelManager.Instance?.ExitLevel();   
+					LevelManager.Instance?.ExitLevel();
 					Project.ActiveProject.NotifyExit();
 					UIDrawer.SetActiveMenu(UIDrawer.MenuType.MainMenu);
 				}
@@ -911,7 +909,7 @@ namespace DLS.Graphics
 		static void CreateNewChip()
 		{
 			Debug.Log($"[BottomBarUI] CreateNewChip: LevelManager.IsActive={LevelManager.Instance?.IsActive}, HasUnsavedChanges={LevelManager.Instance?.HasUnsavedChanges()}");
-			
+
 			// Check for level unsaved changes first
 			if (LevelManager.Instance?.IsActive == true && LevelManager.Instance.HasUnsavedChanges())
 			{
@@ -954,7 +952,7 @@ namespace DLS.Graphics
 			{
 				if (confirm)
 				{
-					LevelManager.Instance?.ExitLevel();   
+					LevelManager.Instance?.ExitLevel();
 					Project.ActiveProject.CreateBlankDevChip();
 				}
 			}

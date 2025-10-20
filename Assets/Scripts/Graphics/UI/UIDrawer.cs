@@ -36,10 +36,12 @@ namespace DLS.Graphics
 			LevelValidationResult,
 			LevelCompleted,
 			Leaderboard,
+			HallOfFame,
 			ScoreExplanation,
 			CachingExplanation,
 			UserNameInput,
-			SimpleMessage
+			SimpleMessage,
+			ChipDescription
 		}
 
 		static MenuType activeMenuOld;
@@ -70,11 +72,17 @@ namespace DLS.Graphics
 			MainMenu.Draw();
 		}
 
-		static void DrawProjectMenus(Project project)
+	static void DrawProjectMenus(Project project)
+	{
+		MenuType menuToDraw = ActiveMenu; // cache state in case it changes while drawing/updating the menus
+		
+		// DEBUG: Log active menu if it's one we're interested in
+		if (menuToDraw == MenuType.UserNameInput || menuToDraw == MenuType.LevelValidationResult)
 		{
-			MenuType menuToDraw = ActiveMenu; // cache state in case it changes while drawing/updating the menus
+			UnityEngine.Debug.Log($"[UIDrawer] DrawProjectMenus - menuToDraw: {menuToDraw}");
+		}
 
-			if (menuToDraw != MenuType.ChipCustomization) BottomBarUI.DrawUI(project);
+		if (menuToDraw != MenuType.ChipCustomization) BottomBarUI.DrawUI(project);
 
 			bool aMenuIsOpen = true;
 			
@@ -100,18 +108,27 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.Levels) LevelsMenu.DrawMenu();
 			else if (menuToDraw == MenuType.LevelValidationResult) LevelValidationPopup.DrawMenu();
 			else if (menuToDraw == MenuType.Leaderboard) LeaderboardPopup.DrawMenu();
+			else if (menuToDraw == MenuType.HallOfFame) HallOfFameMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ScoreExplanation) ScoreExplanationPopup.DrawMenu();
-			else if (menuToDraw == MenuType.CachingExplanation) CachingExplanationPopup.DrawMenu();
-			else if (menuToDraw == MenuType.UserNameInput) UserNameInputPopup.DrawMenu();
+		else if (menuToDraw == MenuType.CachingExplanation) CachingExplanationPopup.DrawMenu();
+		else if (menuToDraw == MenuType.UserNameInput)
+		{
+			UnityEngine.Debug.Log($"[UIDrawer] About to call UserNameInputPopup.DrawMenu()");
+			UserNameInputPopup.DrawMenu();
+			UnityEngine.Debug.Log($"[UIDrawer] UserNameInputPopup.DrawMenu() completed");
+		}
 			else if (menuToDraw == MenuType.SimpleMessage) SimpleMessagePopup.DrawMenu();
+			else if (menuToDraw == MenuType.ChipDescription) ChipDescriptionMenu.DrawMenu();
 			else
 			{
 				bool showSimPausedBanner = project.simPaused;
 				bool showLevelBanner = LevelManager.Instance.IsActive;
 				bool showEraserBanner = DLS.Game.EraserModeController.IsActive;
+				bool showWirePlacementBanner = project.controller?.IsCreatingWire ?? false;
 				
-				// Priority order: Eraser > SimPaused > Level
-				if (showEraserBanner) EraserModeBanner.DrawBanner();
+				// Priority order: WirePlacement > Eraser > SimPaused > Level
+				if (showWirePlacementBanner) WirePlacementBanner.DrawBanner();
+				else if (showEraserBanner) EraserModeBanner.DrawBanner();
 				else if (showSimPausedBanner) SimPausedUI.DrawPausedBanner();
 				else if (showLevelBanner) LevelBannerUI.DrawLevelBanner();
 				
@@ -150,7 +167,9 @@ namespace DLS.Graphics
 				else if (ActiveMenu == MenuType.ProjectStats) ProjectStatsMenu.OnMenuOpened();
                 else if (ActiveMenu == MenuType.ConstantEdit) ConstantEditMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.SpecialChipMaker) SpecialChipMakerMenu.OnMenuOpened();
+				else if (ActiveMenu == MenuType.HallOfFame) HallOfFameMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.Levels) LevelsMenu.OnMenuOpened();
+				else if (ActiveMenu == MenuType.ChipDescription) ChipDescriptionMenu.OnMenuOpened();
 
 
 				if (InInputBlockingMenu() && Project.ActiveProject != null && Project.ActiveProject.controller != null)
@@ -167,10 +186,16 @@ namespace DLS.Graphics
 			SetActiveMenu(ActiveMenu is MenuType.None ? MenuType.BottomBarMenuPopup : MenuType.None);
 		}
 
-		public static void SetActiveMenu(MenuType type)
+	public static void SetActiveMenu(MenuType type)
+	{
+		// DEBUG: Log menu changes for UserNameInput and LevelValidationResult
+		if (type == MenuType.UserNameInput || type == MenuType.LevelValidationResult || 
+		    ActiveMenu == MenuType.UserNameInput || ActiveMenu == MenuType.LevelValidationResult)
 		{
-			ActiveMenu = type;
+			UnityEngine.Debug.Log($"[UIDrawer] SetActiveMenu: {ActiveMenu} -> {type}");
 		}
+		ActiveMenu = type;
+	}
 
 
 		public static void Reset()
@@ -184,6 +209,7 @@ namespace DLS.Graphics
 			RomEditMenu.Reset();
 			ChipLibraryMenu.Reset();
 			SearchPopup.Reset();
+			ChipDescriptionMenu.Reset();
 		}
 	}
 }

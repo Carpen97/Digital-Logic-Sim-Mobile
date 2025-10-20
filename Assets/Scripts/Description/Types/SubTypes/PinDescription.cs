@@ -8,7 +8,7 @@ namespace DLS.Description
 	{
 		public string Name;
 		public int ID;
-		public Vector2 Position;
+		public Vector2 Position; // Position relative to chip center
 		public PinBitCount BitCount;
 		public PinColour Colour;
 		public PinValueDisplayMode ValueDisplayMode;
@@ -39,6 +39,7 @@ namespace DLS.Description
             LocalOffset = localoff;
 			face = side;
         }
+
 	}
 
 	public struct PinBitCount

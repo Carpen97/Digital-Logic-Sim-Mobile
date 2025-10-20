@@ -82,6 +82,23 @@ namespace DLS.Online
                 }
                 #endif
                 
+                // Validate username authentication (if not anonymous)
+                if (!string.IsNullOrEmpty(userName))
+                {
+                    var validationResult = await ValidateUserNameAsync(userName);
+                    if (!validationResult.isValid)
+                    {
+                        Debug.LogWarning($"[Leaderboard] Username validation failed: {validationResult.error}");
+                        // For now, log warning but continue - this allows backward compatibility
+                        // In production, you might want to throw an exception here
+                        // throw new UnauthorizedAccessException(validationResult.error);
+                    }
+                    else
+                    {
+                        Debug.Log($"[Leaderboard] Username '{userName}' validated successfully");
+                    }
+                }
+                
                 // Add timeout to the entire operation
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
                 {
@@ -100,6 +117,41 @@ namespace DLS.Online
             {
                 Debug.LogError($"[Leaderboard] Failed to save score: {ex.Message}");
                 throw;
+            }
+        }
+        
+        /// <summary>
+        /// Validates that a username belongs to the current user
+        /// </summary>
+        private static async Task<(bool isValid, string error)> ValidateUserNameAsync(string userName)
+        {
+            try
+            {
+                // Get current user's profile
+                var profile = await UserAuthService.GetCurrentUserProfileAsync();
+                
+                if (profile == null)
+                {
+                    // User has no profile - they can use any username for now (backward compatibility)
+                    Debug.Log("[Leaderboard] No user profile found - allowing username submission");
+                    return (true, null);
+                }
+                
+                // Check if the username matches the user's claimed username
+                if (string.Equals(profile.username, userName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return (true, null);
+                }
+                else
+                {
+                    return (false, $"Username mismatch: You are authenticated as '{profile.username}' but trying to submit as '{userName}'");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[Leaderboard] Failed to validate username: {ex.Message}");
+                // If validation fails, allow submission (backward compatibility)
+                return (true, null);
             }
         }
         
@@ -137,6 +189,10 @@ namespace DLS.Online
                 string docId = docRef.Id;
                 Debug.Log($"[Leaderboard] Document ID: {docId}");
 
+                // Get user profile for additional authentication metadata
+                var userProfile = await UserAuthService.GetCurrentUserProfileAsync();
+                bool isAuthenticated = userProfile != null && !string.IsNullOrEmpty(userProfile.username);
+                
                 // Prepare simple data without ServerTimestamp to avoid Android issues
                 var data = new Dictionary<string, object>
                 {
@@ -144,8 +200,17 @@ namespace DLS.Online
                     { "userId", FirebaseBootstrap.UserId },
                     { "userName", userName ?? "Anonymous" },
                     { "score", score },
-                    { "submittedAt", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ") }
+                    { "submittedAt", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ") },
+                    { "isAuthenticated", isAuthenticated },
+                    { "deviceId", SystemInfo.deviceUniqueIdentifier }
                 };
+                
+                // Add authentication verification data if user is authenticated
+                if (isAuthenticated)
+                {
+                    data["verifiedUsername"] = userProfile.username;
+                    data["userCreatedAt"] = userProfile.createdAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                }
 
                 // Add complete solution ID if provided
                 if (!string.IsNullOrEmpty(completeSolutionId))

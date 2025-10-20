@@ -11,6 +11,7 @@ using DLS.Online;
 using DLS.Levels;
 using UnityEngine;
 using UnityEngine.UI;
+using Debug = UnityEngine.Debug;
 
 namespace DLS.Game
 {
@@ -33,7 +34,27 @@ namespace DLS.Game
 			SavePaths.EnsureDirectoryExists(SavePaths.ProjectsPath);
 			SaveAndApplyAppSettings(Loader.LoadAppSettings());
 			Main.audioState = audioState;
+			
+			// Initialize Discord Rich Presence (PC only)
+			#if !UNITY_ANDROID && !UNITY_IOS
+			InitializeDiscord();
+			#endif
 		}
+		
+		#if !UNITY_ANDROID && !UNITY_IOS
+		private static void InitializeDiscord()
+		{
+			// Create Discord manager GameObject
+			GameObject discordManager = new GameObject("DiscordManager");
+			UnityEngine.Object.DontDestroyOnLoad(discordManager);
+			
+			// Attach Discord components
+			discordManager.AddComponent<DLS.Integration.Discord.DiscordRichPresenceManager>();
+			discordManager.AddComponent<DLS.Integration.Discord.DiscordActivityTracker>();
+			
+			Debug.Log("[Discord] Rich Presence system initialized");
+		}
+		#endif
 
 		public static void Update()
 		{

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using DLS.Levels;
@@ -27,7 +28,6 @@ namespace DLS.Game.LevelsIntegration
         public LevelDefinition Current { get; private set; }
 
         // IDs of pins that must be locked against delete in level mode
-        readonly HashSet<int> _lockedPinIds = new();
 
         // --- Events for UI to react to ---
         public event Action LevelStarted;
@@ -61,20 +61,13 @@ namespace DLS.Game.LevelsIntegration
             Project.ActiveProject.CreateBlankDevChip();
             var dev = Project.ActiveProject.ViewedChip;
 
-            // 2) Spawn pins & remember which to lock
-            var spawned = SpawnPinsForLevel(dev, def);
-            _lockedPinIds.Clear();
-            foreach (var p in spawned)
-                _lockedPinIds.Add(p.ID);
+            // 2) Spawn pins 
+            SpawnPinsForLevel(dev, def);
 
             // 3) Fit view
             Debug.Log("Fitting level");
             var view = CameraController.GetViewForChip(dev);
-
-            // If you want the camera at exactly (0,0), override after fit:
             view.Pos = Vector2.zero;
-
-            // Persist it so Update() won’t replace it next frame
             CameraController.SetViewForCurrentChip(view);
 
             // Clear hint system cache for new level
@@ -93,14 +86,10 @@ namespace DLS.Game.LevelsIntegration
 
             IsActive = false;
             Current = null;
-            _lockedPinIds.Clear();
 
             LevelEnded?.Invoke();
         }
 
-        /// <summary>True if the given pin is one of the level’s pre-spawned, locked pins.</summary>
-        public bool IsLockedPin(PinInstance pin) =>
-            IsActive && pin != null && _lockedPinIds.Contains(pin.ID);
 
         /// <summary>
         /// Runs validator on a clone of the current level definition.
@@ -152,6 +141,7 @@ namespace DLS.Game.LevelsIntegration
         /// <summary>
         /// Generates test vectors by exhaustively testing all possible input combinations.
         /// Returns JSON string containing the test vectors.
+        /// Supports multi-bit pins by using inputBitCounts and outputBitCounts.
         /// </summary>
         public string GenerateTestVectors()
         {
@@ -164,20 +154,53 @@ namespace DLS.Game.LevelsIntegration
             int inputCount = Current.inputCount;
             int outputCount = Current.outputCount;
             
-            // Calculate total combinations (2^inputCount)
-            int totalCombinations = 1 << inputCount; // 2^inputCount
+            // Calculate total input bits (sum of all input pin bit counts)
+            int totalInputBits = 0;
+            if (Current.inputBitCounts != null && Current.inputBitCounts.Length > 0)
+            {
+                totalInputBits = Current.inputBitCounts.Sum();
+            }
+            else
+            {
+                // Fallback to old behavior if inputBitCounts not available
+                totalInputBits = inputCount;
+            }
             
-            Debug.Log($"[LevelManager] Generating {totalCombinations} test vectors for {inputCount} inputs, {outputCount} outputs");
+            // Calculate total output bits (sum of all output pin bit counts)
+            int totalOutputBits = 0;
+            if (Current.outputBitCounts != null && Current.outputBitCounts.Length > 0)
+            {
+                totalOutputBits = Current.outputBitCounts.Sum();
+            }
+            else
+            {
+                // Fallback to old behavior if outputBitCounts not available
+                totalOutputBits = outputCount;
+            }
+            
+            // Calculate total combinations (2^totalInputBits)
+            int totalCombinations = 1 << totalInputBits; // 2^totalInputBits
+            const int maxTestVectors = 100;
+            
+            Debug.Log($"[LevelManager] Generating all {totalCombinations} test vectors for {inputCount} input pins ({totalInputBits} total bits), {outputCount} output pins ({totalOutputBits} total bits)");
+            if (Current.inputBitCounts != null && Current.inputBitCounts.Length > 0)
+            {
+                Debug.Log($"[LevelManager] Input bit counts: [{string.Join(", ", Current.inputBitCounts)}]");
+            }
+            if (Current.outputBitCounts != null && Current.outputBitCounts.Length > 0)
+            {
+                Debug.Log($"[LevelManager] Output bit counts: [{string.Join(", ", Current.outputBitCounts)}]");
+            }
             
             // List to store all test vectors
-            var testVectors = new List<TestVectorData>();
+            var allTestVectors = new List<TestVectorData>();
             
             // Loop through all possible input combinations
             for (int i = 0; i < totalCombinations; i++)
             {
                 // Convert index to binary input string
                 string inputBits = "";
-                for (int bit = inputCount - 1; bit >= 0; bit--)
+                for (int bit = totalInputBits - 1; bit >= 0; bit--)
                 {
                     inputBits += ((i >> bit) & 1) == 1 ? "1" : "0";
                 }
@@ -194,20 +217,49 @@ namespace DLS.Game.LevelsIntegration
                 string outputBits = outputVector.ToString();
                 
                 // Store test vector
-                testVectors.Add(new TestVectorData
+                allTestVectors.Add(new TestVectorData
                 {
                     inputs = inputBits,
                     expected = outputBits
                 });
             }
             
+            // Randomly sample up to maxTestVectors from all generated test vectors
+            var testVectors = new List<TestVectorData>();
+            if (allTestVectors.Count <= maxTestVectors)
+            {
+                // Use all test vectors if we have fewer than the limit
+                testVectors = allTestVectors;
+                Debug.Log($"[LevelManager] Using all {allTestVectors.Count} test vectors (under limit of {maxTestVectors})");
+            }
+            else
+            {
+                // Randomly sample maxTestVectors from all test vectors
+                var random = new System.Random();
+                var shuffledIndices = Enumerable.Range(0, allTestVectors.Count).OrderBy(x => random.Next()).Take(maxTestVectors);
+                
+                foreach (int index in shuffledIndices)
+                {
+                    testVectors.Add(allTestVectors[index]);
+                }
+                Debug.Log($"[LevelManager] Randomly sampled {maxTestVectors} test vectors from {allTestVectors.Count} total combinations");
+            }
+            
             // Create wrapper object for JSON export
             var wrapper = new TestVectorsWrapper
             {
-                levelId = Current.id,
-                levelName = Current.name,
+                id = Current.id,
+                name = Current.name,
+                chapterId = Current.chapterId,
+                description = Current.description,
                 inputCount = inputCount,
                 outputCount = outputCount,
+                inputLabels = Current.inputLabels,
+                outputLabels = Current.outputLabels,
+                inputBitCounts = Current.inputBitCounts,
+                outputBitCounts = Current.outputBitCounts,
+                inputPinLabels = Current.inputPinLabels,
+                outputPinLabels = Current.outputPinLabels,
                 testVectors = testVectors.ToArray()
             };
             
@@ -249,10 +301,18 @@ namespace DLS.Game.LevelsIntegration
         [Serializable]
         private class TestVectorsWrapper
         {
-            public string levelId;
-            public string levelName;
+            public string id;
+            public string name;
+            public string chapterId;
+            public string description;
             public int inputCount;
             public int outputCount;
+            public System.Collections.Generic.List<string> inputLabels;
+            public System.Collections.Generic.List<string> outputLabels;
+            public int[] inputBitCounts;
+            public int[] outputBitCounts;
+            public DLS.Levels.LevelDefinition.PinLabel[] inputPinLabels;
+            public DLS.Levels.LevelDefinition.PinLabel[] outputPinLabels;
             public TestVectorData[] testVectors;
         }
         
@@ -266,37 +326,37 @@ namespace DLS.Game.LevelsIntegration
         // ------------------------ Internals ------------------------
 
         // Spawns I/O and returns the created pins (inputs + outputs)
-        List<DevPinInstance> SpawnPinsForLevel(DevChipInstance dev, LevelDefinition def)
+        void SpawnPinsForLevel(DevChipInstance dev, LevelDefinition def)
         {
-            var created = new List<DevPinInstance>();
 
             // Resolve labels (fallbacks)
-            var inLabels = (def.inputLabels != null && def.inputLabels.Count > 0)
-                ? def.inputLabels
-                : MakeDefaultInputs(Mathf.Max(def.inputCount, 0));
-
-            var outLabels = (def.outputLabels != null && def.outputLabels.Count > 0)
-                ? def.outputLabels
-                : MakeDefaultOutputs(Mathf.Max(def.outputCount, 0));
-
+            var inLabels = def.inputPinLabels;
+            var outLabels = def.outputPinLabels;
             // Layout
             const float xLeft = -3f;
             const float xRight = 3f;
             const float gapY = 0.6f;
 
-            float yStartIn = ((inLabels.Count - 1) * 0.5f) * gapY;
-            float yStartOut = ((outLabels.Count - 1) * 0.5f) * gapY;
+            float yStartIn = ((inLabels.Length - 1) * 0.5f) * gapY;
+            float yStartOut = ((outLabels.Length - 1) * 0.5f) * gapY;
 
             // Inputs
             for (int i = 0; i < def.inputCount; i++)
             {
                 int id = IDGenerator.GenerateNewElementID(dev);
                 var pos = new Vector2(xLeft, yStartIn - i * gapY);
-                var desc = MakePinDescription(inLabels[i], id, pos, bitCount: 1, PinColour.Red);
+                
+                // Get bit count for this input pin (default to 1 if not specified)
+                int bitCount = 1;
+                if (def.inputBitCounts != null && i < def.inputBitCounts.Length)
+                {
+                    bitCount = def.inputBitCounts[i];
+                }
+                
+                var desc = MakePinDescription(inLabels[i].name, id, pos, bitCount: (ushort)bitCount, PinColour.Red);
                 var pin = new DevPinInstance(desc, isInput: true);
                 pin.anchoredToLevel = true;
                 dev.AddNewDevPin(pin, isLoadingFromFile: false);
-                created.Add(pin);
             }
 
             // Outputs
@@ -304,14 +364,19 @@ namespace DLS.Game.LevelsIntegration
             {
                 int id = IDGenerator.GenerateNewElementID(dev);
                 var pos = new Vector2(xRight, yStartOut - i * gapY);
-                var desc = MakePinDescription(outLabels[i], id, pos, bitCount: 1, PinColour.Red);
+                
+                // Get bit count for this output pin (default to 1 if not specified)
+                int bitCount = 1;
+                if (def.outputBitCounts != null && i < def.outputBitCounts.Length)
+                {
+                    bitCount = def.outputBitCounts[i];
+                }
+                
+                var desc = MakePinDescription(outLabels[i].name, id, pos, bitCount: (ushort)bitCount, PinColour.Green);
                 var pin = new DevPinInstance(desc, isInput: false);
                 pin.anchoredToLevel = true;
                 dev.AddNewDevPin(pin, isLoadingFromFile: false);
-                created.Add(pin);
             }
-
-            return created;
         }
 
         // Clone via JsonUtility to avoid mutation side effects

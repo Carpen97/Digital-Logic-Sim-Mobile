@@ -15,6 +15,10 @@ namespace DLS.Levels
 	public System.Collections.Generic.List<string> inputLabels;
 	public System.Collections.Generic.List<string> outputLabels;
 	
+	// Multi-bit pin support
+	public int[] inputBitCounts;  // Bit count for each input pin (defaults to 1 if not specified)
+	public int[] outputBitCounts; // Bit count for each output pin (defaults to 1 if not specified)
+	
 	// Enhanced label system with both long descriptive names and short abbreviations
 	[Serializable] public struct PinLabel {
 		public string name;  // Long descriptive name (e.g., "A > B")

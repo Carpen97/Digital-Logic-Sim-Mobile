@@ -389,15 +389,21 @@ namespace DLS.Graphics
 				bool pressedContinue = Seb.Vis.UI.UI.Button("CONTINUE", ActiveUITheme.ButtonTheme, continuePos, new Vector2(halfWidth, buttonSize.y), canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 				bool pressedRestart = Seb.Vis.UI.UI.Button("RESTART", ActiveUITheme.ButtonTheme, restartPos, new Vector2(halfWidth, buttonSize.y), canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 				
-				Vector2 leaderboardPos = centeredButtonPos + Vector2.down * (buttonSize.y + buttonSpacing);
-				bool pressedLeaderboard = Seb.Vis.UI.UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				// LEADERBOARD and HALL OF FAME side by side in the middle
+				Vector2 leaderboardPos = new(panelContentBounds.Centre.x - halfWidth / 2f - buttonSpacing / 2f, continuePos.y - buttonSize.y - buttonSpacing);
+				Vector2 hallOfFamePos = new(panelContentBounds.Centre.x + halfWidth / 2f + buttonSpacing / 2f, continuePos.y - buttonSize.y - buttonSpacing);
 				
-				Vector2 exitPos = leaderboardPos + Vector2.down * (buttonSize.y + buttonSpacing);
+				bool pressedLeaderboard = Seb.Vis.UI.UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, new Vector2(halfWidth, buttonSize.y), canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				bool pressedHallOfFame = Seb.Vis.UI.UI.Button("HALL OF FAME", ActiveUITheme.ButtonTheme, hallOfFamePos, new Vector2(halfWidth, buttonSize.y), true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				
+				// EXIT button at the bottom
+				Vector2 exitPos = new(panelContentBounds.Centre.x, leaderboardPos.y - buttonSize.y - buttonSpacing);
 				bool pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 
 				if (pressedContinue) PlaySelectedLevel(continueFromSave: true);
 				if (pressedRestart) PlaySelectedLevel(continueFromSave: false);
 				if (pressedLeaderboard) OpenLeaderboard();
+				if (pressedHallOfFame) OpenHallOfFame();
 				if (pressedExit) Close();
 			}
 			else
@@ -405,14 +411,21 @@ namespace DLS.Graphics
 				// No progress, show normal Play button
 				bool pressedPlay = Seb.Vis.UI.UI.Button("PLAY", ActiveUITheme.ButtonTheme, centeredButtonPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 				
-				Vector2 leaderboardPos = centeredButtonPos + Vector2.down * (buttonSize.y + buttonSpacing);
-				bool pressedLeaderboard = Seb.Vis.UI.UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, buttonSize, canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				// LEADERBOARD and HALL OF FAME side by side in the middle
+				float halfWidth = (buttonSize.x - buttonSpacing) / 2f;
+				Vector2 leaderboardPos = new(panelContentBounds.Centre.x - halfWidth / 2f - buttonSpacing / 2f, centeredButtonPos.y - buttonSize.y - buttonSpacing);
+				Vector2 hallOfFamePos = new(panelContentBounds.Centre.x + halfWidth / 2f + buttonSpacing / 2f, centeredButtonPos.y - buttonSize.y - buttonSpacing);
 				
-				Vector2 exitPos = leaderboardPos + Vector2.down * (buttonSize.y + buttonSpacing);
+				bool pressedLeaderboard = Seb.Vis.UI.UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, new Vector2(halfWidth, buttonSize.y), canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				bool pressedHallOfFame = Seb.Vis.UI.UI.Button("HALL OF FAME", ActiveUITheme.ButtonTheme, hallOfFamePos, new Vector2(halfWidth, buttonSize.y), true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				
+				// EXIT button at the bottom
+				Vector2 exitPos = new(panelContentBounds.Centre.x, leaderboardPos.y - buttonSize.y - buttonSpacing);
 				bool pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 
 				if (pressedPlay) PlaySelectedLevel(continueFromSave: false);
 				if (pressedLeaderboard) OpenLeaderboard();
+				if (pressedHallOfFame) OpenHallOfFame();
 				if (pressedExit) Close();
 			}
 		}
@@ -457,14 +470,20 @@ namespace DLS.Graphics
 		}
 	}
 
-		static void OpenLeaderboard()
-		{
-			// Get the current level ID for the leaderboard
-			string levelId = GetCurrentLevelId();
-			LeaderboardPopup.Open(levelId);
-		}
-		
-		static string GetCurrentLevelId()
+	static void OpenLeaderboard()
+	{
+		// Get the current level ID for the leaderboard
+		string levelId = GetCurrentLevelId();
+		LeaderboardPopup.Open(levelId);
+	}
+	
+	static void OpenHallOfFame()
+	{
+		// Open the Hall of Fame menu
+		HallOfFameMenu.Open();
+	}
+	
+	static string GetCurrentLevelId()
 		{
 			// Get the current level ID from the selected level
 			if (_allLevels.Count > 0)
@@ -493,6 +512,8 @@ namespace DLS.Graphics
 			_levelPacks.Clear();
 			_allLevels.Clear();
 
+			// Force Unity to reload the resource (clears cache)
+			Resources.UnloadAsset(Resources.Load<TextAsset>(LevelPackResourcePath));
 			var packAsset = Resources.Load<TextAsset>(LevelPackResourcePath);
 			if (packAsset == null)
 			{
@@ -522,6 +543,7 @@ namespace DLS.Graphics
 						foreach (var def in ch.levels)
 						{
 							if (def == null || string.IsNullOrEmpty(def.id)) continue;
+							
 							levelPack.levels.Add(def);
 						}
 						

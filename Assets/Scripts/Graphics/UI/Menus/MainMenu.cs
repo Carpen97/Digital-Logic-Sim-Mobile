@@ -48,6 +48,9 @@ namespace DLS.Graphics
 		static readonly string[] SettingsWheelBottomBarScrollingOptions = { "ARROWS","ARROWS (inverted)", "OFF"};
 		static readonly string[] SettingsWheelUIScalingOptions = { "SMALL","MEDIUM", "LARGE"};
 		static readonly string[] SettingsWheelVSyncOptions = { "DISABLED", "ENABLED" };
+		#if !UNITY_ANDROID && !UNITY_IOS
+		static readonly string[] SettingsWheelDiscordOptions = { "OFF", "ON" };
+		#endif
 
 		static readonly Func<string, bool> projectNameValidator = ProjectNameValidator;
 		static readonly Seb.Vis.UI.UI.ScrollViewDrawContentFunc loadProjectScrollViewDrawer = DrawAllProjectsInScrollView;
@@ -497,7 +500,7 @@ namespace DLS.Graphics
 		{
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
-			float regionWidth = 30;
+			float regionWidth = 40;
 			Vector2 wheelSize = new(16, 2.5f);
 			#if UNITY_ANDROID || UNITY_IOS	
 			regionWidth = 70;
@@ -561,6 +564,32 @@ namespace DLS.Graphics
 				Seb.Vis.UI.UI.DrawText("VSync", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				int vsyncSetting = Seb.Vis.UI.UI.WheelSelector(EditedAppSettings.VSyncEnabled ? 1 : 0, SettingsWheelVSyncOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				EditedAppSettings.VSyncEnabled = vsyncSetting == 1;
+
+				#if !UNITY_ANDROID && !UNITY_IOS
+				// -- Discord Rich Presence (PC only) --
+				pos += Vector2.down * 4;
+				Seb.Vis.UI.UI.DrawText("Discord Integration", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				int discordSetting = Seb.Vis.UI.UI.WheelSelector(EditedAppSettings.EnableDiscordRichPresence ? 1 : 0, SettingsWheelDiscordOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
+				bool newDiscordSetting = discordSetting == 1;
+				if (newDiscordSetting != EditedAppSettings.EnableDiscordRichPresence)
+				{
+					EditedAppSettings.EnableDiscordRichPresence = newDiscordSetting;
+					Debug.Log($"[Discord] Setting changed to: {(newDiscordSetting ? "ON" : "OFF")}");
+					
+					// Update Discord manager if it exists
+					if (DLS.Integration.Discord.DiscordRichPresenceManager.Instance != null)
+					{
+						if (newDiscordSetting)
+						{
+							DLS.Integration.Discord.DiscordRichPresenceManager.Instance.Enable();
+						}
+						else
+						{
+							DLS.Integration.Discord.DiscordRichPresenceManager.Instance.Disable();
+						}
+					}
+				}
+				#endif
 
 				#if UNITY_ANDROID || UNITY_IOS
 				pos += Vector2.down * 4;
@@ -945,15 +974,14 @@ namespace DLS.Graphics
 				Seb.Vis.UI.UI.DrawScrollView(ID_PatchNotesScrollView, leftScrollViewPos, leftScrollViewSize, Anchor.TopLeft, theme.ScrollTheme, (topLeft, width, isLayoutPass) =>
 				{
 					if (selectedVersion == null)
-					{
-						Seb.Vis.UI.UI.DrawText("No patch notes available", theme.FontRegular, theme.FontSizeRegular * 0.8f, topLeft, Anchor.TopLeft, Color.red);
-						return;
-					}
-					
-					float spacing = 0.5f;
-					float sectionSpacing = 1.0f; // Extra spacing before section headers
-					
-					// Version header
+				{
+					Seb.Vis.UI.UI.DrawText("No patch notes available", theme.FontRegular, theme.FontSizeRegular * 0.8f, topLeft, Anchor.TopLeft, Color.red);
+					return;
+				}
+				
+				float sectionSpacing = 1.0f; // Extra spacing before section headers
+				
+				// Version header
 					Seb.Vis.UI.UI.DrawText($"Version {selectedVersion.version}", theme.FontRegular, theme.FontSizeRegular * 1.0f, topLeft, Anchor.TopLeft, new Color(0.98f, 0.76f, 0.26f));
 					topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 0.3f;
 					

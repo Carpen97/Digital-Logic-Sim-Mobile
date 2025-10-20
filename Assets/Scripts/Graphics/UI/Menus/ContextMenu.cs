@@ -34,17 +34,20 @@ namespace DLS.Graphics
 		static readonly MenuEntry deleteEntry = new(Format("DELETE"), Delete, CanDelete);
 		static readonly MenuEntry openChipEntry = new(Format("OPEN"), OpenChip, CanOpenChip);
 		static readonly MenuEntry labelChipEntry = new(Format("LABEL"), OpenChipLabelPopup, CanLabelChip);
+		static readonly MenuEntry infoEntry = new(Format("INFO"), OpenChipInfo, CanShowChipInfo);
 
 		static readonly MenuEntry[] entries_customSubchip =
 		{
 			new(Format("VIEW"), EnterViewMode, CanEnterViewMode),
 			openChipEntry,
+			infoEntry,
 			labelChipEntry,
 			deleteEntry
 		};
 
 		static readonly MenuEntry[] entries_builtinSubchip =
 		{
+			infoEntry,
 			labelChipEntry,
 			deleteEntry
 		};
@@ -56,6 +59,7 @@ namespace DLS.Graphics
 		static readonly MenuEntry[] entries_builtinBus =
 		{
 			new(Format("FLIP"), FlipBus, CanFlipBus),
+			infoEntry,
 			labelChipEntry,
 			deleteEntry
 		};
@@ -63,6 +67,7 @@ namespace DLS.Graphics
 		static readonly MenuEntry[] entries_builtinKeySubchip =
 		{
 			new(Format("REBIND"), OpenKeyBindMenu, CanEditCurrentChip),
+			infoEntry,
 			labelChipEntry,
 			deleteEntry
 		};
@@ -70,6 +75,7 @@ namespace DLS.Graphics
 		static readonly MenuEntry[] entries_builtinRomSubchip =
 		{
 			new(Format("EDIT"), OpenRomEditMenu, CanEditCurrentChip),
+			infoEntry,
 			labelChipEntry,
 			deleteEntry
 		};
@@ -77,6 +83,7 @@ namespace DLS.Graphics
 		static readonly MenuEntry[] entries_builtinPulseChip =
 		{
 			new(Format("EDIT"), OpenPulseEditMenu, CanEditCurrentChip),
+			infoEntry,
 			labelChipEntry,
 			deleteEntry
 		};
@@ -84,6 +91,7 @@ namespace DLS.Graphics
         static readonly MenuEntry[] entries_builtinConstantChip =
 {
             new(Format("EDIT"), OpenConstantEditMenu, CanEditCurrentChip),
+            infoEntry,
             labelChipEntry,
             deleteEntry
         };
@@ -461,6 +469,15 @@ namespace DLS.Graphics
 		static void OpenPulseEditMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.PulseEdit);
 
 		static void OpenConstantEditMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ConstantEdit);
+
+		static void OpenChipInfo()
+		{
+			// Get the chip name from the interaction context
+			string chipName = interactionContextName;
+			ChipDescriptionMenu.OpenForChip(chipName);
+		}
+
+		static bool CanShowChipInfo() => true; // Always allow showing chip info
 
 		static bool CanEditCurrentChip() => Project.ActiveProject.CanEditViewedChip;
 

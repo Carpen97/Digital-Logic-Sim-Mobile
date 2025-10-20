@@ -1,0 +1,19 @@
+Vad tillverkar Arm?
+
+Arm Holdings är ett brittiskt teknikföretag som designar processorer och annan halvledarteknik. De tillverkar inte själva fysiska chip, utan licensierar sina processorarkitekturer (t.ex. Arm Cortex) till andra företag som använder dem i allt från mobiltelefoner och surfplattor till bilar, IoT-enheter och servrar. Arm är särskilt kända för sina energieffektiva processorer, vilket gör dem populära i batteridrivna enheter.
+
+Vad är din roll som programmerare i företaget?
+
+Hur arbetar du med hållbarhet i ditt arbete?
+
+Hur jobbar Arm med att minska miljöpåverkan när de tillverkar sina produkter?
+
+Ställer ni några krav på era kunder för att säkerställa att era produkter används på ett hållbart sätt ur ett miljövänligt perspektiv?
+
+
+Ställer ni några krav på era kunder och de ni samarbetar med på bra arbetsförhållanden?
+
+Vad har Arm för långsiktiga mål när det kommer till ekonomisk, social och miljömässig hållbarhet?
+Hur säkerställer ni att leverantörerna uppfyller era hållbarhetsmål?
+Vilka är de största hållbarhetsutmaningarna inom processorutveckling?
+Hur tror du att hållbarhet kommer påverka utvecklingen av teknik i framtiden?

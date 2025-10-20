@@ -159,8 +159,10 @@ namespace DLS.Graphics
                 float buttonRegionWidth = menuWidth;
                 
                 // Use custom button names for HorizontalButtonGroup
-                string[] buttonNames = { "VIEW", "CANCEL" };
-                bool[] buttonStates = { _selectedIndex >= 0 && _selectedIndex < _scores.Count, true };
+                bool hasPublicSolution = _selectedIndex >= 0 && _selectedIndex < _scores.Count && 
+                                       !string.IsNullOrEmpty(_scores[_selectedIndex].completeSolutionId);
+                string[] buttonNames = { hasPublicSolution ? "VIEW" : "Solution not public", "CANCEL" };
+                bool[] buttonStates = { hasPublicSolution, true };
                 
                 int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(
                     buttonNames,
@@ -178,7 +180,7 @@ namespace DLS.Graphics
                 {
                     UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
                 }
-                else if (buttonIndex == 0 && _selectedIndex >= 0 && _selectedIndex < _scores.Count) // VIEW
+                else if (buttonIndex == 0 && hasPublicSolution) // VIEW (only when solution is public)
                 {
                     ViewSelectedSolution();
                 }
@@ -192,7 +194,6 @@ namespace DLS.Graphics
         static void DrawTableHeader()
         {
             // Clean header like PreferencesMenu - no background, just text
-            float listW = menuWidth; // Full width to match list and buttons
             
             // Draw header text with original positioning
             Vector2 rankPos = currentPos + Vector2.right * rankOffset;

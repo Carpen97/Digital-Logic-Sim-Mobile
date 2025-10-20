@@ -32,6 +32,8 @@ namespace DLS.Game
 		public bool HasCustomLayout;
 
 		public bool anchoredToLevel { get; set; } = false;
+		
+		Vector2 previousSize; // Track previous size for scaling pin positions
 
 		public SubChipInstance(ChipDescription description, SubChipDescription subChipDesc)
 		{
@@ -46,6 +48,7 @@ namespace DLS.Game
 			MinSize = CalculateMinChipSize(description.InputPins, description.OutputPins, description.Name);
 
 			HasCustomLayout = description.HasCustomLayout;
+			previousSize = description.Size; // Initialize previous size
 
 			InputPins = CreatePinInstances(description.InputPins, true);
 			OutputPins = CreatePinInstances(description.OutputPins, false);
@@ -148,6 +151,40 @@ namespace DLS.Game
 
 		public void UpdatePinLayout()
 		{
+			// Handle pins with direct relative positioning (for custom shapes)
+			PinInstance[] allPins = InputPins.Concat(OutputPins).ToArray();
+			
+			// Calculate scale factors
+			Vector2 currentSize = Description.Size;
+			Vector2 scale = new Vector2(currentSize.x / previousSize.x, currentSize.y / previousSize.y);
+			
+			foreach (PinInstance pin in allPins)
+			{
+				// For custom shapes, update pin positions in the description
+				if (Description.ShapeType != ChipShapeType.Rectangle)
+				{
+					Vector2 currentPos = GetPinPositionFromDescription(pin);
+					
+					if (Description.ShapeType == ChipShapeType.CustomPolygon)
+					{
+						// For custom polygons, snap to closest edge instead of scaling
+						Vector2 chipHalfSize = currentSize / 2f;
+						float rotation = Description.ShapeRotation;
+						Vector2 projectedPoint = ProjectOntoCustomPolygonEdge(currentPos, chipHalfSize, rotation, Description.CustomPolygon);
+						UpdatePinPositionInDescription(pin, projectedPoint);
+					}
+					else
+					{
+						// For other shapes, scale the pin position the same way we scale the shape
+						Vector2 newRelativePos = new Vector2(currentPos.x * scale.x, currentPos.y * scale.y);
+						UpdatePinPositionInDescription(pin, newRelativePos);
+					}
+				}
+			}
+			
+			// Update previous size for next resize
+			previousSize = currentSize;
+			
 			if (!HasCustomLayout)
 			{
 				CalculatePinLayout(InputPins);
@@ -202,12 +239,16 @@ namespace DLS.Game
         {
             if (pins == null || pins.Length == 0) return;
 
-            foreach (int face in new[] { 0, 1, 2, 3 })
+            // Handle different shapes
+            ChipShapeType shapeType = Description.ShapeType;
+            int maxFace = GetMaxFaceForShape(shapeType);
+
+            for (int face = 0; face <= maxFace; face++)
             {
                 var facePins = pins.Where(p => p.face == face).ToList();
                 if (facePins.Count == 0) continue;
 
-                bool isHorizontal = face == 0 || face == 2;
+                bool isHorizontal = IsHorizontalFace(shapeType, face);
                 float chipSpan = isHorizontal ? Size.x : Size.y;
 
                 float GetHalfHeight(PinInstance pin) => PinHeightFromBitCount(pin.bitCount) / 2f;
@@ -563,5 +604,217 @@ namespace DLS.Game
             foreach (var pin in OutputPins)
                 ApplyLayout(pin, chipDesc.OutputPins);
         }
+
+        static int GetMaxFaceForShape(ChipShapeType shapeType)
+        {
+            switch (shapeType)
+            {
+                case ChipShapeType.Rectangle:
+                    return 3; // 4 faces (0-3)
+                case ChipShapeType.Hexagon:
+                    return 5; // 6 faces (0-5)
+                case ChipShapeType.Triangle:
+                    return 2; // 3 faces (0-2)
+                default:
+                    return 3;
+            }
+        }
+
+        static bool IsHorizontalFace(ChipShapeType shapeType, int face)
+        {
+            switch (shapeType)
+            {
+                case ChipShapeType.Rectangle:
+                    return face == 0 || face == 2; // Top and bottom faces
+                case ChipShapeType.Hexagon:
+                    // For hexagon, faces 0, 3 are more horizontal, others are more vertical/diagonal
+                    return face == 0 || face == 3;
+                case ChipShapeType.Triangle:
+                    // For triangle, face 0 (top) is horizontal, others are diagonal
+                    return face == 0;
+                default:
+                    return face == 0 || face == 2;
+            }
+        }
+
+        static Vector2 ProjectOntoCustomPolygonEdge(Vector2 localPos, Vector2 chipHalfSize, float rotation, CustomPolygonData polygon)
+        {
+            if (polygon == null) return localPos;
+
+            float rotationRad = rotation * Mathf.Deg2Rad;
+            Vector2 bestProjection = localPos;
+            float bestDistance = float.MaxValue;
+
+            // Convert normalized vertices to local positions
+            Vector2[] localVertices = new Vector2[polygon.Vertices.Length];
+            for (int i = 0; i < polygon.Vertices.Length; i++)
+            {
+                Vector2 normalizedPos = polygon.Vertices[i].ToVector2();
+                Vector2 scaledPos = new Vector2(normalizedPos.x * chipHalfSize.x, normalizedPos.y * chipHalfSize.y);
+                localVertices[i] = RotateVector(scaledPos, rotationRad);
+            }
+
+            // Check each edge
+            for (int i = 0; i < localVertices.Length; i++)
+            {
+                int next = (i + 1) % localVertices.Length;
+                Vector2 edgeStart = localVertices[i];
+                Vector2 edgeEnd = localVertices[next];
+
+                Vector2 projection;
+                if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
+                {
+                    // Project onto curved edge
+                    projection = ProjectOntoQuadraticBezier(edgeStart, edgeEnd, polygon.Edges[i], localPos);
+                }
+                else
+                {
+                    // Project onto straight edge
+                    projection = ProjectOntoLineSegment(edgeStart, edgeEnd, localPos);
+                }
+
+                float distance = Vector2.Distance(localPos, projection);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestProjection = projection;
+                }
+            }
+
+            return bestProjection;
+        }
+
+        static Vector2 ProjectOntoLineSegment(Vector2 start, Vector2 end, Vector2 point)
+        {
+            Vector2 line = end - start;
+            float lineLength = line.magnitude;
+            if (lineLength < 0.001f) return start;
+
+            Vector2 lineDir = line / lineLength;
+            Vector2 toPoint = point - start;
+            float projectionLength = Vector2.Dot(toPoint, lineDir);
+            projectionLength = Mathf.Clamp(projectionLength, 0f, lineLength);
+            return start + lineDir * projectionLength;
+        }
+
+        static Vector2 ProjectOntoQuadraticBezier(Vector2 start, Vector2 end, PolygonEdge edge, Vector2 point)
+        {
+            // Calculate the control point for the bezier curve
+            Vector2 edgeMidpointStraight = (start + end) * 0.5f;
+            Vector2 edgeDirection = end - start;
+            Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
+            Vector2 controlPoint = edgeMidpointStraight + perpendicular * edge.CurveStrength;
+
+            // Sample the curve to find the closest point
+            int samples = 20;
+            Vector2 bestPoint = start;
+            float bestDistance = float.MaxValue;
+
+            for (int i = 0; i <= samples; i++)
+            {
+                float t = i / (float)samples;
+                Vector2 curvePoint = QuadraticBezier(start, controlPoint, end, t);
+                float distance = Vector2.Distance(point, curvePoint);
+
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestPoint = curvePoint;
+                }
+            }
+
+            return bestPoint;
+        }
+
+        static Vector2 QuadraticBezier(Vector2 p0, Vector2 p1, Vector2 p2, float t)
+        {
+            float u = 1 - t;
+            return u * u * p0 + 2 * u * t * p1 + t * t * p2;
+        }
+
+        static Vector2 RotateVector(Vector2 vector, float rotationRad)
+        {
+            float cos = Mathf.Cos(rotationRad);
+            float sin = Mathf.Sin(rotationRad);
+            return new Vector2(
+                vector.x * cos - vector.y * sin,
+                vector.x * sin + vector.y * cos
+            );
+        }
+		
+		static void UpdatePinPositionInDescription(PinInstance pin, Vector2 newPosition)
+		{
+			// Find and update the pin's position in the chip description
+			if (pin.parent is SubChipInstance subchip)
+			{
+				var chipDesc = subchip.Description;
+				
+				// Search in input pins
+				if (chipDesc.InputPins != null)
+				{
+					for (int i = 0; i < chipDesc.InputPins.Length; i++)
+					{
+						if (chipDesc.InputPins[i].ID == pin.ID)
+						{
+							var pinDesc = chipDesc.InputPins[i];
+							pinDesc.Position = newPosition;
+							chipDesc.InputPins[i] = pinDesc;
+							return;
+						}
+					}
+				}
+				
+				// Search in output pins
+				if (chipDesc.OutputPins != null)
+				{
+					for (int i = 0; i < chipDesc.OutputPins.Length; i++)
+					{
+						if (chipDesc.OutputPins[i].ID == pin.ID)
+						{
+							var pinDesc = chipDesc.OutputPins[i];
+							pinDesc.Position = newPosition;
+							chipDesc.OutputPins[i] = pinDesc;
+							return;
+						}
+					}
+				}
+			}
+		}
+		
+		static Vector2 GetPinPositionFromDescription(PinInstance pin)
+		{
+			// Find the pin's position in the chip description
+			if (pin.parent is SubChipInstance subchip)
+			{
+				var chipDesc = subchip.Description;
+				
+				// Search in input pins
+				if (chipDesc.InputPins != null)
+				{
+					foreach (var pinDesc in chipDesc.InputPins)
+					{
+						if (pinDesc.ID == pin.ID)
+						{
+							return pinDesc.Position;
+						}
+					}
+				}
+				
+				// Search in output pins
+				if (chipDesc.OutputPins != null)
+				{
+					foreach (var pinDesc in chipDesc.OutputPins)
+					{
+						if (pinDesc.ID == pin.ID)
+						{
+							return pinDesc.Position;
+						}
+					}
+				}
+			}
+			
+			return Vector2.zero;
+		}
+
     }
 }

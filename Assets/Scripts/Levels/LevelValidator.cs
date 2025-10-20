@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DLS.Levels.Host;
+using UnityEngine;
 
 namespace DLS.Levels
 {
 	public sealed class LevelValidator
 	{
-	private readonly ISimulationAdapter _sim;
-	private readonly Random _random = new Random();
-	private const int MAX_COMBINATIONAL_TESTS = 40;
+		private readonly ISimulationAdapter _sim;
+		private readonly System.Random _random = new System.Random();
+		private const int MAX_COMBINATIONAL_TESTS = 40;
 
 		public LevelValidator(ISimulationAdapter sim) => _sim = sim;
 
@@ -36,60 +37,60 @@ namespace DLS.Levels
 			return report;
 		}
 
-	private void ValidateCombinational(LevelDefinition def, ValidationReport report)
-	{
-		var vectors = def.testVectors;
-
-		// Initialize AllTestResults for combinational levels
-		report.AllTestResults = new List<TestResult>();
-
-		// Randomly select up to MAX_COMBINATIONAL_TESTS vectors if there are too many
-		LevelDefinition.TestVector[] vectorsToTest;
-		if (vectors.Length > MAX_COMBINATIONAL_TESTS)
+		private void ValidateCombinational(LevelDefinition def, ValidationReport report)
 		{
-			// Use LINQ OrderBy with random guid to shuffle, then take first MAX_COMBINATIONAL_TESTS
-			vectorsToTest = vectors.OrderBy(x => _random.Next()).Take(MAX_COMBINATIONAL_TESTS).ToArray();
-			UnityEngine.Debug.Log($"[LevelValidator] Testing {MAX_COMBINATIONAL_TESTS} randomly selected vectors out of {vectors.Length} available");
-		}
-		else
-		{
-			vectorsToTest = vectors;
-		}
+			var vectors = def.testVectors;
 
-		// Correctness
-		foreach (var tv in vectorsToTest)
-		{
-			var iv = BitVector.FromString(tv.inputs);
-			_sim.ApplyInputs(iv);
+			// Initialize AllTestResults for combinational levels
+			report.AllTestResults = new List<TestResult>();
 
-			// ✅ ensure propagation before sampling outputs
-			_sim.SettleWithin(2, out _);   // 1–2 steps is plenty for combinational logic
-
-			var ov = _sim.ReadOutputs();
-			var expected = BitVector.FromString(tv.expected);
-			bool passed = (ov.Length == expected.Length && ov.Raw == expected.Raw);
-
-			// Create test result for this vector
-			var testResult = new TestResult
+			// Randomly select up to MAX_COMBINATIONAL_TESTS vectors if there are too many
+			LevelDefinition.TestVector[] vectorsToTest;
+			if (vectors.Length > MAX_COMBINATIONAL_TESTS)
 			{
-				Inputs = tv.inputs,
-				Expected = tv.expected,
-				Actual = ov.ToString(),
-				Passed = passed,
-				SequenceName = "", // Not used for combinational
-				StepIndex = 0, // Not used for combinational
-				IsClockEdge = false // Not used for combinational
-			};
-
-			report.AllTestResults.Add(testResult);
-
-			if (!passed)
+				// Use LINQ OrderBy with random guid to shuffle, then take first MAX_COMBINATIONAL_TESTS
+				vectorsToTest = vectors.OrderBy(x => _random.Next()).Take(MAX_COMBINATIONAL_TESTS).ToArray();
+				UnityEngine.Debug.Log($"[LevelValidator] Testing {MAX_COMBINATIONAL_TESTS} randomly selected vectors out of {vectors.Length} available");
+			}
+			else
 			{
-				report.PassedAll = false;
-				report.Failures.Add(new CaseFail(tv.inputs, $"Expected {expected}, got {ov}"));
+				vectorsToTest = vectors;
+			}
+
+			// Correctness
+			foreach (var tv in vectorsToTest)
+			{
+				var iv = BitVector.FromString(tv.inputs);
+				_sim.ApplyInputs(iv);
+
+				// ✅ ensure propagation before sampling outputs
+				_sim.SettleWithin(2, out _);   // 1–2 steps is plenty for combinational logic
+
+				var ov = _sim.ReadOutputs();
+				var expected = BitVector.FromString(tv.expected);
+				bool passed = (ov.Length == expected.Length && ov.Raw == expected.Raw);
+
+				// Create test result for this vector
+				var testResult = new TestResult
+				{
+					Inputs = tv.inputs,
+					Expected = tv.expected,
+					Actual = ov.ToString(),
+					Passed = passed,
+					SequenceName = "", // Not used for combinational
+					StepIndex = 0, // Not used for combinational
+					IsClockEdge = false // Not used for combinational
+				};
+
+				report.AllTestResults.Add(testResult);
+
+				if (!passed)
+				{
+					report.PassedAll = false;
+					report.Failures.Add(new CaseFail(tv.inputs, $"Expected {expected}, got {ov}"));
+				}
 			}
 		}
-	}
 
 		private void ValidateSequences(LevelDefinition def, ValidationReport report)
 		{
@@ -103,32 +104,32 @@ namespace DLS.Levels
 			// Initialize AllTestResults
 			report.AllTestResults = new List<TestResult>();
 
-		ResetCircuitStateEnhanced();
+			ResetCircuitStateEnhanced(def);
 
-		foreach (var sequence in def.testSequences)
-		{
-			// Apply setup vectors if provided (for circuit initialization)
-			if (sequence.setup != null && sequence.setup.Length > 0)
+			foreach (var sequence in def.testSequences)
 			{
-				foreach (var setupInput in sequence.setup)
+				// Apply setup vectors if provided (for circuit initialization)
+				if (sequence.setup != null && sequence.setup.Length > 0)
 				{
-					var setupIv = BitVector.FromString(setupInput);
-					_sim.ApplyInputs(setupIv);
-					_sim.SettleWithin(def.settleStepsPerVector, out _);
+					foreach (var setupInput in sequence.setup)
+					{
+						var setupIv = BitVector.FromString(setupInput);
+						_sim.ApplyInputs(setupIv);
+						_sim.SettleWithin(def.settleStepsPerVector, out _);
+					}
 				}
-			}
-			
-			// Apply the entire test sequence step by step
-			for (int i = 0; i < sequence.vectors.Length; i++)
+
+				// Apply the entire test sequence step by step
+				for (int i = 0; i < sequence.vectors.Length; i++)
 				{
 					var vector = sequence.vectors[i];
-					
+
 					// ALWAYS populate AllTestResults from the original test sequence
 					// This ensures expected values always come from JSON, not simulation
 					var testResult = new TestResult
 					{
 						Inputs = vector.inputs,
-						Expected = vector.expected,  
+						Expected = vector.expected,
 						Actual = "",  // Will be populated by simulation
 						Passed = false,  // Will be determined by simulation
 						SequenceName = sequence.name,
@@ -166,7 +167,7 @@ namespace DLS.Levels
 					{
 						report.PassedAll = false;
 						report.Failures.Add(new CaseFail(
-							vector.inputs, 
+							vector.inputs,
 							$"Sequence '{sequence.name}': Expected {expected}, got {ov}"
 						));
 					}
@@ -176,7 +177,7 @@ namespace DLS.Levels
 			}
 		}
 
-		private void ResetCircuitState()
+		private void ResetCircuitState(LevelDefinition def)
 		{
 			// Try to use reflection to call ResetCircuitState if available
 			var resetMethod = _sim.GetType().GetMethod("ResetCircuitState");
@@ -197,7 +198,7 @@ namespace DLS.Levels
 		/// Enhanced reset for SR-latches and other sequential circuits.
 		/// Ensures a consistent starting state before testing.
 		/// </summary>
-		private void ResetCircuitStateEnhanced()
+		private void ResetCircuitStateEnhanced(LevelDefinition def)
 		{
 			// Try enhanced SR-latch reset first
 			var resetSRMethod = _sim.GetType().GetMethod("ResetSRLatchState");
@@ -206,9 +207,9 @@ namespace DLS.Levels
 				resetSRMethod.Invoke(_sim, null);
 				return;
 			}
-			
+
 			// Fall back to standard reset
-			ResetCircuitState();
+			ResetCircuitState(def);
 		}
 
 	}
@@ -220,7 +221,7 @@ namespace DLS.Levels
 		public List<string> ConstraintMessages;
 		public int Stars;
 		public int LastPartsCount;
-		
+
 		// NEW: Store all test results
 		public List<TestResult> AllTestResults;
 	}

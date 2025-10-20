@@ -23,11 +23,51 @@ public sealed class MobileSimulationAdapter : ISimulationAdapter
 	public void ApplyInputs(BitVector iv)
 	{
 		var ins = InputPinsArray;
-		int n = Mathf.Min(ins.Length, iv.Length);
-		for (int i = 0; i < n; i++)
+		int bitOffset = 0;
+		
+		for (int i = 0; i < ins.Length; i++)
 		{
-			bool on = ((iv.Raw >> i) & 1UL) != 0UL;
-			ins[i].Pin.PlayerInputState.SetFirstBit(on);
+			var pin = ins[i].Pin;
+			var pinBitCount = pin.bitCount.BitCount;
+			
+			if (pinBitCount == 1)
+			{
+				// Single bit pin - use the existing method
+				if (bitOffset < iv.Length)
+				{
+					pin.PlayerInputState.SetFirstBit(iv[bitOffset]);
+					bitOffset++;
+				}
+			}
+			else
+			{
+				// Multi-bit pin - extract the bits for this pin and set them
+				ulong pinValue = 0;
+				for (int bitIndex = 0; bitIndex < pinBitCount && bitOffset < iv.Length; bitIndex++)
+				{
+					if (iv[bitOffset])
+					{
+						pinValue |= (1UL << bitIndex);
+					}
+					bitOffset++;
+				}
+				
+				// Set the value based on bit count
+				if (pinBitCount <= 16)
+				{
+					pin.PlayerInputState.SetShortValue((ushort)pinValue);
+				}
+				else if (pinBitCount <= 32)
+				{
+					pin.PlayerInputState.SetMediumValue((uint)pinValue);
+				}
+				else
+				{
+					// For >32 bits, we'd need to use BigValues, but that's complex
+					// For now, just set the first 32 bits
+					pin.PlayerInputState.SetMediumValue((uint)pinValue);
+				}
+			}
 		}
 	}
 
@@ -86,15 +126,54 @@ public sealed class MobileSimulationAdapter : ISimulationAdapter
 		if (root == null || dev == null) return new BitVector(0, 0);
 
 		ulong raw = 0UL;
-		int i = 0;
-		foreach (var o in dev.GetOutputPins())
+		int bitOffset = 0;
+		var outputPins = dev.GetOutputPins().ToArray();
+		
+		for (int i = 0; i < outputPins.Length; i++)
 		{
+			var o = outputPins[i];
 			var sPin = root.GetSimPinFromAddress(o.Pin.Address);
-			if (sPin.State.FirstBitHigh())
-				raw |= (1UL << i);
-			i++;
+			var pinBitCount = o.Pin.bitCount.BitCount;
+			
+			if (pinBitCount == 1)
+			{
+				// Single bit pin - read the first bit
+				if (sPin.State.FirstBitHigh())
+					raw |= (1UL << bitOffset);
+				bitOffset++;
+			}
+			else
+			{
+				// Multi-bit pin - read all bits
+				uint pinValue = 0;
+				if (pinBitCount <= 16)
+				{
+					pinValue = sPin.State.GetShortValues();
+				}
+				else if (pinBitCount <= 32)
+				{
+					pinValue = sPin.State.GetMediumValues();
+				}
+				else
+				{
+					// For >32 bits, we'd need to use BigValues, but that's complex
+					// For now, just read the first 32 bits
+					pinValue = sPin.State.GetMediumValues();
+				}
+				
+				// Extract individual bits and add them to the result
+				for (int bitIndex = 0; bitIndex < pinBitCount; bitIndex++)
+				{
+					if ((pinValue & (1U << bitIndex)) != 0)
+					{
+						raw |= (1UL << bitOffset);
+					}
+					bitOffset++;
+				}
+			}
 		}
-		return new BitVector(raw, i);
+		
+		return new BitVector(raw, bitOffset);
 	}
 
 	public ComponentCounts MeasureComponents()

@@ -481,23 +481,42 @@ public class MobileUIController : MonoBehaviour
 	}
 	public void OnTrashCanPress()
 	{
-		// Toggle eraser mode instead of deleting immediately
-		// Check actual state from EraserModeController to keep in sync
-		bool currentlyActive = DLS.Game.EraserModeController.IsActive;
-		
-		if (!currentlyActive)
+		// If placing a wire, cancel wire placement instead of toggling eraser
+		if (Project.ActiveProject?.controller?.IsCreatingWire ?? false)
 		{
-			// Activate eraser mode (DeleteAll)
-			DLS.Game.EraserModeController.ToggleEraserMode();
-			isEraserModeActive = true;
-			Debug.Log("[MobileUIController] Eraser mode activated");
+			Project.ActiveProject.controller.CancelEverything();
+			Debug.Log("[MobileUIController] Cancelled wire placement via trash can");
+			return;
+		}
+		
+		// Check if any elements are selected
+		bool hasSelection = Project.ActiveProject?.controller?.SelectedElements?.Count > 0;
+		
+		if (hasSelection)
+		{
+			// Delete selected elements
+			Project.ActiveProject.controller.DeleteSelected();
+			Debug.Log("[MobileUIController] Deleted selected elements via trash can");
 		}
 		else
 		{
-			// Deactivate eraser mode
-			DLS.Game.EraserModeController.DisableEraserMode();
-			isEraserModeActive = false;
-			Debug.Log("[MobileUIController] Eraser mode deactivated");
+			// Toggle eraser mode when nothing is selected
+			bool currentlyActive = DLS.Game.EraserModeController.IsActive;
+			
+			if (!currentlyActive)
+			{
+				// Activate eraser mode (DeleteAll)
+				DLS.Game.EraserModeController.ToggleEraserMode();
+				isEraserModeActive = true;
+				Debug.Log("[MobileUIController] Eraser mode activated");
+			}
+			else
+			{
+				// Deactivate eraser mode
+				DLS.Game.EraserModeController.DisableEraserMode();
+				isEraserModeActive = false;
+				Debug.Log("[MobileUIController] Eraser mode deactivated");
+			}
 		}
 	}
 	

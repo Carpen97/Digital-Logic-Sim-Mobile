@@ -629,7 +629,11 @@ namespace DLS.Game
 		}
 
 		public bool ShouldSnapToGrid => KeyboardShortcuts.SnapModeHeld || (description.Prefs_Snapping == 1 && ShowGrid) || description.Prefs_Snapping == 2;
-		public bool ForceStraightWires => KeyboardShortcuts.StraightLineModeHeld || (description.Prefs_StraightWires == 1 && ShowGrid) || description.Prefs_StraightWires == 2;
+		public bool ForceStraightWires => 
+			DLS.Graphics.WirePlacementBanner.ForceStraightWires ||  // Mobile: Banner override (like holding Shift)
+			KeyboardShortcuts.StraightLineModeHeld ||                // PC: Holding Shift
+			(description.Prefs_StraightWires == 1 && ShowGrid) ||    // Preference: If Grid Shown
+			description.Prefs_StraightWires == 2;                    // Preference: Always
 
 		public void NotifyExit()
 		{

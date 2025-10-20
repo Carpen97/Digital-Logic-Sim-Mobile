@@ -96,7 +96,12 @@ namespace DLS.SaveSystem
 				Wires = chip.Wires.Select(CreateWireDescription).ToArray(),
 				Displays = displays,
 				ChipType = ChipType.Custom,
-				HasCustomLayout = hasSavedDesc ? descOld.HasCustomLayout : false
+				HasCustomLayout = hasSavedDesc ? descOld.HasCustomLayout : false,
+				
+				// Preserve custom shape data
+				ShapeType = hasSavedDesc ? descOld.ShapeType : ChipShapeType.Rectangle,
+				ShapeRotation = hasSavedDesc ? descOld.ShapeRotation : 0f,
+				CustomPolygon = hasSavedDesc ? descOld.CustomPolygon : null
 			};
 		}
 
@@ -211,18 +216,20 @@ namespace DLS.SaveSystem
 			new(
 				devPin.Pin.Name,
 				devPin.ID,
-				devPin.Position,
+				devPin.Position, // Use the Position field from DevPinInstance
 				devPin.Pin.bitCount,
 				// Don't save colour info for output pin since it changes based on received input, so would just trigger unecessary 'unsaved changes' warnings
 				devPin.IsInputPin ? devPin.Pin.Colour : default,
-				devPin.pinValueDisplayMode
+				devPin.pinValueDisplayMode,
+				devPin.Pin.LocalPosY,
+				devPin.Pin.face
 			);
 
 		public static PinDescription CreatePinDescriptionAndConserveCustomInfo(DevPinInstance devPin, PinDescription pinDescription) =>
 			new(
 				devPin.Pin.Name,
 				devPin.ID,
-				devPin.Position,
+				devPin.Position, // Use the Position field from DevPinInstance
 				devPin.Pin.bitCount,
 				devPin.IsInputPin ? devPin.Pin.Colour : default,
 				devPin.pinValueDisplayMode,

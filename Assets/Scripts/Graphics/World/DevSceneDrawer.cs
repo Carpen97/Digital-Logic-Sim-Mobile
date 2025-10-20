@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DLS.Description;
 using DLS.Game;
 using DLS.Game.LevelsIntegration;
+using DLS.Graphics.UI;
 using DLS.Simulation;
 using Seb.Helpers;
 using Seb.Types;
@@ -319,8 +320,8 @@ namespace DLS.Graphics
 
 
 			// Draw outline and body
-			Draw.Quad(pos, desc.Size + Vector2.one * ChipOutlineWidth, outlineCol);
-			Draw.Quad(pos, desc.Size, chipCol);
+			DrawChipShape(pos, desc.Size + Vector2.one * ChipOutlineWidth, outlineCol, desc.ShapeType, desc.ShapeRotation, desc.CustomPolygon);
+			DrawChipShape(pos, desc.Size, chipCol, desc.ShapeType, desc.ShapeRotation, desc.CustomPolygon);
 
 			// Mouse over detection
 			if (InputHelper.MouseInsideBounds_World(pos, desc.Size))
@@ -888,6 +889,8 @@ namespace DLS.Graphics
 					bool mouseOverStateToggle = InputHelper.MouseInsideBounds_World(pos, squareDisplaySize);
 					bool isInteractingWithStateDisplay = mouseOverStateToggle && isInteractable;
 					Color stateCol = devPin.Pin.GetStateCol(currBitIndex, isInteractingWithStateDisplay, canEditViewedChip);
+					
+					uint bitState = devPin.Pin.State.GetTristatedValue(currBitIndex);
 
 					if (isInteractingWithStateDisplay)
 					{
@@ -1150,7 +1153,6 @@ namespace DLS.Graphics
 			{
 
 				pinCol = ActiveTheme.PinSelectedCol;
-				Debug.Log($"DRAWING PIN WITH COLOR {pinCol}");
 			}
 
 			Draw.Point(pinPos, PinRadius, pinCol);
@@ -1356,6 +1358,21 @@ namespace DLS.Graphics
         }
         public static void DrawGrid(Color gridCol)
 		{
+			// Check which grid type to draw (0 = Square, 1 = Hexagon)
+			int gridType = Project.ActiveProject.description.Prefs_GridType;
+			
+			if (gridType == 1)
+			{
+				DrawHexagonGrid(gridCol);
+			}
+			else
+			{
+				DrawSquareGrid(gridCol);
+			}
+		}
+
+		static void DrawSquareGrid(Color gridCol)
+		{
 			float thickness = GridThickness;
 
 			Camera cam = InputHelper.WorldCam;
@@ -1388,12 +1405,86 @@ namespace DLS.Graphics
 				}
 			}
 
-			return;
-
 			static float ToGrid(float v, float gridSize)
 			{
 				int intV = (int)(v / gridSize);
 				return intV * gridSize;
+			}
+		}
+
+		static void DrawHexagonGrid(Color gridCol)
+		{
+			float thickness = GridThickness;
+			Camera cam = InputHelper.WorldCam;
+			float screenHalfHeight = cam.orthographicSize;
+			float screenHalfWidth = cam.orthographicSize * cam.aspect;
+			Vector2 worldCentre = cam.transform.position;
+
+			// Use the same skip logic as square grid
+			int skip = cam.orthographicSize < 8 ? 1 : cam.orthographicSize < 32 ? 4 : 16;
+			
+			// Scale hexagon size based on skip factor (like square grid spacing)
+			float baseHexSize = GridSize * 1.5f;
+			float hexSize = baseHexSize * skip; // Make hexagons bigger when zoomed out
+			
+			// For proper hexagonal tessellation:
+			float hexWidth = hexSize * Mathf.Sqrt(3f); // Width between flat sides
+			float hexHeight = hexSize * 2f; // Height between pointy ends
+			
+			// Proper hexagonal grid spacing for tessellation
+			float horizontalSpacing = hexWidth; // Distance between column centers
+			float verticalSpacing = hexHeight * 0.75f; // Distance between row centers
+
+			// Calculate grid bounds
+			float left = worldCentre.x - screenHalfWidth - hexWidth;
+			float right = worldCentre.x + screenHalfWidth + hexWidth;
+			float bottom = worldCentre.y - screenHalfHeight - hexHeight;
+			float top = worldCentre.y + screenHalfHeight + hexHeight;
+
+			// Calculate grid coordinates for proper hexagonal tessellation
+			int colStart = Mathf.FloorToInt(left / horizontalSpacing) - 1;
+			int colEnd = Mathf.CeilToInt(right / horizontalSpacing) + 1;
+			int rowStart = Mathf.FloorToInt(bottom / verticalSpacing) - 1;
+			int rowEnd = Mathf.CeilToInt(top / verticalSpacing) + 1;
+
+			for (int row = rowStart; row <= rowEnd; row++)
+			{
+
+				for (int col = colStart; col <= colEnd; col++)
+				{
+
+					// Calculate position with proper hexagonal offset
+					// Every other row is offset by half the horizontal spacing
+					float xOffset = (row % 2 == 0) ? 0f : horizontalSpacing * 0.5f;
+					float x = col * horizontalSpacing + xOffset;
+					float y = row * verticalSpacing;
+
+					Vector2 center = new Vector2(x, y);
+					DrawHexagon(center, hexSize, thickness, gridCol);
+				}
+			}
+		}
+
+		static void DrawHexagon(Vector2 center, float size, float thickness, Color color)
+		{
+			// Calculate the 6 vertices of a point-top hexagon (rotated 30 degrees)
+			Vector2[] vertices = new Vector2[6];
+			for (int i = 0; i < 6; i++)
+			{
+				float angleDeg = 60f * i + 30f; // Add 30 degrees to rotate from flat-top to point-top
+				float angleRad = angleDeg * Mathf.Deg2Rad;
+				vertices[i] = center + new Vector2(
+					size * Mathf.Cos(angleRad),
+					size * Mathf.Sin(angleRad)
+				);
+			}
+
+			// Draw the 6 edges of the hexagon
+			for (int i = 0; i < 6; i++)
+			{
+				Vector2 start = vertices[i];
+				Vector2 end = vertices[(i + 1) % 6];
+				Draw.Line(start, end, thickness, color);
 			}
 		}
 
@@ -1422,5 +1513,185 @@ namespace DLS.Graphics
 
 			return (drawPriority_childWire + drawPriority_signalHigh + drawPriority_bitCount) * 100 + wire.spawnOrder;
 		}
+
+		static void DrawChipShape(Vector2 centre, Vector2 size, Color col, ChipShapeType shapeType)
+		{
+			DrawChipShape(centre, size, col, shapeType, 0f, null);
+		}
+
+	static void DrawChipShape(Vector2 centre, Vector2 size, Color col, ChipShapeType shapeType, float rotation, CustomPolygonData customPolygon = null)
+	{
+		switch (shapeType)
+		{
+			case ChipShapeType.Rectangle:
+				Draw.Quad(centre, size, col);
+				break;
+				
+			case ChipShapeType.Hexagon:
+				DrawHexagon(centre, size, col, rotation);
+				break;
+				
+			case ChipShapeType.Triangle:
+				DrawTriangle(centre, size, col, rotation);
+				break;
+				
+			case ChipShapeType.CustomPolygon:
+				DrawCustomPolygon(centre, size, col, rotation, customPolygon);
+				break;
+		}
+	}
+
+		static void DrawHexagon(Vector2 centre, Vector2 size, Color col)
+		{
+			DrawHexagon(centre, size, col, 0f);
+		}
+
+		static void DrawHexagon(Vector2 centre, Vector2 size, Color col, float rotation)
+		{
+			// Create hexagon using 6 triangles
+			float halfWidth = size.x * 0.5f;
+			float halfHeight = size.y * 0.5f;
+			float rotationRad = rotation * Mathf.Deg2Rad;
+			
+			// Hexagon vertices (6 points)
+			Vector2[] vertices = new Vector2[6];
+			for (int i = 0; i < 6; i++)
+			{
+				float angle = i * Mathf.PI / 3f + rotationRad; // 60 degrees per vertex + rotation
+				vertices[i] = centre + new Vector2(
+					Mathf.Cos(angle) * halfWidth,
+					Mathf.Sin(angle) * halfHeight
+				);
+			}
+			
+			// Draw hexagon as 6 triangles from center
+			for (int i = 0; i < 6; i++)
+			{
+				int next = (i + 1) % 6;
+				Draw.Triangle(centre, vertices[i], vertices[next], col);
+			}
+		}
+
+		static void DrawTriangle(Vector2 centre, Vector2 size, Color col)
+		{
+			DrawTriangle(centre, size, col, 0f);
+		}
+
+	static void DrawTriangle(Vector2 centre, Vector2 size, Color col, float rotation)
+	{
+		// Draw triangle using the same vertex calculation as pin positioning
+		float halfWidth = size.x * 0.5f;
+		float halfHeight = size.y * 0.5f;
+		float rotationRad = rotation * Mathf.Deg2Rad;
+		
+		// Triangle vertices (3 points) - same calculation as GetTriangleProjectedPointDirect
+		Vector2[] vertices = new Vector2[3];
+		for (int i = 0; i < 3; i++)
+		{
+			float angle = i * 2f * Mathf.PI / 3f + rotationRad;
+			vertices[i] = centre + new Vector2(
+				Mathf.Cos(angle) * halfWidth,
+				Mathf.Sin(angle) * halfHeight
+			);
+		}
+		
+		Draw.Triangle(vertices[0], vertices[1], vertices[2], col);
+	}
+
+	static Vector2 RotateVector(Vector2 vector, float rotationRad)
+	{
+		float cos = Mathf.Cos(rotationRad);
+		float sin = Mathf.Sin(rotationRad);
+		return new Vector2(
+			vector.x * cos - vector.y * sin,
+			vector.x * sin + vector.y * cos
+		);
+	}
+
+	static void DrawCustomPolygon(Vector2 centre, Vector2 size, Color col, float rotation, CustomPolygonData customPolygon)
+	{
+		// Use the passed custom polygon data
+		if (customPolygon == null)
+		{
+			// Fallback to rectangle if no custom polygon data
+			Draw.Quad(centre, size, col);
+			return;
+		}
+
+		CustomPolygonData polygon = customPolygon;
+		if (polygon.Vertices == null || polygon.Vertices.Length < 3)
+		{
+			// Need at least 3 vertices for a polygon
+			Draw.Quad(centre, size, col);
+			return;
+		}
+
+		float halfWidth = size.x * 0.5f;
+		float halfHeight = size.y * 0.5f;
+		float rotationRad = rotation * Mathf.Deg2Rad;
+
+		// Convert normalized vertices to world positions
+		Vector2[] worldVertices = new Vector2[polygon.Vertices.Length];
+		for (int i = 0; i < polygon.Vertices.Length; i++)
+		{
+			Vector2 normalizedPos = polygon.Vertices[i].ToVector2();
+			Vector2 scaledPos = new Vector2(normalizedPos.x * halfWidth, normalizedPos.y * halfHeight);
+			worldVertices[i] = centre + RotateVector(scaledPos, rotationRad);
+		}
+
+		// Draw polygon as triangles from center
+		for (int i = 0; i < worldVertices.Length; i++)
+		{
+			int next = (i + 1) % worldVertices.Length;
+			
+			// Check if this edge is curved
+			if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
+			{
+				// Draw curved edge as multiple segments
+				DrawCurvedEdge(centre, worldVertices[i], worldVertices[next], polygon.Edges[i], col);
+			}
+			else
+			{
+				// Draw straight edge as triangle
+				Draw.Triangle(centre, worldVertices[i], worldVertices[next], col);
+			}
+		}
+	}
+
+	static void DrawCurvedEdge(Vector2 centre, Vector2 start, Vector2 end, PolygonEdge edge, Color col)
+	{
+		// For now, draw curved edges as multiple straight segments
+		// using quadratic bezier curve
+		int segments = 8; // Number of segments to approximate the curve
+		
+		// Calculate control point
+		Vector2 edgeMidpoint = (start + end) * 0.5f;
+		Vector2 edgeDirection = end - start;
+		Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
+		Vector2 controlPoint = edgeMidpoint + perpendicular * edge.CurveStrength;
+
+		// Draw curve as series of triangles
+		Vector2 prevPoint = start;
+		for (int i = 1; i <= segments; i++)
+		{
+			float t = i / (float)segments;
+			Vector2 curvePoint = QuadraticBezier(start, controlPoint, end, t);
+			Draw.Triangle(centre, prevPoint, curvePoint, col);
+			prevPoint = curvePoint;
+		}
+	}
+
+	static Vector2 QuadraticBezier(Vector2 p0, Vector2 p1, Vector2 p2, float t)
+	{
+		float u = 1 - t;
+		float tt = t * t;
+		float uu = u * u;
+		
+		Vector2 point = uu * p0;
+		point += 2 * u * t * p1;
+		point += tt * p2;
+		
+		return point;
+	}
 	}
 }

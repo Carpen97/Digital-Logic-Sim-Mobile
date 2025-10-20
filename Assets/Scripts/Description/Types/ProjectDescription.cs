@@ -23,20 +23,21 @@ namespace DLS.Description
 		public DateTime CreationTime;
 		public DateTime LastSaveTime;
 
-		// Prefs
-		public int Prefs_MainPinNamesDisplayMode;
-		public int Prefs_ChipPinNamesDisplayMode;
-		public int Prefs_GridDisplayMode;
-		public int Prefs_WireCurvatureMode;
-		public int Prefs_MultiWireLayoutAlgorithm;
-		// Prefs_UIThemeMode removed - only Squiggles Theme is used
-		public int Prefs_Snapping;
-		public int Prefs_StraightWires;
-		public bool Prefs_SimPaused;
-		public int Prefs_SimTargetStepsPerSecond;
-		public int Prefs_SimStepsPerClockTick;
-		public int Perfs_PinIndicators;
-		public bool Prefs_UseDragAndDropMode;
+	// Prefs
+	public int Prefs_MainPinNamesDisplayMode;
+	public int Prefs_ChipPinNamesDisplayMode;
+	public int Prefs_GridDisplayMode;
+	public int Prefs_GridType; // 0 = Square, 1 = Hexagon
+	public int Prefs_WireCurvatureMode;
+	public int Prefs_MultiWireLayoutAlgorithm;
+	// Prefs_UIThemeMode removed - only Squiggles Theme is used
+	public int Prefs_Snapping;
+	public int Prefs_StraightWires;
+	public bool Prefs_SimPaused;
+	public int Prefs_SimTargetStepsPerSecond;
+	public int Prefs_SimStepsPerClockTick;
+	public int Perfs_PinIndicators;
+	public bool Prefs_UseDragAndDropMode;
 		
 		// User name preferences for leaderboard uploads
 		public string Prefs_UserName;

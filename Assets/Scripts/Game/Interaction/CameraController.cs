@@ -196,8 +196,14 @@ namespace DLS.Game
 			if (CanMove)
 			{
 #if UNITY_ANDROID || UNITY_IOS
+				bool isPlacingWire = Project.ActiveProject.controller.IsCreatingWire;
+				// During wire placement, require two fingers for panning. Otherwise, use single finger.
+				int requiredTouchCount = isPlacingWire ? 2 : 1;
+				bool canPanWithCurrentTouchCount = UnityEngine.Input.touchCount >= requiredTouchCount;
+
 				if (TouchInputHelper.Instance != null &&
 					TouchInputHelper.Instance.Dragging &&
+					canPanWithCurrentTouchCount &&
 					Project.ActiveProject.controller.SelectedElements.Count == 0 &&
 					!MobileUIControllerWrapper.IsBoxSelectToolActive &&
 					!DLS.Game.EraserModeController.IsActive  // Disable camera panning when eraser mode is active

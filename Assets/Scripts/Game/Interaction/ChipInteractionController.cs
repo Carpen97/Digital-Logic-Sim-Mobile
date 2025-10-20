@@ -433,6 +433,9 @@ namespace DLS.Game
 				Touch touch = Input.GetTouch(0);
 				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) || InteractionState.MouseIsOverUI) return;
 				if (MobileUIControllerWrapper.IsWrenchToolActive) return;
+				
+				// Don't process touch input if touching the wire placement banner
+				if (DLS.Graphics.WirePlacementBanner.IsTouchOverBanner(touch.position)) return;
 			
 				if(touch.phase == TouchPhase.Began){
 					HandleSingleTap();

@@ -1,17 +1,19 @@
 using System;
+using System.Threading.Tasks;
 using UnityEngine;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis;
 using Seb.Vis.UI;
 using DLS.Game;
+using DLS.Online;
 using static DLS.Graphics.DrawSettings;
 
 namespace DLS.Graphics
 {
     /// <summary>
     /// Popup for entering user name when uploading scores to Firebase leaderboard.
-    /// Mobile-optimized with validation and preference storage.
+    /// Mobile-optimized with validation, username reservation, and authentication.
     /// </summary>
     public static class UserNameInputPopup
     {
@@ -22,6 +24,12 @@ namespace DLS.Graphics
         static bool _shareSolution = false;
         static string _validationMessage = "";
         static bool _hasInitializedInput = false; // Track if input has been initialized
+        static bool _isCheckingAvailability = false;
+        static bool _hasClaimedUsername = false; // Whether user already has a username
+        static bool _isLoadingProfile = false;
+        static string _originalUserName = ""; // Store original username for change detection
+        static bool _showNameChangeConfirmation = false;
+        static string _newUserName = "";
         
         // UI constants
         const float InputFieldHeight = 4f;
@@ -42,16 +50,61 @@ namespace DLS.Graphics
             _onConfirm = onConfirm;
             _onCancel = onCancel;
             
-            // Load saved user name if available
-            LoadSavedUserName();
-            
             // Reset state
             _validationMessage = "";
             _uploadAsAnonymous = false;
-            _shareSolution = false; // Reset share solution state
-            _hasInitializedInput = false; // Reset input initialization flag
+            _shareSolution = false;
+            _hasInitializedInput = false;
+            _isCheckingAvailability = false;
+            _hasClaimedUsername = false;
+            _isLoadingProfile = true;
+            
+            // Load user profile asynchronously
+            _ = LoadUserProfileAsync();
             
             UIDrawer.SetActiveMenu(UIDrawer.MenuType.UserNameInput);
+        }
+        
+        /// <summary>
+        /// Loads the user's profile from Firebase to check if they have a claimed username
+        /// </summary>
+        static async Task LoadUserProfileAsync()
+        {
+            try
+            {
+                _isLoadingProfile = true;
+                _validationMessage = "🔄 Loading user profile...";
+                
+                var profile = await UserAuthService.GetCurrentUserProfileAsync();
+                
+                if (profile != null && !string.IsNullOrEmpty(profile.username))
+                {
+                    // User already has a claimed username
+                    _userName = profile.username;
+                    _originalUserName = profile.username; // Store original for change detection
+                    _hasClaimedUsername = true;
+                    _validationMessage = $"✓ Verified user: {profile.username}";
+                    _rememberName = true; // Enable remember checkbox for claimed users
+                }
+                else
+                {
+                    // User has no claimed username, check local preferences
+                    LoadSavedUserName();
+                    _hasClaimedUsername = false;
+                    _validationMessage = "";
+                }
+                
+                _isLoadingProfile = false;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[UserNameInputPopup] Failed to load user profile: {ex.Message}");
+                // Fall back to local preferences
+                LoadSavedUserName();
+                _hasClaimedUsername = false;
+                _isLoadingProfile = false;
+                _validationMessage = "";
+            }
         }
         
         public static void DrawMenu()
@@ -59,6 +112,14 @@ namespace DLS.Graphics
             // Dimmed backdrop (same as other popups)
             MenuHelper.DrawBackgroundOverlay();
             
+            // If showing confirmation dialog, only draw that
+            if (_showNameChangeConfirmation)
+            {
+                DrawNameChangeConfirmation();
+                return;
+            }
+            
+            // Otherwise draw the main menu
             using (Seb.Vis.UI.UI.BeginBoundsScope(true))
             {
                 Draw.ID panelBG = Seb.Vis.UI.UI.ReservePanel();
@@ -73,7 +134,10 @@ namespace DLS.Graphics
                 // --- Subtitle ---
                 Vector2 subtitlePos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + new Vector2(0f, -1.4f);
                 Color subtitleCol = ColHelper.MakeCol255(200, 200, 200);
-                Seb.Vis.UI.UI.DrawText("Your name will appear on the leaderboard", ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, subtitlePos, Anchor.TextCentre, subtitleCol);
+                string subtitle = _hasClaimedUsername 
+                    ? "Your authenticated username will be used" 
+                    : "Pick a username that will be displayed on the leaderboard";
+                Seb.Vis.UI.UI.DrawText(subtitle, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, subtitlePos, Anchor.TextCentre, subtitleCol);
                 
                 // --- Input field ---
                 DrawInputField();
@@ -123,8 +187,10 @@ namespace DLS.Graphics
             var inputTheme = MenuHelper.Theme.ChipNameInputField;
             inputTheme.fontSize = ActiveUITheme.FontSizeRegular;
             
-            // Only use disabled scope when actually anonymous
-            if (_uploadAsAnonymous)
+            // Disable input field when uploading anonymously or loading profile
+            bool shouldDisable = _uploadAsAnonymous || _isLoadingProfile;
+            
+            if (shouldDisable)
             {
                 using (Seb.Vis.UI.UI.BeginDisabledScope(true))
                 {
@@ -136,7 +202,7 @@ namespace DLS.Graphics
                         "Enter your name...",
                         Anchor.Centre,
                         1f,
-                        ValidateUserName,
+                        null,  // No validation callback - validate only on submit
                         false
                     );
                     
@@ -155,7 +221,7 @@ namespace DLS.Graphics
                     "Enter your name...",
                     Anchor.Centre,
                     1f,
-                    ValidateUserName,
+                    null,  // No validation callback - validate only on submit
                     true  // forceFocus = true like other working input fields
                 );
             }
@@ -167,40 +233,42 @@ namespace DLS.Graphics
             float checkboxSize = 2.5f;
             float checkboxSpacing = 1.5f;
             
-            // Remember name checkbox
+            // Remember name checkbox (enabled for all users, disabled only when anonymous)
             Vector2 rememberPos = checkboxStart;
+            bool rememberEnabled = !_uploadAsAnonymous;
             bool rememberPressed = Seb.Vis.UI.UI.Button(
                 _rememberName ? "[X] Remember my name" : "[ ] Remember my name",
                 MenuHelper.Theme.ButtonTheme,
                 rememberPos,
                 new Vector2(Seb.Vis.UI.UI.Width * 0.5f, checkboxSize),
-                true,
+                rememberEnabled,
                 false,
                 false,
                 MenuHelper.Theme.ButtonTheme.buttonCols,
                 Anchor.CentreTop
             );
             
-            if (rememberPressed)
+            if (rememberPressed && rememberEnabled)
             {
                 _rememberName = !_rememberName;
             }
             
-            // Anonymous checkbox
+            // Anonymous checkbox (disabled when user has claimed username)
             Vector2 anonymousPos = rememberPos + Vector2.down * (checkboxSize + checkboxSpacing);
+            bool anonymousEnabled = !_hasClaimedUsername;
             bool anonymousPressed = Seb.Vis.UI.UI.Button(
                 _uploadAsAnonymous ? "[X] Upload as Anonymous" : "[ ] Upload as Anonymous",
                 MenuHelper.Theme.ButtonTheme,
                 anonymousPos,
                 new Vector2(Seb.Vis.UI.UI.Width * 0.5f, checkboxSize),
-                true,
+                anonymousEnabled,
                 false,
                 false,
                 MenuHelper.Theme.ButtonTheme.buttonCols,
                 Anchor.CentreTop
             );
             
-            if (anonymousPressed)
+            if (anonymousPressed && anonymousEnabled)
             {
                 _uploadAsAnonymous = !_uploadAsAnonymous;
                 if (_uploadAsAnonymous)
@@ -236,7 +304,17 @@ namespace DLS.Graphics
             Vector2 messagePos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + new Vector2(0f, -1.4f);
             Color messageCol = _validationMessage.Contains("✓") ? ColHelper.MakeCol255(100, 255, 100) : ColHelper.MakeCol255(255, 100, 100);
             
-            Seb.Vis.UI.UI.DrawText(_validationMessage, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, messagePos, Anchor.TextCentre, messageCol);
+            // Make loading messages more prominent
+            if (_validationMessage.Contains("Updating username") || _validationMessage.Contains("Claiming username") || _validationMessage.Contains("Loading"))
+            {
+                // Use larger font and more prominent color for loading states
+                messageCol = ColHelper.MakeCol255(255, 255, 100); // Bright yellow for loading
+                Seb.Vis.UI.UI.DrawText(_validationMessage, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 1.2f, messagePos, Anchor.TextCentre, messageCol);
+            }
+            else
+            {
+                Seb.Vis.UI.UI.DrawText(_validationMessage, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, messagePos, Anchor.TextCentre, messageCol);
+            }
         }
         
         static void DrawButtons()
@@ -261,6 +339,13 @@ namespace DLS.Graphics
         // ---------- Logic ----------
         static void HandleUpload()
         {
+            // Prevent double-click during async operations
+            if (_isCheckingAvailability || _isLoadingProfile)
+            {
+                _validationMessage = "Please wait...";
+                return;
+            }
+            
             string userName = "";
             bool shouldRemember = false;
             
@@ -283,7 +368,27 @@ namespace DLS.Graphics
                 return;
             }
             
-            // Save preference if requested
+            // Handle username claiming for authenticated users
+            if (!_uploadAsAnonymous && !_hasClaimedUsername)
+            {
+                // User wants to use a username but hasn't claimed one yet
+                _ = ClaimUsernameAndContinueAsync(userName, shouldRemember);
+                return;
+            }
+            
+            // Handle name change for users who already have a claimed username
+            if (!_uploadAsAnonymous && _hasClaimedUsername && !string.IsNullOrEmpty(_originalUserName))
+            {
+                if (userName != _originalUserName)
+                {
+                    // User wants to change their name - show confirmation dialog
+                    _newUserName = userName;
+                    _showNameChangeConfirmation = true;
+                    return;
+                }
+            }
+            
+            // Save preference if requested (for non-authenticated mode)
             if (shouldRemember && !string.IsNullOrEmpty(userName))
             {
                 SaveUserName(userName);
@@ -294,9 +399,50 @@ namespace DLS.Graphics
             UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
         }
         
+        /// <summary>
+        /// Claims a username for the user and continues with upload
+        /// </summary>
+        static async Task ClaimUsernameAndContinueAsync(string userName, bool shouldRemember)
+        {
+            try
+            {
+                _isCheckingAvailability = true;
+                _validationMessage = "🔄 Claiming username...";
+                
+                var result = await UserAuthService.ClaimUsernameAsync(userName);
+                
+                if (result.success)
+                {
+                    _validationMessage = "✓ Username claimed successfully!";
+                    _hasClaimedUsername = true;
+                    
+                    // Wait a moment to show success message
+                    await Task.Delay(500);
+                    
+                    // Continue with upload
+                    _onConfirm?.Invoke(userName, false, _shareSolution);
+                    UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
+                }
+                else
+                {
+                    _validationMessage = result.error;
+                }
+                
+                _isCheckingAvailability = false;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[UserNameInputPopup] Failed to claim username: {ex.Message}");
+                _validationMessage = "Failed to claim username. Try again.";
+                _isCheckingAvailability = false;
+            }
+        }
+        
         static bool ValidateUserName(string userName)
         {
             if (string.IsNullOrEmpty(userName)) return false;
+            
+            // Full validation for submission (3-20 characters)
             if (userName.Length < 3 || userName.Length > 20) return false;
             
             // Check for valid characters (letters, numbers, spaces, hyphens, underscores)
@@ -350,6 +496,103 @@ namespace DLS.Graphics
             catch (Exception ex)
             {
                 Debug.LogWarning($"[UserNameInputPopup] Failed to save user name: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Draws the name change confirmation dialog
+        /// </summary>
+        static void DrawNameChangeConfirmation()
+        {
+            using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+            {
+                Draw.ID dialogBG = Seb.Vis.UI.UI.ReservePanel();
+                
+                // Dialog title - centered at top
+                Vector2 titlePos = Seb.Vis.UI.UI.CentreTop + Vector2.down * 15f;
+                Color headerCol = ColHelper.MakeCol255(255, 165, 0); // Orange for warning
+                Seb.Vis.UI.UI.DrawText("Change Username?", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular * 1.5f, titlePos, Anchor.TextCentre, headerCol);
+                
+                // Warning message - centered below title with proper spacing
+                Vector2 messagePos = titlePos + Vector2.down * 10f; // Increased spacing below title
+                Color messageCol = Color.white;
+                string message = $"You are changing your username from:\n\"{_originalUserName}\"\nto:\n\"{_newUserName}\"\n\nThis will update all your existing solutions.";
+                Seb.Vis.UI.UI.DrawText(message, ActiveUITheme.FontRegular, ActiveUITheme.FontSizeRegular, messagePos, Anchor.TextCentre, messageCol);
+                
+                // Buttons
+                Vector2 buttonPos = Seb.Vis.UI.UI.PrevBounds.CentreBottom + new Vector2(0f, -4f);
+                string[] buttonNames = { "CONFIRM CHANGE", "CANCEL" };
+                bool[] buttonStates = { true, true };
+                
+                int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(
+                    buttonNames,
+                    buttonStates,
+                    MenuHelper.Theme.ButtonTheme,
+                    buttonPos,
+                    Seb.Vis.UI.UI.Width * 0.7f,
+                    DrawSettings.DefaultButtonSpacing,
+                    0,
+                    Anchor.CentreTop
+                );
+                
+                // Handle button results
+                if (buttonIndex == 0) // CONFIRM CHANGE
+                {
+                    _ = ConfirmNameChangeAsync();
+                }
+                else if (buttonIndex == 1) // CANCEL
+                {
+                    _showNameChangeConfirmation = false;
+                    _newUserName = "";
+                    // Reset input field to original name
+                    var inputState = Seb.Vis.UI.UI.GetInputFieldState(ID_UserNameInput);
+                    inputState.SetText(_originalUserName, false);
+                    // Go back to LevelValidationPopup
+                    _onCancel?.Invoke();
+                    UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
+                }
+                
+                // Dialog background
+                MenuHelper.DrawReservedMenuPanel(dialogBG, Seb.Vis.UI.UI.GetCurrentBoundsScope());
+            }
+        }
+        
+        /// <summary>
+        /// Confirms the name change and updates existing solutions
+        /// </summary>
+        static async Task ConfirmNameChangeAsync()
+        {
+            try
+            {
+                _validationMessage = "🔄 Updating username and all solutions...";
+                
+                // Use the new comprehensive username change method
+                var result = await UserAuthService.ChangeUsernameAsync(_newUserName);
+                if (!result.success)
+                {
+                    throw new Exception(result.error);
+                }
+                
+                Debug.Log($"[UserNameInputPopup] Successfully updated username to: {_newUserName}");
+                
+                // Update local state
+                _originalUserName = _newUserName;
+                _userName = _newUserName;
+                _showNameChangeConfirmation = false;
+                _newUserName = "";
+                
+                _validationMessage = $"✓ Username updated to: {_userName}";
+                
+                // Continue with the original upload
+                _onConfirm?.Invoke(_userName, _rememberName, _shareSolution);
+                UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[UserNameInputPopup] Failed to update username: {ex.Message}");
+                _validationMessage = "Failed to update username. Please try again.";
+                _showNameChangeConfirmation = false;
+                _newUserName = "";
             }
         }
     }

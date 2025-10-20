@@ -12,6 +12,7 @@ namespace DLS.Description
 		public bool VSyncEnabled;
         public int showScrollingButtons;
         public int UIScaling;
+        public bool EnableDiscordRichPresence;
 
         public static AppSettings Default() =>
 			new()
@@ -20,6 +21,7 @@ namespace DLS.Description
 				ResolutionY = 1080,
 				fullscreenMode = FullScreenMode.Windowed,
 				VSyncEnabled = true,
+				EnableDiscordRichPresence = true,
 				#if UNITY_ANDROID || UNITY_IOS
 				orientationIsLeftLandscape = false,
 				showScrollingButtons = 0,

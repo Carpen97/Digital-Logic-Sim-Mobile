@@ -1,0 +1,45 @@
+{
+  "project_info": {
+    "project_number": "60852084956",
+    "project_id": "dlsmobile-22657",
+    "storage_bucket": "dlsmobile-22657.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:60852084956:android:97bca894b581ede7f15419",
+        "android_client_info": {
+          "package_name": "com.DavidCarpenfelt.DigitalLogicSimMobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAz_OVtg_Q9222COod_7zUxdGUrHWAJjLk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:60852084956:web:6287a99dda351bb8f15419",
+        "api_key": [
+          {
+            "current_key": "AIzaSyAJFzpF8PnGjyj9LuYWk8Cl22-DJioIH6U"
+          }
+        ],
+        "oauth_client": [],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": []
+          }
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

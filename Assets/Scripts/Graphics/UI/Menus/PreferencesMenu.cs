@@ -38,11 +38,17 @@ namespace DLS.Graphics
 			#endif
 		};
 
-		static readonly string[] GridDisplayOptions =
-		{
-			"Off",
-			"On"
-		};
+	static readonly string[] GridDisplayOptions =
+	{
+		"Off",
+		"On"
+	};
+
+	static readonly string[] GridTypeOptions =
+	{
+		"Square",
+		"Hexagon"
+	};
 
 		static readonly string[] WireCurvatureOptions =
 		{
@@ -106,23 +112,25 @@ namespace DLS.Graphics
 			"Drag and Drop"
 		};
 
+
 		static readonly Vector2 entrySize = new(menuWidth, DrawSettings.SelectorWheelHeight);
 		public static readonly Vector2 settingFieldSize = new(entrySize.x / 3, entrySize.y);
 
-		// ---- State ----
-		static readonly UIHandle ID_MainPinNames = new("PREFS_MainPinNames");
-		static readonly UIHandle ID_ChipPinNames = new("PREFS_ChipPinNames");
-		static readonly UIHandle ID_GridDisplay = new("PREFS_GridDisplay");
-		static readonly UIHandle ID_WireCurvatureDisplay = new("PREFS_WireCurvatureDisplay");
-		static readonly UIHandle ID_MultiWireLayoutAlgorithm = new("PREFS_MultiWireLayoutAlgorithm");
+	// ---- State ----
+	static readonly UIHandle ID_MainPinNames = new("PREFS_MainPinNames");
+	static readonly UIHandle ID_ChipPinNames = new("PREFS_ChipPinNames");
+	static readonly UIHandle ID_GridDisplay = new("PREFS_GridDisplay");
+	static readonly UIHandle ID_GridType = new("PREFS_GridType");
+	static readonly UIHandle ID_WireCurvatureDisplay = new("PREFS_WireCurvatureDisplay");
+	static readonly UIHandle ID_MultiWireLayoutAlgorithm = new("PREFS_MultiWireLayoutAlgorithm");
 		// UIThemeDisplay handle removed - only Squiggles Theme is used
 		static readonly UIHandle ID_Snapping = new("PREFS_Snapping");
 		static readonly UIHandle ID_StraightWires = new("PREFS_StraightWires");
 		static readonly UIHandle ID_SimStatus = new("PREFS_SimStatus");
 		static readonly UIHandle ID_SimFrequencyField = new("PREFS_SimTickTarget");
 		static readonly UIHandle ID_ClockSpeedInput = new("PREFS_ClockSpeed");
-		static readonly UIHandle ID_PinIndicators = new("PREFS_PinIndicators");
-		static readonly UIHandle ID_ControlScheme = new("PREFS_ControlScheme");
+	static readonly UIHandle ID_PinIndicators = new("PREFS_PinIndicators");
+	static readonly UIHandle ID_ControlScheme = new("PREFS_ControlScheme");
 
 		// Section collapse/expand state
 		static readonly UIHandle ID_DisplaySection = new("PREFS_DisplaySection");
@@ -231,16 +239,17 @@ namespace DLS.Graphics
 			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
 				// --- Draw settings ---
-				DrawCollapsibleHeader("DISPLAY:", ID_DisplaySection, IsDisplaySectionExpanded, ToggleDisplaySection);
-				if (IsDisplaySectionExpanded())
-				{
-					DrawNextWheel("Show I/O pin names", PinDisplayOptions, ID_MainPinNames);
-					DrawNextWheel("Show chip pin names", PinDisplayOptions, ID_ChipPinNames);
-					DrawNextWheel(showGridLabel, GridDisplayOptions, ID_GridDisplay);
-					DrawNextWheel(wireCurvatureLabel, WireCurvatureOptions, ID_WireCurvatureDisplay);
-					DrawNextWheel("Multi-wire layout", MultiWireLayoutAlgorithmOptions, ID_MultiWireLayoutAlgorithm);
-					// UI Theme option removed - only Squiggles Theme is used
-				}
+			DrawCollapsibleHeader("DISPLAY:", ID_DisplaySection, IsDisplaySectionExpanded, ToggleDisplaySection);
+			if (IsDisplaySectionExpanded())
+			{
+				DrawNextWheel("Show I/O pin names", PinDisplayOptions, ID_MainPinNames);
+				DrawNextWheel("Show chip pin names", PinDisplayOptions, ID_ChipPinNames);
+				DrawNextWheel(showGridLabel, GridDisplayOptions, ID_GridDisplay);
+				DrawNextWheel("Grid type", GridTypeOptions, ID_GridType);
+				DrawNextWheel(wireCurvatureLabel, WireCurvatureOptions, ID_WireCurvatureDisplay);
+				DrawNextWheel("Multi-wire layout", MultiWireLayoutAlgorithmOptions, ID_MultiWireLayoutAlgorithm);
+				// UI Theme option removed - only Squiggles Theme is used
+			}
 
 			DrawCollapsibleHeader("EDITING:", ID_EditingSection, IsEditingSectionExpanded, ToggleEditingSection);
 			if (IsEditingSectionExpanded())
@@ -268,6 +277,7 @@ namespace DLS.Graphics
 					Seb.Vis.UI.UI.DrawText(currentSimSpeedString, theme.FontBold, theme.FontSizeRegular, tickLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, currentSimSpeedStringColour);
 				}
 
+
 				// Draw cancel/confirm buttons
 				Vector2 buttonTopLeft = new(labelPosCurr.x, Seb.Vis.UI.UI.PrevBounds.Bottom);
 				MenuHelper.CancelConfirmResult result = MenuHelper.DrawCancelConfirmButtons(buttonTopLeft, menuWidth, true);
@@ -276,14 +286,15 @@ namespace DLS.Graphics
 				Bounds2D menuBounds = Seb.Vis.UI.UI.GetCurrentBoundsScope();
 				MenuHelper.DrawReservedMenuPanel(panelID, menuBounds);
 
-				// ---- Handle changes ----
-				// Get values from expanded sections only
-				int mainPinNamesMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_MainPinNames).index : project.description.Prefs_MainPinNamesDisplayMode;
-				int chipPinNamesMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_ChipPinNames).index : project.description.Prefs_ChipPinNamesDisplayMode;
-				int gridDisplayMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_GridDisplay).index : project.description.Prefs_GridDisplayMode;
-				int wireDisplayMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_WireCurvatureDisplay).index : project.description.Prefs_WireCurvatureMode;
-				int multiWireLayoutAlgorithm = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_MultiWireLayoutAlgorithm).index : project.description.Prefs_MultiWireLayoutAlgorithm;
-				// UIThemeMode removed - only Squiggles Theme is used
+			// ---- Handle changes ----
+			// Get values from expanded sections only
+			int mainPinNamesMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_MainPinNames).index : project.description.Prefs_MainPinNamesDisplayMode;
+			int chipPinNamesMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_ChipPinNames).index : project.description.Prefs_ChipPinNamesDisplayMode;
+			int gridDisplayMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_GridDisplay).index : project.description.Prefs_GridDisplayMode;
+			int gridType = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_GridType).index : project.description.Prefs_GridType;
+			int wireDisplayMode = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_WireCurvatureDisplay).index : project.description.Prefs_WireCurvatureMode;
+			int multiWireLayoutAlgorithm = IsDisplaySectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_MultiWireLayoutAlgorithm).index : project.description.Prefs_MultiWireLayoutAlgorithm;
+			// UIThemeMode removed - only Squiggles Theme is used
 				
 			int pinIndicatorsMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_PinIndicators).index : project.description.Perfs_PinIndicators;
 			int snappingMode = IsEditingSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_Snapping).index : project.description.Prefs_Snapping;
@@ -308,13 +319,14 @@ namespace DLS.Graphics
 				targetSimTicksPerSecond = Mathf.Max(1, targetSimTicksPerSecond);
 				if (project.targetTicksPerSecond != targetSimTicksPerSecond || project.simPaused != pauseSim) lastSimTickRateSetTime = Time.time;
 
-				// Assign changes immediately so can see them take effect in background
-				project.description.Prefs_MainPinNamesDisplayMode = mainPinNamesMode;
-				project.description.Prefs_ChipPinNamesDisplayMode = chipPinNamesMode;
-				project.description.Prefs_GridDisplayMode = gridDisplayMode;
-				project.description.Prefs_WireCurvatureMode = wireDisplayMode;
-				project.description.Prefs_MultiWireLayoutAlgorithm = multiWireLayoutAlgorithm;
-				// UIThemeMode assignment removed - only Squiggles Theme is used
+			// Assign changes immediately so can see them take effect in background
+			project.description.Prefs_MainPinNamesDisplayMode = mainPinNamesMode;
+			project.description.Prefs_ChipPinNamesDisplayMode = chipPinNamesMode;
+			project.description.Prefs_GridDisplayMode = gridDisplayMode;
+			project.description.Prefs_GridType = gridType;
+			project.description.Prefs_WireCurvatureMode = wireDisplayMode;
+			project.description.Prefs_MultiWireLayoutAlgorithm = multiWireLayoutAlgorithm;
+			// UIThemeMode assignment removed - only Squiggles Theme is used
 				project.description.Prefs_Snapping = snappingMode;
 				project.description.Prefs_StraightWires = straightWireMode;
 				project.description.Prefs_SimTargetStepsPerSecond = targetSimTicksPerSecond;
@@ -402,12 +414,13 @@ namespace DLS.Graphics
 
 			ProjectDescription projDesc = Project.ActiveProject.description;
 
-			Seb.Vis.UI.UI.GetWheelSelectorState(ID_MainPinNames).index = projDesc.Prefs_MainPinNamesDisplayMode;
-			Seb.Vis.UI.UI.GetWheelSelectorState(ID_ChipPinNames).index = projDesc.Prefs_ChipPinNamesDisplayMode;
-			Seb.Vis.UI.UI.GetWheelSelectorState(ID_GridDisplay).index = projDesc.Prefs_GridDisplayMode;
-			Seb.Vis.UI.UI.GetWheelSelectorState(ID_WireCurvatureDisplay).index = projDesc.Prefs_WireCurvatureMode;
-			Seb.Vis.UI.UI.GetWheelSelectorState(ID_MultiWireLayoutAlgorithm).index = projDesc.Prefs_MultiWireLayoutAlgorithm;
-			// UIThemeDisplay initialization removed - only Squiggles Theme is used
+		Seb.Vis.UI.UI.GetWheelSelectorState(ID_MainPinNames).index = projDesc.Prefs_MainPinNamesDisplayMode;
+		Seb.Vis.UI.UI.GetWheelSelectorState(ID_ChipPinNames).index = projDesc.Prefs_ChipPinNamesDisplayMode;
+		Seb.Vis.UI.UI.GetWheelSelectorState(ID_GridDisplay).index = projDesc.Prefs_GridDisplayMode;
+		Seb.Vis.UI.UI.GetWheelSelectorState(ID_GridType).index = projDesc.Prefs_GridType;
+		Seb.Vis.UI.UI.GetWheelSelectorState(ID_WireCurvatureDisplay).index = projDesc.Prefs_WireCurvatureMode;
+		Seb.Vis.UI.UI.GetWheelSelectorState(ID_MultiWireLayoutAlgorithm).index = projDesc.Prefs_MultiWireLayoutAlgorithm;
+		// UIThemeDisplay initialization removed - only Squiggles Theme is used
 	
 			// 🛠 Clamp snapping and straight wire mode indexes
 			#if UNITY_ANDROID || UNITY_IOS

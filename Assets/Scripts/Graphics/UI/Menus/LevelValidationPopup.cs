@@ -48,6 +48,13 @@ namespace DLS.Graphics
 		const float OkBtnHeightMul = 1.5f;
 		const float LayoutYOffset = 0f; // shift whole window upwards
 
+		// ---------- Zoom Constants ----------
+		const float MinZoom = 0.5f;
+		const float MaxZoom = 3.0f;
+		const float ZoomStep = 0.2f;
+		const float DefaultZoom = 1.0f;
+		const float FitToWidthZoom = -1f; // Special value to indicate "fit to width"
+
 		// ---------- Popup State ----------
 		static string _title = "";
 		static bool _isSuccess;
@@ -58,11 +65,18 @@ namespace DLS.Graphics
 		static int _selectedIndex = -1;
 		static bool _isSequentialLevel = false;
 
+		// ---------- Zoom State ----------
+		static float _tableZoom = DefaultZoom;
+
+        private static float defaultZoom;
+
+		// ---------- Display Mode State ----------
+		static int _displayMode = 0; // 0 = Binary, 1 = Graphical
+		static readonly string[] _displayModeNames = { "Binary", "Graphical" };
+
 		// ---------- Scrolling State ----------
 		static float _hScroll = 0f;  // Horizontal scroll offset
-		static float _vScroll = 0f;  // Vertical scroll offset
 		static float _contentWidth = 0f;  // Total content width (for horizontal scrolling)
-		static float _contentHeight = 0f; // Total content height (for vertical scrolling)
 		static float _headerHeight = 0f;  // Header height (excluded from vertical scroll)
 
 		// ---------- Column Layout ----------
@@ -94,9 +108,13 @@ namespace DLS.Graphics
 		// ---------- Firebase test state ----------
 		static bool _isUploading = false;
 		static string _uploadStatus = "";
+        private static bool defaultZoomSet;
+        private static float _viewportWidth;
 
-		// ---------- UI Handles ----------
-		static readonly UIHandle ID_LevelValidationPopup = new("LevelValidationPopup_Scrollbar");
+        // ---------- UI Handles ----------
+
+
+        static readonly UIHandle ID_LevelValidationPopup = new("LevelValidationPopup_Scrollbar");
 		static readonly UIHandle ID_LevelValidationPopup_H = new("LevelValidationPopup_HScroll");
 
 		// ---------- Public API ----------
@@ -139,6 +157,8 @@ namespace DLS.Graphics
 					});
 				}
 			}
+
+			defaultZoomSet = false;
 
 			UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
 		}
@@ -190,27 +210,26 @@ namespace DLS.Graphics
 			// Calculate scroll view dimensions
 			Vector2 panelTopLeft = leftPanelBounds.TopLeft + new Vector2(1f, -1f);
 			float scrollBarWidth = DrawSettings.ActiveUITheme.ScrollTheme.scrollBarWidth;
-			float viewportWidth = panelSize.x - 2f; // Account for panel padding
+			_viewportWidth = panelSize.x - 2f; // Account for panel padding
 			float viewportHeight = panelSize.y - 2f; // Account for panel padding
 
-			// Calculate header height (two lines + padding)
-			float lineHeight = ActiveUITheme.FontSizeRegular * 1.2f;
-			_headerHeight = lineHeight * 2f + 4f; // Two lines + padding
+			// Calculate header height (two lines + padding) - scaled by zoom
+			float lineHeight = ActiveUITheme.FontSizeRegular * 1.2f * _tableZoom;
+			_headerHeight = lineHeight * 2f + 4f * _tableZoom; // Two lines + padding
 
-			// Calculate content dimensions (placeholder values for now)
-			_contentWidth = Mathf.Max(viewportWidth, 200f); // Minimum content width
-			_contentHeight = _rows.Count * RowHeight; // Height based on number of rows
+			// Calculate content dimensions (placeholder values for now) - scaled by zoom
+			// _contentWidth will be calculated later in DrawTableContent based on actual content
+			// _contentHeight is automatically calculated by the scroll view system during layout pass
 
-			// Clamp scroll values
-			_hScroll = Mathf.Clamp(_hScroll, 0f, Mathf.Max(0f, _contentWidth - viewportWidth));
+			// Clamp scroll values - adjust for zoom
+			_hScroll = Mathf.Clamp(_hScroll, 0f, Mathf.Max(0f, _contentWidth - _viewportWidth));
 			float availableContentHeight = viewportHeight - _headerHeight - scrollBarWidth; // Account for horizontal scrollbar
-			_vScroll = Mathf.Clamp(_vScroll, 0f, Mathf.Max(0f, _contentHeight - availableContentHeight));
 
 
 			// Draw scrollable content area (below header, above horizontal scrollbar)
 			Vector2 contentAreaTopLeft = panelTopLeft + Vector2.down * _headerHeight;
 			float horizontalScrollbarHeight = scrollBarWidth;
-			Vector2 contentAreaSize = new Vector2(viewportWidth, viewportHeight - _headerHeight - horizontalScrollbarHeight-0.3f);
+			Vector2 contentAreaSize = new Vector2(_viewportWidth, viewportHeight - _headerHeight - horizontalScrollbarHeight-0.3f);
 
 			// Create scroll view for table content only
 			ScrollViewTheme scrollTheme = DrawSettings.ActiveUITheme.ScrollTheme;
@@ -220,7 +239,7 @@ namespace DLS.Graphics
 				ID_LevelValidationPopup,
 				contentAreaTopLeft,
 				contentAreaSize,
-				UILayoutHelper.DefaultSpacing,
+				UILayoutHelper.DefaultSpacing * _tableZoom * 5,
 				Anchor.TopLeft,
 				scrollTheme,
 				DrawTableContent,
@@ -228,23 +247,22 @@ namespace DLS.Graphics
 			);
 			
 			// Draw header with horizontal scrolling (fixed vertical position)
-			DrawHeader(panelTopLeft, viewportWidth);
-			DrawHeaderTableDivider(panelTopLeft, viewportWidth);
+			DrawHeader(panelTopLeft, _viewportWidth, viewportHeight, scrollBarWidth);
 
+			using (Seb.Vis.UI.UI.CreateMaskScope(Bounds2D.CreateFromTopLeftAndSize(panelTopLeft, new Vector2(_viewportWidth, viewportHeight))))
+            {
+				DrawAllColumnDividers(panelTopLeft, _viewportWidth, viewportHeight - scrollBarWidth);
+            }
 			// Create horizontal scrollbar if content is wider than viewport
-			Debug.Log($"[LevelValidationPopup] SCROLLBAR CHECK: Content width: {_contentWidth}, Viewport width: {viewportWidth}");
-			Debug.Log($"[LevelValidationPopup] SCROLLBAR CHECK: Condition (_contentWidth > viewportWidth): {_contentWidth > viewportWidth}");
-			if (_contentWidth > viewportWidth)
+			if (_contentWidth > _viewportWidth)
 			{
-				Debug.Log($"[LevelValidationPopup] Creating horizontal scrollbar - ENTERING SCROLLBAR CREATION");
 				// Position scrollbar at bottom of panel (matching backup implementation)
-				Bounds2D hScrollViewArea = Bounds2D.CreateFromTopLeftAndSize(panelTopLeft, new Vector2(viewportWidth, viewportHeight));
+				Bounds2D hScrollViewArea = Bounds2D.CreateFromTopLeftAndSize(panelTopLeft, new Vector2(_viewportWidth, viewportHeight));
 				Bounds2D hBarArea = Bounds2D.CreateFromTopLeftAndSize(
 					new Vector2(panelTopLeft.x, panelTopLeft.y - viewportHeight + scrollBarWidth * 1.6f),
-					new Vector2(viewportWidth, scrollBarWidth)
+					new Vector2(_viewportWidth, scrollBarWidth)
 				);
 
-				Debug.Log($"[LevelValidationPopup] Scrollbar areas - ViewArea: {hScrollViewArea}, BarArea: {hBarArea}");
 
 				var hScrollState = Seb.Vis.UI.UI.DrawScrollbarHorizontal(
 					hScrollViewArea,
@@ -254,16 +272,10 @@ namespace DLS.Graphics
 					ID_LevelValidationPopup_H
 				);
 
-				_hScroll = Mathf.Clamp(hScrollState.scrollX, 0f, Mathf.Max(0f, _contentWidth - viewportWidth));
-				Debug.Log($"[LevelValidationPopup] Scrollbar created successfully, _hScroll set to: {_hScroll}");
-			}
-			else
-			{
-				Debug.Log($"[LevelValidationPopup] No horizontal scrollbar needed - content fits in viewport");
+				_hScroll = Mathf.Clamp(hScrollState.scrollX, 0f, Mathf.Max(0f, _contentWidth - _viewportWidth));
 			}
 
 			// Draw column dividers last so they cover both header and content
-			DrawAllColumnDividers(panelTopLeft, viewportWidth, viewportHeight - scrollBarWidth);
 		}
 
 		private static void DrawHeaderTableDivider(Vector2 panelTopLeft, float viewportWidth)
@@ -296,8 +308,80 @@ namespace DLS.Graphics
 			int nandCount = GetNandGateCount();
 			Seb.Vis.UI.UI.DrawText($"Score: {nandCount}", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TopLeft, Color.yellow);
 
-			// Buttons
-			Vector2 btnPos = scorePos + new Vector2(0f, -RowHeight * 1.4f);
+			// Display mode selector (above zoom buttons)
+			Vector2 displayModePos = scorePos + new Vector2(0f, -RowHeight * 1.4f) + Vector2.up * (buttonHeight + spacing);;
+			_displayMode = Seb.Vis.UI.UI.WheelSelector(
+				new UIHandle("DisplayMode"),
+				_displayModeNames,
+				displayModePos,
+				new Vector2(contentWidth, buttonHeight),
+				MenuHelper.Theme.OptionsWheel,
+				Anchor.TopLeft
+			);
+
+			// Zoom buttons (below display mode selector)
+			Vector2 zoomBtnPos = displayModePos + Vector2.down * (buttonHeight + spacing);
+			float thirdW = (contentWidth - spacing * 2) / 3f;
+			Vector2 zoomInPos = zoomBtnPos;
+			Vector2 fitWidthPos = new Vector2(zoomBtnPos.x + thirdW + spacing, zoomBtnPos.y);
+			Vector2 zoomOutPos = new Vector2(zoomBtnPos.x + (thirdW + spacing) * 2, zoomBtnPos.y);
+
+			bool zoomInPressed = Seb.Vis.UI.UI.Button(
+				"+",
+				MenuHelper.Theme.ButtonTheme,
+				zoomInPos,
+				new Vector2(thirdW, buttonHeight),
+				_tableZoom < MaxZoom,
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			bool fitWidthPressed = Seb.Vis.UI.UI.Button(
+				"Fit",
+				MenuHelper.Theme.ButtonTheme,
+				fitWidthPos,
+				new Vector2(thirdW, buttonHeight),
+				true,
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			bool zoomOutPressed = Seb.Vis.UI.UI.Button(
+				"-",
+				MenuHelper.Theme.ButtonTheme,
+				zoomOutPos,
+				new Vector2(thirdW, buttonHeight),
+				_tableZoom > defaultZoom,
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
+			);
+
+			// Handle zoom button actions
+			if (zoomInPressed && _tableZoom < MaxZoom)
+			{
+				_tableZoom = Mathf.Min(_tableZoom + ZoomStep, MaxZoom);
+				_bitGroupPositionsCalculated = false; // Recalculate positions with new zoom
+			}
+			if (zoomOutPressed && _tableZoom > MinZoom)
+			{
+				_tableZoom = Mathf.Max(_tableZoom - ZoomStep, MinZoom);
+				_bitGroupPositionsCalculated = false; // Recalculate positions with new zoom
+			}
+			if (fitWidthPressed)
+			{
+				_tableZoom = defaultZoom;
+				_hScroll = 0;
+				_bitGroupPositionsCalculated = false; // Recalculate positions with new zoom
+			}
+
+			// Buttons (moved down to make room for display mode and zoom buttons)
+			Vector2 btnPos = displayModePos + Vector2.down * (buttonHeight + spacing) * 2; // Move down to make room
 
 			bool levelPassed = _rows.Count > 0 && _rows.All(r => r.Passed);
 			bool hasValidSelection = _selectedIndex >= 0 && _selectedIndex < _rows.Count;
@@ -373,15 +457,15 @@ namespace DLS.Graphics
 			btnPos += Vector2.down * (buttonHeight + spacing);
 
 			// Row: Levels | Next
-			float halfW = (contentWidth - spacing) * 0.5f;
+			float halfWLevels = (contentWidth - spacing) * 0.5f;
 			Vector2 levelsPos = btnPos;
-			Vector2 nextPos = new Vector2(btnPos.x + halfW + spacing, btnPos.y);
+			Vector2 nextPos = new Vector2(btnPos.x + halfWLevels + spacing, btnPos.y);
 
 			bool levelsPressed = Seb.Vis.UI.UI.Button(
 				"Levels",
 				MenuHelper.Theme.ButtonTheme,
 					levelsPos,
-				new Vector2(halfW, buttonHeight),
+				new Vector2(halfWLevels, buttonHeight),
 				true,
 				false,
 				false,
@@ -393,7 +477,7 @@ namespace DLS.Graphics
 				"Next",
 				MenuHelper.Theme.ButtonTheme,
 					nextPos,
-				new Vector2(halfW, buttonHeight),
+				new Vector2(halfWLevels, buttonHeight),
 				true,
 				false,
 				false,
@@ -440,6 +524,205 @@ namespace DLS.Graphics
 			return adapter.CountNandGates();
 		}
 
+		static float CalculateContentWidthAtZoom(float zoom)
+		{
+			// This is a simplified calculation - we'll calculate the width based on the first row
+			if (_rows.Count == 0) return 200f; // Default minimum width
+
+			var firstRow = _rows[0];
+			
+			// Calculate text widths at the given zoom level
+			float inTextWidth = Seb.Vis.UI.UI.CalculateTextSize(firstRow.Inputs, ActiveUITheme.FontSizeRegular * zoom, FontType.JetbrainsMonoRegular).x;
+			float expTextWidth = Seb.Vis.UI.UI.CalculateTextSize(firstRow.Expected, ActiveUITheme.FontSizeRegular * zoom, FontType.JetbrainsMonoRegular).x;
+			float outTextWidth = Seb.Vis.UI.UI.CalculateTextSize(firstRow.Got, ActiveUITheme.FontSizeRegular * zoom, FontType.JetbrainsMonoRegular).x;
+
+			// Calculate total width including padding and dividers
+			float cellPadding = 2f * zoom;
+			float dividerWidth = 3f * zoom;
+			float initialPadding = 1f * zoom;
+			float finalPadding = cellPadding * 2;
+
+			return initialPadding + cellPadding + inTextWidth + cellPadding + dividerWidth +
+				   cellPadding/2 + expTextWidth + cellPadding + dividerWidth +
+				   cellPadding/2 + outTextWidth + finalPadding;
+		}
+
+		static float DrawGraphicalBits(string bits, bool isInputColumn, float startX, float centerY, int column)
+		{
+			if (string.IsNullOrEmpty(bits)) return 0f;
+
+			// Get current level to access bit counts
+			var levelManager = LevelManager.Instance;
+			var currentLevel = levelManager?.Current;
+			if (currentLevel == null) return 0f;
+
+			// Get bit counts for this column
+			int[] bitCounts = isInputColumn ? currentLevel.inputBitCounts : currentLevel.outputBitCounts;
+			if (bitCounts == null || bitCounts.Length == 0) return 0f;
+
+			float x = startX;
+			int bitOffset = 0;
+			float totalWidth = 0f;
+
+			for (int pinIndex = 0; pinIndex < bitCounts.Length; pinIndex++)
+			{
+
+				int pinBitCount = bitCounts[pinIndex];
+				string pinBits;
+
+				if (bitOffset + pinBitCount <= bits.Length)
+				{
+					pinBits = bits.Substring(bitOffset, pinBitCount);
+				}
+				else if (bitOffset < bits.Length)
+				{
+					string availableBits = bits.Substring(bitOffset);
+					pinBits = availableBits.PadRight(pinBitCount, '0');
+				}
+				else
+				{
+					pinBits = new string('0', pinBitCount);
+				}
+
+				// Draw the bit group
+				float groupWidth = DrawBitGroup(pinBits, x, centerY, column, pinIndex);
+				x += groupWidth + 3f * _tableZoom; // Space between groups
+				totalWidth += groupWidth + (pinIndex < bitCounts.Length - 1 ? 3f * _tableZoom : 0f);
+				bitOffset += pinBitCount;
+			}
+
+			return totalWidth;
+		}
+
+		static float DrawBitGroup(string bits, float x, float centerY, int column, int groupIndex)
+		{
+
+			float dotSize = 1.0f * _tableZoom; // Slightly larger for visibility
+			if (bits.Length == 1)
+			{
+				// Draw 1-bit as a simple dot - make it more visible
+				bool isHigh = bits[0] == '1';
+				Color dotColor = DrawSettings.GetStateColour(isHigh, 0);
+				
+				x += dotSize*1.5f;
+				// Use UI drawing function - draw a small square to simulate a dot
+				Seb.Vis.UI.UI.DrawCircle(
+					new Vector2(x, centerY),
+					dotSize*1.08f,
+					Color.black
+				);
+				Seb.Vis.UI.UI.DrawCircle(
+					new Vector2(x, centerY),
+					dotSize,
+					dotColor
+				);
+				
+				// Log position for header alignment if this is the first row
+				if (column >= 0)
+				{
+					float midX = x; // Center is at x since we centered the dot
+					switch (column)
+					{
+						case 0: _inputBitGroupXPositions.Add(midX); break;
+						case 1: _expectedBitGroupXPositions.Add(midX); break;
+						case 2: _outputBitGroupXPositions.Add(midX); break;
+					}
+				}
+				
+				return dotSize *2.5f;
+			}
+			else if (bits.Length == 8)
+			{
+				// Draw 8-bit as a 2x4 grid - make it more visible
+				float gridSize = 5f * _tableZoom; // Slightly larger
+				float squareSize = gridSize / 4f; // 2x4 grid, so 4 squares per row
+				float squareSpacing = 0.12f * _tableZoom; // Smaller spacing for tighter grid
+
+				x += gridSize*0.5f;
+				
+				// Draw black border background
+				Seb.Vis.UI.UI.DrawPanel(
+					new Bounds2D(
+						new Vector2(x -gridSize*0.5f, centerY - (gridSize+squareSpacing) * 0.25f),
+						new Vector2(x + gridSize*0.5f, centerY + (gridSize+squareSpacing) * 0.25f)
+					),
+					Color.black
+				);
+				
+				// Draw individual bits as distinct squares
+				for (int i = 0; i < 8; i++)
+				{
+					int row = i / 4;
+					int col = i % 4;
+					bool isHigh = bits[i] == '1'; 
+					Color bitColor = DrawSettings.GetStateColour(isHigh, 0);
+					
+					// Calculate position for each square
+					float squareX = x + squareSize * 0.5f + col * squareSize - gridSize *0.5f;
+					float squareY = centerY + squareSize * 0.5f - row * squareSize;
+					
+					// Draw individual square with small gap
+					Seb.Vis.UI.UI.DrawPanel(
+						new Bounds2D(
+							new Vector2(squareX - (squareSize - squareSpacing) * 0.5f, squareY - (squareSize - squareSpacing) * 0.5f),
+							new Vector2(squareX + (squareSize - squareSpacing) * 0.5f, squareY + (squareSize - squareSpacing) * 0.5f)
+						),
+						bitColor
+					);
+				}
+				
+				// Log position for header alignment if this is the first row
+				if (column >= 0)
+				{
+					float midX = x ;
+					switch (column)
+					{
+						case 0: _inputBitGroupXPositions.Add(midX); break;
+						case 1: _expectedBitGroupXPositions.Add(midX); break;
+						case 2: _outputBitGroupXPositions.Add(midX); break;
+					}
+				}
+				
+				return gridSize;
+			}
+			else
+			{
+				// For other bit counts, draw as a simple horizontal line of dots
+				float spacing = 0.5f * _tableZoom;
+				float totalWidth = bits.Length * dotSize + (bits.Length - 1) * spacing;
+				
+				for (int i = 0; i < bits.Length; i++)
+				{
+					bool isHigh = bits[i] == '1';
+					Color dotColor = DrawSettings.GetStateColour(isHigh, 0);
+					
+					float dotX = x + dotSize * 0.5f + i * (dotSize + spacing);
+					
+					// Use UI drawing for dots
+					Seb.Vis.UI.UI.DrawCircle(
+						new Vector2(dotX, centerY),
+						dotSize,
+						dotColor,
+						Anchor.Centre
+					);
+				}
+				
+				// Log position for header alignment if this is the first row
+				if (column >= 0)
+				{
+					float midX = x + totalWidth * 0.5f;
+					switch (column)
+					{
+						case 0: _inputBitGroupXPositions.Add(midX); break;
+						case 1: _expectedBitGroupXPositions.Add(midX); break;
+						case 2: _outputBitGroupXPositions.Add(midX); break;
+					}
+				}
+				
+				return totalWidth;
+			}
+		}
+
 		static void ApplySelectedTestInputs()
 		{
 			if (_selectedIndex < 0 || _selectedIndex >= _rows.Count) return;
@@ -482,15 +765,14 @@ namespace DLS.Graphics
 
 		// ---------- Table Drawing Methods ----------
 
-		static void DrawHeader(Vector2 headerTopLeft, float viewportWidth)
+		static void DrawHeader(Vector2 headerTopLeft, float viewportWidth, float viewportHeight, float scrollBarWidth)
 		{
 			// Apply horizontal scroll offset
 			Vector2 scrolledTopLeft = headerTopLeft + Vector2.left * _hScroll;
-			Debug.Log($"[LevelValidationPopup] DrawHeader: _hScroll={_hScroll}, headerTopLeft={headerTopLeft}, scrolledTopLeft={scrolledTopLeft}");
 
-			// Calculate header height (two lines)
-			float lineHeight = ActiveUITheme.FontSizeRegular * 1.2f;
-			float headerHeight = lineHeight * 2f + 4f; // Two lines + padding
+			// Calculate header height (two lines) - scaled by zoom
+			float lineHeight = ActiveUITheme.FontSizeRegular * 1.2f * _tableZoom;
+			float headerHeight = lineHeight * 2f + 4f * _tableZoom; // Two lines + padding
 
 			// Draw header background (fixed position, clipped to viewport bounds)
 			Draw.ID headerID = Seb.Vis.UI.UI.ReservePanel();
@@ -503,35 +785,37 @@ namespace DLS.Graphics
 			// Create clipping context for text to match panel bounds (using the same method as backup)
 			using (Seb.Vis.UI.UI.CreateMaskScope(Bounds2D.CreateFromTopLeftAndSize(headerTopLeft, new Vector2(viewportWidth, headerHeight))))
 			{
+
+				DrawHeaderTableDivider(headerTopLeft, viewportWidth);
+
 				// Line 1: Column titles (IN, EXPECTED, OUT)
 				float y1 = headerTopLeft.y - lineHeight * 1.0f;
-				float x = headerTopLeft.x + 1f - _hScroll; // Apply horizontal scroll offset (matching backup approach)
+				float x = headerTopLeft.x + 1f * _tableZoom - _hScroll; // Apply horizontal scroll offset and zoom scaling
 
-				// IN column title
+				// IN column title - scaled by zoom
 				string inTitle = "IN";
 				float inTitleX = x + _inColumnWidth * 0.5f;
-				Seb.Vis.UI.UI.DrawText(inTitle, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * 1.4f, new Vector2(inTitleX, y1), Anchor.Centre, Color.white);
-				x += _inColumnWidth + _dividerWidth;
+				Seb.Vis.UI.UI.DrawText(inTitle, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * 1.4f * _tableZoom, new Vector2(inTitleX, y1), Anchor.Centre, Color.white);
+				x += _inColumnWidth + _dividerWidth * _tableZoom;
 
-				// EXPECTED column title
+				// EXPECTED column title - scaled by zoom
 				string expTitle = "EXPECTED";
 				float expTitleX = x + _expectedColumnWidth * 0.5f;
-				Seb.Vis.UI.UI.DrawText(expTitle, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * 1.4f, new Vector2(expTitleX, y1), Anchor.Centre, Color.white);
-				x += _expectedColumnWidth + _dividerWidth;
+				Seb.Vis.UI.UI.DrawText(expTitle, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * 1.4f * _tableZoom, new Vector2(expTitleX, y1), Anchor.Centre, Color.white);
+				x += _expectedColumnWidth + _dividerWidth * _tableZoom;
 
-				// OUT column title
+				// OUT column title - scaled by zoom
 				string outTitle = "OUT";
 				float outTitleX = x + _outColumnWidth * 0.5f;
-				Seb.Vis.UI.UI.DrawText(outTitle, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * 1.4f, new Vector2(outTitleX, y1), Anchor.Centre, Color.white);
+				Seb.Vis.UI.UI.DrawText(outTitle, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * 1.4f * _tableZoom, new Vector2(outTitleX, y1), Anchor.Centre, Color.white);
 
 				// Line 2: Pin labels (using stored x-positions for alignment)
 				float y2 = headerTopLeft.y - lineHeight * 2.5f;
-				DrawPinLabelsInHeader(headerTopLeft.x + 1f - _hScroll, y2);
+				DrawPinLabelsInHeader(y2);
 			}
 		}
 
-
-		static void DrawPinLabelsInHeader(float startX, float y)
+		static void DrawPinLabelsInHeader(float y)
 		{
 			// Get current level to access pin labels
 			var levelManager = LevelManager.Instance;
@@ -544,9 +828,10 @@ namespace DLS.Graphics
 			{
 				for (int i = 0; i < currentLevel.inputPinLabels.Length && i < _inputBitGroupXPositions.Count; i++)
 				{
-					string label = currentLevel.inputPinLabels[i].abbr; // Use abbreviation for header
+					int index = currentLevel.inputPinLabels.Length - 1 - i;
+					string label = currentLevel.inputPinLabels[index].abbr; // Use abbreviation for header
 					float labelX = _inputBitGroupXPositions[i]; // Adjust for header start position
-					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, new Vector2(labelX, y), Anchor.Centre, Color.white);
+					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * _tableZoom, new Vector2(labelX, y), Anchor.Centre, Color.white);
 				}
 			}
 
@@ -555,9 +840,10 @@ namespace DLS.Graphics
 			{
 				for (int i = 0; i < currentLevel.outputPinLabels.Length && i < _expectedBitGroupXPositions.Count; i++)
 				{
-					string label = currentLevel.outputPinLabels[i].abbr; // Use abbreviation for header
+					int index = currentLevel.outputPinLabels.Length - 1 - i;
+					string label = currentLevel.outputPinLabels[index].abbr; // Use abbreviation for header
 					float labelX = _expectedBitGroupXPositions[i]; // Adjust for header start position
-					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, new Vector2(labelX, y), Anchor.Centre, Color.white);
+					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * _tableZoom, new Vector2(labelX, y), Anchor.Centre, Color.white);
 				}
 			}
 
@@ -566,104 +852,13 @@ namespace DLS.Graphics
 			{
 				for (int i = 0; i < currentLevel.outputPinLabels.Length && i < _outputBitGroupXPositions.Count; i++)
 				{
-					string label = currentLevel.outputPinLabels[i].abbr; // Use abbreviation for header
+
+					int index = currentLevel.outputPinLabels.Length - 1 - i;
+					string label = currentLevel.outputPinLabels[index].abbr; // Use abbreviation for header
 					float labelX = _outputBitGroupXPositions[i]; // Adjust for header start position
-					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, new Vector2(labelX, y), Anchor.Centre, Color.white);
+					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * _tableZoom, new Vector2(labelX, y), Anchor.Centre, Color.white);
 				}
 			}
-		}
-
-		static void DrawPinLabelsForRow(float y)
-		{
-			// Get current level to access pin labels
-			var levelManager = LevelManager.Instance;
-			var currentLevel = levelManager?.Current;
-
-			if (currentLevel == null) return;
-
-			// Draw input pin labels using stored x-positions
-			if (currentLevel.inputPinLabels != null && currentLevel.inputPinLabels.Length > 0 && _inputBitGroupXPositions.Count > 0)
-			{
-				for (int i = 0; i < currentLevel.inputPinLabels.Length && i < _inputBitGroupXPositions.Count; i++)
-				{
-					string label = currentLevel.inputPinLabels[i].abbr; // Use abbreviation for header
-					float labelX = _inputBitGroupXPositions[i]; // Use exact x-position from bit group
-					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, new Vector2(labelX, y), Anchor.Centre, Color.white);
-				}
-			}
-
-			// Draw expected pin labels using stored x-positions
-			if (currentLevel.outputPinLabels != null && currentLevel.outputPinLabels.Length > 0 && _expectedBitGroupXPositions.Count > 0)
-			{
-				for (int i = 0; i < currentLevel.outputPinLabels.Length && i < _expectedBitGroupXPositions.Count; i++)
-				{
-					string label = currentLevel.outputPinLabels[i].abbr; // Use abbreviation for header
-					float labelX = _expectedBitGroupXPositions[i]; // Use exact x-position from bit group
-					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, new Vector2(labelX, y), Anchor.Centre, Color.white);
-				}
-			}
-
-			// Draw output pin labels using stored x-positions
-			if (currentLevel.outputPinLabels != null && currentLevel.outputPinLabels.Length > 0 && _outputBitGroupXPositions.Count > 0)
-			{
-				for (int i = 0; i < currentLevel.outputPinLabels.Length && i < _outputBitGroupXPositions.Count; i++)
-				{
-					string label = currentLevel.outputPinLabels[i].abbr; // Use abbreviation for header
-					float labelX = _outputBitGroupXPositions[i]; // Use exact x-position from bit group
-					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, new Vector2(labelX, y), Anchor.Centre, Color.white);
-				}
-			}
-		}
-
-		static void DrawPinLabels(float startX, float y)
-		{
-			// Get current level to access pin labels
-			var levelManager = LevelManager.Instance;
-			var currentLevel = levelManager?.Current;
-
-			if (currentLevel == null) return;
-
-			// Draw input pin labels using stored x-positions
-			if (currentLevel.inputPinLabels != null && currentLevel.inputPinLabels.Length > 0 && _inputBitGroupXPositions.Count > 0)
-			{
-				for (int i = 0; i < currentLevel.inputPinLabels.Length && i < _inputBitGroupXPositions.Count; i++)
-				{
-					string label = currentLevel.inputPinLabels[i].abbr; // Use abbreviation for header
-					float labelX = _inputBitGroupXPositions[i]; // Use exact x-position from bit group
-					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, new Vector2(labelX, y), Anchor.Centre, Color.white);
-				}
-			}
-
-			// Draw expected pin labels using stored x-positions
-			if (currentLevel.outputPinLabels != null && currentLevel.outputPinLabels.Length > 0 && _expectedBitGroupXPositions.Count > 0)
-			{
-				for (int i = 0; i < currentLevel.outputPinLabels.Length && i < _expectedBitGroupXPositions.Count; i++)
-				{
-					string label = currentLevel.outputPinLabels[i].abbr; // Use abbreviation for header
-					float labelX = _expectedBitGroupXPositions[i]; // Use exact x-position from bit group
-					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, new Vector2(labelX, y), Anchor.Centre, Color.white);
-				}
-			}
-
-			// Draw output pin labels using stored x-positions
-			if (currentLevel.outputPinLabels != null && currentLevel.outputPinLabels.Length > 0 && _outputBitGroupXPositions.Count > 0)
-			{
-				for (int i = 0; i < currentLevel.outputPinLabels.Length && i < _outputBitGroupXPositions.Count; i++)
-				{
-					string label = currentLevel.outputPinLabels[i].abbr; // Use abbreviation for header
-					float labelX = _outputBitGroupXPositions[i]; // Use exact x-position from bit group
-					Seb.Vis.UI.UI.DrawText(label, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, new Vector2(labelX, y), Anchor.Centre, Color.white);
-				}
-			}
-		}
-
-		static float CalculateGroupWidth(int bitCount)
-		{
-			// Calculate width of a single character in the font
-			float charWidth = Seb.Vis.UI.UI.CalculateTextSize("0", ActiveUITheme.FontSizeRegular, FontType.JetbrainsMonoRegular).x;
-
-			// Group width = number of bits * character width
-			return bitCount * charWidth;
 		}
 
 		static string FormatBitsWithGrouping(string bits, bool isInputColumn, float start_x, int column)
@@ -706,7 +901,7 @@ namespace DLS.Graphics
 					// No bits available: pad with zeros
 					pinBits = new string('0', pinBitCount);
 				}
-				float textWidth = Seb.Vis.UI.UI.CalculateTextSize(pinBits, ActiveUITheme.FontSizeRegular, FontType.JetbrainsMonoRegular).x;
+				float textWidth = Seb.Vis.UI.UI.CalculateTextSize(pinBits, ActiveUITheme.FontSizeRegular * _tableZoom, FontType.JetbrainsMonoRegular).x;
 				switch (column)
 				{
 					case 0:
@@ -719,7 +914,7 @@ namespace DLS.Graphics
 						_outputBitGroupXPositions.Add(x + textWidth * 0.5f);
 						break;
 				}
-				x += textWidth + Seb.Vis.UI.UI.CalculateTextSize("   ", ActiveUITheme.FontSizeRegular, FontType.JetbrainsMonoRegular).x;
+				x += textWidth + Seb.Vis.UI.UI.CalculateTextSize("   ", ActiveUITheme.FontSizeRegular * _tableZoom, FontType.JetbrainsMonoRegular).x;
 				groups.Add(pinBits);
 				bitOffset += pinBitCount;
 			}
@@ -733,9 +928,9 @@ namespace DLS.Graphics
 			// Apply horizontal scroll offset
 			Vector2 scrolledTopLeft = panelTopLeft + Vector2.left * _hScroll;
 
-			// Calculate divider positions
-			float x1 = scrolledTopLeft.x + 2 + _inColumnWidth; // After IN column
-			float x2 = scrolledTopLeft.x + 2 + _inColumnWidth + _dividerWidth + _expectedColumnWidth; // After EXPECTED column
+			// Calculate divider positions - scaled by zoom
+			float x1 = scrolledTopLeft.x + 1f * _tableZoom + 2f * _tableZoom + _inColumnWidth; // After IN column
+			float x2 = scrolledTopLeft.x + 1f * _tableZoom + 2f * _tableZoom + _inColumnWidth + _dividerWidth * _tableZoom + _expectedColumnWidth; // After EXPECTED column
 
 			float contentAreaHeight = viewportHeight - _headerHeight; // Height of scrollable content area
 			float horizontalScrollbarHeight = DrawSettings.ActiveUITheme.ScrollTheme.scrollBarWidth;
@@ -750,15 +945,17 @@ namespace DLS.Graphics
 
 		static void DrawColumnDivider(float x, float y, float height)
 		{
-			// Draw two-layer divider: reversed colors
+			// Draw two-layer divider: reversed colors - scaled by zoom
 			Color contentColor = ColHelper.MakeCol(0.12f); // Content background color (outer layer)
 			Color panelColor = ColHelper.MakeCol(0.08f); // Panel background color (inner layer)
+
+			float dividerWidth = _dividerWidth * _tableZoom;
 
 			// Draw content layer (wider, outer)
 			Draw.ID contentDividerID = Seb.Vis.UI.UI.ReservePanel();
 			Seb.Vis.UI.UI.ModifyPanel(
 				contentDividerID,
-				new Bounds2D(new Vector2(x - 1.5f, y - _headerHeight), new Vector2(x + 1.5f, y - height)),
+				new Bounds2D(new Vector2(x - dividerWidth * 0.5f, y - _headerHeight), new Vector2(x + dividerWidth * 0.5f, y - height)),
 				contentColor
 			);
 
@@ -766,7 +963,7 @@ namespace DLS.Graphics
 			Draw.ID panelDividerID = Seb.Vis.UI.UI.ReservePanel();
 			Seb.Vis.UI.UI.ModifyPanel(
 				panelDividerID,
-				new Bounds2D(new Vector2(x - 0.5f, y), new Vector2(x + 0.5f, y - height)),
+				new Bounds2D(new Vector2(x - dividerWidth * 0.17f, y), new Vector2(x + dividerWidth * 0.17f, y - height)),
 				panelColor
 			);
 		}
@@ -783,12 +980,12 @@ namespace DLS.Graphics
             }
 
 			// Use full content width instead of viewport width for row drawing
-			float rowWidth = _contentWidth;
+			float rowWidth = Mathf.Max(_viewportWidth, _contentWidth); // Use the larger of viewport or content width
 
 			// Bit group positions are calculated once for header alignment
 
-			// Set column spacing
-			_columnSpacing = RowHeight * 0.5f;
+			// Set column spacing - scaled by zoom
+			_columnSpacing = RowHeight * 0.5f * _tableZoom;
 
 			var row = _rows[index];
 			bool selected = index == _selectedIndex;
@@ -796,94 +993,108 @@ namespace DLS.Graphics
 			// Apply horizontal scroll offset
 			Vector2 scrolledTopLeft = contentTopLeft + Vector2.left * _hScroll;
 
-			// Draw row background (using full content width)
-			Color rowColor = selected ? new Color(0.2f, 0.4f, 0.2f, 0.3f) : new Color(0.1f, 0.1f, 0.1f, 0.1f);
-			Draw.ID rowID = Seb.Vis.UI.UI.ReservePanel();
-			Seb.Vis.UI.UI.ModifyPanel(
-				rowID,
-				new Bounds2D(scrolledTopLeft, scrolledTopLeft + new Vector2(rowWidth, -RowHeight)),
-				rowColor
+			// Make row clickable (using full content width)
+			// Always call Button to register bounds, but only handle clicks during render pass
+			bool pressed = Seb.Vis.UI.UI.Button(
+				"", // Empty text, we're just using it for click detection
+				MenuHelper.Theme.ButtonTheme,
+				scrolledTopLeft,
+				new Vector2(rowWidth*_tableZoom, RowHeight * _tableZoom),
+				true,
+				false,
+				false,
+				MenuHelper.Theme.ButtonTheme.buttonCols,
+				Anchor.TopLeft
 			);
 
-			// Calculate column positions
-			float x = scrolledTopLeft.x;
-			float centerY = scrolledTopLeft.y - RowHeight * 0.5f;
-			float cell_Padding = 2f;
+			if (!isLayoutPass && pressed)
+			{
+				_selectedIndex = index;
+			}
+
+			// Calculate column positions - scaled by zoom
+			float x = scrolledTopLeft.x + 1f * _tableZoom; // Match header initial padding
+			float centerY = scrolledTopLeft.y - RowHeight * _tableZoom * 0.5f;
+			float cell_Padding = 2f * _tableZoom;
 
 
 			//IN
 			float x_start = x;
-			x += cell_Padding;
+			x += cell_Padding/2;
 
-			string inText = FormatBitsWithGrouping(row.Inputs, true,x,index == 0 ? 0 : -1);
-			float inTextWidth = Seb.Vis.UI.UI.CalculateTextSize(inText, ActiveUITheme.FontSizeRegular, FontType.JetbrainsMonoRegular).x;
-			Vector2 in_bit_graphics_pos = new Vector2(x + inTextWidth * 0.5f, centerY);
-			Seb.Vis.UI.UI.DrawText(inText, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, in_bit_graphics_pos, Anchor.Centre, Color.white);
-			x += inTextWidth;
+			string inText = FormatBitsWithGrouping(row.Inputs, true,x,index == 0 && _displayMode == 0? 0 : -1); // <-- This logs x_values index==0, Dont do that for graphical
+			float inWidth;
+            if (_displayMode == 1) // Graphical representation
+			{
+				inWidth = DrawGraphicalBits(row.Inputs, true, x, centerY, index == 0 ? 0 : -1);
+            }
+            else
+            {
+				inWidth = Seb.Vis.UI.UI.CalculateTextSize(inText, ActiveUITheme.FontSizeRegular * _tableZoom, FontType.JetbrainsMonoRegular).x;
+				Vector2 in_bit_graphics_pos = new Vector2(x + inWidth * 0.5f, centerY);
+				Seb.Vis.UI.UI.DrawText(inText, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * _tableZoom, in_bit_graphics_pos, Anchor.Centre, Color.white);
+            }
+			inWidth = MathF.Max(inWidth,2f*_tableZoom);
+			x += inWidth;
 			x += cell_Padding;
 
 			_inColumnWidth = x - x_start;
-			x += _dividerWidth;
+			x += _dividerWidth * _tableZoom;
 
 			//EXPECTED
 			x_start = x;
 			x += cell_Padding / 2;
-			string expText = FormatBitsWithGrouping(row.Expected, false,x,index == 0 ? 1 : -1);
-			float expTextWidth = Seb.Vis.UI.UI.CalculateTextSize(expText, ActiveUITheme.FontSizeRegular, FontType.JetbrainsMonoRegular).x;
+			string expText = FormatBitsWithGrouping(row.Expected, false,x,index == 0&& _displayMode == 0 ? 1 : -1);
+			float expTextWidth;
+			if (_displayMode == 1) // Graphical representation
+			{
+				expTextWidth = DrawGraphicalBits(row.Expected, false, x, centerY, index == 0 ? 1 : -1);
+			}
+			else
+			{
+				expTextWidth = Seb.Vis.UI.UI.CalculateTextSize(expText, ActiveUITheme.FontSizeRegular * _tableZoom, FontType.JetbrainsMonoRegular).x;
+				Vector2 exp_bit_graphics_pos = new Vector2(x + expTextWidth * 0.5f, centerY);
+				Seb.Vis.UI.UI.DrawText(expText, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * _tableZoom, exp_bit_graphics_pos, Anchor.Centre, Color.white);
+			}
 
-			Vector2 exp_bit_graphics_pos = new Vector2(x + expTextWidth * 0.5f, centerY);
-			Seb.Vis.UI.UI.DrawText(expText, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, exp_bit_graphics_pos, Anchor.Centre, Color.white);
+			expTextWidth = MathF.Max(expTextWidth,8f*_tableZoom);
 			x += expTextWidth;
 			x += cell_Padding;
 
 			_expectedColumnWidth = x - x_start;
-			x += _dividerWidth;
+			x += _dividerWidth * _tableZoom;
 
 			//OUT
 			x_start = x;
 			x += cell_Padding / 2;
-			string outText = FormatBitsWithGrouping(row.Got, false,x,index == 0 ? 2 : -1);
-			float outTextWidth = Seb.Vis.UI.UI.CalculateTextSize(outText, ActiveUITheme.FontSizeRegular, FontType.JetbrainsMonoRegular).x;
-
-			Vector2 out_bit_graphics_pos = new Vector2(x + outTextWidth * 0.5f, centerY);
-			Seb.Vis.UI.UI.DrawText(outText, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular, out_bit_graphics_pos, Anchor.Centre, Color.white);
+			string outText = FormatBitsWithGrouping(row.Got, false,x,index == 0 && _displayMode == 0? 2 : -1);
+			float outTextWidth;
+			if (_displayMode == 1) // Graphical representation
+			{
+				outTextWidth = DrawGraphicalBits(row.Got, false, x, centerY, index == 0 ? 2 : -1);
+			}
+			else
+			{
+				outTextWidth = Seb.Vis.UI.UI.CalculateTextSize(outText, ActiveUITheme.FontSizeRegular * _tableZoom, FontType.JetbrainsMonoRegular).x;
+				Vector2 out_bit_graphics_pos = new Vector2(x + outTextWidth * 0.5f, centerY);
+				Seb.Vis.UI.UI.DrawText(outText, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * _tableZoom, out_bit_graphics_pos, Anchor.Centre, Color.white);
+			}
+			outTextWidth = MathF.Max(outTextWidth,3f*_tableZoom);
 			x += outTextWidth;
 
 			_outColumnWidth = x - x_start;
 
-			// Labels are drawn in header, not per row
 
-			// Calculate total content width (horizontal scrollbar is created once in DrawLeftPanel)
-			//float totalContentWidth = _inColumnWidth + _dividerWidth + _expectedColumnWidth + _dividerWidth + _outColumnWidth;
+			// Calculate total content width (horizontal scrollbar is created once in DrawLeftPanel) - scaled by zoom
 			float totalContentWidth = x - scrolledTopLeft.x + cell_Padding * 2;
 			_contentWidth = totalContentWidth;
-			Debug.Log($"[LevelValidationPopup] Row {index}: IN={_inColumnWidth}, EXP={_expectedColumnWidth}, OUT={_outColumnWidth}, Total={totalContentWidth}");
 
-			// FOR TESTING: Force a very large content width to ensure scrollbar appears
-			// _contentWidth = 1000f; // Much larger than any reasonable viewport
-			// Debug.Log($"[LevelValidationPopup] TESTING: Forced content width to {_contentWidth}");
-			// Debug.Log($"[LevelValidationPopup] TESTING: This should definitely trigger horizontal scrollbar!");
+            if (defaultZoomSet == false)
+            {
+            	defaultZoom =  width/ _contentWidth;
+				defaultZoomSet = true;
+            }
 
-			// Make row clickable (using full content width)
-			if (!isLayoutPass)
-			{
-				bool pressed = Seb.Vis.UI.UI.Button(
-					"", // Empty text, we're just using it for click detection
-					MenuHelper.Theme.ButtonTheme,
-					scrolledTopLeft,
-					new Vector2(rowWidth, RowHeight),
-					true,
-					false,
-					false,
-					MenuHelper.Theme.ButtonTheme.buttonCols,
-					Anchor.TopLeft
-				);
-
-				if (pressed)
-				{
-					_selectedIndex = index;
-				}
-			}
 		}
 
 		// ---------- User Name Input Callbacks ----------
@@ -931,9 +1142,21 @@ namespace DLS.Graphics
 			}
 			else if (option == 1) // Save and continue
 			{
-				// TODO: Implement save functionality
-				Debug.Log("[LevelValidationPopup] Save functionality not implemented yet");
-				return;
+				// Save current level progress
+				var levelManager = LevelManager.Instance;
+				if (levelManager != null)
+				{
+					levelManager.SaveCurrentProgress();
+					Debug.Log("[LevelValidationPopup] Level progress saved successfully");
+				}
+				else
+				{
+					Debug.LogError("[LevelValidationPopup] LevelManager instance not found");
+				}
+				
+				// Start the next level
+				levelManager.StartLevel(nextLevel);
+				UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
 			}
 			else if (option == 2) // Continue without saving
 			{

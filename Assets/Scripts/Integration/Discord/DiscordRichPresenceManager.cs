@@ -19,9 +19,7 @@ namespace DLS.Integration.Discord
 	public class DiscordRichPresenceManager : MonoBehaviour
 	{
 		public static DiscordRichPresenceManager Instance { get; private set; }
-
-		// ⚠️ REPLACE WITH YOUR ACTUAL APPLICATION ID FROM DISCORD DEVELOPER PORTAL
-		private const string APPLICATION_ID = "1300166829308756030";
+		private const string APPLICATION_ID = "1428865072792342528";
 
 		#if DISCORD_SUPPORTED
 		private DiscordRpcClient client;
