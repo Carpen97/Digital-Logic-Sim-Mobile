@@ -71,7 +71,6 @@ Mobile Port (origin)
 
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 063 | Discord integration investigation | In Progress | Investigate Discord overlay support and Rich Presence integration for showing DLS activity in Discord status. |
 | 065 | Create advanced 8-bit chapter for levels | In Progress | Design new chapter introducing 8-bit inputs/outputs to teach multi-bit circuit design with progressive difficulty. |
 | 067 | Chip description viewer | In Progress | Create detailed chip descriptions with new menu window for educational content about component functionality. |
 
@@ -149,7 +148,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **5 Open Tickets** available for selection
-- **3 In Progress** tickets (063, 065, 067)
-- **Ticket 063** - investigating Discord integration
+- **2 In Progress** tickets (065, 067)
+- **Ticket 063** - completed Discord integration investigation
 - **Ticket 065** - creating advanced 8-bit chapter for levels
-- **Ticket 067 kicked off** - chip description viewer with educational content
+- **Ticket 067** - chip description viewer with educational content
