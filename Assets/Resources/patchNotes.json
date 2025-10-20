@@ -23,6 +23,11 @@
           "text": "Eraser Tool (Mobile) - Toggleable eraser mode for rapid circuit cleanup! Tap the always-visible trash icon to activate eraser mode, then drag your finger over components/wires to delete them continuously. Two modes available: 'Delete All' removes everything you touch, 'Wires Only' preserves components. Tap the top banner to switch modes. Camera panning disabled while erasing to prevent accidents. Huge productivity boost for mobile editing!",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Discord Rich Presence (PC) - Show off your Digital Logic Sim activity on Discord! Enable 'Discord Status' in Settings to display your current activity to friends. Shows what level you're playing, whether you're building circuits or running simulations, and your current progress. Perfect for sharing your learning journey and connecting with other DLS players on Discord. PC-only feature that integrates seamlessly with Discord's Rich Presence system.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "improvements": [
