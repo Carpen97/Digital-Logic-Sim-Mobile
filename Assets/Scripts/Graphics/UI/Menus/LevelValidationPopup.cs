@@ -1191,6 +1191,9 @@ namespace DLS.Graphics
 			// Ensure minimum width for "RESULT" text
 			float minResultWidth = Seb.Vis.UI.UI.CalculateTextSize("RESULT", ActiveUITheme.FontSizeRegular * 1.4f * _tableZoom, FontType.JetbrainsMonoRegular).x + cell_Padding * 2;
 			_resultColumnWidth = Mathf.Max(x - x_start, minResultWidth);
+			
+			// Update x to reflect actual column width (in case minResultWidth is larger)
+			x = x_start + _resultColumnWidth;
 
 			// Calculate total content width (horizontal scrollbar is created once in DrawLeftPanel) - scaled by zoom
 			float totalContentWidth = x - scrolledTopLeft.x + cell_Padding * 2;
