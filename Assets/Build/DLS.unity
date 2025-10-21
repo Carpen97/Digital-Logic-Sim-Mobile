@@ -151,7 +151,7 @@ MonoBehaviour:
   openSaveDirectory: 0
   openInMainMenu: 0
   startInLevel: 1
-  startLevelId: lvl.8bit.equality.1
+  startLevelId: lvl.adder4bit.1
   continueLevelFromSave: 1
   testProjectName: TEST
   openA: 1

@@ -52,12 +52,12 @@ namespace DLS.Game
 		{
 			get	
 			{
-				if(BitCount.BitCount is 1 or 4 or 8)
+				if(BitCount.BitCount==1)
 				{
-                    return HandlePosition + faceDir * (GridSize * (BitCount.BitCount is 1 or 4 ? 6 : 9));
-                }
-
-				return StateDisplayPosition + faceDir * (StateGridSize.x / 2 + 2 * GridSize);
+                    return HandlePosition + faceDir * (GridSize * 6);
+                }else{
+					return StateDisplayPosition + faceDir * (StateGridSize.x) * (GridSize*5);
+				}
 			}
 		}
 
