@@ -49,6 +49,33 @@ namespace DLS.Levels
 		public TestVector[] vectors;  // Sequence of input/output pairs
 	}
 	public TestSequence[] testSequences;
+	
+	// Support for external binary test vector files
+	public string testVectorsFile;  // Path to binary file (relative to Resources folder, without extension)
+	
+	// Cached test vectors loaded from binary file
+	private TestVector[] _cachedBinaryVectors;
+	private bool _binaryVectorsLoaded;
+	
+	/// <summary>
+	/// Get test vectors - loads from binary file if specified, otherwise uses testVectors array.
+	/// </summary>
+	public TestVector[] GetTestVectors()
+	{
+		// If we have a binary file specified, load from it
+		if (!string.IsNullOrEmpty(testVectorsFile))
+		{
+			if (!_binaryVectorsLoaded)
+			{
+				_cachedBinaryVectors = TestVectorsBinaryFormat.ReadFromResource(testVectorsFile);
+				_binaryVectorsLoaded = true;
+			}
+			return _cachedBinaryVectors ?? System.Array.Empty<TestVector>();
+		}
+		
+		// Otherwise use the inline testVectors array
+		return testVectors ?? System.Array.Empty<TestVector>();
+	}
 		
 		public System.Collections.Generic.List<string> hints;
 	}

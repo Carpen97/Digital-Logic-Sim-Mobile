@@ -279,13 +279,29 @@ namespace DLS.Game.LevelsIntegration
                     Debug.Log($"[LevelManager] Created directory: {directoryPath}");
                 }
                 
-                string fileName = $"{Current.id}_testvectors.json";
-                string filePath = System.IO.Path.Combine(directoryPath, fileName);
+                // Save JSON version
+                string jsonFileName = $"{Current.id}_testvectors.json";
+                string jsonFilePath = System.IO.Path.Combine(directoryPath, jsonFileName);
+                System.IO.File.WriteAllText(jsonFilePath, json);
+                Debug.Log($"[LevelManager] Test vectors saved to: {jsonFilePath}");
                 
-                System.IO.File.WriteAllText(filePath, json);
-                Debug.Log($"[LevelManager] Test vectors saved to: {filePath}");
+                // Also save binary version for direct use
+                string binaryFileName = $"{Current.id}.tvec";
+                string binaryFilePath = System.IO.Path.Combine(directoryPath, binaryFileName);
                 
-                // Refresh Unity's asset database to show the new file
+                // Convert TestVectorData to LevelDefinition.TestVector
+                var levelTestVectors = testVectors.Select(tv => new DLS.Levels.LevelDefinition.TestVector
+                {
+                    inputs = tv.inputs,
+                    expected = tv.expected,
+                    settleSteps = 0,
+                    isClockEdge = false
+                }).ToArray();
+                
+                TestVectorsBinaryFormat.WriteToFile(binaryFilePath, levelTestVectors, totalInputBits, totalOutputBits);
+                Debug.Log($"[LevelManager] Binary test vectors saved to: {binaryFilePath}");
+                
+                // Refresh Unity's asset database to show the new files
                 UnityEditor.AssetDatabase.Refresh();
             }
             catch (System.Exception e)

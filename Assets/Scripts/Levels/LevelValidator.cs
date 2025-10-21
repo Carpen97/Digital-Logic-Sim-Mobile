@@ -37,9 +37,9 @@ namespace DLS.Levels
 			return report;
 		}
 
-		private void ValidateCombinational(LevelDefinition def, ValidationReport report)
-		{
-			var vectors = def.testVectors;
+	private void ValidateCombinational(LevelDefinition def, ValidationReport report)
+	{
+		var vectors = def.GetTestVectors();
 
 			// Initialize AllTestResults for combinational levels
 			report.AllTestResults = new List<TestResult>();
