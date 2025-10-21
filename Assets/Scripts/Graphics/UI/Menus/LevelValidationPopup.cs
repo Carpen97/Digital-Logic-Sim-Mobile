@@ -83,6 +83,7 @@ namespace DLS.Graphics
 		static float _inColumnWidth = 0f;
 		static float _expectedColumnWidth = 0f;
 		static float _outColumnWidth = 0f;
+		static float _resultColumnWidth = 0f;
 		static float _columnSpacing = 0f;
 		static float _dividerWidth = 3f; // Width of column dividers
 
@@ -158,7 +159,11 @@ namespace DLS.Graphics
 				}
 			}
 
+			// Reset zoom state so defaultZoom is calculated consistently
+			_tableZoom = DefaultZoom;
+			_hScroll = 0f;
 			defaultZoomSet = false;
+			Debug.Log($"[LevelValidationPopup] Opening popup - Reset _tableZoom to {_tableZoom}, defaultZoomSet = false");
 
 			UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
 		}
@@ -381,6 +386,7 @@ namespace DLS.Graphics
 			}
 			if (fitWidthPressed)
 			{
+				Debug.Log($"[LevelValidationPopup] Fit button pressed - Setting _tableZoom from {_tableZoom} to {defaultZoom}");
 				_tableZoom = defaultZoom;
 				_hScroll = 0;
 				_bitGroupPositionsCalculated = false; // Recalculate positions with new zoom
@@ -553,6 +559,23 @@ namespace DLS.Graphics
 				   cellPadding/2 + outTextWidth + finalPadding;
 		}
 
+		static void DrawResultCheckmark(Vector2 center, float size, Color color)
+		{
+			// Draw as a solid green circle (simple and clear)
+			Seb.Vis.UI.UI.DrawCircle(center, size, color, Anchor.Centre);
+		}
+
+		static void DrawResultCross(Vector2 center, float size, Color color)
+		{
+			// Draw as a solid red square (simple and clear)
+			float squareSize = size * 1.4f;
+			Bounds2D squareBounds = new Bounds2D(
+				center - new Vector2(squareSize * 0.5f, squareSize * 0.5f),
+				center + new Vector2(squareSize * 0.5f, squareSize * 0.5f)
+			);
+			Seb.Vis.UI.UI.DrawPanel(squareBounds, color);
+		}
+
 		static float DrawGraphicalBits(string bits, bool isInputColumn, float startX, float centerY, int column)
 		{
 			if (string.IsNullOrEmpty(bits)) return 0f;
@@ -592,8 +615,13 @@ namespace DLS.Graphics
 
 				// Draw the bit group
 				float groupWidth = DrawBitGroup(pinBits, x, centerY, column, pinIndex);
-				x += groupWidth + 3f * _tableZoom; // Space between groups
-				totalWidth += groupWidth + (pinIndex < bitCounts.Length - 1 ? 3f * _tableZoom : 0f);
+				if(pinBitCount == 1){
+					x += groupWidth + 1f * _tableZoom; // Space between groups
+					totalWidth += groupWidth + (pinIndex < bitCounts.Length - 1 ? 1f * _tableZoom : 0f);
+				}else{
+					x += groupWidth + 3f * _tableZoom; // Space between groups
+					totalWidth += groupWidth + (pinIndex < bitCounts.Length - 1 ? 3f * _tableZoom : 0f);
+				}
 				bitOffset += pinBitCount;
 			}
 
@@ -814,11 +842,51 @@ namespace DLS.Graphics
 				string outTitle = "OUT";
 				float outTitleX = x + _outColumnWidth * 0.5f;
 				Seb.Vis.UI.UI.DrawText(outTitle, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * 1.4f * _tableZoom, new Vector2(outTitleX, y1), Anchor.Centre, Color.white);
+				x += _outColumnWidth + _dividerWidth * _tableZoom;
 
-				// Line 2: Pin labels (using stored x-positions for alignment)
+				// RESULT column title - scaled by zoom
+				string resultTitle = "RESULT";
+				float resultTitleX = x + _resultColumnWidth * 0.5f;
+				Seb.Vis.UI.UI.DrawText(resultTitle, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * 1.4f * _tableZoom, new Vector2(resultTitleX, y1), Anchor.Centre, Color.white);
+
+				// Line 2: Pin labels and result stats
 				float y2 = headerTopLeft.y - lineHeight * 2.5f;
 				DrawPinLabelsInHeader(y2);
+				DrawResultStats(y2, x + _resultColumnWidth * 0.5f);
 			}
+		}
+
+		static void DrawResultStats(float y, float x)
+		{
+			// Calculate pass rate
+			int totalTests = _rows.Count;
+			int passedTests = _rows.Count(r => r.Passed);
+			
+			if (totalTests == 0) return;
+			
+			float passRate = (float)passedTests / totalTests;
+			
+			// Determine color based on pass rate
+			Color statsColor;
+			if (passRate >= 1.0f)
+			{
+				statsColor = Color.green;
+			}
+			else if (passRate > 0.75f)
+			{
+				statsColor = new Color(1.0f, 0.6f, 0.0f); // Orange
+			}
+			else if (passRate > 0.5f)
+			{
+				statsColor = Color.yellow;
+			}
+			else
+			{
+				statsColor = Color.red;
+			}
+			
+			string statsText = $"({passedTests}/{totalTests})";
+			Seb.Vis.UI.UI.DrawText(statsText, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * _tableZoom, new Vector2(x, y), Anchor.Centre, statsColor);
 		}
 
 		static void DrawPinLabelsInHeader(float y)
@@ -937,6 +1005,7 @@ namespace DLS.Graphics
 			// Calculate divider positions - scaled by zoom
 			float x1 = scrolledTopLeft.x + 1f * _tableZoom + 2f * _tableZoom + _inColumnWidth; // After IN column
 			float x2 = scrolledTopLeft.x + 1f * _tableZoom + 2f * _tableZoom + _inColumnWidth + _dividerWidth * _tableZoom + _expectedColumnWidth; // After EXPECTED column
+			float x3 = scrolledTopLeft.x + 1f * _tableZoom + 2f * _tableZoom + _inColumnWidth + _dividerWidth * _tableZoom + _expectedColumnWidth + _dividerWidth * _tableZoom + _outColumnWidth; // After OUT column
 
 			float contentAreaHeight = viewportHeight - _headerHeight; // Height of scrollable content area
 			float horizontalScrollbarHeight = DrawSettings.ActiveUITheme.ScrollTheme.scrollBarWidth;
@@ -949,6 +1018,8 @@ namespace DLS.Graphics
 			DrawColumnDivider(x1, scrolledTopLeft.y, totalHeight);
 			// Draw second divider (between EXPECTED and OUT)
 			DrawColumnDivider(x2, scrolledTopLeft.y, totalHeight);
+			// Draw third divider (between OUT and RESULT)
+			DrawColumnDivider(x3, scrolledTopLeft.y, totalHeight);
 		}
 
 		static void DrawColumnDivider(float x, float y, float height)
@@ -1089,9 +1160,37 @@ namespace DLS.Graphics
 			}
 			outTextWidth = MathF.Max(outTextWidth,3f*_tableZoom);
 			x += outTextWidth;
+			x += cell_Padding;
 
 			_outColumnWidth = x - x_start;
+			x += _dividerWidth * _tableZoom;
 
+			//RESULT
+			x_start = x;
+			x += cell_Padding / 2;
+			
+			// Draw checkmark or cross based on test result
+			float resultIconSize = 2.0f * _tableZoom;
+			Color resultColor = row.Passed ? Color.green : Color.red;
+			Vector2 iconCenter = new Vector2(x + resultIconSize, centerY);
+			
+			if (row.Passed)
+			{
+				// Draw checkmark as filled circle
+				DrawResultCheckmark(iconCenter, resultIconSize, resultColor);
+			}
+			else
+			{
+				// Draw cross as circle with X
+				DrawResultCross(iconCenter, resultIconSize, resultColor);
+			}
+			
+			x += resultIconSize * 2;
+			x += cell_Padding / 2;
+
+			// Ensure minimum width for "RESULT" text
+			float minResultWidth = Seb.Vis.UI.UI.CalculateTextSize("RESULT", ActiveUITheme.FontSizeRegular * 1.4f * _tableZoom, FontType.JetbrainsMonoRegular).x + cell_Padding * 2;
+			_resultColumnWidth = Mathf.Max(x - x_start, minResultWidth);
 
 			// Calculate total content width (horizontal scrollbar is created once in DrawLeftPanel) - scaled by zoom
 			float totalContentWidth = x - scrolledTopLeft.x + cell_Padding * 2;
@@ -1102,8 +1201,11 @@ namespace DLS.Graphics
 
             if (defaultZoomSet == false)
             {
-            	defaultZoom =  width/ _contentWidth;
+            	// Normalize content width back to zoom 1.0, then calculate the zoom needed to fit
+            	float contentWidthAtZoom1 = _contentWidth / _tableZoom;
+            	defaultZoom = Mathf.Clamp(width / contentWidthAtZoom1, MinZoom, MaxZoom);
 				defaultZoomSet = true;
+				Debug.Log($"[LevelValidationPopup] Calculated defaultZoom: {defaultZoom} (width: {width}, contentWidth: {_contentWidth}, tableZoom: {_tableZoom}, normalized: {contentWidthAtZoom1})");
             }
 
 		}
