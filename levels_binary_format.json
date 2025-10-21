@@ -1,0 +1,2134 @@
+{
+  "schemaVersion": 1,
+  "packId": "pack.basics",
+  "packName": "Digital Logic – Basics",
+  "packDescription": "",
+  "chapters": [
+    {
+      "chapterId": "ch.basics",
+      "chapterName": "Basics",
+      "chapterDescription": "Master the building blocks of digital electronics! Learn how simple gates like AND, OR, and XOR form the foundation of all computer logic. By combining these basic gates, you'll create increasingly powerful circuits that perform complex operations.",
+      "levels": [
+        {
+          "id": "lvl.not.1",
+          "chapterId": "ch.basics",
+          "name": "NOT Gate",
+          "description": "Output should be the inverse of input.",
+          "inputCount": 1,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.not.1"
+        },
+        {
+          "id": "lvl.and.1",
+          "chapterId": "ch.basics",
+          "name": "AND Gate",
+          "description": "Output should be 1 only if both inputs are 1.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.and.1"
+        },
+        {
+          "id": "lvl.or.1",
+          "chapterId": "ch.basics",
+          "name": "OR Gate",
+          "description": "Output should be 1 if either input is 1.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.or.1"
+        },
+        {
+          "id": "lvl.xor.1",
+          "chapterId": "ch.basics",
+          "name": "XOR Gate",
+          "description": "Output should be 1 if exactly one input is 1.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.xor.1"
+        },
+        {
+          "id": "lvl.nor.1",
+          "chapterId": "ch.basics",
+          "name": "NOR Gate",
+          "description": "Output is 1 only when both inputs are 0.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "NOR is NOT OR",
+            "Y = NOT (A OR B)"
+          ],
+          "testVectorsFile": "testvectors/lvl.nor.1"
+        },
+        {
+          "id": "lvl.xnor.1",
+          "chapterId": "ch.basics",
+          "name": "XNOR Gate",
+          "description": "Output is 1 when inputs are equal.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.xnor.1"
+        }
+      ]
+    },
+    {
+      "chapterId": "ch.intermediate",
+      "chapterName": "Intermediate",
+      "chapterDescription": "Building upon basic logic gates, these challenges introduce more complex combinational circuits, multi-input functions, and fundamental functional blocks. Master the art of combining simple gates to create sophisticated logic operations.",
+      "levels": [
+        {
+          "id": "lvl.a_and_not_b",
+          "chapterId": "ch.intermediate",
+          "name": "A AND NOT B",
+          "description": "Output should be 1 when A=1 and B=0.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.a_and_not_b"
+        },
+        {
+          "id": "lvl.a_or_not_b",
+          "chapterId": "ch.intermediate",
+          "name": "A OR NOT B",
+          "description": "Output should be 1 when A=1 or B=0 (or both).",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.a_or_not_b"
+        },
+        {
+          "id": "lvl.impl.1",
+          "chapterId": "ch.intermediate",
+          "name": "Implication (A → B)",
+          "description": "(!A) OR B.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.impl.1"
+        },
+        {
+          "id": "lvl.and3.1",
+          "chapterId": "ch.intermediate",
+          "name": "3-Input AND",
+          "description": "Output is 1 only when A=B=C=1.",
+          "inputCount": 3,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "C",
+              "abbr": "C"
+            },
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.and3.1"
+        },
+        {
+          "id": "lvl.or3.1",
+          "chapterId": "ch.intermediate",
+          "name": "3-Input OR",
+          "description": "Output is 1 if any input is 1.",
+          "inputCount": 3,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "C",
+              "abbr": "C"
+            },
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.or3.1"
+        },
+        {
+          "id": "lvl.maj3.1",
+          "chapterId": "ch.intermediate",
+          "name": "Majority",
+          "description": "Output is 1 when at least two inputs are 1.",
+          "inputCount": 3,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "C",
+              "abbr": "C"
+            },
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.maj3.1"
+        },
+        {
+          "id": "lvl.par3.1",
+          "chapterId": "ch.intermediate",
+          "name": "Parity (Odd, 3-bit)",
+          "description": "Output is 1 when the number of 1s is odd.",
+          "inputCount": 3,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "C",
+              "abbr": "C"
+            },
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.par3.1"
+        },
+        {
+          "id": "lvl.atleast1zero",
+          "chapterId": "ch.intermediate",
+          "name": "At Least One Zero",
+          "description": "Output is 1 unless both inputs are 1.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.atleast1zero"
+        },
+        {
+          "id": "lvl.mux2.1",
+          "chapterId": "ch.intermediate",
+          "name": "2→1 MUX (S,A,B)",
+          "description": "If S=0 output A; if S=1 output B.",
+          "inputCount": 3,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "S",
+              "abbr": "S"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [],
+          "hints": [],
+          "testVectorsFile": "testvectors/lvl.mux2.1"
+        }
+      ]
+    },
+    {
+      "chapterId": "ch.sequential",
+      "chapterName": "Sequential Circuits",
+      "chapterDescription": "Enter the world of memory and time! Build circuits that remember their past and create counters, latches, and flip-flops. This is where digital circuits gain the power of memory and state.",
+      "levels": [
+        {
+          "id": "lvl.srlatch.1",
+          "chapterId": "ch.sequential",
+          "name": "SR Latch",
+          "description": "Basic memory element. Set when S=1, Reset when R=1, Hold when both are 0.",
+          "inputCount": 2,
+          "outputCount": 2,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Reset",
+              "abbr": "R"
+            },
+            {
+              "name": "Set",
+              "abbr": "S"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Output",
+              "abbr": "Q"
+            },
+            {
+              "name": "Output Inverted",
+              "abbr": "N"
+            }
+          ],
+          "isSequential": true,
+          "settleStepsPerVector": 2,
+          "testSequences": [
+            {
+              "name": "Set and Reset",
+              "vectors": [
+                {
+                  "inputs": "01",
+                  "expected": "10",
+                  "settleSteps": 3,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "00",
+                  "expected": "10",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "10",
+                  "expected": "01",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "00",
+                  "expected": "01",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "01",
+                  "expected": "10",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "00",
+                  "expected": "10",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                }
+              ]
+            }
+          ],
+          "hints": [
+            "Use NAND gates",
+            "Q = NOT (R AND Qn)",
+            "Qn = NOT (S AND Q)"
+          ]
+        },
+        {
+          "id": "lvl.dlatch.1",
+          "chapterId": "ch.sequential",
+          "name": "D Latch",
+          "description": "Level-triggered memory element. When Enable=1, Q follows D. When Enable=0, Q holds its value (latched).",
+          "inputCount": 2,
+          "outputCount": 2,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Data",
+              "abbr": "D"
+            },
+            {
+              "name": "Enable",
+              "abbr": "E"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Output",
+              "abbr": "Q"
+            },
+            {
+              "name": "Output Inverted",
+              "abbr": "N"
+            }
+          ],
+          "isSequential": true,
+          "settleStepsPerVector": 2,
+          "testSequences": [
+            {
+              "name": "Transparent and Latched Modes",
+              "setup": [
+                "00",
+                "10",
+                "00"
+              ],
+              "vectors": [
+                {
+                  "inputs": "01",
+                  "expected": "10",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "00",
+                  "expected": "10",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "10",
+                  "expected": "10",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "11",
+                  "expected": "01",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "01",
+                  "expected": "01",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "00",
+                  "expected": "01",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "10",
+                  "expected": "10",
+                  "settleSteps": 2,
+                  "isClockEdge": false
+                }
+              ]
+            }
+          ],
+          "hints": [
+            "D Latch is level-triggered, not edge-triggered",
+            "When Enable=1: Q becomes D immediately (transparent mode)",
+            "When Enable=0: Q holds its current value (latch mode)",
+            "Can be built using NAND gates or an SR Latch with D and NOT D inputs",
+            "Q' is always the complement of Q"
+          ]
+        },
+        {
+          "id": "lvl.dflipflop.1",
+          "chapterId": "ch.sequential",
+          "name": "D Flip-Flop",
+          "description": "Data storage element. Q follows D on rising clock edge. Q' is the complement of Q. When CLK goes high, Q captures the value of D and holds it until the next rising edge.",
+          "inputCount": 2,
+          "outputCount": 2,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Data",
+              "abbr": "D"
+            },
+            {
+              "name": "Clock",
+              "abbr": "C"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Output",
+              "abbr": "Q"
+            },
+            {
+              "name": "Output Inverted",
+              "abbr": "N"
+            }
+          ],
+          "isSequential": true,
+          "clockInputIndex": 1,
+          "settleStepsPerVector": 3,
+          "testSequences": [
+            {
+              "name": "Data Storage and Complement",
+              "setup": [
+                "00",
+                "10",
+                "00"
+              ],
+              "vectors": [
+                {
+                  "inputs": "10",
+                  "expected": "10",
+                  "settleSteps": 10,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "11",
+                  "expected": "10",
+                  "settleSteps": 10,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "01",
+                  "expected": "10",
+                  "settleSteps": 10,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "11",
+                  "expected": "01",
+                  "settleSteps": 10,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "00",
+                  "expected": "01",
+                  "settleSteps": 10,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "10",
+                  "expected": "10",
+                  "settleSteps": 10,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "00",
+                  "expected": "10",
+                  "settleSteps": 10,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "01",
+                  "expected": "10",
+                  "settleSteps": 10,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "11",
+                  "expected": "01",
+                  "settleSteps": 10,
+                  "isClockEdge": true
+                }
+              ]
+            }
+          ],
+          "hints": [
+            "D flip-flop stores the D input on rising clock edge",
+            "Q changes only when CLK transitions from 0 to 1",
+            "Q' (Q complement) is always the opposite of Q",
+            "Characteristic equation: Q(n+1) = D(n)"
+          ]
+        }
+      ]
+    },
+    {
+      "chapterId": "ch.arithmetic",
+      "chapterName": "Arithmetic Fundamentals",
+      "chapterDescription": "Learn the magic of binary math! Construct adders from simple gates, understand carry propagation, and build the mathematical foundation that powers every computer's arithmetic unit.",
+      "levels": [
+        {
+          "id": "lvl.halfadder.1",
+          "chapterId": "ch.arithmetic",
+          "name": "Half Adder",
+          "description": "Add two single bits. Output is sum and carry.",
+          "inputCount": 2,
+          "outputCount": 2,
+          "inputBitCounts": [
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Carry",
+              "abbr": "C"
+            },
+            {
+              "name": "Sum",
+              "abbr": "S"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "Sum = A XOR B",
+            "Carry = A AND B"
+          ],
+          "testVectorsFile": "testvectors/lvl.halfadder.1"
+        },
+        {
+          "id": "lvl.fulladder.1",
+          "chapterId": "ch.arithmetic",
+          "name": "Full Adder",
+          "description": "Add two bits plus carry-in. Output is sum and carry-out.",
+          "inputCount": 3,
+          "outputCount": 2,
+          "inputBitCounts": [
+            1,
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Input A",
+              "abbr": "A"
+            },
+            {
+              "name": "Input B",
+              "abbr": "B"
+            },
+            {
+              "name": "Carry In",
+              "abbr": "Cin"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Carry Out",
+              "abbr": "Co"
+            },
+            {
+              "name": "Sum",
+              "abbr": "S"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "Use two half adders",
+            "Sum = A XOR B XOR Cin",
+            "Cout = (A AND B) OR (Cin AND (A XOR B))"
+          ],
+          "testVectorsFile": "testvectors/lvl.fulladder.1"
+        },
+        {
+          "id": "lvl.adder4bit.1",
+          "chapterId": "ch.arithmetic",
+          "name": "4-bit Adder",
+          "description": "Add two 4-bit numbers. Output is 5-bit result (4-bit sum + carry).",
+          "inputCount": 8,
+          "outputCount": 5,
+          "inputBitCounts": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "A0",
+              "abbr": "A0"
+            },
+            {
+              "name": "A1",
+              "abbr": "A1"
+            },
+            {
+              "name": "A2",
+              "abbr": "A2"
+            },
+            {
+              "name": "A3",
+              "abbr": "A3"
+            },
+            {
+              "name": "B0",
+              "abbr": "B0"
+            },
+            {
+              "name": "B1",
+              "abbr": "B1"
+            },
+            {
+              "name": "B2",
+              "abbr": "B2"
+            },
+            {
+              "name": "B3",
+              "abbr": "B3"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Carry Out",
+              "abbr": "Co"
+            },
+            {
+              "name": "Sum Bit 0",
+              "abbr": "S0"
+            },
+            {
+              "name": "Sum Bit 1",
+              "abbr": "S1"
+            },
+            {
+              "name": "Sum Bit 2",
+              "abbr": "S2"
+            },
+            {
+              "name": "Sum Bit 3",
+              "abbr": "S3"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "Chain four full adders",
+            "Carry propagates through all stages",
+            "Test with edge cases: 0+0, max+1, overflow"
+          ],
+          "testVectorsFile": "testvectors/lvl.adder4bit.1"
+        }
+      ]
+    },
+    {
+      "chapterId": "ch.advanced_arithmetic",
+      "chapterName": "Advanced Arithmetic",
+      "chapterDescription": "Reach the pinnacle of digital design! Build subtraction circuits using two's complement, create comparators, and finally construct a complete ALU - the heart of every processor that performs all arithmetic and logic operations.",
+      "levels": [
+        {
+          "id": "lvl.subtractor.1",
+          "chapterId": "ch.advanced_arithmetic",
+          "name": "4-bit Subtractor",
+          "description": "Subtract B from A using two's complement. Output is difference and borrow.",
+          "inputCount": 8,
+          "outputCount": 5,
+          "inputBitCounts": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "B0",
+              "abbr": "B0"
+            },
+            {
+              "name": "B1",
+              "abbr": "B1"
+            },
+            {
+              "name": "B2",
+              "abbr": "B2"
+            },
+            {
+              "name": "B3",
+              "abbr": "B3"
+            },
+            {
+              "name": "A0",
+              "abbr": "A0"
+            },
+            {
+              "name": "A1",
+              "abbr": "A1"
+            },
+            {
+              "name": "A2",
+              "abbr": "A2"
+            },
+            {
+              "name": "A3",
+              "abbr": "A3"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Borrow",
+              "abbr": "Bo"
+            },
+            {
+              "name": "Difference 0",
+              "abbr": "D0"
+            },
+            {
+              "name": "Difference 1",
+              "abbr": "D1"
+            },
+            {
+              "name": "Difference 2",
+              "abbr": "D2"
+            },
+            {
+              "name": "Difference 3",
+              "abbr": "D3"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "Use two's complement: A - B = A + (~B + 1)",
+            "Invert B, add 1, then use 4-bit adder",
+            "Borrow indicates negative result"
+          ],
+          "testVectorsFile": "testvectors/lvl.subtractor.1"
+        },
+        {
+          "id": "lvl.comparator.1",
+          "chapterId": "ch.advanced_arithmetic",
+          "name": "4-bit Comparator",
+          "description": "Compare two 4-bit numbers. Output A>B, A=B, A<B.",
+          "inputCount": 8,
+          "outputCount": 3,
+          "inputBitCounts": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1,
+            1,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "A0",
+              "abbr": "A0"
+            },
+            {
+              "name": "A1",
+              "abbr": "A1"
+            },
+            {
+              "name": "A2",
+              "abbr": "A2"
+            },
+            {
+              "name": "A3",
+              "abbr": "A3"
+            },
+            {
+              "name": "B0",
+              "abbr": "B0"
+            },
+            {
+              "name": "B1",
+              "abbr": "B1"
+            },
+            {
+              "name": "B2",
+              "abbr": "B2"
+            },
+            {
+              "name": "B3",
+              "abbr": "B3"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "A < B",
+              "abbr": "LT"
+            },
+            {
+              "name": "A = B",
+              "abbr": "EQ"
+            },
+            {
+              "name": "A > B",
+              "abbr": "GT"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "A = B when all bits match",
+            "A > B when MSB differs and A_MSB=1, or MSB same and A > B in lower bits",
+            "A < B when neither A > B nor A = B",
+            "Compare bits from most significant to least significant"
+          ],
+          "testVectorsFile": "testvectors/lvl.comparator.1"
+        },
+        {
+          "id": "lvl.alu_simple.1",
+          "chapterId": "ch.advanced_arithmetic",
+          "name": "Simple ALU (Add/Sub)",
+          "description": "4-bit ALU with add/subtract operations. Op=0: add, Op=1: subtract.",
+          "inputCount": 9,
+          "outputCount": 5,
+          "inputBitCounts": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "A0",
+              "abbr": "A0"
+            },
+            {
+              "name": "A1",
+              "abbr": "A1"
+            },
+            {
+              "name": "A2",
+              "abbr": "A2"
+            },
+            {
+              "name": "A3",
+              "abbr": "A3"
+            },
+            {
+              "name": "B0",
+              "abbr": "B0"
+            },
+            {
+              "name": "B1",
+              "abbr": "B1"
+            },
+            {
+              "name": "B2",
+              "abbr": "B2"
+            },
+            {
+              "name": "B3",
+              "abbr": "B3"
+            },
+            {
+              "name": "Op",
+              "abbr": "Op"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Carry/Borrow",
+              "abbr": "C/B"
+            },
+            {
+              "name": "Result Bit 0",
+              "abbr": "R0"
+            },
+            {
+              "name": "Result Bit 1",
+              "abbr": "R1"
+            },
+            {
+              "name": "Result Bit 2",
+              "abbr": "R2"
+            },
+            {
+              "name": "Result Bit 3",
+              "abbr": "R3"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "Use MUX to select between adder and subtractor",
+            "When Op=0: A + B",
+            "When Op=1: A - B (two's complement)"
+          ],
+          "testVectorsFile": "testvectors/lvl.alu_simple.1"
+        },
+        {
+          "id": "lvl.alu_complete.1",
+          "chapterId": "ch.advanced_arithmetic",
+          "name": "Complete 4-bit ALU",
+          "description": "Full ALU with 4 operations: AND, OR, ADD, SUB. 2-bit operation select.",
+          "inputCount": 10,
+          "outputCount": 5,
+          "inputBitCounts": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "outputBitCounts": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "A0",
+              "abbr": "A0"
+            },
+            {
+              "name": "A1",
+              "abbr": "A1"
+            },
+            {
+              "name": "A2",
+              "abbr": "A2"
+            },
+            {
+              "name": "A3",
+              "abbr": "A3"
+            },
+            {
+              "name": "B0",
+              "abbr": "B0"
+            },
+            {
+              "name": "B1",
+              "abbr": "B1"
+            },
+            {
+              "name": "B2",
+              "abbr": "B2"
+            },
+            {
+              "name": "B3",
+              "abbr": "B3"
+            },
+            {
+              "name": "Op0",
+              "abbr": "Op0"
+            },
+            {
+              "name": "Op1",
+              "abbr": "Op1"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Flag",
+              "abbr": "F"
+            },
+            {
+              "name": "Result Bit 0",
+              "abbr": "R0"
+            },
+            {
+              "name": "Result Bit 1",
+              "abbr": "R1"
+            },
+            {
+              "name": "Result Bit 2",
+              "abbr": "R2"
+            },
+            {
+              "name": "Result Bit 3",
+              "abbr": "R3"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "Op=00: A AND B",
+            "Op=01: A OR B",
+            "Op=10: A + B",
+            "Op=11: A - B",
+            "Use 4-to-1 MUX to select operation"
+          ],
+          "testVectorsFile": "testvectors/lvl.alu_complete.1"
+        },
+        {
+          "id": "lvl.counter4bit.1",
+          "chapterId": "ch.sequential",
+          "name": "4-bit Counter",
+          "description": "Count from 0 to 15 and repeat. Use clock input.",
+          "inputCount": 1,
+          "outputCount": 4,
+          "inputBitCounts": [
+            1
+          ],
+          "outputBitCounts": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Clock",
+              "abbr": "C"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Count Bit 3",
+              "abbr": "3"
+            },
+            {
+              "name": "Count Bit 2",
+              "abbr": "2"
+            },
+            {
+              "name": "Count Bit 1",
+              "abbr": "1"
+            },
+            {
+              "name": "Count Bit 0",
+              "abbr": "0"
+            }
+          ],
+          "isSequential": true,
+          "clockInputIndex": 0,
+          "settleStepsPerVector": 3,
+          "testSequences": [
+            {
+              "name": "Reset and Count",
+              "vectors": [
+                {
+                  "inputs": "0",
+                  "expected": "0000",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0001",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0001",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0010",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0010",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0011",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0011",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0100",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0100",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0101",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0101",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0110",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0110",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0111",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "0111",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1000",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1000",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1001",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1001",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1010",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1010",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1011",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1011",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1100",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1100",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1101",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1101",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1110",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1110",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "1111",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                },
+                {
+                  "inputs": "0",
+                  "expected": "1111",
+                  "settleSteps": 1,
+                  "isClockEdge": false
+                },
+                {
+                  "inputs": "1",
+                  "expected": "0000",
+                  "settleSteps": 2,
+                  "isClockEdge": true
+                }
+              ]
+            }
+          ],
+          "hints": [
+            "Use D flip-flops for each bit",
+            "Q0 toggles every clock",
+            "Q1 toggles when Q0=1",
+            "Q2 toggles when Q0=1 and Q1=1",
+            "Q3 toggles when Q0=1, Q1=1, and Q2=1"
+          ]
+        }
+      ]
+    },
+    {
+      "chapterId": "ch.8bit",
+      "chapterName": "8-Bit Operations",
+      "chapterDescription": "Bridge the gap between simple logic gates and real-world computing! Learn to work with 8-bit data buses - the fundamental unit of computer memory. Master parallel processing, understand carry propagation across bytes, and build circuits that manipulate data the way real processors do. From simple operations to a complete 8-bit ALU, you'll discover how computers process information at the byte level.",
+      "levels": [
+        {
+          "id": "lvl.8bit.wire.1",
+          "chapterId": "ch.8bit",
+          "name": "8-Bit Wire",
+          "description": "Connect the 8-bit input directly to the 8-bit output. This introduces the concept of multi-bit buses - bundles of wires that carry parallel data signals. Think of it as moving an entire byte of information at once!",
+          "inputCount": 1,
+          "outputCount": 1,
+          "inputBitCounts": [
+            8
+          ],
+          "outputBitCounts": [
+            8
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Data",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Output",
+              "abbr": "OUT"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "Connect A0 to OUT0, A1 to OUT1, and so on...",
+            "This is the simplest 8-bit operation - just passing data through"
+          ],
+          "testVectorsFile": "testvectors/lvl.8bit.wire.1"
+        },
+        {
+          "id": "lvl.8bit.not.1",
+          "chapterId": "ch.8bit",
+          "name": "8-Bit NOT",
+          "description": "Invert all 8 bits of the input. Apply a NOT gate to each bit independently. This operation flips every bit: 0→1 and 1→0, creating the bitwise complement.",
+          "inputCount": 1,
+          "outputCount": 1,
+          "inputBitCounts": [
+            8
+          ],
+          "outputBitCounts": [
+            8
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Data",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Inverted",
+              "abbr": "OUT"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "Apply a NOT gate to each bit",
+            "NOT A0 → OUT0, NOT A1 → OUT1, etc."
+          ],
+          "testVectorsFile": "testvectors/lvl.8bit.not.1"
+        },
+        {
+          "id": "lvl.8bit.and.1",
+          "chapterId": "ch.8bit",
+          "name": "8-Bit AND",
+          "description": "Perform bitwise AND on two 8-bit inputs. Each output bit is the AND of the corresponding input bits. Useful for masking - isolating specific bits while zeroing others.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            8,
+            8
+          ],
+          "outputBitCounts": [
+            8
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Data A",
+              "abbr": "A"
+            },
+            {
+              "name": "Data B",
+              "abbr": "B"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Result",
+              "abbr": "OUT"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "AND each pair: A0 AND B0 → OUT0, A1 AND B1 → OUT1, etc.",
+            "Use 8 separate AND gates, one for each bit position"
+          ],
+          "testVectorsFile": "testvectors/lvl.8bit.and.1"
+        },
+        {
+          "id": "lvl.8bit.or.1",
+          "chapterId": "ch.8bit",
+          "name": "8-Bit OR",
+          "description": "Perform bitwise OR on two 8-bit inputs. Each output bit is 1 if either corresponding input bit is 1. Useful for combining bit patterns or setting specific bits.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            8,
+            8
+          ],
+          "outputBitCounts": [
+            8
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Data A",
+              "abbr": "A"
+            },
+            {
+              "name": "Data B",
+              "abbr": "B"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Result",
+              "abbr": "OUT"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "OR each pair: A0 OR B0 → OUT0, A1 OR B1 → OUT1, etc.",
+            "Use 8 separate OR gates, one for each bit position"
+          ],
+          "testVectorsFile": "testvectors/lvl.8bit.or.1"
+        },
+        {
+          "id": "lvl.8bit.xor.1",
+          "chapterId": "ch.8bit",
+          "name": "8-Bit XOR",
+          "description": "Perform bitwise XOR on two 8-bit inputs. Each output bit is 1 if the corresponding input bits differ. XOR is essential for error detection, encryption, and detecting differences between values.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            8,
+            8
+          ],
+          "outputBitCounts": [
+            8
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Data A",
+              "abbr": "A"
+            },
+            {
+              "name": "Data B",
+              "abbr": "B"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Result",
+              "abbr": "OUT"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "XOR each pair: A0 XOR B0 → OUT0, A1 XOR B1 → OUT1, etc.",
+            "XOR outputs 1 only when inputs differ",
+            "Use 8 separate XOR gates"
+          ],
+          "testVectorsFile": "testvectors/lvl.8bit.xor.1"
+        },
+        {
+          "id": "lvl.8bit.mux.1",
+          "chapterId": "ch.8bit",
+          "name": "8-Bit 2-to-1 Multiplexer",
+          "description": "Build an 8-bit 2-to-1 multiplexer. When SEL=0, output A; when SEL=1, output B. This circuit selects between two 8-bit data sources based on a single control signal.",
+          "inputCount": 3,
+          "outputCount": 1,
+          "inputBitCounts": [
+            1,
+            8,
+            8
+          ],
+          "outputBitCounts": [
+            8
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Select",
+              "abbr": "SEL"
+            },
+            {
+              "name": "Data A",
+              "abbr": "A"
+            },
+            {
+              "name": "Data B",
+              "abbr": "B"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Output",
+              "abbr": "OUT"
+            }
+          ],
+          "testVectors": [],
+          "testVectorsFile": "testvectors/lvl.8bit.mux.1"
+        },
+        {
+          "id": "lvl.8bit.adder.1",
+          "chapterId": "ch.8bit",
+          "name": "8-Bit Adder",
+          "description": "Add two 8-bit numbers with carry-in and carry-out. This is real binary arithmetic! The carry ripples through all 8 bits, just like carrying in decimal addition. Hint: You can chain two 4-bit adders together!",
+          "inputCount": 3,
+          "outputCount": 2,
+          "inputBitCounts": [
+            1,
+            8,
+            8
+          ],
+          "outputBitCounts": [
+            8,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Carry In",
+              "abbr": "C"
+            },
+            {
+              "name": "Data A",
+              "abbr": "A"
+            },
+            {
+              "name": "Data B",
+              "abbr": "B"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Sum",
+              "abbr": "SUM"
+            },
+            {
+              "name": "Carry Out",
+              "abbr": "C"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "Chain two 4-bit adders together",
+            "Connect carry-out of lower 4 bits to carry-in of upper 4 bits",
+            "Or build from 8 full adders with carries rippling through"
+          ],
+          "testVectorsFile": "testvectors/lvl.8bit.adder.1"
+        },
+        {
+          "id": "lvl.8bit.equality.1",
+          "chapterId": "ch.8bit",
+          "name": "8-Bit Equality Comparator",
+          "description": "Compare two 8-bit numbers for equality. Output 1 if A equals B, 0 otherwise. All 8 bits must match! This is how computers check if two values are the same.",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            8,
+            8
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Data A",
+              "abbr": "A"
+            },
+            {
+              "name": "Data B",
+              "abbr": "B"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Equal",
+              "abbr": "EQ"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "A equals B when all bits match",
+            "Use XNOR for each bit pair, then AND all results together",
+            "Or: XOR each bit pair, OR all results, then NOT the final output"
+          ],
+          "testVectorsFile": "testvectors/lvl.8bit.equality.1"
+        },
+        {
+          "id": "lvl.8bit.greater.1",
+          "chapterId": "ch.8bit",
+          "name": "8-Bit Greater Than",
+          "description": "Compare two 8-bit unsigned numbers. Output 1 if A > B, 0 otherwise. Start comparing from the most significant bit (MSB) - just like comparing decimal numbers from left to right!",
+          "inputCount": 2,
+          "outputCount": 1,
+          "inputBitCounts": [
+            8,
+            8
+          ],
+          "outputBitCounts": [
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Data A",
+              "abbr": "A"
+            },
+            {
+              "name": "Data B",
+              "abbr": "B"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Greater",
+              "abbr": "GT"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "Compare from MSB (bit 7) to LSB (bit 0)",
+            "If A7 > B7, then A > B",
+            "If A7 = B7, check A6 vs B6, and so on...",
+            "This requires cascading comparisons"
+          ],
+          "testVectorsFile": "testvectors/lvl.8bit.greater.1"
+        },
+        {
+          "id": "lvl.8bit.leftshift.1",
+          "chapterId": "ch.8bit",
+          "name": "8-Bit Left Shifter",
+          "description": "Shift all bits left by 1 position. Bit 7 receives bit 6, bit 6 receives bit 5, and so on. Bit 0 becomes 0. Fun fact: shifting left by 1 is the same as multiplying by 2!",
+          "inputCount": 1,
+          "outputCount": 1,
+          "inputBitCounts": [
+            8
+          ],
+          "outputBitCounts": [
+            8
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Data",
+              "abbr": "IN"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Shifted",
+              "abbr": "OUT"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "Connect IN6 to OUT7, IN5 to OUT6, etc.",
+            "OUT0 is always 0",
+            "This is just wire routing - no gates needed!"
+          ],
+          "testVectorsFile": "testvectors/lvl.8bit.leftshift.1"
+        },
+        {
+          "id": "lvl.8bit.incrementer.1",
+          "chapterId": "ch.8bit",
+          "name": "8-Bit Incrementer",
+          "description": "Add 1 to the 8-bit input. This is a special case of addition used everywhere in computers - incrementing program counters, array indices, loop counters, etc.",
+          "inputCount": 1,
+          "outputCount": 1,
+          "inputBitCounts": [
+            8
+          ],
+          "outputBitCounts": [
+            8
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Data",
+              "abbr": "IN"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Incremented",
+              "abbr": "OUT"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "This is adding 1 to the input",
+            "You can use an 8-bit adder with B=00000001 and Cin=0",
+            "Or chain full adders with the first Cin=1 and all B inputs=0"
+          ],
+          "testVectorsFile": "testvectors/lvl.8bit.incrementer.1"
+        },
+        {
+          "id": "lvl.8bit.alu.1",
+          "chapterId": "ch.8bit",
+          "name": "Simple 8-Bit ALU",
+          "description": "Build a simple 8-bit Arithmetic Logic Unit with 4 operations selected by 2 control bits (OP1, OP0): 00=AND, 01=OR, 10=ADD, 11=XOR. This is the capstone challenge - combining everything you've learned into a real data processing unit!",
+          "inputCount": 4,
+          "outputCount": 2,
+          "inputBitCounts": [
+            1,
+            1,
+            8,
+            8
+          ],
+          "outputBitCounts": [
+            8,
+            1
+          ],
+          "inputPinLabels": [
+            {
+              "name": "Operation Bit 1",
+              "abbr": "OP1"
+            },
+            {
+              "name": "Operation Bit 0",
+              "abbr": "OP0"
+            },
+            {
+              "name": "Data A",
+              "abbr": "A"
+            },
+            {
+              "name": "Data B",
+              "abbr": "B"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Result",
+              "abbr": "RES"
+            },
+            {
+              "name": "Carry/Flag",
+              "abbr": "C"
+            }
+          ],
+          "testVectors": [],
+          "hints": [
+            "OP=00: A AND B (bitwise)",
+            "OP=01: A OR B (bitwise)",
+            "OP=10: A + B (addition)",
+            "OP=11: A XOR B (bitwise)",
+            "Use 4-to-1 multiplexers to select between operations",
+            "Build each operation separately, then select the result"
+          ],
+          "testVectorsFile": "testvectors/lvl.8bit.alu.1"
+        }
+      ]
+    },
+    {
+      "chapterId": "ch.coming-soon",
+      "chapterName": "Coming Soon",
+      "chapterDescription": "More exciting challenges are on the way! I am working on additional levels to expand your digital logic journey. Check back soon for new circuits to design, more complex challenges, and fresh ways to test your skills. Your adventure in logic design is just beginning!\n\nIf you wanna give feedback, have ideas for more levels or have a bug to report, reach out to @Carpen# on discord (discord link available in about menu).",
+      "levels": []
+    }
+  ]
+}

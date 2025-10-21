@@ -211,15 +211,17 @@ namespace DLS.Graphics
 			Vector2 panelTopLeft = leftPanelBounds.TopLeft + new Vector2(1f, -1f);
 			float scrollBarWidth = DrawSettings.ActiveUITheme.ScrollTheme.scrollBarWidth;
 			_viewportWidth = panelSize.x - 2f; // Account for panel padding
+			#if UNITY_ANDROID || UNITY_IOS
+			_viewportWidth -= 1.0f;
+			#endif
 			float viewportHeight = panelSize.y - 2f; // Account for panel padding
 
 			// Calculate header height (two lines + padding) - scaled by zoom
 			float lineHeight = ActiveUITheme.FontSizeRegular * 1.2f * _tableZoom;
 			_headerHeight = lineHeight * 2f + 4f * _tableZoom; // Two lines + padding
-
-			// Calculate content dimensions (placeholder values for now) - scaled by zoom
-			// _contentWidth will be calculated later in DrawTableContent based on actual content
-			// _contentHeight is automatically calculated by the scroll view system during layout pass
+			#if UNITY_ANDROID || UNITY_IOS
+			_headerHeight *= 1.25f;
+			#endif
 
 			// Clamp scroll values - adjust for zoom
 			_hScroll = Mathf.Clamp(_hScroll, 0f, Mathf.Max(0f, _contentWidth - _viewportWidth));
@@ -229,7 +231,11 @@ namespace DLS.Graphics
 			// Draw scrollable content area (below header, above horizontal scrollbar)
 			Vector2 contentAreaTopLeft = panelTopLeft + Vector2.down * _headerHeight;
 			float horizontalScrollbarHeight = scrollBarWidth;
+			#if UNITY_ANDROID || UNITY_IOS
+			Vector2 contentAreaSize = new Vector2(_viewportWidth, viewportHeight - _headerHeight - horizontalScrollbarHeight-1.3f);
+			#else
 			Vector2 contentAreaSize = new Vector2(_viewportWidth, viewportHeight - _headerHeight - horizontalScrollbarHeight-0.3f);
+			#endif
 
 			// Create scroll view for table content only
 			ScrollViewTheme scrollTheme = DrawSettings.ActiveUITheme.ScrollTheme;
@@ -936,9 +942,11 @@ namespace DLS.Graphics
 			float horizontalScrollbarHeight = DrawSettings.ActiveUITheme.ScrollTheme.scrollBarWidth;
 			float totalHeight = _headerHeight + contentAreaHeight - horizontalScrollbarHeight; // Total height minus horizontal scrollbar
 
+			#if UNITY_ANDROID || UNITY_IOS
+			totalHeight*=1.05f;
+			#endif
 			// Draw first divider (between IN and EXPECTED)
 			DrawColumnDivider(x1, scrolledTopLeft.y, totalHeight);
-
 			// Draw second divider (between EXPECTED and OUT)
 			DrawColumnDivider(x2, scrolledTopLeft.y, totalHeight);
 		}
@@ -999,7 +1007,7 @@ namespace DLS.Graphics
 				"", // Empty text, we're just using it for click detection
 				MenuHelper.Theme.ButtonTheme,
 				scrolledTopLeft,
-				new Vector2(rowWidth*_tableZoom, RowHeight * _tableZoom),
+				new Vector2(rowWidth, RowHeight * _tableZoom),
 				true,
 				false,
 				false,
@@ -1087,6 +1095,9 @@ namespace DLS.Graphics
 
 			// Calculate total content width (horizontal scrollbar is created once in DrawLeftPanel) - scaled by zoom
 			float totalContentWidth = x - scrolledTopLeft.x + cell_Padding * 2;
+			#if UNITY_ANDROID || UNITY_IOS
+			totalContentWidth += 3.0f;
+			#endif
 			_contentWidth = totalContentWidth;
 
             if (defaultZoomSet == false)
