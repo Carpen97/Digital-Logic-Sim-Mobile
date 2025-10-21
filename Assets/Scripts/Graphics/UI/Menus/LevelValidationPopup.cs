@@ -846,13 +846,13 @@ namespace DLS.Graphics
 
 				// RESULT column title - scaled by zoom
 				string resultTitle = "RESULT";
-				float resultTitleX = x + _resultColumnWidth * 0.5f;
+				float resultTitleX = x + _resultColumnWidth * 0.8f;
 				Seb.Vis.UI.UI.DrawText(resultTitle, FontType.JetbrainsMonoRegular, ActiveUITheme.FontSizeRegular * 1.4f * _tableZoom, new Vector2(resultTitleX, y1), Anchor.Centre, Color.white);
 
 				// Line 2: Pin labels and result stats
 				float y2 = headerTopLeft.y - lineHeight * 2.5f;
 				DrawPinLabelsInHeader(y2);
-				DrawResultStats(y2, x + _resultColumnWidth * 0.5f);
+				DrawResultStats(y2, x + _resultColumnWidth * 0.8f);
 			}
 		}
 
@@ -1170,30 +1170,16 @@ namespace DLS.Graphics
 			x += cell_Padding / 2;
 			
 			// Draw checkmark or cross based on test result
-			float resultIconSize = 2.0f * _tableZoom;
+			float resultIconSize = 4.0f * _tableZoom;
 			Color resultColor = row.Passed ? Color.green : Color.red;
 			Vector2 iconCenter = new Vector2(x + resultIconSize, centerY);
-			
-			if (row.Passed)
-			{
-				// Draw checkmark as filled circle
-				DrawResultCheckmark(iconCenter, resultIconSize, resultColor);
-			}
-			else
-			{
-				// Draw cross as circle with X
-				DrawResultCross(iconCenter, resultIconSize, resultColor);
-			}
-			
+			string resultGlyph = row.Passed ? "✓" : "✗";
+			float glyphSize = ActiveUITheme.FontSizeRegular * 2.2f * _tableZoom;
+			Seb.Vis.UI.UI.DrawText(resultGlyph, FontType.JetbrainsMonoRegular, glyphSize, new Vector2(x + resultIconSize * 0.5f, centerY), Anchor.Centre, resultColor);
 			x += resultIconSize * 2;
 			x += cell_Padding / 2;
-
-			// Ensure minimum width for "RESULT" text
-			float minResultWidth = Seb.Vis.UI.UI.CalculateTextSize("RESULT", ActiveUITheme.FontSizeRegular * 1.4f * _tableZoom, FontType.JetbrainsMonoRegular).x + cell_Padding * 2;
-			_resultColumnWidth = Mathf.Max(x - x_start, minResultWidth);
-			
-			// Update x to reflect actual column width (in case minResultWidth is larger)
-			x = x_start + _resultColumnWidth;
+			_resultColumnWidth = Seb.Vis.UI.UI.CalculateTextSize("RESULT", ActiveUITheme.FontSizeRegular * _tableZoom, FontType.JetbrainsMonoRegular).x;
+			x += _resultColumnWidth;
 
 			// Calculate total content width (horizontal scrollbar is created once in DrawLeftPanel) - scaled by zoom
 			float totalContentWidth = x - scrolledTopLeft.x + cell_Padding * 2;

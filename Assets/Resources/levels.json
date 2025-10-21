@@ -1230,224 +1230,490 @@
           ]
         },
         {
-          "id": "lvl.fulladder.1",
-          "chapterId": "ch.arithmetic",
-          "name": "Full Adder",
-          "description": "Add two bits plus carry-in. Output is sum and carry-out.",
-          "inputCount": 3,
-          "outputCount": 2,
-          "inputBitCounts": [
-            1,
-            1,
-            1
-          ],
-          "outputBitCounts": [
-            1,
-            1
-          ],
-          "inputPinLabels": [
-            {
-              "name": "Input A",
-              "abbr": "A"
-            },
-            {
-              "name": "Input B",
-              "abbr": "B"
-            },
-            {
-              "name": "Carry In",
-              "abbr": "Cin"
-            }
-
-          ],
-          "outputPinLabels": [
-            {
-              "name": "Carry Out",
-              "abbr": "Co"
-            },
-            {
-              "name": "Sum",
-              "abbr": "S"
-            }
-
-          ],
-          "testVectors": [
-            {
-              "inputs": "000",
-              "expected": "00"
-            },
-            {
-              "inputs": "001",
-              "expected": "10"
-            },
-            {
-              "inputs": "010",
-              "expected": "10"
-            },
-            {
-              "inputs": "011",
-              "expected": "01"
-            },
-            {
-              "inputs": "100",
-              "expected": "10"
-
-            },
-            {
-              "inputs": "101",
-              "expected": "01"
-            },
-            {
-              "inputs": "110",
-              "expected": "01"
-            },
-            {
-              "inputs": "111",
-              "expected": "11"
-            }
-          ],
-          "hints": [
-            "Use two half adders",
-            "Sum = A XOR B XOR Cin",
-            "Cout = (A AND B) OR (Cin AND (A XOR B))"
-          ]
-        },
-        {
           "id": "lvl.adder4bit.1",
-          "chapterId": "ch.arithmetic",
           "name": "4-bit Adder",
+          "chapterId": "ch.arithmetic",
           "description": "Add two 4-bit numbers. Output is 5-bit result (4-bit sum + carry).",
           "inputCount": 8,
           "outputCount": 5,
+          "inputLabels": [],
+          "outputLabels": [],
           "inputBitCounts": [
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
           ],
           "outputBitCounts": [
-            1,
-            1,
-            1,
-            1,
-            1
+              1,
+              1,
+              1,
+              1,
+              1
           ],
           "inputPinLabels": [
-            {
-              "name": "A0",
-              "abbr": "A0"
-            },
-            {
-              "name": "A1",
-              "abbr": "A1"
-            }, 
-            {
-              "name": "A2",
-              "abbr": "A2"
-            },
-            {
-              "name": "A3",
-              "abbr": "A3"
-            },
-            {
-              "name": "B0",
-              "abbr": "B0"
-            },
-            {
-              "name": "B1",
-              "abbr": "B1"
-            },
-            {
-              "name": "B2",
-              "abbr": "B2"
-            },
-            {
-              "name": "B3",
-              "abbr": "B3"
-            }
+              {
+                  "name": "A0",
+                  "abbr": "A0"
+              },
+              {
+                  "name": "A1",
+                  "abbr": "A1"
+              },
+              {
+                  "name": "A2",
+                  "abbr": "A2"
+              },
+              {
+                  "name": "A3",
+                  "abbr": "A3"
+              },
+              {
+                  "name": "B0",
+                  "abbr": "B0"
+              },
+              {
+                  "name": "B1",
+                  "abbr": "B1"
+              },
+              {
+                  "name": "B2",
+                  "abbr": "B2"
+              },
+              {
+                  "name": "B3",
+                  "abbr": "B3"
+              }
           ],
           "outputPinLabels": [
-            {
-              "name": "Carry Out",
-              "abbr": "Co"
-            },
-            {
-              "name": "Sum Bit 0",
-              "abbr": "S0"
-            },
-            {
-              "name": "Sum Bit 1",
-              "abbr": "S1"
-            },
-            {
-              "name": "Sum Bit 2",
-              "abbr": "S2"
-            },
-            {
-              "name": "Sum Bit 3",
-              "abbr": "S3"
-            }
+              {
+                  "name": "Carry Out",
+                  "abbr": "Co"
+              },
+              {
+                  "name": "Sum Bit 0",
+                  "abbr": "S0"
+              },
+              {
+                  "name": "Sum Bit 1",
+                  "abbr": "S1"
+              },
+              {
+                  "name": "Sum Bit 2",
+                  "abbr": "S2"
+              },
+              {
+                  "name": "Sum Bit 3",
+                  "abbr": "S3"
+              }
           ],
           "testVectors": [
-            {
-              "inputs": "00000000",
-              "expected": "00000"
-            },
-            {
-              "inputs": "10000000",
-              "expected": "10000"
-            },
-            {
-              "inputs": "10001000",
-              "expected": "01000"
-            },
-            {
-              "inputs": "11001100",
-              "expected": "01100"
-            },
-            {
-              "inputs": "10101010",
-              "expected": "01010"
-            },
-            {
-              "inputs": "11101110",
-              "expected": "01110"
-            },
-            {
-              "inputs": "10011001",
-              "expected": "01001"
-            },
-            {
-              "inputs": "11111111",
-              "expected": "01111"
-            },
-            {
-              "inputs": "11110000",
-              "expected": "11110"
-            },
-            {
-              "inputs": "00001111",
-              "expected": "11110"
-            },
-            {
-              "inputs": "11111000",
-              "expected": "00001"
-            },
-            {
-              "inputs": "10001111",
-              "expected": "00001"
-            }
-          ],
-          "hints": [
-            "Chain four full adders",
-            "Carry propagates through all stages",
-            "Test with edge cases: 0+0, max+1, overflow"
+              {
+                  "inputs": "01010100",
+                  "expected": "00110"
+              },
+              {
+                  "inputs": "00000000",
+                  "expected": "00000"
+              },
+              {
+                  "inputs": "11001101",
+                  "expected": "01110"
+              },
+              {
+                  "inputs": "10001011",
+                  "expected": "01110"
+              },
+              {
+                  "inputs": "01001101",
+                  "expected": "10110"
+              },
+              {
+                  "inputs": "10000000",
+                  "expected": "10000"
+              },
+              {
+                  "inputs": "00100110",
+                  "expected": "01010"
+              },
+              {
+                  "inputs": "01001011",
+                  "expected": "11110"
+              },
+              {
+                  "inputs": "00101111",
+                  "expected": "11001"
+              },
+              {
+                  "inputs": "11010010",
+                  "expected": "11110"
+              },
+              {
+                  "inputs": "00010000",
+                  "expected": "00010"
+              },
+              {
+                  "inputs": "11110011",
+                  "expected": "11011"
+              },
+              {
+                  "inputs": "11111010",
+                  "expected": "00101"
+              },
+              {
+                  "inputs": "00010101",
+                  "expected": "01001"
+              },
+              {
+                  "inputs": "10000100",
+                  "expected": "11000"
+              },
+              {
+                  "inputs": "01100110",
+                  "expected": "00110"
+              },
+              {
+                  "inputs": "10101000",
+                  "expected": "01100"
+              },
+              {
+                  "inputs": "11110110",
+                  "expected": "10101"
+              },
+              {
+                  "inputs": "00100011",
+                  "expected": "00001"
+              },
+              {
+                  "inputs": "11010110",
+                  "expected": "10001"
+              },
+              {
+                  "inputs": "01100101",
+                  "expected": "00001"
+              },
+              {
+                  "inputs": "01010111",
+                  "expected": "00011"
+              },
+              {
+                  "inputs": "11010000",
+                  "expected": "11010"
+              },
+              {
+                  "inputs": "11011011",
+                  "expected": "00011"
+              },
+              {
+                  "inputs": "11100000",
+                  "expected": "11100"
+              },
+              {
+                  "inputs": "10000011",
+                  "expected": "10110"
+              },
+              {
+                  "inputs": "11111100",
+                  "expected": "01001"
+              },
+              {
+                  "inputs": "10101101",
+                  "expected": "00001"
+              },
+              {
+                  "inputs": "01000011",
+                  "expected": "01110"
+              },
+              {
+                  "inputs": "01110110",
+                  "expected": "00101"
+              },
+              {
+                  "inputs": "00111111",
+                  "expected": "11011"
+              },
+              {
+                  "inputs": "01101000",
+                  "expected": "11100"
+              },
+              {
+                  "inputs": "11000100",
+                  "expected": "10100"
+              },
+              {
+                  "inputs": "10001111",
+                  "expected": "00001"
+              },
+              {
+                  "inputs": "11011101",
+                  "expected": "01101"
+              },
+              {
+                  "inputs": "11110100",
+                  "expected": "10001"
+              },
+              {
+                  "inputs": "10001010",
+                  "expected": "01100"
+              },
+              {
+                  "inputs": "10111101",
+                  "expected": "00011"
+              },
+              {
+                  "inputs": "10110010",
+                  "expected": "10001"
+              },
+              {
+                  "inputs": "10111001",
+                  "expected": "01101"
+              },
+              {
+                  "inputs": "00011011",
+                  "expected": "10101"
+              },
+              {
+                  "inputs": "00010010",
+                  "expected": "00110"
+              },
+              {
+                  "inputs": "10010111",
+                  "expected": "11101"
+              },
+              {
+                  "inputs": "11010001",
+                  "expected": "11001"
+              },
+              {
+                  "inputs": "00101110",
+                  "expected": "11010"
+              },
+              {
+                  "inputs": "10100010",
+                  "expected": "10010"
+              },
+              {
+                  "inputs": "01101011",
+                  "expected": "11001"
+              },
+              {
+                  "inputs": "00111101",
+                  "expected": "11101"
+              },
+              {
+                  "inputs": "10111100",
+                  "expected": "00001"
+              },
+              {
+                  "inputs": "10010000",
+                  "expected": "10010"
+              },
+              {
+                  "inputs": "00000001",
+                  "expected": "00010"
+              },
+              {
+                  "inputs": "01001111",
+                  "expected": "10001"
+              },
+              {
+                  "inputs": "00100001",
+                  "expected": "00110"
+              },
+              {
+                  "inputs": "11001111",
+                  "expected": "01001"
+              },
+              {
+                  "inputs": "01110011",
+                  "expected": "01011"
+              },
+              {
+                  "inputs": "10110100",
+                  "expected": "11110"
+              },
+              {
+                  "inputs": "10100100",
+                  "expected": "11100"
+              },
+              {
+                  "inputs": "10001100",
+                  "expected": "00100"
+              },
+              {
+                  "inputs": "11010101",
+                  "expected": "10101"
+              },
+              {
+                  "inputs": "01000101",
+                  "expected": "00110"
+              },
+              {
+                  "inputs": "01111111",
+                  "expected": "10111"
+              },
+              {
+                  "inputs": "11111110",
+                  "expected": "01101"
+              },
+              {
+                  "inputs": "01010010",
+                  "expected": "01110"
+              },
+              {
+                  "inputs": "01010011",
+                  "expected": "01101"
+              },
+              {
+                  "inputs": "10001110",
+                  "expected": "00010"
+              },
+              {
+                  "inputs": "01000110",
+                  "expected": "00010"
+              },
+              {
+                  "inputs": "01011010",
+                  "expected": "11110"
+              },
+              {
+                  "inputs": "10000111",
+                  "expected": "11110"
+              },
+              {
+                  "inputs": "10000001",
+                  "expected": "10010"
+              },
+              {
+                  "inputs": "01011111",
+                  "expected": "10011"
+              },
+              {
+                  "inputs": "00111001",
+                  "expected": "10101"
+              },
+              {
+                  "inputs": "10011111",
+                  "expected": "00011"
+              },
+              {
+                  "inputs": "11010011",
+                  "expected": "11101"
+              },
+              {
+                  "inputs": "11100001",
+                  "expected": "11110"
+              },
+              {
+                  "inputs": "00001110",
+                  "expected": "11100"
+              },
+              {
+                  "inputs": "10001101",
+                  "expected": "00110"
+              },
+              {
+                  "inputs": "00100101",
+                  "expected": "01110"
+              },
+              {
+                  "inputs": "00001100",
+                  "expected": "11000"
+              },
+              {
+                  "inputs": "10011000",
+                  "expected": "01010"
+              },
+              {
+                  "inputs": "10000010",
+                  "expected": "10100"
+              },
+              {
+                  "inputs": "01000001",
+                  "expected": "01010"
+              },
+              {
+                  "inputs": "11101001",
+                  "expected": "00001"
+              },
+              {
+                  "inputs": "10001000",
+                  "expected": "01000"
+              },
+              {
+                  "inputs": "01011100",
+                  "expected": "10110"
+              },
+              {
+                  "inputs": "01111011",
+                  "expected": "11011"
+              },
+              {
+                  "inputs": "00001011",
+                  "expected": "10110"
+              },
+              {
+                  "inputs": "00111011",
+                  "expected": "10011"
+              },
+              {
+                  "inputs": "10110001",
+                  "expected": "10101"
+              },
+              {
+                  "inputs": "01010000",
+                  "expected": "01010"
+              },
+              {
+                  "inputs": "00010111",
+                  "expected": "01101"
+              },
+              {
+                  "inputs": "10101110",
+                  "expected": "00110"
+              },
+              {
+                  "inputs": "00000110",
+                  "expected": "01100"
+              },
+              {
+                  "inputs": "11101100",
+                  "expected": "01010"
+              },
+              {
+                  "inputs": "10101011",
+                  "expected": "01001"
+              },
+              {
+                  "inputs": "10010110",
+                  "expected": "11110"
+              },
+              {
+                  "inputs": "00110101",
+                  "expected": "01101"
+              },
+              {
+                  "inputs": "00101101",
+                  "expected": "11110"
+              },
+              {
+                  "inputs": "10100101",
+                  "expected": "11110"
+              },
+              {
+                  "inputs": "01010001",
+                  "expected": "01001"
+              },
+              {
+                  "inputs": "00100111",
+                  "expected": "01001"
+              }
           ]
-        }
+      }
       ]
     },
     {
