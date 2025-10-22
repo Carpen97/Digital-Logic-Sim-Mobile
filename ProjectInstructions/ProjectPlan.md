@@ -71,9 +71,6 @@ Mobile Port (origin)
 
 | ID  | Name                          | Status     | Notes                                                                                                                                    |
 | --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 065 | Create advanced 8-bit chapter for levels | In Progress | Design new chapter introducing 8-bit inputs/outputs to teach multi-bit circuit design with progressive difficulty. |
-| 067 | Chip description viewer | In Progress | Create detailed chip descriptions with new menu window for educational content about component functionality. |
-| 068 | Fix chip library preview issues | In Progress | Fix cut-off names, oversized previews, and text display issues in chip library. |
 
 ---
 
@@ -88,6 +85,7 @@ Mobile Port (origin)
 | 046 | Add donation button | Open   | Add a donation button to support development of the Digital Logic Sim Mobile project. Button should be accessible from an appropriate location (e.g., About menu, main menu, or settings). Integrate with a donation platform (PayPal, Ko-fi, Buy Me a Coffee, or similar). Design should be unobtrusive but visible, matching the existing UI theme. Include optional thank you message for supporters. Consider mobile-optimized placement and ensure it opens donation link in external browser or platform-specific handler. |
 | 064 | Replace buzzer text with graphical speaker icon | Open   | Replace the current text "BUZZER" display with a graphical speaker icon. Design a visual speaker representation that clearly indicates audio output state (on/off). Should be intuitive, visually appealing, and match the game's aesthetic. Consider animated states (speaker waves when active, static when silent). Mobile-optimized design with clear visual feedback. Improves visual consistency and makes buzzers more recognizable at a glance. |
 | 069 | Fix chip search functionality | Open   | Fix broken "Find chip" search feature in chip library. Search is currently non-functional and doesn't locate chips when users search by name. Implement proper search filtering, case-insensitive matching, and search across chip names, categories, and tags. Ensure search works for built-in chips, custom user chips, and chips in collections. Mobile-optimized search with clear results display and instant feedback. Critical usability feature for finding chips quickly in large libraries. |
+| 070 | Pre-release build for testers (v2.1.6.11) | Open   | Prepare pre-release builds for community testing before official release. Build and distribute Android APK for testers to playthrough latest changes. Optionally build PC version as well. Gather feedback on new features (Hall of Fame, username auth, ROM editor, eraser tool, Discord integration, etc.). Test stability, performance, and usability. Identify any critical bugs before official multi-platform release. Coordinate with community testers and collect feedback for final polish. |
 
 ---
 
@@ -149,10 +147,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - 🚨 **CRITICAL: Unity Scene Safety** - **PM MUST ALWAYS warn user to save Unity scenes BEFORE any git branch operations (checkout, merge, switch, etc.)**
 
 ### **Current Status:**
-- **6 Open Tickets** available for selection
-- **3 In Progress** tickets (065, 067, 068)
-- **Ticket 063** - completed Discord Rich Presence integration
-- **Ticket 065** - creating advanced 8-bit chapter for levels
-- **Ticket 067** - chip description viewer with educational content
-- **Ticket 068 kicked off** - fixing chip library preview issues
-- **Ticket 069** - pending (chip search fix)
+- **7 Open Tickets** available for selection
+- **0 In Progress** tickets
+- **Tickets 065, 067, 068** - completed (8-bit chapter, chip descriptions, preview fixes)
+- **Ticket 070** - new pre-release build ticket created
