@@ -86,6 +86,8 @@ Mobile Port (origin)
 | 039 | Show dotted wire preview on mobile wire creation| Open   | When creating new wires on mobile, display a preview of the wire path as a dotted line to show where the wire will be placed. Enhance user experience by providing visual feedback during wire creation process. Implement dotted wire rendering for wire preview state before wire is confirmed. Mobile-specific enhancement for touch-based wire creation workflow. |
 | 046 | Add donation button | Open   | Add a donation button to support development of the Digital Logic Sim Mobile project. Button should be accessible from an appropriate location (e.g., About menu, main menu, or settings). Integrate with a donation platform (PayPal, Ko-fi, Buy Me a Coffee, or similar). Design should be unobtrusive but visible, matching the existing UI theme. Include optional thank you message for supporters. Consider mobile-optimized placement and ensure it opens donation link in external browser or platform-specific handler. |
 | 064 | Replace buzzer text with graphical speaker icon | Open   | Replace the current text "BUZZER" display with a graphical speaker icon. Design a visual speaker representation that clearly indicates audio output state (on/off). Should be intuitive, visually appealing, and match the game's aesthetic. Consider animated states (speaker waves when active, static when silent). Mobile-optimized design with clear visual feedback. Improves visual consistency and makes buzzers more recognizable at a glance. |
+| 068 | Fix chip library preview issues | Open   | Fix multiple preview-related bugs in chip library: (1) Chip names getting cut off in menus, boxes, and preview library display, (2) Preview bounds showing content larger than actual chip size (e.g., chip with LED and key inside shows oversized preview), (3) Ensure proper text wrapping and display for long chip names. Improve preview rendering to accurately represent chip visual bounds and internal components. Better text layout and sizing for chip names in all contexts (library, menus, thumbnails). Mobile-friendly text display with proper truncation or wrapping. |
+| 069 | Fix chip search functionality | Open   | Fix broken "Find chip" search feature in chip library. Search is currently non-functional and doesn't locate chips when users search by name. Implement proper search filtering, case-insensitive matching, and search across chip names, categories, and tags. Ensure search works for built-in chips, custom user chips, and chips in collections. Mobile-optimized search with clear results display and instant feedback. Critical usability feature for finding chips quickly in large libraries. |
 
 ---
 
@@ -147,8 +149,9 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 - 🚨 **CRITICAL: Unity Scene Safety** - **PM MUST ALWAYS warn user to save Unity scenes BEFORE any git branch operations (checkout, merge, switch, etc.)**
 
 ### **Current Status:**
-- **5 Open Tickets** available for selection
+- **7 Open Tickets** available for selection
 - **2 In Progress** tickets (065, 067)
-- **Ticket 063** - completed Discord integration investigation
+- **Ticket 063** - completed Discord Rich Presence integration
 - **Ticket 065** - creating advanced 8-bit chapter for levels
 - **Ticket 067** - chip description viewer with educational content
+- **Tickets 068, 069** - created from community bug report
