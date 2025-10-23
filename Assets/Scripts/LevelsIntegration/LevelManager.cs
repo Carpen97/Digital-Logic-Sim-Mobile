@@ -192,6 +192,21 @@ namespace DLS.Game.LevelsIntegration
                 Debug.Log($"[LevelManager] Output bit counts: [{string.Join(", ", Current.outputBitCounts)}]");
             }
             
+            // ⚠️ CRITICAL: Sort circuit pins to match the level definition's expected order
+            // The circuit's pin order might differ from the level definition if the user:
+            // - Deleted and recreated pins in a different order
+            // - Loaded a saved circuit with pins in a different order
+            var dev = Project.ActiveProject.ViewedChip;
+            var circuitInputPins = dev.GetInputPins();
+            var circuitOutputPins = dev.GetOutputPins().ToArray();
+            
+            // Sort input pins by the level definition's expected order
+            var sortedInputPins = SortPinsByLevelOrder(circuitInputPins, Current.inputPinLabels);
+            var sortedOutputPins = SortPinsByLevelOrder(circuitOutputPins, Current.outputPinLabels);
+            
+            Debug.Log($"[LevelManager] Sorted input pins: [{string.Join(", ", sortedInputPins.Select(p => p.Name))}]");
+            Debug.Log($"[LevelManager] Sorted output pins: [{string.Join(", ", sortedOutputPins.Select(p => p.Name))}]");
+            
             // List to store all test vectors
             var allTestVectors = new List<TestVectorData>();
             
@@ -205,15 +220,15 @@ namespace DLS.Game.LevelsIntegration
                     inputBits += ((i >> bit) & 1) == 1 ? "1" : "0";
                 }
                 
-                // Apply inputs to circuit
+                // Apply inputs to circuit (using SORTED pins)
                 var inputVector = BitVector.FromString(inputBits);
-                _sim.ApplyInputs(inputVector);
+                ApplyInputsInOrder(inputVector, sortedInputPins);
                 
                 // Let circuit settle
                 _sim.SettleWithin(5, out _);
                 
-                // Read outputs
-                var outputVector = _sim.ReadOutputs();
+                // Read outputs (using SORTED pins)
+                var outputVector = ReadOutputsInOrder(sortedOutputPins);
                 string outputBits = outputVector.ToString();
                 
                 // Store test vector
@@ -337,6 +352,148 @@ namespace DLS.Game.LevelsIntegration
         {
             public string inputs;
             public string expected;
+        }
+        
+        /// <summary>
+        /// Sorts circuit pins to match the level definition's expected order.
+        /// This ensures generated test vectors use the correct bit positions.
+        /// </summary>
+        private DevPinInstance[] SortPinsByLevelOrder(IEnumerable<DevPinInstance> circuitPins, LevelDefinition.PinLabel[] expectedOrder)
+        {
+            var circuitPinsList = circuitPins.ToList();
+            var sortedPins = new List<DevPinInstance>();
+            
+            // For each expected pin label, find the matching circuit pin
+            foreach (var expectedLabel in expectedOrder)
+            {
+                var matchingPin = circuitPinsList.FirstOrDefault(p => 
+                    p.Name.Equals(expectedLabel.name, StringComparison.OrdinalIgnoreCase));
+                
+                if (matchingPin != null)
+                {
+                    sortedPins.Add(matchingPin);
+                }
+                else
+                {
+                    Debug.LogWarning($"[LevelManager] Could not find circuit pin matching level definition: '{expectedLabel.name}'");
+                }
+            }
+            
+            // Warn if there are extra pins in the circuit that don't match the level definition
+            if (sortedPins.Count != circuitPinsList.Count)
+            {
+                var extraPins = circuitPinsList.Where(p => !sortedPins.Contains(p)).Select(p => p.Name);
+                Debug.LogWarning($"[LevelManager] Circuit has extra pins not in level definition: [{string.Join(", ", extraPins)}]");
+            }
+            
+            return sortedPins.ToArray();
+        }
+        
+        /// <summary>
+        /// Applies input values to pins in the specified order (not using the default GetInputPins order).
+        /// </summary>
+        private void ApplyInputsInOrder(BitVector inputVector, DevPinInstance[] orderedPins)
+        {
+            int bitOffset = 0;
+            
+            foreach (var pin in orderedPins)
+            {
+                var pinBitCount = pin.Pin.bitCount.BitCount;
+                
+                if (pinBitCount == 1)
+                {
+                    // Single bit pin
+                    if (bitOffset < inputVector.Length)
+                    {
+                        pin.Pin.PlayerInputState.SetFirstBit(inputVector[bitOffset]);
+                        bitOffset++;
+                    }
+                }
+                else
+                {
+                    // Multi-bit pin
+                    ulong pinValue = 0;
+                    for (int bitIndex = 0; bitIndex < pinBitCount && bitOffset < inputVector.Length; bitIndex++)
+                    {
+                        if (inputVector[bitOffset])
+                        {
+                            pinValue |= (1UL << bitIndex);
+                        }
+                        bitOffset++;
+                    }
+                    
+                    // Set the value based on bit count
+                    if (pinBitCount <= 16)
+                    {
+                        pin.Pin.PlayerInputState.SetShortValue((ushort)pinValue);
+                    }
+                    else if (pinBitCount <= 32)
+                    {
+                        pin.Pin.PlayerInputState.SetMediumValue((uint)pinValue);
+                    }
+                    else
+                    {
+                        // For >32 bits, just set the first 32 bits
+                        pin.Pin.PlayerInputState.SetMediumValue((uint)pinValue);
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Reads output values from pins in the specified order (not using the default GetOutputPins order).
+        /// </summary>
+        private BitVector ReadOutputsInOrder(DevPinInstance[] orderedPins)
+        {
+            var root = Project.ActiveProject.rootSimChip;
+            if (root == null) return new BitVector(0, 0);
+            
+            ulong raw = 0UL;
+            int bitOffset = 0;
+            
+            foreach (var pin in orderedPins)
+            {
+                var sPin = root.GetSimPinFromAddress(pin.Pin.Address);
+                var pinBitCount = pin.Pin.bitCount.BitCount;
+                
+                if (pinBitCount == 1)
+                {
+                    // Single bit pin
+                    if (sPin.State.FirstBitHigh())
+                        raw |= (1UL << bitOffset);
+                    bitOffset++;
+                }
+                else
+                {
+                    // Multi-bit pin
+                    uint pinValue = 0;
+                    if (pinBitCount <= 16)
+                    {
+                        pinValue = sPin.State.GetShortValues();
+                    }
+                    else if (pinBitCount <= 32)
+                    {
+                        pinValue = sPin.State.GetMediumValues();
+                    }
+                    else
+                    {
+                        // For >32 bits, just read the first 32 bits
+                        pinValue = sPin.State.GetMediumValues();
+                    }
+                    
+                    // Extract individual bits
+                    for (int bitIndex = 0; bitIndex < pinBitCount; bitIndex++)
+                    {
+                        if ((pinValue & (1U << bitIndex)) != 0)
+                        {
+                            raw |= (1UL << bitOffset);
+                        }
+                        bitOffset++;
+                    }
+                }
+            }
+            
+            return new BitVector(raw, bitOffset);
         }
 
         // ------------------------ Internals ------------------------

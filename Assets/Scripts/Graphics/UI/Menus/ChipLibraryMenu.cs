@@ -1791,29 +1791,32 @@ namespace DLS.Graphics
 				drawCenter = previewCenter;
 			}
 			
-			// Draw chip using new UI drawing methods that replicate game drawing exactly
-			Debug.Log($"Drawing chip preview: center={previewCenter}, scaledSize={scaledSize}, scale={scale}, chipCol={chipCol}");
-			
-			// For In_Pin and Out_Pin, don't draw chip body/outline - they use DevPin-style display instead
-			if (chipDesc.ChipType != ChipType.In_Pin && chipDesc.ChipType != ChipType.Out_Pin)
-			{
-				// Draw outline first (behind everything)
-				UI_DrawChipOutline(drawCenter, chipSize, outlineCol, scale);
-				
-				// Draw pins second (behind chip body, like in game)
-				try
-				{
-					DrawChipPreviewPins(chipDesc, drawCenter, scaledSize, scale);
-				}
-				catch (System.Exception ex)
-				{
-					Debug.LogError($"Exception in DrawChipPreviewPins: {ex.Message}\n{ex.StackTrace}");
-				}
-				
-				// Draw chip body last (on top of pins, like in game)
-				Debug.Log($"About to draw chip body at {drawCenter} with size {chipSize} and color {chipCol}");
-				UI_DrawChipBody(drawCenter, chipSize, chipCol, scale);
-			}
+		// Draw chip using new UI drawing methods that replicate game drawing exactly
+		// Normalize color values (some chips incorrectly use 0-255 range instead of 0-1)
+		chipCol = NormalizeColor(chipCol);
+		outlineCol = NormalizeColor(outlineCol);
+		Debug.Log($"Drawing chip preview: center={previewCenter}, scaledSize={scaledSize}, scale={scale}, chipCol={chipCol}");
+		
+	// For In_Pin and Out_Pin, don't draw chip body/outline - they use DevPin-style display instead
+	if (chipDesc.ChipType != ChipType.In_Pin && chipDesc.ChipType != ChipType.Out_Pin)
+	{
+		// Draw outline first (behind everything)
+		UI_DrawChipOutline(drawCenter, chipSize, outlineCol, scale, chipDesc.ShapeType, chipDesc.ShapeRotation, chipDesc.CustomPolygon);
+		
+		// Draw pins second (behind chip body, like in game)
+		try
+		{
+			DrawChipPreviewPins(chipDesc, drawCenter, scaledSize, scale);
+		}
+		catch (System.Exception ex)
+		{
+			Debug.LogError($"Exception in DrawChipPreviewPins: {ex.Message}\n{ex.StackTrace}");
+		}
+		
+		// Draw chip body last (on top of pins, like in game)
+		Debug.Log($"About to draw chip body at {drawCenter} with size {chipSize} and color {chipCol}");
+		UI_DrawChipBody(drawCenter, chipSize, chipCol, scale, chipDesc.ShapeType, chipDesc.ShapeRotation, chipDesc.CustomPolygon);
+	}
 			else
 			{
 				// For In_Pin and Out_Pin, don't draw pins here - DrawDevPinStyleDisplay handles pin drawing
@@ -1832,20 +1835,133 @@ namespace DLS.Graphics
 			// Make outline darker than chip color
 			return new Color(chipCol.r * 0.7f, chipCol.g * 0.7f, chipCol.b * 0.7f, chipCol.a);
 		}
-
-		static void UI_DrawChipBody(Vector2 pos, Vector2 size, Color chipCol, float scale)
+		
+		// Normalize color values from 0-255 range to 0-1 range if needed
+		// (Some chip descriptions incorrectly use 0-255 values for Unity Color which expects 0-1)
+		static Color NormalizeColor(Color col)
 		{
-			Vector2 scaledSize = size * scale;
-			Debug.Log($"Drawing chip body at {pos} with size {scaledSize} and color {chipCol}");
-			Seb.Vis.UI.UI.DrawPanel(pos, scaledSize, chipCol, Anchor.Centre);
+			// If any color component is >1, assume it's in 0-255 range and normalize
+			if (col.r > 1f || col.g > 1f || col.b > 1f)
+			{
+				return new Color(col.r / 255f, col.g / 255f, col.b / 255f, col.a);
+			}
+			return col;
 		}
 
-		static void UI_DrawChipOutline(Vector2 pos, Vector2 size, Color outlineCol, float scale)
+	static void UI_DrawChipBody(Vector2 pos, Vector2 size, Color chipCol, float scale, ChipShapeType shapeType = ChipShapeType.Rectangle, float rotation = 0f, CustomPolygonData customPolygon = null)
+	{
+		Vector2 scaledSize = size * scale;
+		Debug.Log($"Drawing chip body at {pos} with size {scaledSize} and color {chipCol}, shape={shapeType}");
+		UI_DrawChipShape(pos, scaledSize, chipCol, shapeType, rotation, customPolygon);
+	}
+
+	static void UI_DrawChipOutline(Vector2 pos, Vector2 size, Color outlineCol, float scale, ChipShapeType shapeType = ChipShapeType.Rectangle, float rotation = 0f, CustomPolygonData customPolygon = null)
+	{
+		Vector2 scaledSize = size * scale;
+		Vector2 outlineSize = scaledSize + Vector2.one * (DrawSettings.ChipOutlineWidth * scale);
+		UI_DrawChipShape(pos, outlineSize, outlineCol, shapeType, rotation, customPolygon);
+	}
+
+	static void UI_DrawChipShape(Vector2 centre, Vector2 size, Color col, ChipShapeType shapeType, float rotation, CustomPolygonData customPolygon)
+	{
+		switch (shapeType)
 		{
-			Vector2 scaledSize = size * scale;
-			Vector2 outlineSize = scaledSize + Vector2.one * (DrawSettings.ChipOutlineWidth * scale);
-			Seb.Vis.UI.UI.DrawPanel(pos, outlineSize, outlineCol, Anchor.Centre);
+			case ChipShapeType.Rectangle:
+				Seb.Vis.UI.UI.DrawPanel(centre, size, col, Anchor.Centre);
+				break;
+				
+			case ChipShapeType.Hexagon:
+				UI_DrawHexagon(centre, size, col, rotation);
+				break;
+				
+			case ChipShapeType.Triangle:
+				UI_DrawTriangle(centre, size, col, rotation);
+				break;
+				
+			case ChipShapeType.CustomPolygon:
+				UI_DrawCustomPolygon(centre, size, col, rotation, customPolygon);
+				break;
 		}
+	}
+
+	static void UI_DrawHexagon(Vector2 centre, Vector2 size, Color col, float rotation)
+	{
+		float halfWidth = size.x * 0.5f;
+		float halfHeight = size.y * 0.5f;
+		float rotationRad = rotation * Mathf.Deg2Rad;
+		
+		Vector2[] vertices = new Vector2[6];
+		for (int i = 0; i < 6; i++)
+		{
+			float angle = i * Mathf.PI / 3f + rotationRad;
+			vertices[i] = centre + new Vector2(
+				Mathf.Cos(angle) * halfWidth,
+				Mathf.Sin(angle) * halfHeight
+			);
+		}
+		
+		// Draw as triangles using UI.DrawQuad for each triangle
+		for (int i = 0; i < 6; i++)
+		{
+			int next = (i + 1) % 6;
+			// Draw triangle using three quads or use Draw.Triangle directly (it works in UI space)
+			Draw.Triangle(centre, vertices[i], vertices[next], col);
+		}
+	}
+
+	static void UI_DrawTriangle(Vector2 centre, Vector2 size, Color col, float rotation)
+	{
+		float halfWidth = size.x * 0.5f;
+		float halfHeight = size.y * 0.5f;
+		float rotationRad = rotation * Mathf.Deg2Rad;
+		
+		Vector2[] vertices = new Vector2[3];
+		for (int i = 0; i < 3; i++)
+		{
+			float angle = i * 2f * Mathf.PI / 3f + rotationRad;
+			vertices[i] = centre + new Vector2(
+				Mathf.Cos(angle) * halfWidth,
+				Mathf.Sin(angle) * halfHeight
+			);
+		}
+		
+		Draw.Triangle(vertices[0], vertices[1], vertices[2], col);
+	}
+
+	static void UI_DrawCustomPolygon(Vector2 centre, Vector2 size, Color col, float rotation, CustomPolygonData polygonData)
+	{
+		if (polygonData == null || polygonData.Vertices == null || polygonData.Vertices.Length < 3)
+		{
+			Seb.Vis.UI.UI.DrawPanel(centre, size, col, Anchor.Centre);
+			return;
+		}
+
+		float halfWidth = size.x * 0.5f;
+		float halfHeight = size.y * 0.5f;
+		float rotationRad = rotation * Mathf.Deg2Rad;
+		
+		Vector2[] worldVertices = new Vector2[polygonData.Vertices.Length];
+		for (int i = 0; i < polygonData.Vertices.Length; i++)
+		{
+			Vector2 normalizedPos = polygonData.Vertices[i].ToVector2();
+			Vector2 scaledPos = new Vector2(normalizedPos.x * halfWidth, normalizedPos.y * halfHeight);
+			
+			float cos = Mathf.Cos(rotationRad);
+			float sin = Mathf.Sin(rotationRad);
+			Vector2 rotatedPos = new Vector2(
+				scaledPos.x * cos - scaledPos.y * sin,
+				scaledPos.x * sin + scaledPos.y * cos
+			);
+			
+			worldVertices[i] = centre + rotatedPos;
+		}
+		
+		// Fan triangulation from first vertex
+		for (int i = 1; i < worldVertices.Length - 1; i++)
+		{
+			Draw.Triangle(worldVertices[0], worldVertices[i], worldVertices[i + 1], col);
+		}
+	}
 
 		static void UI_DrawChipPin(Vector2 pos, Color pinCol, float scale)
 		{
@@ -2086,66 +2202,161 @@ namespace DLS.Graphics
 				Seb.Vis.UI.UI.DrawPanel(textPos, bandSize, chipCol, Anchor.Centre);
 			}
 
-			Seb.Vis.UI.UI.DrawText(chipDesc.Name, FontType.JetbrainsMonoRegular, fontSize, textPos, Anchor.Centre, textCol);
+			// Use multiline name if available (splits long names with spaces into 2 lines)
+			string displayName = CreateMultiLineName(chipDesc.Name);
+			Seb.Vis.UI.UI.DrawText(displayName, FontType.JetbrainsMonoRegular, fontSize, textPos, Anchor.Centre, textCol);
+		}
+		
+		// Split chip name into two lines (if contains a space character) - matches game logic
+		static string CreateMultiLineName(string name)
+		{
+			// If name is short, or contains no spaces, then just keep on single line
+			if (name.Length <= 6 || !name.Contains(' ')) return name;
+
+			// Find best split point (prefer middle space)
+			int spaceIndex = name.IndexOf(' ');
+			if (spaceIndex > 0)
+			{
+				// Replace first space with newline to create two lines
+				return name.Substring(0, spaceIndex) + "\n" + name.Substring(spaceIndex + 1);
+			}
+
+			return name;
 		}
 
-		static void DrawChipPreviewDisplays(ChipDescription chipDesc, Vector2 chipPos, Vector2 chipSize, float scale)
+	static void DrawChipPreviewDisplays(ChipDescription chipDesc, Vector2 chipPos, Vector2 chipSize, float scale)
+	{
+		// Draw chip displays if they exist (like 7-segment, RGB, etc.)
+		Debug.Log($"DrawChipPreviewDisplays: HasDisplay={chipDesc.HasDisplay()}, Displays={chipDesc.Displays?.Length ?? 0}, ChipType={chipDesc.ChipType}, chipSize={chipSize}, previewScale={scale}");
+		if (chipDesc.HasDisplay() && chipDesc.Displays != null)
 		{
-			// Draw chip displays if they exist (like 7-segment, RGB, etc.)
-			Debug.Log($"DrawChipPreviewDisplays: HasDisplay={chipDesc.HasDisplay()}, Displays={chipDesc.Displays?.Length ?? 0}, ChipType={chipDesc.ChipType}");
-			if (chipDesc.HasDisplay() && chipDesc.Displays != null)
+			foreach (var display in chipDesc.Displays)
 			{
-				foreach (var display in chipDesc.Displays)
+				// Calculate display position - offset from chip center, scaled by preview scale
+				// This matches game logic: posWorld = posParent + display.Position * parentScale
+				Vector2 displayPos = chipPos + display.Position * scale;
+				
+				// Scale the display with the preview zoom - when we "zoom in" on the chip in the preview,
+				// all contents (including nested displays) should scale proportionally
+				float displayScale = display.Scale * scale;
+				
+				Debug.Log($"[DISPLAY] ChipType={chipDesc.ChipType}, SubChipID={display.SubChipID}, display.Scale={display.Scale}, previewScale={scale}, finalScale={displayScale}");
+				
+				// For custom chips, we need to look at the actual DisplayInstance objects
+				// For built-in chips, we use the chip's main ChipType
+				if (chipDesc.ChipType == ChipType.Custom)
 				{
-					// Calculate display position within chip
-					Vector2 displayPos = chipPos + display.Position * scale;
-					float displayScale = scale * display.Scale;
-					Debug.Log($"Drawing display at {displayPos} with scale {displayScale}");
+					// Custom chips: look up the sub-chip and render its actual type
+					DrawCustomChipDisplay(display, displayPos, displayScale, chipDesc);
+				}
+				else
+				{
+					// Built-in chips: draw based on chip type
+					DrawBuiltinChipDisplay(chipDesc.ChipType, displayPos, displayScale);
+				}
+			}
+		}
+		else
+		{
+			// Special handling for In_Pin and Out_Pin chip types - draw like DevPins in game
+			if (chipDesc.ChipType == ChipType.In_Pin || chipDesc.ChipType == ChipType.Out_Pin)
+			{
+				Debug.Log($"Drawing DevPin-style display for {chipDesc.ChipType}");
+				DrawDevPinStyleDisplay(chipDesc, chipPos, chipSize, scale);
+			}
+		}
+	}
+
+	static void DrawCustomChipDisplay(DisplayDescription displayDesc, Vector2 displayPos, float displayScale, ChipDescription parentChipDesc)
+	{
+		// Look up the sub-chip being displayed to get its actual chip type
+		if (displayDesc.SubChipID == -1)
+		{
+			// -1 means built-in display, shouldn't happen here but handle gracefully
+			Debug.LogWarning("DrawCustomChipDisplay called with SubChipID=-1");
+			return;
+		}
+
+		// Find the SubChipDescription with matching ID
+		// Note: SubChipDescription is a struct, so we use a nullable to track if found
+		SubChipDescription? subChipDescNullable = null;
+		if (parentChipDesc.SubChips != null)
+		{
+			foreach (var subChip in parentChipDesc.SubChips)
+			{
+				if (subChip.ID == displayDesc.SubChipID)
+				{
+					subChipDescNullable = subChip;
+					break;
+				}
+			}
+		}
+
+		if (!subChipDescNullable.HasValue)
+		{
+			Debug.LogWarning($"Could not find SubChip with ID {displayDesc.SubChipID} in parent chip {parentChipDesc.Name}");
+			return;
+		}
+
+		SubChipDescription subChipDesc = subChipDescNullable.Value;
+
+		// Look up the chip description from the library
+		if (!project.chipLibrary.TryGetChipDescription(subChipDesc.Name, out ChipDescription displayedChipDesc))
+		{
+			Debug.LogWarning($"Could not find chip description for {subChipDesc.Name}");
+			return;
+		}
+
+		// Check if this is itself a custom chip with nested displays (double nesting!)
+		if (displayedChipDesc.ChipType == ChipType.Custom && displayedChipDesc.HasDisplay())
+		{
+			Debug.Log($"[RECURSIVE] Rendering custom chip {displayedChipDesc.Name} with {displayedChipDesc.Displays.Length} nested displays");
+			
+			// Recursively render this custom chip's displays
+			// The displays are positioned relative to the nested chip, so we pass displayPos as the chip center
+			// and use displayScale as the scale factor
+			if (displayedChipDesc.Displays != null)
+			{
+				foreach (var nestedDisplay in displayedChipDesc.Displays)
+				{
+					// Calculate nested display position relative to the parent position
+					Vector2 nestedDisplayPos = displayPos + nestedDisplay.Position * displayScale;
+					// Nested display scale compounds: nestedDisplay.Scale * displayScale
+					float nestedDisplayScale = nestedDisplay.Scale * displayScale;
 					
-					// For custom chips, we need to look at the actual DisplayInstance objects
-					// For built-in chips, we use the chip's main ChipType
-					if (chipDesc.ChipType == ChipType.Custom)
-					{
-						// Custom chips: try to create a temporary DisplayInstance to get the display type
-						// This is a simplified approach - in reality we'd need full access to the chip instances
-						DrawCustomChipDisplay(display, displayPos, displayScale);
-					}
-					else
-					{
-						// Built-in chips: draw based on chip type
-						DrawBuiltinChipDisplay(chipDesc.ChipType, displayPos, displayScale);
-					}
+					Debug.Log($"  [NESTED] Rendering at pos={nestedDisplayPos}, scale={nestedDisplayScale}");
+					
+					// Recursively call to handle even deeper nesting
+					DrawCustomChipDisplay(nestedDisplay, nestedDisplayPos, nestedDisplayScale, displayedChipDesc);
 				}
 			}
-			else
-			{
-				// Special handling for In_Pin and Out_Pin chip types - draw like DevPins in game
-				if (chipDesc.ChipType == ChipType.In_Pin || chipDesc.ChipType == ChipType.Out_Pin)
-				{
-					Debug.Log($"Drawing DevPin-style display for {chipDesc.ChipType}");
-					DrawDevPinStyleDisplay(chipDesc, chipPos, chipSize, scale);
-				}
-			}
+		}
+		else
+		{
+			// This is a built-in display chip (LED, 7-seg, etc.) - render it
+			
+		// IMPORTANT: Adjust scale based on display type
+		// Simple displays (LED, Toggle, Button) should use absolute scale (displayDesc.Scale)
+		// Complex displays (7-seg, RGB, Dot) should use the scaled value (displayScale)
+		float finalDisplayScale;
+		if (displayedChipDesc.ChipType == ChipType.DisplayLED || 
+		    displayedChipDesc.ChipType == ChipType.Toggle ||
+		    displayedChipDesc.ChipType == ChipType.Button)
+		{
+			// Simple interactive displays: use absolute world scale (don't multiply by preview scale)
+			finalDisplayScale = displayDesc.Scale;
+			Debug.Log($"[SIMPLE DISPLAY OVERRIDE] Chip={displayedChipDesc.Name}, Using absolute scale: {finalDisplayScale} instead of {displayScale}");
+		}
+		else
+		{
+			// Complex displays: use the scaled value
+			finalDisplayScale = displayScale;
 		}
 
-		static void DrawCustomChipDisplay(DisplayDescription displayDesc, Vector2 displayPos, float displayScale)
-		{
-			// For custom chips, we need to determine what type of display this is
-			// Since we don't have access to the full DisplayInstance, we'll use heuristics
-			
-			// Try to get the chip description of the displayed sub-chip
-			// This is a simplified approach - in reality we'd need full access to the chip instances
-			
-			// For now, draw a generic display that indicates it's a custom chip
-			// The actual implementation would need to:
-			// 1. Get the SubChipInstance for the displayDesc.SubChipID
-			// 2. Look at its DisplayType
-			// 3. Draw the appropriate display type
-			
-			// Placeholder: draw a cyan panel to indicate custom chip
-			Seb.Vis.UI.UI.DrawPanel(displayPos, Vector2.one * displayScale, Color.cyan, Anchor.Centre);
-			Seb.Vis.UI.UI.DrawText("CUSTOM", FontType.JetbrainsMonoRegular, displayScale * 0.3f, displayPos, Anchor.Centre, Color.white);
-		}
+		// Now render the actual chip type
+		DrawBuiltinChipDisplay(displayedChipDesc.ChipType, displayPos, finalDisplayScale);
+	}
+	}
 
 		static void DrawDevPinStyleDisplay(ChipDescription chipDesc, Vector2 chipPos, Vector2 chipSize, float scale)
 		{
@@ -2303,12 +2514,34 @@ namespace DLS.Graphics
 				Seb.Vis.UI.UI.DrawPanel(displayPos, Vector2.one * displayScale, new Color(0.2f, 0.2f, 0.2f), Anchor.Centre);
 				Seb.Vis.UI.UI.DrawText("BUTTON", FontType.JetbrainsMonoRegular, displayScale * 0.2f, displayPos, Anchor.Centre, Color.white);
 			}
-			else if (chipType == ChipType.Toggle)
-			{
-				// Draw toggle display (blue toggle switch)
-				Seb.Vis.UI.UI.DrawPanel(displayPos, Vector2.one * displayScale, new Color(0.3f, 0.5f, 0.8f), Anchor.Centre);
-				Seb.Vis.UI.UI.DrawText("TOGGLE", FontType.JetbrainsMonoRegular, displayScale * 0.2f, displayPos, Anchor.Centre, Color.white);
-			}
+	else if (chipType == ChipType.Toggle)
+	{
+		// Draw toggle display - matches game implementation exactly
+		// From DevSceneDrawer.DrawInteractable_Toggle
+		Vector2 ratio = new Vector2(1f, 2f);  // Toggle is 1:2 aspect ratio (width:height)
+		const float toggleSize = 1f;
+		const float switchHorizontalDrawRatio = 0.875f;
+		
+		Vector2 toggleDrawSize = ratio * (displayScale * toggleSize);
+		Vector2 switchDrawSize = switchHorizontalDrawRatio * displayScale * toggleSize * Vector2.one;
+		Vector2 innerSwitchDrawSize = switchDrawSize * 0.775f;
+		
+		float verticalOffset = (toggleDrawSize.y / 2 - (switchDrawSize.y / switchHorizontalDrawRatio) / 2);
+		// Show toggle in default "off" position (down)
+		verticalOffset *= 1; // 1 = down (off), -1 = up (on)
+		
+		// Get theme colors to match game
+		Color bodyCol = new Color(0.4f, 0.4f, 0.4f); // StateDisconnectedCol approximation
+		Color switchBackgroundCol = new Color(0.15f, 0.15f, 0.15f); // BackgroundCol
+		Color switchHeadCol = new Color(0.8f, 0.8f, 0.8f); // DevPinHandleHighlighted approximation
+		
+		// Draw body
+		Seb.Vis.UI.UI.DrawPanel(displayPos, toggleDrawSize, bodyCol, Anchor.Centre);
+		// Draw switch background
+		Seb.Vis.UI.UI.DrawPanel(displayPos + Vector2.up * verticalOffset, switchDrawSize, switchBackgroundCol, Anchor.Centre);
+		// Draw switch head
+		Seb.Vis.UI.UI.DrawPanel(displayPos + Vector2.up * verticalOffset, innerSwitchDrawSize, switchHeadCol, Anchor.Centre);
+	}
 			else if (chipType == ChipType.In_Pin)
 			{
 				// Draw input pin display (dark gray button-like)
@@ -2337,7 +2570,7 @@ namespace DLS.Graphics
 			float size = scale * borderFrac;
 			Vector2 bottomLeft = centre - Vector2.one * size / 2;
 			float pixelSize = size / pixelsPerRow;
-			Vector2 pixelDrawSize = Vector2.one * (pixelSize * pixelSizeT);
+			float pixelRadius = pixelSize * pixelSizeT / 2;
 			
 			// Use the same color as the game
 			Color col = new Color(0.1f, 0.1f, 0.1f, 1f); // Matches ColHelper.MakeCol(0.1f)
@@ -2354,54 +2587,57 @@ namespace DLS.Graphics
 					Color pixelColor = pixelOn ? Color.white : col;
 					
 					Vector2 pos = bottomLeft + Vector2.one * pixelSize / 2 + Vector2.right * (pixelSize * x) + Vector2.up * (pixelSize * y);
-					Draw.Point(pos, pixelDrawSize.x / 2, pixelColor);
+					Seb.Vis.UI.UI.DrawPoint(pos, pixelRadius, pixelColor);
 				}
 			}
 		}
 
-		static void UI_DrawRGBDisplay(Vector2 centre, float scale)
+	static void UI_DrawRGBDisplay(Vector2 centre, float scale)
+	{
+		// Draw RGB display (16x16 pixel grid with colors) - simplified for preview
+		const int pixelsPerRow = 16;
+		const float borderFrac = 0.95f;
+		const float pixelSizeT = 0.925f;
+		
+		// Draw background using UI functions
+		Seb.Vis.UI.UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
+		
+		float size = scale * borderFrac;
+		Vector2 bottomLeft = centre - Vector2.one * size / 2;
+		float pixelSize = size / pixelsPerRow;
+		Vector2 pixelDrawSize = Vector2.one * (pixelSize * pixelSizeT);
+		
+		// Draw a colorful pattern for preview
+		for (int y = 0; y < 16; y++)
 		{
-			// Draw RGB display (16x16 pixel grid with colors) - simplified for preview
-			const int pixelsPerRow = 16;
-			const float borderFrac = 0.95f;
-			const float pixelSizeT = 0.925f;
-			
-			// Draw background
-			Seb.Vis.UI.UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
-			
-			float size = scale * borderFrac;
-			Vector2 bottomLeft = centre - Vector2.one * size / 2;
-			float pixelSize = size / pixelsPerRow;
-			Vector2 pixelDrawSize = Vector2.one * (pixelSize * pixelSizeT);
-			
-			// Draw a colorful pattern for preview
-			for (int y = 0; y < 16; y++)
+			for (int x = 0; x < 16; x++)
 			{
-				for (int x = 0; x < 16; x++)
-				{
-					// Create a colorful pattern for preview
-					float r = (x / 15f);
-					float g = (y / 15f);
-					float b = ((x + y) / 30f);
-					Color pixelColor = new Color(r, g, b, 1f);
-					
-					Vector2 pos = bottomLeft + Vector2.one * pixelSize / 2 + Vector2.right * (pixelSize * x) + Vector2.up * (pixelSize * y);
-					Seb.Vis.UI.UI.DrawQuad(pos, pixelDrawSize, pixelColor, Anchor.Centre);
-				}
+				// Create a colorful pattern for preview
+				float r = (x / 15f);
+				float g = (y / 15f);
+				float b = ((x + y) / 30f);
+				Color pixelColor = new Color(r, g, b, 1f);
+				
+				Vector2 pos = bottomLeft + Vector2.one * pixelSize / 2 + Vector2.right * (pixelSize * x) + Vector2.up * (pixelSize * y);
+				Seb.Vis.UI.UI.DrawPanel(pos, pixelDrawSize, pixelColor, Anchor.Centre);
 			}
 		}
+	}
 
-		static void UI_DrawLEDDisplay(Vector2 centre, float scale)
-		{
-			// Draw LED display (black background with colored LED) - matches game implementation
-			const float pixelSizeT = 0.975f;
-			Vector2 pixelDrawSize = Vector2.one * (scale * pixelSizeT);
-			
-			// Draw black background
-			Seb.Vis.UI.UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
-			// Draw colored LED (red for preview)
-			Seb.Vis.UI.UI.DrawQuad(centre, pixelDrawSize, Color.red, Anchor.Centre);
-		}
+	static void UI_DrawLEDDisplay(Vector2 centre, float scale)
+	{
+		// Draw LED display (black background with colored LED) - matches game implementation exactly
+		const float pixelSizeT = 0.975f;
+		Vector2 pixelDrawSize = Vector2.one * (scale * pixelSizeT);
+		
+		Debug.Log($"[LED] UIcentre={centre}, UIscale={scale}, pixelSize={pixelDrawSize}");
+		
+		// Use UI drawing functions to stay in UI space
+		// Draw black background
+		Seb.Vis.UI.UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
+		// Draw colored LED (red for preview)
+		Seb.Vis.UI.UI.DrawPanel(centre, pixelDrawSize, Color.red, Anchor.Centre);
+	}
 
 		static void UI_DrawSevenSegmentDisplay(Vector2 centre, float scale, int A, int B, int C, int D, int E, int F, int G)
 		{
@@ -2430,22 +2666,27 @@ namespace DLS.Graphics
 			// Use consistent red color for all segments in preview
 			Color segmentColor = Color.red;
 
-			// Draw bounds (black background) - match game exactly
-			Vector2 boundsSize = new(boundsWidth, boundsHeight);
-			Seb.Vis.UI.UI.DrawPanel(centre, boundsSize, Color.black, Anchor.Centre);
+		// Draw bounds (black background) using UI functions
+		Vector2 boundsSize = new(boundsWidth, boundsHeight);
+		Seb.Vis.UI.UI.DrawPanel(centre, boundsSize, Color.black, Anchor.Centre);
 
-			// Draw segments in the exact same order and positions as the game
-			// Draw horizontal segments
-			if (G == 1) Seb.Vis.UI.UI.DrawDiamond(centre, segmentSizeHorizontal, segmentColor); // mid
-			if (A == 1) Seb.Vis.UI.UI.DrawDiamond(centre + Vector2.up * segmentRegionHeight / 2, segmentSizeHorizontal, segmentColor); // top
-			if (D == 1) Seb.Vis.UI.UI.DrawDiamond(centre - Vector2.up * segmentRegionHeight / 2, segmentSizeHorizontal, segmentColor); // bottom
+		// Convert to screen space for Draw.Diamond calls
+		Vector2 centre_ss = Seb.Vis.UI.UI.UIToScreenSpace(centre);
+		Vector2 segmentSizeHorizontal_ss = Seb.Vis.UI.UI.UIToScreenSpace(centre + segmentSizeHorizontal / 2) - Seb.Vis.UI.UI.UIToScreenSpace(centre - segmentSizeHorizontal / 2);
+		Vector2 segmentSizeVertical_ss = Seb.Vis.UI.UI.UIToScreenSpace(centre + segmentSizeVertical / 2) - Seb.Vis.UI.UI.UIToScreenSpace(centre - segmentSizeVertical / 2);
 
-			// Draw vertical segments
-			if (F == 1) Seb.Vis.UI.UI.DrawDiamond(centre - offsetX + offsetY, segmentSizeVertical, segmentColor); // left top
-			if (E == 1) Seb.Vis.UI.UI.DrawDiamond(centre - offsetX - offsetY, segmentSizeVertical, segmentColor); // left bottom
-			if (B == 1) Seb.Vis.UI.UI.DrawDiamond(centre + offsetX + offsetY, segmentSizeVertical, segmentColor); // right top
-                        if (C == 1) Seb.Vis.UI.UI.DrawDiamond(centre + offsetX - offsetY, segmentSizeVertical, segmentColor); // right bottom
-		}
+		// Draw segments using Draw.Diamond for proper hexagon shapes (like the game)
+		// Draw horizontal segments
+		if (G == 1) Draw.Diamond(centre_ss, segmentSizeHorizontal_ss, segmentColor); // mid
+		if (A == 1) Draw.Diamond(Seb.Vis.UI.UI.UIToScreenSpace(centre + Vector2.up * segmentRegionHeight / 2), segmentSizeHorizontal_ss, segmentColor); // top
+		if (D == 1) Draw.Diamond(Seb.Vis.UI.UI.UIToScreenSpace(centre - Vector2.up * segmentRegionHeight / 2), segmentSizeHorizontal_ss, segmentColor); // bottom
+
+		// Draw vertical segments
+		if (F == 1) Draw.Diamond(Seb.Vis.UI.UI.UIToScreenSpace(centre - offsetX + offsetY), segmentSizeVertical_ss, segmentColor); // left top
+		if (E == 1) Draw.Diamond(Seb.Vis.UI.UI.UIToScreenSpace(centre - offsetX - offsetY), segmentSizeVertical_ss, segmentColor); // left bottom
+		if (B == 1) Draw.Diamond(Seb.Vis.UI.UI.UIToScreenSpace(centre + offsetX + offsetY), segmentSizeVertical_ss, segmentColor); // right top
+		if (C == 1) Draw.Diamond(Seb.Vis.UI.UI.UIToScreenSpace(centre + offsetX - offsetY), segmentSizeVertical_ss, segmentColor); // right bottom
+	}
 
 	static void ScrollToSelectedElement()
 	{

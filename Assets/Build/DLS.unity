@@ -153,7 +153,7 @@ MonoBehaviour:
   startInLevel: 1
   startLevelId: lvl.adder4bit.1
   continueLevelFromSave: 1
-  testProjectName: TEST
+  testProjectName: Playthrough
   openA: 1
   chipToOpenA: NOT
   chipToOpenB: TEST MergeSplit

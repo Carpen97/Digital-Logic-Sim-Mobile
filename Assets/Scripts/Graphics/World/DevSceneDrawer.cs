@@ -1098,9 +1098,9 @@ namespace DLS.Graphics
 			#endif
 		}
 
-		static void DrawPin(PinInstance pin)
-		{
-			if (pin.bitCount == PinBitCount.Bit1)
+	public static void DrawPin(PinInstance pin)
+	{
+		if (pin.bitCount == PinBitCount.Bit1)
 			{
 				DrawSingleBitPin(pin);
 			}

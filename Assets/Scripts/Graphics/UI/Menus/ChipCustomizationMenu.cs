@@ -14,17 +14,24 @@ namespace DLS.Graphics
 	public static class ChipCustomizationMenu
 	{
 
-		static readonly string[] nameDisplayOptions =
-		{
-			"Name: Middle",
-			"Name: Top",
-			"Name: Hidden"
-		};
-        static readonly string[] layoutOptions =
-        {
-            "Layout: Default",
-            "Layout: Custom"
-        };
+	static readonly string[] nameDisplayOptionsRectangle =
+	{
+		"Name: Middle",
+		"Name: Top",
+		"Name: Hidden"
+	};
+
+	static readonly string[] nameDisplayOptionsNonRectangle =
+	{
+		"Name: Middle",
+		"Name: Hidden"
+	};
+
+    static readonly string[] layoutOptions =
+    {
+        "Layout: Default",
+        "Layout: Custom"
+    };
 
 		static readonly string[] cachingOptions = { "Caching: Off", "Caching: On" };
 
@@ -159,10 +166,24 @@ namespace DLS.Graphics
 			// Only show left panel content when not interacting with displays
 			if (!IsMovingOrScalingDisplay())
 			{
-				// ---- Chip name UI ----
-			theme.OptionsWheel.OverrideFontSize(2f);
-			int nameDisplayMode = Seb.Vis.UI.UI.WheelSelector(ID_NameDisplayOptions, nameDisplayOptions, Seb.Vis.UI.UI.TopLeft + Vector2.down * pad, new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
-			ChipSaveMenu.ActiveCustomizeDescription.NameLocation = (NameDisplayLocation)nameDisplayMode;
+			// ---- Chip name UI ----
+		theme.OptionsWheel.OverrideFontSize(2f);
+		bool isRectangle = ChipSaveMenu.ActiveCustomizeDescription.ShapeType == ChipShapeType.Rectangle;
+		string[] currentNameOptions = isRectangle ? nameDisplayOptionsRectangle : nameDisplayOptionsNonRectangle;
+		int nameDisplayMode = Seb.Vis.UI.UI.WheelSelector(ID_NameDisplayOptions, currentNameOptions, Seb.Vis.UI.UI.TopLeft + Vector2.down * pad, new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
+		
+		// Map the selector index to NameDisplayLocation enum (accounting for missing "Top" option in non-rectangle shapes)
+		NameDisplayLocation nameLocation;
+		if (isRectangle)
+		{
+			nameLocation = (NameDisplayLocation)nameDisplayMode; // 0=Centre, 1=Top, 2=Hidden
+		}
+		else
+		{
+			// For non-rectangle: 0=Centre, 1=Hidden (skip Top which is index 1)
+			nameLocation = nameDisplayMode == 0 ? NameDisplayLocation.Centre : NameDisplayLocation.Hidden;
+		}
+		ChipSaveMenu.ActiveCustomizeDescription.NameLocation = nameLocation;
             // ---- Chip layout UI ----
             int layoutMode = Seb.Vis.UI.UI.WheelSelector(ID_LayoutOptions, layoutOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight * 1.5f), theme.OptionsWheel, Anchor.TopLeft);
             if (layoutMode == 0 && isCustomLayout)
@@ -211,6 +232,35 @@ namespace DLS.Graphics
                 if ((ChipShapeType)shapeMode == ChipShapeType.CustomPolygon && ChipSaveMenu.ActiveCustomizeDescription.CustomPolygon == null)
                 {
                     ChipSaveMenu.ActiveCustomizeDescription.CustomPolygon = new CustomPolygonData();
+                }
+                
+                // If switching to non-rectangle, update the wheel selector state to match the new options
+                if ((ChipShapeType)shapeMode != ChipShapeType.Rectangle)
+                {
+                    WheelSelectorState nameWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_NameDisplayOptions);
+                    
+                    // If name is set to Top, reset to Centre
+                    if (ChipSaveMenu.ActiveCustomizeDescription.NameLocation == NameDisplayLocation.Top)
+                    {
+                        ChipSaveMenu.ActiveCustomizeDescription.NameLocation = NameDisplayLocation.Centre;
+                        nameWheelState.index = 0; // Centre
+                    }
+                    // If name is Hidden, set index to 1 (since non-rectangle only has 2 options)
+                    else if (ChipSaveMenu.ActiveCustomizeDescription.NameLocation == NameDisplayLocation.Hidden)
+                    {
+                        nameWheelState.index = 1; // Hidden
+                    }
+                    else
+                    {
+                        nameWheelState.index = 0; // Centre (default)
+                    }
+                }
+                // If switching TO rectangle, update the wheel selector state to match the new options
+                else if ((ChipShapeType)shapeMode == ChipShapeType.Rectangle)
+                {
+                    WheelSelectorState nameWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_NameDisplayOptions);
+                    // Map the current name location to the correct index for rectangle options
+                    nameWheelState.index = (int)ChipSaveMenu.ActiveCustomizeDescription.NameLocation;
                 }
                 
                 RelocatePinsForNewShape((ChipShapeType)shapeMode);
@@ -366,9 +416,28 @@ namespace DLS.Graphics
 			Color.RGBToHSV(ChipSaveMenu.ActiveCustomizeDescription.Colour, out chipColourPickerState.hue, out chipColourPickerState.sat, out chipColourPickerState.val);
 			UpdateChipColHexStringFromColour(chipColourPickerState.GetRGB());
 
-			// Init name display mode
-			WheelSelectorState nameDisplayWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_NameDisplayOptions);
-			nameDisplayWheelState.index = (int)ChipSaveMenu.ActiveCustomizeDescription.NameLocation;
+		// Init name display mode
+		WheelSelectorState nameDisplayWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_NameDisplayOptions);
+		bool isRectangle = ChipSaveMenu.ActiveCustomizeDescription.ShapeType == ChipShapeType.Rectangle;
+		NameDisplayLocation nameLocation = ChipSaveMenu.ActiveCustomizeDescription.NameLocation;
+		
+		// If non-rectangle shape and name is set to Top, reset to Centre
+		if (!isRectangle && nameLocation == NameDisplayLocation.Top)
+		{
+			nameLocation = NameDisplayLocation.Centre;
+			ChipSaveMenu.ActiveCustomizeDescription.NameLocation = NameDisplayLocation.Centre;
+		}
+		
+		// Map NameDisplayLocation to selector index (accounting for missing "Top" in non-rectangle)
+		if (isRectangle)
+		{
+			nameDisplayWheelState.index = (int)nameLocation; // 0=Centre, 1=Top, 2=Hidden
+		}
+		else
+		{
+			// For non-rectangle: 0=Centre, 1=Hidden (Top is not available)
+			nameDisplayWheelState.index = nameLocation == NameDisplayLocation.Centre ? 0 : 1;
+		}
 
 			// Init cache setting
 			WheelSelectorState cacheSettingWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_CachingOptions);
@@ -824,19 +893,19 @@ namespace DLS.Graphics
         }
 
 
-        static void AddPolygonVertex(CustomPolygonData polygon)
+        static void AddPolygonVertex(CustomPolygonData polygon, int selectedEdge)
         {
-            // Add a new vertex between the first and second vertex
-            int insertIndex = 1;
-            Vector2 pos1 = polygon.Vertices[0].ToVector2();
-            Vector2 pos2 = polygon.Vertices[1].ToVector2();
+            // Add a new vertex to the selected edge
+            int insertIndex = selectedEdge + 1;
+            Vector2 pos1 = polygon.Vertices[selectedEdge].ToVector2();
+            Vector2 pos2 = polygon.Vertices[insertIndex % polygon.Vertices.Length].ToVector2();
             Vector2 newPos = (pos1 + pos2) * 0.5f;
 
             // Create new arrays with one more element
             PolygonVertex[] newVertices = new PolygonVertex[polygon.Vertices.Length + 1];
             PolygonEdge[] newEdges = new PolygonEdge[polygon.Vertices.Length + 1];
 
-            // Copy existing vertices
+            // Copy existing vertices up to insertion point
             for (int i = 0; i < insertIndex; i++)
             {
                 newVertices[i] = polygon.Vertices[i];
@@ -858,18 +927,23 @@ namespace DLS.Graphics
             polygon.Edges = newEdges;
         }
 
-        static void RemovePolygonVertex(CustomPolygonData polygon)
+        static void RemovePolygonVertex(CustomPolygonData polygon, int vertexIndex)
         {
             if (polygon.Vertices.Length <= 3) return; // Don't remove if only 3 vertices left
 
-            // Remove the last vertex
+            // Remove the specified vertex
             PolygonVertex[] newVertices = new PolygonVertex[polygon.Vertices.Length - 1];
             PolygonEdge[] newEdges = new PolygonEdge[polygon.Vertices.Length - 1];
 
-            for (int i = 0; i < newVertices.Length; i++)
+            int newIndex = 0;
+            for (int i = 0; i < polygon.Vertices.Length; i++)
             {
-                newVertices[i] = polygon.Vertices[i];
-                newEdges[i] = polygon.Edges[i];
+                if (i != vertexIndex)
+                {
+                    newVertices[newIndex] = polygon.Vertices[i];
+                    newEdges[newIndex] = polygon.Edges[i];
+                    newIndex++;
+                }
             }
 
             polygon.Vertices = newVertices;
@@ -880,9 +954,9 @@ namespace DLS.Graphics
         {
             // Position the panel to the right of existing panels
             // Main panel width + right panel width + padding
-            float existingPanelsWidth = width + width + pad * 2; // Main panel + right panel + padding
-            Vector2 panelPos = new Vector2(existingPanelsWidth, Seb.Vis.UI.UI.Height - 4f - pad); // Bottom right
-            Vector2 panelSize = new Vector2(width, 4f);
+            float existingPanelsWidth = width; // Main panel + right panel + padding
+            Vector2 panelPos = new Vector2(existingPanelsWidth, Seb.Vis.UI.UI.Height); // Bottom right
+            Vector2 panelSize = new Vector2(width-6.5f, 14f);
             
             if (customPolygonPanelExpanded)
             {
@@ -923,6 +997,13 @@ namespace DLS.Graphics
 
             Vector2 currentPos = startPos;
 
+            // Warning message
+            Color warningColor = new Color(1f, 0.7f, 0.2f); // Orange/yellow warning color
+            Seb.Vis.UI.UI.DrawText("WARNING: Custom shapes is an", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, warningColor);
+            currentPos += Vector2.down * (UIThemeLibrary.FontSizeSmall + pad * 0.3f);
+            Seb.Vis.UI.UI.DrawText("experimental feature", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, warningColor);
+            currentPos += Vector2.down * (UIThemeLibrary.FontSizeSmall + pad * 1.5f);
+
             // Display current vertex count
             Seb.Vis.UI.UI.DrawText($"Vertices: {polygon.Vertices.Length}", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeDefault, currentPos, Anchor.TopLeft, Color.white);
             currentPos += Vector2.down * (UIThemeLibrary.FontSizeDefault + pad);
@@ -930,29 +1011,39 @@ namespace DLS.Graphics
             // Add/Remove vertex buttons
             Vector2 btnSize = new Vector2(panelWidth / 2 - 5, DrawSettings.ButtonHeight);
             Vector2 leftBtnPos = currentPos;
-            Vector2 rightBtnPos = leftBtnPos + new Vector2(panelWidth / 2 + 5, 0);
+            Vector2 btnSize2 = new Vector2(panelWidth / 2 - 7.8f, DrawSettings.ButtonHeight);
+            Vector2 rightBtnPos = leftBtnPos - new Vector2(0, DrawSettings.ButtonHeight + pad);
 
-            // Add vertex button
-            if (Seb.Vis.UI.UI.Button("Add Vertex", MenuHelper.Theme.ButtonTheme, leftBtnPos, btnSize, true, true, false, MenuHelper.Theme.ButtonTheme.buttonCols, Anchor.TopLeft))
+            // Get selection state from CustomizationSceneDrawer
+            int selectedEdge = CustomizationSceneDrawer.SelectedPolygonEdge;
+            int selectedVertex = CustomizationSceneDrawer.SelectedPolygonVertex;
+
+            // Add vertex button (only enabled when an edge is selected)
+            bool canAddVertex = selectedEdge >= 0;
+            if (Seb.Vis.UI.UI.Button("Add Vertex", MenuHelper.Theme.ButtonTheme, leftBtnPos, btnSize, canAddVertex, true, false, MenuHelper.Theme.ButtonTheme.buttonCols, Anchor.TopLeft))
             {
-                AddPolygonVertex(polygon);
+                Debug.Log($"Add Vertex clicked! Selected edge: {selectedEdge}, Current vertex count: {polygon.Vertices.Length}");
+                AddPolygonVertex(polygon, selectedEdge);
+                Debug.Log($"After add: vertex count: {polygon.Vertices.Length}");
             }
 
-            // Remove vertex button (only if more than 3 vertices)
-            if (polygon.Vertices.Length > 3)
+            // Remove vertex button (only enabled when a vertex is selected and more than 3 vertices exist)
+            bool canRemoveVertex = selectedVertex >= 0 && polygon.Vertices.Length > 3;
+            if (Seb.Vis.UI.UI.Button("Remove Vertex", MenuHelper.Theme.ButtonTheme, rightBtnPos, btnSize2, canRemoveVertex, true, false, MenuHelper.Theme.ButtonTheme.buttonCols, Anchor.TopLeft))
             {
-                if (Seb.Vis.UI.UI.Button("Remove Vertex", MenuHelper.Theme.ButtonTheme, rightBtnPos, btnSize, true, true, false, MenuHelper.Theme.ButtonTheme.buttonCols, Anchor.TopLeft))
-                {
-                    RemovePolygonVertex(polygon);
-                }
+                Debug.Log($"Remove Vertex clicked! Selected vertex: {selectedVertex}, Current vertex count: {polygon.Vertices.Length}");
+                RemovePolygonVertex(polygon, selectedVertex);
+                Debug.Log($"After remove: vertex count: {polygon.Vertices.Length}");
             }
 
-            currentPos += Vector2.down * (DrawSettings.ButtonHeight + pad);
+            currentPos += Vector2.down * (DrawSettings.ButtonHeight*2 + pad*2);
 
             // Instructions
-            Seb.Vis.UI.UI.DrawText("Click vertices to drag them", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
+            Seb.Vis.UI.UI.DrawText("Yellow: Vertices (drag to move)", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
             currentPos += Vector2.down * (UIThemeLibrary.FontSizeSmall + pad * 0.5f);
-            Seb.Vis.UI.UI.DrawText("Click edge midpoints to curve", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
+            Seb.Vis.UI.UI.DrawText("Cyan: Edges (drag to curve)", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
+            currentPos += Vector2.down * (UIThemeLibrary.FontSizeSmall + pad * 0.5f);
+            Seb.Vis.UI.UI.DrawText("Green: Selected", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
         }
 		
 		static void UpdatePinPositionInDescription(PinInstance pin, Vector2 newPosition)

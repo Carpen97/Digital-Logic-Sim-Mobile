@@ -2,8 +2,23 @@
   "versions": [
     {
       "version": "2.1.6.11",
-      "releaseDate": "TBD",
+      "releaseDate": "October 22, 2025",
       "newFeatures": [
+        {
+          "text": "8-Bit Operations Chapter - Brand new educational chapter with 12 progressive levels! Learn to build multi-bit circuits from the ground up, starting with simple 8-bit wire and culminating in a complete 8-bit ALU (Arithmetic Logic Unit). Each level builds on the previous, teaching you to create Splitters, 8-bit NOT/AND/OR gates, Multiplexers, Adders with carry logic, and finally a functional ALU capable of multiple operations. Positioned before 'Coming Soon' chapter. Perfect for students learning computer architecture and anyone wanting to master multi-bit circuit design!",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Chip Description Viewer - Every chip now has detailed educational information! Tap the info button in the chip library or use the context menu to view comprehensive descriptions, usage examples, and technical details for all built-in chips. Learn what each chip does, how it works, and when to use it. Scrollable descriptions with clear formatting make it easy to understand complex components. Perfect companion for learning digital logic design!",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Chip Library Preview Fixes - No more cut-off chip names! Chip previews now calculate proper bounds to ensure all text and components are fully visible in thumbnails. Custom chip names wrap and truncate properly with ellipsis (...) when needed. Consistent preview rendering across chip library, collections, search results, and all other contexts. Clean, professional-looking chip library that makes finding chips effortless.",
+          "userFacing": true,
+          "editNotes": ""
+        },
         {
           "text": "Hall of Fame - Celebrate your achievements! New Hall of Fame view showcases global leaderboard champions and your personal accomplishments across all levels. Three main views: 'Top Players' shows the top 20 global competitors with their total scores, levels completed, and championship counts; 'Your Stats' displays your personal achievements including levels completed, average ranking, best scores, and detailed breakdown per level; 'Level Records' highlights the top 3 champions for each individual level with gold/silver/bronze medals. Accessible from the levels menu. See who's dominating the leaderboards, track your progress, and get motivated to improve your scores! 🏆",
           "userFacing": true,

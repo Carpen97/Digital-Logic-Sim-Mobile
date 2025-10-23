@@ -37,51 +37,71 @@ namespace DLS.Graphics
 	static bool isDraggingRotation = false;
 	static Vector2 rotationHandleStartMouse;
 	static float rotationHandleStartAngle;
+	
+	// Public accessors for polygon selection state
+	public static int SelectedPolygonVertex => selectedPolygonVertex;
+	public static int SelectedPolygonEdge => selectedPolygonEdge;
 
  		public static bool IsResizingChip => selectedChipResizeDir != Vector2Int.zero;
 		static SubChipInstance CustomizeChip => ChipSaveMenu.ActiveCustomizeChip;
 		public static bool IsPlacingDisplay => displayInteractState == DisplayInteractState.Placing;
 
-		public static void DrawCustomizationScene()
+	public static void DrawCustomizationScene()
+	{
+		SubChipInstance chip = ChipSaveMenu.ActiveCustomizeChip;
+		HandleKeyboardShortcuts();
+
+		DevSceneDrawer.DrawSubChip(chip);
+		WorldDrawer.DrawGridIfActive(ColHelper.MakeCol255(0, 0, 0, 100));
+
+		Draw.StartLayer(Vector2.zero, 1, false);
+		DevSceneDrawer.DrawSubchipDisplays(chip, null, true);
+
+	bool chipResizeHascontrol = HandleChipResizing(chip);
+	HandleDisplaySelection(!chipResizeHascontrol);
+
+	HandlePinDragging();
+	HandlePolygonEditing(chip);
+
+	if (SelectedDisplay == null)
 		{
-			SubChipInstance chip = ChipSaveMenu.ActiveCustomizeChip;
-			HandleKeyboardShortcuts();
-
-			DevSceneDrawer.DrawSubChip(chip);
-			WorldDrawer.DrawGridIfActive(ColHelper.MakeCol255(0, 0, 0, 100));
-
-			Draw.StartLayer(Vector2.zero, 1, false);
-			DevSceneDrawer.DrawSubchipDisplays(chip, null, true);
-
-		bool chipResizeHascontrol = HandleChipResizing(chip);
-		HandleDisplaySelection(!chipResizeHascontrol);
-
-		HandlePinDragging();
-		HandlePolygonEditing(chip);
-
-		if (SelectedDisplay == null)
+			if (DisplayUnderMouse != null) HandleDeleteDisplayUnderMouse();
+		}
+		else
+		{
+			if (displayInteractState == DisplayInteractState.Scaling)
 			{
-				if (DisplayUnderMouse != null) HandleDeleteDisplayUnderMouse();
+				HandleDisplayScaling();
 			}
 			else
 			{
-				if (displayInteractState == DisplayInteractState.Scaling)
-				{
-					HandleDisplayScaling();
-				}
-				else
-				{
-					HandleDisplayMovement();
-				}
-			}
-
-			// Display highlighted pin name
-			if (InteractionState.ElementUnderMouse is PinInstance highlightedPin)
-			{
-				Draw.StartLayer(Vector2.zero, 1, false);
-				DevSceneDrawer.DrawPinLabel(highlightedPin);
+				HandleDisplayMovement();
 			}
 		}
+
+		// Draw pins on top layer so they're always visible
+		Draw.StartLayer(Vector2.zero, 1, false);
+		DrawChipPins(chip);
+
+		// Display highlighted pin name
+		if (InteractionState.ElementUnderMouse is PinInstance highlightedPin)
+		{
+			Draw.StartLayer(Vector2.zero, 1, false);
+			DevSceneDrawer.DrawPinLabel(highlightedPin);
+		}
+	}
+	
+	static void DrawChipPins(SubChipInstance chip)
+	{
+		// Draw all pins on top layer
+		for (int i = 0; i < chip.AllPins.Length; i++)
+		{
+			// Hide input pin on bus origin chips
+			if (i == 0 && ChipTypeHelper.IsBusOriginType(chip.Description.ChipType)) continue;
+			
+			DevSceneDrawer.DrawPin(chip.AllPins[i]);
+		}
+	}
 
 		static void HandleKeyboardShortcuts()
 		{
@@ -1268,14 +1288,15 @@ namespace DLS.Graphics
 				polygon.Vertices[selectedPolygonVertex].X = normalized.x;
 				polygon.Vertices[selectedPolygonVertex].Y = normalized.y;
 
-				// End drag on mouse release
-				if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
-				{
-					isDraggingVertex = false;
-					selectedPolygonVertex = -1;
-					// Update pin positions after vertex change
-					UpdatePinPositionsForCustomPolygon(chip);
-				}
+			// End drag on mouse release
+			if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
+			{
+				isDraggingVertex = false;
+				// Keep selectedPolygonVertex set (don't reset to -1) to maintain selection
+				selectedPolygonEdge = -1; // Deselect edge when vertex is selected
+				// Update pin positions after vertex change
+				UpdatePinPositionsForCustomPolygon(chip);
+			}
 			}
 			else if (isDraggingEdgeCurve && selectedPolygonEdge >= 0)
 			{
@@ -1292,14 +1313,15 @@ namespace DLS.Graphics
 				polygon.Edges[selectedPolygonEdge].CurveStrength = curveStrength;
 				polygon.Edges[selectedPolygonEdge].IsCurved = Mathf.Abs(curveStrength) > 0.01f;
 
-				// End drag on mouse release
-				if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
-				{
-					isDraggingEdgeCurve = false;
-					selectedPolygonEdge = -1;
-					// Update pin positions after edge curve change
-					UpdatePinPositionsForCustomPolygon(chip);
-				}
+			// End drag on mouse release
+			if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
+			{
+				isDraggingEdgeCurve = false;
+				// Keep selectedPolygonEdge set (don't reset to -1) to maintain selection
+				selectedPolygonVertex = -1; // Deselect vertex when edge is selected
+				// Update pin positions after edge curve change
+				UpdatePinPositionsForCustomPolygon(chip);
+			}
 			}
 			else if (isDraggingRotation)
 			{
@@ -1328,104 +1350,119 @@ namespace DLS.Graphics
 			}
 			else
 			{
-				// Check for mouse down to start dragging
-				if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
+		// Check for mouse down to start dragging
+		if (InputHelper.IsMouseDownThisFrame(MouseButton.Left) && !InteractionState.MouseIsOverUI)
+		{
+			bool clickedOnSomething = false;
+			
+			// Check if clicking on a vertex
+			for (int i = 0; i < worldVertices.Length; i++)
+			{
+				if (Vector2.Distance(mouseWorld, worldVertices[i]) < vertexRadius)
 				{
-					// Check if clicking on a vertex
-					for (int i = 0; i < worldVertices.Length; i++)
-					{
-						if (Vector2.Distance(mouseWorld, worldVertices[i]) < vertexRadius)
-						{
-							selectedPolygonVertex = i;
-							isDraggingVertex = true;
-							break;
-						}
-					}
-
-					// If not clicking a vertex, check for edge midpoints
-					if (!isDraggingVertex)
-					{
-						for (int i = 0; i < worldVertices.Length; i++)
-						{
-							int next = (i + 1) % worldVertices.Length;
-							Vector2 edgeMidpoint;
-							
-							// Calculate the actual curve midpoint if the edge is curved
-							if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
-							{
-								// For curved edges, use the midpoint of the actual curve
-								Vector2 edgeMidpointStraight = (worldVertices[i] + worldVertices[next]) * 0.5f;
-								Vector2 edgeDirection = worldVertices[next] - worldVertices[i];
-								Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
-								Vector2 controlPoint = edgeMidpointStraight + perpendicular * polygon.Edges[i].CurveStrength;
-								
-								// Get the midpoint of the bezier curve (t = 0.5)
-								edgeMidpoint = QuadraticBezier(worldVertices[i], controlPoint, worldVertices[next], 0.5f);
-							}
-							else
-							{
-								// For straight edges, use the simple midpoint
-								edgeMidpoint = (worldVertices[i] + worldVertices[next]) * 0.5f;
-							}
-
-							if (Vector2.Distance(mouseWorld, edgeMidpoint) < edgeMidpointRadius)
-							{
-								selectedPolygonEdge = i;
-								isDraggingEdgeCurve = true;
-								break;
-							}
-						}
-					}
-
-					// If not clicking vertices or edges, check for rotation handle
-					if (!isDraggingVertex && !isDraggingEdgeCurve)
-					{
-						Vector2 rotationHandleClickPos = chipCenter + Vector2.up * rotationHandleDistance;
-						if (Vector2.Distance(mouseWorld, rotationHandleClickPos) < rotationHandleRadius)
-						{
-							isDraggingRotation = true;
-							rotationHandleStartMouse = mouseWorld;
-							Vector2 toStartMouse = rotationHandleStartMouse - chipCenter;
-							rotationHandleStartAngle = Mathf.Atan2(toStartMouse.y, toStartMouse.x);
-						}
-					}
+					selectedPolygonVertex = i;
+					selectedPolygonEdge = -1; // Deselect edge
+					isDraggingVertex = true;
+					clickedOnSomething = true;
+					break;
 				}
 			}
 
-			// Draw vertex handles
-			for (int i = 0; i < worldVertices.Length; i++)
+			// If not clicking a vertex, check for edge midpoints
+			if (!isDraggingVertex)
 			{
-				Color vertexColor = (selectedPolygonVertex == i && isDraggingVertex) ? Color.green : Color.yellow;
-				Draw.Point(worldVertices[i], vertexRadius, vertexColor);
-			}
-
-			// Draw edge midpoint handles
-			for (int i = 0; i < worldVertices.Length; i++)
-			{
-				int next = (i + 1) % worldVertices.Length;
-				Vector2 edgeMidpoint;
-				
-				// Calculate the actual curve midpoint if the edge is curved
-				if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
+				for (int i = 0; i < worldVertices.Length; i++)
 				{
-					// For curved edges, show the midpoint of the actual curve
-					Vector2 edgeMidpointStraight = (worldVertices[i] + worldVertices[next]) * 0.5f;
-					Vector2 edgeDirection = worldVertices[next] - worldVertices[i];
-					Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
-					Vector2 controlPoint = edgeMidpointStraight + perpendicular * polygon.Edges[i].CurveStrength;
+					int next = (i + 1) % worldVertices.Length;
+					Vector2 edgeMidpoint;
 					
-					// Get the midpoint of the bezier curve (t = 0.5)
-					edgeMidpoint = QuadraticBezier(worldVertices[i], controlPoint, worldVertices[next], 0.5f);
+					// Calculate the actual curve midpoint if the edge is curved
+					if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
+					{
+						// For curved edges, use the midpoint of the actual curve
+						Vector2 edgeMidpointStraight = (worldVertices[i] + worldVertices[next]) * 0.5f;
+						Vector2 edgeDirection = worldVertices[next] - worldVertices[i];
+						Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
+						Vector2 controlPoint = edgeMidpointStraight + perpendicular * polygon.Edges[i].CurveStrength;
+						
+						// Get the midpoint of the bezier curve (t = 0.5)
+						edgeMidpoint = QuadraticBezier(worldVertices[i], controlPoint, worldVertices[next], 0.5f);
+					}
+					else
+					{
+						// For straight edges, use the simple midpoint
+						edgeMidpoint = (worldVertices[i] + worldVertices[next]) * 0.5f;
+					}
+
+					if (Vector2.Distance(mouseWorld, edgeMidpoint) < edgeMidpointRadius)
+					{
+						selectedPolygonEdge = i;
+						selectedPolygonVertex = -1; // Deselect vertex
+						isDraggingEdgeCurve = true;
+						clickedOnSomething = true;
+						break;
+					}
 				}
-				else
-				{
-					// For straight edges, use the simple midpoint
-					edgeMidpoint = (worldVertices[i] + worldVertices[next]) * 0.5f;
-				}
-				
-				Color edgeColor = (selectedPolygonEdge == i && isDraggingEdgeCurve) ? Color.green : Color.cyan;
-				Draw.Point(edgeMidpoint, edgeMidpointRadius, edgeColor);
 			}
+
+			// If not clicking vertices or edges, check for rotation handle
+			if (!isDraggingVertex && !isDraggingEdgeCurve)
+			{
+				Vector2 rotationHandleClickPos = chipCenter + Vector2.up * rotationHandleDistance;
+				if (Vector2.Distance(mouseWorld, rotationHandleClickPos) < rotationHandleRadius)
+				{
+					isDraggingRotation = true;
+					rotationHandleStartMouse = mouseWorld;
+					Vector2 toStartMouse = rotationHandleStartMouse - chipCenter;
+					rotationHandleStartAngle = Mathf.Atan2(toStartMouse.y, toStartMouse.x);
+					clickedOnSomething = true;
+				}
+				// If clicking empty space, deselect everything
+				else if (!clickedOnSomething)
+				{
+					selectedPolygonVertex = -1;
+					selectedPolygonEdge = -1;
+				}
+			}
+		}
+			}
+
+		// Draw vertex handles
+		for (int i = 0; i < worldVertices.Length; i++)
+		{
+			// Show green if this vertex is selected (whether dragging or not)
+			Color vertexColor = (selectedPolygonVertex == i) ? Color.green : Color.yellow;
+			Draw.Point(worldVertices[i], vertexRadius, vertexColor);
+		}
+
+		// Draw edge midpoint handles
+		for (int i = 0; i < worldVertices.Length; i++)
+		{
+			int next = (i + 1) % worldVertices.Length;
+			Vector2 edgeMidpoint;
+			
+			// Calculate the actual curve midpoint if the edge is curved
+			if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
+			{
+				// For curved edges, show the midpoint of the actual curve
+				Vector2 edgeMidpointStraight = (worldVertices[i] + worldVertices[next]) * 0.5f;
+				Vector2 edgeDirection = worldVertices[next] - worldVertices[i];
+				Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
+				Vector2 controlPoint = edgeMidpointStraight + perpendicular * polygon.Edges[i].CurveStrength;
+				
+				// Get the midpoint of the bezier curve (t = 0.5)
+				edgeMidpoint = QuadraticBezier(worldVertices[i], controlPoint, worldVertices[next], 0.5f);
+			}
+			else
+			{
+				// For straight edges, use the simple midpoint
+				edgeMidpoint = (worldVertices[i] + worldVertices[next]) * 0.5f;
+			}
+			
+			// Show green if this edge is selected (whether dragging or not)
+			Color edgeColor = (selectedPolygonEdge == i) ? Color.green : Color.cyan;
+			Draw.Point(edgeMidpoint, edgeMidpointRadius, edgeColor);
+		}
 
 			// Draw rotation handle
 			Vector2 rotationHandlePos;
