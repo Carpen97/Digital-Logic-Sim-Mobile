@@ -12,20 +12,18 @@ PluginImporter:
   validateReferences: 1
   platformData:
     Android:
-      enabled: 1
+      enabled: 0
       settings:
-        AndroidLibraryDependee: UnityLibrary
-        AndroidSharedLibraryType: Executable
-        CPU: ARMv7
+        CPU: AnyCPU
     Any:
-      enabled: 1
+      enabled: 0
       settings:
-        Exclude Android: 0
+        Exclude Android: 1
         Exclude Editor: 0
-        Exclude Linux64: 1
-        Exclude OSXUniversal: 1
+        Exclude Linux64: 0
+        Exclude OSXUniversal: 0
         Exclude Win: 0
-        Exclude Win64: 1
+        Exclude Win64: 0
     Editor:
       enabled: 1
       settings:
@@ -33,21 +31,21 @@ PluginImporter:
         DefaultValueInitialized: true
         OS: AnyOS
     Linux64:
-      enabled: 0
+      enabled: 1
       settings:
-        CPU: None
+        CPU: AnyCPU
     OSXUniversal:
-      enabled: 0
+      enabled: 1
       settings:
-        CPU: None
+        CPU: AnyCPU
     Win:
       enabled: 1
       settings:
         CPU: AnyCPU
     Win64:
-      enabled: 0
+      enabled: 1
       settings:
-        CPU: None
+        CPU: AnyCPU
     WindowsStoreApps:
       enabled: 0
       settings:

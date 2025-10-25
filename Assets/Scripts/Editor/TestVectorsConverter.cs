@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 using System.IO;
 using System.Linq;
@@ -309,8 +310,9 @@ namespace DLS.Editor
 				order++;
 				len /= 1024;
 			}
-			return $"{len:0.##} {sizes[order]}";
-		}
+		return $"{len:0.##} {sizes[order]}";
 	}
 }
+}
+#endif
 

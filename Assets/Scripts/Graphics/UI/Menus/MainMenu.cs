@@ -260,11 +260,13 @@ namespace DLS.Graphics
 			activePopup = PopupKind.None;
 			selectedProjectIndex = -1;
 			
-			// Load patch notes data when menu opens
-			if (patchNotesData == null)
-			{
-				patchNotesData = PatchNotesLoader.LoadPatchNotes();
-			}
+		// Load patch notes data when menu opens
+		if (patchNotesData == null)
+		{
+			// Force reload to get latest patch notes (remove after testing)
+			PatchNotesLoader.ForceReload();
+			patchNotesData = PatchNotesLoader.LoadPatchNotes();
+		}
 		}
 
 		static void DrawMainScreen()

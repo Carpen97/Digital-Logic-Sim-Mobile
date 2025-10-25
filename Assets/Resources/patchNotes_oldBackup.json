@@ -2,20 +2,20 @@
   "versions": [
     {
       "version": "2.1.6.11",
-      "releaseDate": "October 23, 2025",
+      "releaseDate": "October 22, 2025",
       "newFeatures": [
         {
-          "text": "8-Bit Operations Chapter - Brand new educational chapter with 12 progressive levels! Learn to build multi-bit circuits from the ground up, starting with simple 8-bit wire and culminating in a complete 8-bit ALU (Arithmetic Logic Unit). Each level builds on the previous, teaching you to create Splitters, 8-bit NOT/AND/OR gates, Multiplexers, Adders with carry logic, and finally a functional ALU capable of multiple operations.",
+          "text": "8-Bit Operations Chapter - Brand new educational chapter with 12 progressive levels! Learn to build multi-bit circuits from the ground up, starting with simple 8-bit wire and culminating in a complete 8-bit ALU (Arithmetic Logic Unit). Each level builds on the previous, teaching you to create Splitters, 8-bit NOT/AND/OR gates, Multiplexers, Adders with carry logic, and finally a functional ALU capable of multiple operations. Positioned before 'Coming Soon' chapter. Perfect for students learning computer architecture and anyone wanting to master multi-bit circuit design!",
           "userFacing": true,
           "editNotes": ""
         },
         {
-          "text": "Chip Description Viewer - View detailed descriptions for all built-in chips! Tap the info button in the chip library to access educational information, usage examples, and technical details. Note: Chip descriptions are a work in progress and will be expanded in future updates.",
+          "text": "Chip Description Viewer - Every chip now has detailed educational information! Tap the info button in the chip library or use the context menu to view comprehensive descriptions, usage examples, and technical details for all built-in chips. Learn what each chip does, how it works, and when to use it. Scrollable descriptions with clear formatting make it easy to understand complex components. Perfect companion for learning digital logic design!",
           "userFacing": true,
           "editNotes": ""
         },
         {
-          "text": "Hexagon Grid Option - Choose your aesthetic! New grid type preference in Settings > Display allows you to switch between the classic square grid and a beautiful hexagon honeycomb grid. The hexagon grid uses proper mathematical tessellation with point-top hexagons, creating a seamless honeycomb pattern that scales perfectly at all zoom levels. Your preference is saved with your project and persists across sessions.",
+          "text": "Chip Library Preview Fixes - No more cut-off chip names! Chip previews now calculate proper bounds to ensure all text and components are fully visible in thumbnails. Custom chip names wrap and truncate properly with ellipsis (...) when needed. Consistent preview rendering across chip library, collections, search results, and all other contexts. Clean, professional-looking chip library that makes finding chips effortless.",
           "userFacing": true,
           "editNotes": ""
         },
@@ -25,7 +25,7 @@
           "editNotes": ""
         },
         {
-          "text": "Username Authentication System - Your leaderboard identity is now secure! Each device gets a unique authentication token, allowing you to claim a username that's permanently tied to your device. No more impersonation - only you can post scores under your name. You can change your username anytime through a simple confirmation dialog, and all your existing leaderboard entries automatically migrate to your new name.",
+          "text": "Username Authentication System - Your leaderboard identity is now secure! Each device gets a unique authentication token, allowing you to claim a username that's permanently tied to your device. No more impersonation - only you can post scores under your name. You can change your username anytime through a simple confirmation dialog, and all your existing leaderboard entries automatically migrate to your new name. Old usernames remain reserved to prevent confusion. This establishes trust and competitive integrity for the leaderboard system. Seamless setup on first launch with optional 'Remember my name' feature.",
           "userFacing": true,
           "editNotes": ""
         },
@@ -43,21 +43,16 @@
           "text": "Discord Rich Presence (PC) - Show off your Digital Logic Sim activity on Discord! Enable 'Discord Status' in Settings to display your current activity to friends. Shows what level you're playing, whether you're building circuits or running simulations, and your current progress. Perfect for sharing your learning journey and connecting with other DLS players on Discord. PC-only feature that integrates seamlessly with Discord's Rich Presence system.",
           "userFacing": true,
           "editNotes": ""
-        },
-        {
-          "text": "Custom Chip Shapes - Create chips with custom visual shapes! Design unique chip appearances to match your preferences or circuit organization needs. Note: This feature is experimental and not fully tested yet. Feedback welcome as we continue to refine it!",
-          "userFacing": true,
-          "editNotes": ""
         }
       ],
       "improvements": [
         {
-          "text": "Chip Library Preview Fixes - No more cut-off chip names! Chip previews now calculate proper bounds to ensure all text and components are fully visible in thumbnails. Custom chip names wrap and truncate properly with ellipsis (...) when needed. Consistent preview rendering across chip library, collections, search results, and all other contexts.",
+          "text": "Hexagon Grid Option - Choose your aesthetic! New grid type preference in Settings > Display allows you to switch between the classic square grid and a beautiful hexagon honeycomb grid. The hexagon grid uses proper mathematical tessellation with point-top hexagons, creating a seamless honeycomb pattern that scales perfectly at all zoom levels. Your preference is saved with your project and persists across sessions. Try it out for a fresh visual experience while designing circuits!",
           "userFacing": true,
           "editNotes": ""
         },
         {
-          "text": "Two-Finger Panning During Wire Placement (Mobile) - No more accidental camera panning while routing wires! During wire placement, single-finger drags now only interact with wire points and pins - the camera stays put. To pan the camera while placing a wire, use two fingers. This eliminates the most frustrating aspect of mobile wire routing and makes placement precise and smooth.",
+          "text": "Two-Finger Panning During Wire Placement (Mobile) - No more accidental camera panning while routing wires! During wire placement, single-finger drags now only interact with wire points and pins - the camera stays put. To pan the camera while placing a wire, use two fingers. This eliminates the most frustrating aspect of mobile wire routing and makes placement precise and smooth. Normal camera panning (outside wire placement) still works with one finger.",
           "userFacing": true,
           "editNotes": ""
         },
@@ -72,12 +67,27 @@
           "editNotes": ""
         },
         {
-          "text": "ROM Output Configuration - ROM chips now support multiple output configurations! Easily toggle between different output bit widths to match your circuit needs. Available configurations include 1×16, 2×8, 4×4, 8×2, and 16×1 bit outputs.",
+          "text": "Custom Pin Names in Level Mode - You can now rename input/output pins when playing levels! Right-click any level I/O pin and choose 'Edit' to give it a custom name. Your custom pin names appear as column headers in the validation results table, making it easier to understand test results. Perfect for educational levels where descriptive names like 'CarryIn', 'Sum', 'Clock' help students understand circuit functionality. Pin names are saved with your solution.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Unified ROM Visibility and Naming - ROM chips now display with clear, consistent labeling throughout the game. The chip library shows a single 'ROM 256×16' entry instead of multiple confusing variants. Every ROM chip displays a two-line label showing 'ROM' on the first line and its active configuration on the second (e.g., '256×(2x8)', '256×(1x16)', '256×(16x1)', '256×(4x4)'). Freshly spawned ROMs default to '256×(2x8)' and automatically update their labels after editing. This eliminates confusion between editor and runtime views, prevents chip library duplication, and makes it instantly clear what configuration each ROM is using.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "ROM Editor Mobile Optimization - Enhanced ROM editing with mobile-first design: larger touch-friendly buttons, vertical layout for easy access, row selection system (click row numbers to select), context-aware Fill 0s/Fill 1s operations, optimized spacing and responsive layout for all screen sizes.",
           "userFacing": true,
           "editNotes": ""
         },
         {
           "text": "Level Mode Chip Restrictions - Special chips (ROM, displays, pulse generators, clocks, buttons, etc.) are now disabled in level mode to maintain educational focus. Players must build circuits from fundamental logic gates (NAND, tri-state buffers) and basic components. Custom user chips remain available. Prevents trivial solutions and ensures fair leaderboard comparisons while promoting deeper understanding of digital logic design.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Draggable Scroll Views - All scrollable lists and menus now support mobile-style content dragging! Simply touch/click anywhere in the content area and drag to scroll - no need to target the tiny scrollbar. Works in ROM editor, chip library, search results, levels menu, leaderboards, patch notes, and everywhere else. Natural mobile app experience with smart threshold to prevent accidental scrolling. Scrollbar and mouse wheel still work as before.",
           "userFacing": true,
           "editNotes": ""
         },

@@ -67,6 +67,14 @@ namespace DLS.Graphics
 		private static PatchNotesData _cachedData;
 		private static bool _hasLoaded = false;
 
+		// Debug method to force reload (remove after testing)
+		public static void ForceReload()
+		{
+			_cachedData = null;
+			_hasLoaded = false;
+			Debug.Log("[PatchNotesLoader] Cache cleared - will reload from disk");
+		}
+
 		public static PatchNotesData LoadPatchNotes()
 		{
 			if (_hasLoaded && _cachedData != null)

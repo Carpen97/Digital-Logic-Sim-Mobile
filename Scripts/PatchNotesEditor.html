@@ -769,28 +769,11 @@
 
         function saveJSON() {
             try {
-                // Convert to game format (only user-facing items, simple strings)
-                const gameData = {
-                    versions: patchNotesData.versions.map(v => ({
-                        version: v.version,
-                        releaseDate: v.releaseDate,
-                        sections: {
-                            newFeatures: (v.newFeatures || [])
-                                .filter(item => item.userFacing)
-                                .map(item => item.text),
-                            improvements: (v.improvements || [])
-                                .filter(item => item.userFacing)
-                                .map(item => item.text),
-                            bugFixes: (v.bugFixes || [])
-                                .filter(item => item.userFacing)
-                                .map(item => item.text)
-                        }
-                    }))
-                };
-                
-                const json = JSON.stringify(gameData, null, 2);
+                // Save FULL editor format with all metadata (editNotes, userFacing, etc.)
+                // The C# game code auto-converts this to display format when loading
+                const json = JSON.stringify(patchNotesData, null, 2);
                 downloadFile(json, 'patchNotes.json', 'application/json');
-                showMessage('✅ JSON saved! Copy to Assets/Resources/', 'success');
+                showMessage('✅ JSON saved with metadata! Copy to Assets/Resources/', 'success');
             } catch (error) {
                 showMessage('❌ Error: ' + error.message, 'error');
             }

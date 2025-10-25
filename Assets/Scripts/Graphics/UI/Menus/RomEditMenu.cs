@@ -25,6 +25,7 @@ namespace DLS.Graphics
 	static int pendingPinConfiguration = -1; // -1 = no pending change, otherwise the new config to apply
 	static bool showingWireDeletionWarning = false;
 	static int warningPendingConfig = -1;
+	static bool chipWasReplaced = false; // Track if chip was replaced (to avoid saving after replacement)
 		static UIHandle[] IDS_inputRow;
 		static UIHandle[][] IDS_bitButtons; // Array of arrays: [rowIndex][bitIndex]
 		static UIHandle[] IDS_rowSelectButtons; // Array for row selection buttons
@@ -228,7 +229,12 @@ namespace DLS.Graphics
 						}
 					}
 					
-					SaveChangesToROM();
+					// Only save ROM contents if chip wasn't replaced
+					// (replacement already preserves the data, and simulation isn't ready yet)
+					if (!chipWasReplaced)
+					{
+						SaveChangesToROM();
+					}
 					UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
 				}
 
@@ -935,31 +941,36 @@ namespace DLS.Graphics
 			RowCount = romChip.InternalData.Length;
 			ActiveRomDataBitCount = 16; //
 
-			ID_PinConfiguration = new UIHandle("ROM_PinConfiguration", romChip.ID);
-			ID_scrollbar = new UIHandle("ROM_EditScrollbar", romChip.ID);
-			
-			// Initialize pin configuration based on current chip type
-			pinConfiguration = GetStoredPinConfiguration();
-			UpdateGridPatternSize(); // Set initial visual grouping
-			pendingPinConfiguration = -1; // No pending changes initially
+		ID_PinConfiguration = new UIHandle("ROM_PinConfiguration", romChip.ID);
+		ID_scrollbar = new UIHandle("ROM_EditScrollbar", romChip.ID);
+		ID_DataDisplayMode = new UIHandle("ROM_DataDisplayMode", romChip.ID);
+		
+		// Initialize pin configuration based on current chip type
+		pinConfiguration = GetStoredPinConfiguration();
+		UpdateGridPatternSize(); // Set initial visual grouping
+		pendingPinConfiguration = -1; // No pending changes initially
+		chipWasReplaced = false; // Reset replacement flag
 
-			allDisplayModes = (DataDisplayMode[])Enum.GetValues(typeof(DataDisplayMode));
-			focusedRowIndex = -1; // No row focused initially
-			IDS_inputRow = new UIHandle[RowCount];
-			IDS_bitButtons = new UIHandle[RowCount][];
-			IDS_rowSelectButtons = new UIHandle[RowCount];
-			for (int i = 0; i < RowCount; i++)
+		allDisplayModes = (DataDisplayMode[])Enum.GetValues(typeof(DataDisplayMode));
+		focusedRowIndex = -1; // No row focused initially
+		IDS_inputRow = new UIHandle[RowCount];
+		IDS_bitButtons = new UIHandle[RowCount][];
+		IDS_rowSelectButtons = new UIHandle[RowCount];
+		for (int i = 0; i < RowCount; i++)
+		{
+			IDS_bitButtons[i] = new UIHandle[ActiveRomDataBitCount];
+			for (int bit = 0; bit < ActiveRomDataBitCount; bit++)
 			{
-				IDS_bitButtons[i] = new UIHandle[ActiveRomDataBitCount];
-				for (int bit = 0; bit < ActiveRomDataBitCount; bit++)
-				{
-					IDS_bitButtons[i][bit] = new UIHandle($"ROM_bitButton_{i}_{bit}");
-				}
-				IDS_rowSelectButtons[i] = new UIHandle($"ROM_rowSelect_{i}");
+				IDS_bitButtons[i][bit] = new UIHandle($"ROM_bitButton_{i}_{bit}");
 			}
-			selectedRowIndex = -1; // Reset selection
-			rowNumberStrings = new string[RowCount];
-			dataDisplayMode = (DataDisplayMode)Seb.Vis.UI.UI.GetWheelSelectorState(ID_DataDisplayMode).index;
+			IDS_rowSelectButtons[i] = new UIHandle($"ROM_rowSelect_{i}");
+		}
+		selectedRowIndex = -1; // Reset selection
+		rowNumberStrings = new string[RowCount];
+		
+		// Set Graphical as the default display mode (index 4)
+		Seb.Vis.UI.UI.GetWheelSelectorState(ID_DataDisplayMode).index = (int)DataDisplayMode.Graphical;
+		dataDisplayMode = (DataDisplayMode)Seb.Vis.UI.UI.GetWheelSelectorState(ID_DataDisplayMode).index;
 
 			// Always use 3-digit formatting for consistency across all modes
 			int lineNumberPadLength = 3;
@@ -1047,6 +1058,7 @@ namespace DLS.Graphics
 			if (romChip.ChipType != newChipType)
 			{
 				ReplaceRomChip(newChipType);
+				chipWasReplaced = true; // Mark that chip was replaced
 			}
 			else
 			{
@@ -1183,8 +1195,8 @@ namespace DLS.Graphics
 		{
 			MenuHelper.DrawBackgroundOverlay();
 
-			// Draw panel
-			var panelSize = new Vector2(Seb.Vis.UI.UI.Width * 0.4f, Seb.Vis.UI.UI.Height * 0.3f);
+			// Draw panel (wider to accommodate longer text like "16x1-bit to 4x4-bit")
+			var panelSize = new Vector2(Seb.Vis.UI.UI.Width * 0.55f, Seb.Vis.UI.UI.Height * 0.3f);
 			var panelPos = Seb.Vis.UI.UI.Centre;
 			var panelID = Seb.Vis.UI.UI.ReservePanel();
 
@@ -1223,7 +1235,13 @@ namespace DLS.Graphics
 					
 					// Proceed with the change
 					HandlePinConfigurationChange(warningPendingConfig);
-					SaveChangesToROM();
+					
+					// Only save ROM contents if chip wasn't replaced
+					// (replacement already preserves the data, and simulation isn't ready yet)
+					if (!chipWasReplaced)
+					{
+						SaveChangesToROM();
+					}
 					UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
 				}
 			}

@@ -530,25 +530,25 @@ namespace DLS.Graphics
 			       "ROM2X8_VARIANT" or "ROM4X4_VARIANT" or "ROM16X1_VARIANT" or "ROM1X16_VARIANT" or "ROM8X2_VARIANT";
 		}
 
-		static string GetLibraryDisplayName(string chipName)
+	static string GetLibraryDisplayName(string chipName)
+	{
+		if (project.chipLibrary.TryGetChipDescription(chipName, out ChipDescription desc))
 		{
-			if (project.chipLibrary.TryGetChipDescription(chipName, out ChipDescription desc))
+			if (ChipTypeHelper.IsRomType(desc.ChipType))
 			{
-				if (ChipTypeHelper.IsRomType(desc.ChipType))
-				{
-					return $"ROM 256\u00d716"; // Always show a single ROM name in the library
-				}
+				return $"ROM 256\u00d7(2x8)"; // Show the default 2x8 configuration
 			}
-
-			// Map legacy variant names to unified display name
-			string normalized = chipName.Replace(" ", string.Empty).Replace("\u00d7", "x").Replace("×", "x").ToUpperInvariant();
-			if (normalized.StartsWith("ROM") && (normalized.Contains("2X8") || normalized.Contains("4X4") || normalized.Contains("16X1") || normalized.Contains("1X16") || normalized.Contains("8X2")))
-			{
-				return $"ROM 256\u00d716";
-			}
-
-			return chipName;
 		}
+
+		// Map legacy variant names to unified display name
+		string normalized = chipName.Replace(" ", string.Empty).Replace("\u00d7", "x").Replace("×", "x").ToUpperInvariant();
+		if (normalized.StartsWith("ROM") && (normalized.Contains("2X8") || normalized.Contains("4X4") || normalized.Contains("16X1") || normalized.Contains("1X16") || normalized.Contains("8X2")))
+		{
+			return $"ROM 256\u00d7(2x8)"; // Show the default 2x8 configuration
+		}
+
+		return chipName;
+	}
 
 		// Resolve a chip name coming from collections/starred to a real library name
 		// Used to prevent KeyNotFound exceptions for legacy ROM variant entries
