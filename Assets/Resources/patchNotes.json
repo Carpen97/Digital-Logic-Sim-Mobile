@@ -48,6 +48,16 @@
           "text": "Custom Chip Shapes - Create chips with custom visual shapes! Design unique chip appearances to match your preferences or circuit organization needs. Note: This feature is experimental and not fully tested yet. Feedback welcome as we continue to refine it!",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Advanced Speaker Chip - New enhanced audio output component! The Speaker chip provides sophisticated sound generation beyond the basic buzzer. Features include multi-bit audio input for richer sound, additional control options for wave types and envelopes, improved volume control with finer granularity, and potential for chord/harmony generation. Perfect for creating complex audio circuits and learning about digital-to-analog conversion and sound synthesis concepts.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "TextDisplay Chip - Revolutionary new component that displays programmable text strings! The TextDisplay chip takes an 8-bit input (0-255) and displays the corresponding text from its 256 programmable string slots. The chip's displayed name updates in real-time based on the input value, enabling dynamic labeled states like 'IDLE' → 'RUNNING' → 'ERROR'. Perfect for state machines, circuit debugging, and visual feedback. Edit all 256 text entries through an intuitive ROM-style editor with presets and copy/paste functionality. Teaches lookup tables, memory-mapped displays, and character encoding concepts.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "improvements": [
