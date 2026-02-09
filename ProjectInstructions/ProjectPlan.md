@@ -5,7 +5,7 @@
 ### 📌 How We Work
 
 * **Tickets**: All work is broken down into numbered tickets (001, 002…). Only open tickets are kept here. When a ticket is completed, a closure note is written (including the date of closure) and saved offline; it is then removed from this plan.
-* **Worker Chats**: Each ticket gets its own dedicated worker chat. Moving forward, these will be handled in **Cursor**, where the worker chat is in charge of coding. The Project Manager (this chat) creates the ticket description and sends an intro paragraph to the worker chat so it knows its role and scope. The worker chat then reports back when work is done.
+* **Worker Chats**: Each ticket gets its own dedicated worker chat (in **Cursor**); the worker is in charge of coding. Handoff uses the **`ProjectInstructions/WorkerComm/`** folder: the PM writes the kick-off to **`Ticket_XXX_Short_Description_Kickoff.md`** (e.g. `Ticket_091_RGB_LED_Chip_Kickoff.md`) so the filename says what the ticket is about; you open a new agent and tell it to read that file (and to write its report to **`Ticket_XXX_Short_Description_Report.md`** when done). No need to copy-paste long text. The worker reports back by writing the report file; the PM (or you) reads it to update the plan and close the ticket. See **`ProjectInstructions/WorkerComm/README.md`** for the full workflow.
 
 ---
 
@@ -53,6 +53,11 @@ Mobile Port (origin)
 - ⚠️ **PM MUST WARN USER** before any `git checkout`, `git merge`, or branch switching operation
 - 💡 **Why**: Git branch switches update scene files, causing Unity to lose unsaved changes when it reloads
 
+**🚨 CRITICAL: Community sync / merge – keep mobile Project Plan**
+- When merging from Community Edition (e.g. Ticket 090), **do not overwrite** `ProjectInstructions/ProjectPlan.md` with the community version. The mobile project has its own ticket list, Backlog, and workflow (Type column, etc.); the community repo has a different plan.
+- **Do not run `git stash`** before the merge if the only local changes are in ProjectInstructions—stashing removes the mobile plan from the working tree and the merge then replaces it with community’s file. Either commit the mobile plan first, or resolve conflicts by **keeping “ours”** for `ProjectInstructions/ProjectPlan.md`.
+- **Instruction for agents:** When kicking off a community-sync task, tell the agent: “Preserve mobile’s `ProjectInstructions/ProjectPlan.md`; do not stash it or accept community’s version during merge.”
+
 ---
 
 ### 🎯 Goals
@@ -69,7 +74,9 @@ Mobile Port (origin)
 
 ### 🔄 In Progress
 
-* (None)
+| ID  | Type    | Name        | Status     | Notes                                                                                                                                                                                                                                 |
+| --- | ------- | ----------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 092 | Bug     | Discord logo in About menu (white rectangle) | In Progress | About menu Discord icon displays as white rectangle instead of Discord logo. Fix asset/reference/rendering so icon displays correctly. Kick-off: `Ticket_092_Discord_Logo_About_Kickoff.md`. Report: `Ticket_092_Discord_Logo_About_Report.md`. |
 
 ---
 
@@ -109,8 +116,10 @@ Mobile Port (origin)
 | 085 | Feature | Project or circuit descriptions | Backlog | Add optional description field for projects or individual circuits; show in project/circuit UI. Community request (QuanChanUwU). |
 | 086 | Bug     | Import project / empty project bug | Backlog | Investigate: import project and "0 projects" flow show wrong or persistent error message. Repro from Discord (QuanChanUwU, iOS). |
 | 087 | Feature | Progress sync between devices | Backlog | Research/backlog: cloud or account sync for progress (and optionally projects) across devices. Larger scope; auth/backend TBD. Community request (myithspa). |
-
+| 089 | Bug     | Level zero-score loophole (disallowed components inside custom chips) | Backlog | Players can get score 0 on levels by using custom chips that contain disallowed components (e.g. ROM) inside them; level mode only restricts top-level chips. Investigate how score is computed and how level restrictions are enforced; fix so either (1) subchips are validated and disallowed components inside custom chips reject the solution or (2) score reflects actual NAND/component use so 0 is impossible when using such chips. Delegate codebase investigation and fix to worker agent. |
+| 090 | Improvement | Sync with Community Edition (merge community into mobile) | Backlog | Pull latest changes from Community Edition (remote `community`, branch `community/dev`) into integration branch `merge/mobile-community`; resolve conflicts; review and test; merge `merge/mobile-community` into `main` when ready. Per project Git workflow: community is logic-mindful/Digital-Logic-Sim-Community-Edit; mobile is Carpen97/Digital-Logic-Sim-Mobile. Remember Unity scene safety: save all scenes before any branch/merge operations. |
 ---
+
 
 ## 📋 **Project Manager Workflow**
 
@@ -126,7 +135,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Responsibilities:**
 - **Ticket Management**: Move tickets between states only when explicitly instructed
-- **Worker Chat Kick-off**: Prepare detailed kick-off statements in raw format (not .md) with ticket title as first line
+- **Worker Chat Kick-off**: Write the kick-off to **`ProjectInstructions/WorkerComm/Ticket_XXX_Short_Description_Kickoff.md`** (e.g. `Ticket_091_RGB_LED_Chip_Kickoff.md`) so the filename includes a short description of the ticket. First line of the file = ticket title; then context, steps, success criteria. Tell the user to open a new agent and say: “Read `ProjectInstructions/WorkerComm/Ticket_XXX_Short_Description_Kickoff.md` and do the task; when done, write your report to `ProjectInstructions/WorkerComm/Ticket_XXX_Short_Description_Report.md`.” For community-sync / merge tasks (e.g. Ticket 090), include in the kick-off: “Preserve mobile’s `ProjectInstructions/ProjectPlan.md`; do not stash it or accept community’s version during merge.” When the user says the ticket reported back, read the corresponding report file and update the plan.
 - **Workflow Coordination**: Provide guidance and oversight for development teams  
 - **Documentation**: Maintain project plans and track progress
 - **Status Updates**: Report on project status and coordinate next steps
@@ -171,9 +180,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **8 Open Tickets** available for selection (019, 024, 026, 039, 046, 064, 069, 071)
-- **0 In Progress** tickets
-- **Tickets 070, 088** – completed (pre-release build, customization view pin layout)
-- **14 Backlog** tickets (074–087); move to Open Tickets when ready to prioritize
-- **0 In Progress** tickets
-- **Tickets 065, 067, 068, 070, 072, 073** - completed (8-bit chapter, chip descriptions, preview fixes, pre-release build, Speaker chip, TextDisplay chip)
-- **Ticket 071** - iOS/iPad build (.ipa) added
+- **1 In Progress** ticket (092 – Discord logo in About menu)
+- **Tickets 070, 088, 091** – completed (pre-release build, customization view pin layout, RGB LED chip)
+- **16 Backlog** tickets (074–087, 089, 090); move to Open Tickets when ready to prioritize
+- **Note:** After community merge, if ProjectPlan was reverted, restore Backlog and ticket list from this version. 044 (Unity security) may have come from community—add to Open if needed.

@@ -58,6 +58,11 @@
           "text": "TextDisplay Chip - Revolutionary new component that displays programmable text strings! The TextDisplay chip takes an 8-bit input (0-255) and displays the corresponding text from its 256 programmable string slots. The chip's displayed name updates in real-time based on the input value, enabling dynamic labeled states like 'IDLE' → 'RUNNING' → 'ERROR'. Perfect for state machines, circuit debugging, and visual feedback. Edit all 256 text entries through an intuitive ROM-style editor with presets and copy/paste functionality. Teaches lookup tables, memory-mapped displays, and character encoding concepts.",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "RGB LED Chip - New display component with true colour! The RGB LED chip has three 8-bit inputs (R, G, B), each 0–255. An on-chip light shows the colour defined by those inputs and updates in real time as you change them. Find it in the chip library under DISPLAY. Perfect for colour output, visual feedback, and learning about RGB encoding.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "improvements": [

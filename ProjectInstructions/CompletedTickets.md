@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 57
-- **Most Recent**: Ticket 088 (February 9, 2026)
+- **Total Completed Tickets**: 58
+- **Most Recent**: Ticket 091 (February 9, 2026)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 091** – RGB LED chip
+**Closed:** 2026-02-09  
+**Summary:** Implemented the RGB LED built-in chip. Three 8-bit inputs (R, G, B), each 0–255; no outputs. An on-chip light displays the colour from those inputs and updates in real time as inputs change. Integrated with built-in chip set (ChipType.DisplayRGBLED, BuiltinChipCreator, ChipTypeHelper), simulator (SimChip InternalState, Simulator ProcessBuiltinChip packing R|G|B), and scene rendering (DevSceneDrawer DrawDisplay). Appears in chip library under DISPLAY; included in BuiltinCollectionCreator, BottomBarUI, ChipInteractionController, ChipLibraryMenu; DescriptionCreator and ChipDescriptionData for persistence and library description. Hidden in level mode with other display chips. Report: Ticket_091_RGB_LED_Chip_Report.md.
+
+---
 
 ### **Ticket 088** – Customization view: pin layout by shape
 **Closed:** 2026-02-09  
