@@ -89,6 +89,11 @@ namespace DLS.Simulation
 				// first 256 bits = display buffer, next 256 bits = back buffer, last bit = clock state (to allow edge-trigger behaviour)
 				InternalState = new uint[addressSize_8Bit * 2 + 1];
 			}
+			else if (ChipType == ChipType.DisplayRGBLED)
+			{
+				// Packed RGB (R in low 8 bits, G in next 8, B in next 8) for display rendering
+				InternalState = new uint[1];
+			}
 			else if (ChipType is ChipType.dev_Ram_8Bit)
 			{
 				InternalState = new uint[addressSize_8Bit + 1]; // +1 for clock state (to allow edge-trigger behaviour)

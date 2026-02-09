@@ -2339,7 +2339,8 @@ namespace DLS.Graphics
 		// Simple displays (LED, Toggle, Button) should use absolute scale (displayDesc.Scale)
 		// Complex displays (7-seg, RGB, Dot) should use the scaled value (displayScale)
 		float finalDisplayScale;
-		if (displayedChipDesc.ChipType == ChipType.DisplayLED || 
+		if (displayedChipDesc.ChipType == ChipType.DisplayLED ||
+		    displayedChipDesc.ChipType == ChipType.DisplayRGBLED ||
 		    displayedChipDesc.ChipType == ChipType.Toggle ||
 		    displayedChipDesc.ChipType == ChipType.Button)
 		{
@@ -2496,6 +2497,11 @@ namespace DLS.Graphics
 				// Draw LED display (black background with colored LED)
 				UI_DrawLEDDisplay(displayPos, displayScale);
 			}
+			else if (chipType == ChipType.DisplayRGBLED)
+			{
+				// Draw RGB LED (black background with white LED as preview - indicates full RGB range)
+				UI_DrawLEDDisplayWithColor(displayPos, displayScale, Color.white);
+			}
 			else if (chipType == ChipType.DisplayDot)
 			{
 				// Draw DOT display (16x16 pixel grid)
@@ -2637,6 +2643,14 @@ namespace DLS.Graphics
 		Seb.Vis.UI.UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
 		// Draw colored LED (red for preview)
 		Seb.Vis.UI.UI.DrawPanel(centre, pixelDrawSize, Color.red, Anchor.Centre);
+	}
+
+	static void UI_DrawLEDDisplayWithColor(Vector2 centre, float scale, Color col)
+	{
+		const float pixelSizeT = 0.975f;
+		Vector2 pixelDrawSize = Vector2.one * (scale * pixelSizeT);
+		Seb.Vis.UI.UI.DrawPanel(centre, Vector2.one * scale, Color.black, Anchor.Centre);
+		Seb.Vis.UI.UI.DrawPanel(centre, pixelDrawSize, col, Anchor.Centre);
 	}
 
 		static void UI_DrawSevenSegmentDisplay(Vector2 centre, float scale, int A, int B, int C, int D, int E, int F, int G)

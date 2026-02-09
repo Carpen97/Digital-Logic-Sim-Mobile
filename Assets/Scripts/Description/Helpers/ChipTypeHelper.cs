@@ -32,6 +32,7 @@ namespace DLS.Description
 		{ ChipType.DisplayDot, "DOT DISPLAY" },
 		{ ChipType.SevenSegmentDisplay, "7-SEGMENT" },
 	{ ChipType.DisplayLED, "LED" },
+	{ ChipType.DisplayRGBLED, "RGB LED" },
 	{ ChipType.TextDisplay, "TEXT DISPLAY" },
 
 		{ ChipType.Buzzer, "BUZZER" },

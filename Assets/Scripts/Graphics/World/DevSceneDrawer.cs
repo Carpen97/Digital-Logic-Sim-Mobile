@@ -477,7 +477,15 @@ namespace DLS.Graphics
 					bounds = Bounds2D.Grow(bounds, childBounds);
 				}
 			}
-			else if (display.DisplayType is ChipType.SevenSegmentDisplay)
+			else
+			{
+				// When this display is on a custom chip's face, it references a subchip by SubChipID (e.g. an LED).
+				// Use that subchip's sim so the display shows the correct state when viewed from outside the chip.
+				if (display.Desc.SubChipID >= 0 && sim != null)
+					sim = sim.GetSubChipFromID(display.Desc.SubChipID);
+			}
+
+			if (display.DisplayType is ChipType.SevenSegmentDisplay)
 			{
 				bool simActive = sim != null;
 				// if this is the builtin 7Seg, highlight segments when mouse is over corresponding pin
@@ -513,6 +521,20 @@ namespace DLS.Graphics
 					col = GetStateColour(isOn, displayColIndex);
 				}
 
+				bounds = DrawDisplay_LED(posWorld, scaleWorld, col);
+			}
+			else if (display.DisplayType == ChipType.DisplayRGBLED)
+			{
+				bool simActive = sim != null;
+				Color col = Color.black;
+				if (simActive && sim.InternalState.Length > 0)
+				{
+					uint packed = sim.InternalState[0];
+					float r = (packed & 0xFF) / 255f;
+					float g = ((packed >> 8) & 0xFF) / 255f;
+					float b = ((packed >> 16) & 0xFF) / 255f;
+					col = new Color(r, g, b);
+				}
 				bounds = DrawDisplay_LED(posWorld, scaleWorld, col);
 			}
 		else if (display.DisplayType == ChipType.TextDisplay)

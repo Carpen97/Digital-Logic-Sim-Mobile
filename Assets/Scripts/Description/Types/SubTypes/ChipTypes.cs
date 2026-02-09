@@ -25,6 +25,7 @@ namespace DLS.Description
 	DisplayRGB,
 	DisplayDot,
 	DisplayLED,
+	DisplayRGBLED,
 	DisplayRGBTouch,
 	TextDisplay,
 

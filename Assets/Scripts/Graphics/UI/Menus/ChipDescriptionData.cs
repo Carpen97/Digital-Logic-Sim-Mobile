@@ -215,6 +215,20 @@ Example: Connect an LED to a button to show when the button is pressed, or use i
 
 Tips: LEDs are simple but effective for providing immediate visual feedback about circuit states.",
 
+		[ChipType.DisplayRGBLED] = @"RGB LED
+
+What it is: A single LED whose colour is set by three 8-bit inputs for red, green, and blue (0–255 each).
+
+How it works: The chip has three inputs (R, G, B). The on-chip light shows the colour given by the current input values. The display updates in real time as the inputs change.
+
+When to use: RGB LEDs are useful for:
+• Showing a single colour from logic (e.g. state indicators, alarms)
+• Previewing RGB values from adders or colour pickers
+• Status lights with configurable colour
+• Simple colour output without a full pixel display
+
+Example: Connect three 8-bit constant chips to R, G, and B to set a fixed colour, or drive them from a small circuit to change colour over time.",
+
 		[ChipType.TextDisplay] = @"Text Display
 
 What it is: A programmable text display that can show 256 different text strings, selected by an 8-bit input address.

@@ -147,6 +147,7 @@ namespace DLS.SaveSystem
 			ChipType.Key => new uint[] { 'K' }, // Key binding
 			ChipType.Pulse => new uint[] { 50, 0, 0 }, // Pulse width, ticks remaining, input state old
 			ChipType.DisplayLED => new uint[] { 0 }, // LED colour
+			ChipType.DisplayRGBLED => new uint[] { 0 }, // Packed RGB for display (driven by inputs at runtime)
 			ChipType.Button => new uint[] { 0 }, // Button colour
 			ChipType.Toggle => new uint[] { 0 }, // Toggle State 
 			ChipType.Constant_8Bit => new uint[] { 0 }, // Content

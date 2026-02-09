@@ -46,6 +46,7 @@ namespace DLS.Game
 		       chipType == ChipType.DisplayRGBTouch ||
 		       chipType == ChipType.DisplayDot ||
 		       chipType == ChipType.DisplayLED ||
+		       chipType == ChipType.DisplayRGBLED ||
 		       chipType == ChipType.Pulse ||
 		       chipType == ChipType.Clock ||
 		       chipType == ChipType.Key ||

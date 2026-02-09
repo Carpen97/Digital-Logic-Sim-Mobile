@@ -426,6 +426,15 @@ namespace DLS.Simulation
 
                     break;
 				}
+				case ChipType.DisplayRGBLED:
+				{
+					// No outputs; copy R, G, B (8-bit inputs) to InternalState for display rendering
+					uint r = chip.InputPins[0].State.GetShortValues() & 0xFFu;
+					uint g = chip.InputPins[1].State.GetShortValues() & 0xFFu;
+					uint b = chip.InputPins[2].State.GetShortValues() & 0xFFu;
+					chip.InternalState[0] = r | (g << 8) | (b << 16);
+					break;
+				}
 				case ChipType.DisplayDot:
 				{
 					const uint addressSpace = 256;
