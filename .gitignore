@@ -135,3 +135,11 @@ Digital-Logic-Sim-Mobile_BackUpThisFolder_ButDontShipItWithYourGame/
 
 # Platform-specific build outputs
 platform-tools/
+DLS_PC/
+DLS_Linux*/
+DLS_Linux_Data/
+DLS_LINUX_OCT/
+GameAssembly.so
+UnityPlayer.so
+libdecor*.so*
+*.x86_64

@@ -69,9 +69,7 @@ Mobile Port (origin)
 
 ### 🔄 In Progress
 
-| ID  | Name                          | Status     | Notes                                                                                                                                    |
-| --- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 070 | Pre-release build for testers (v2.1.6.11) | In Progress | Building and distributing pre-release for community testing before official release. |
+* (None)
 
 ---
 
@@ -149,7 +147,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **7 Open Tickets** available for selection
-- **1 In Progress** ticket (070)
-- **Tickets 065, 067, 068, 072, 073** - completed (8-bit chapter, chip descriptions, preview fixes, Speaker chip, TextDisplay chip)
-- **Ticket 070 kicked off** - pre-release build for community testers
+- **0 In Progress** tickets
+- **Tickets 065, 067, 068, 070, 072, 073** - completed (8-bit chapter, chip descriptions, preview fixes, pre-release build, Speaker chip, TextDisplay chip)
 - **Ticket 071** - iOS/iPad build (.ipa) added
