@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "name": "DLS.Description",
   "rootNamespace": "DLS.Description",
   "references": [],
@@ -12,7 +11,4 @@
   "defineConstraints": [],
   "versionDefines": [],
   "noEngineReferences": false
-=======
-  "name": "DLS.Description"
->>>>>>> community/dev
 }
