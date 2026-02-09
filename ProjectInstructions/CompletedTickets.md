@@ -13,12 +13,36 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 59
-- **Most Recent**: Ticket 092 (February 9, 2026)
+- **Total Completed Tickets**: 63
+- **Most Recent**: Ticket 078 (February 9, 2026)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 078** – Delete-mode ghost hitbox
+**Closed:** 2026-02-09  
+**Summary:** Fixed the area at the top of the screen where the delete-mode popup appears remaining non-interactive after the popup was closed, so chips could not be moved or placed there. The zone no longer blocks input when the popup is hidden. Fixed alongside Ticket 075 (same work session). Community report (Lamp).
+
+---
+
+### **Ticket 075** – Wire edit: restore segment deletion
+**Closed:** 2026-02-09  
+**Summary:** Restored wire-segment deletion in wire edit mode. After the new delete behaviour, add and move vertices still worked but deleting a wire segment (removing a vertex) no longer did. Restored or reimplemented so that in wire edit mode the user can again delete a selected vertex via the intended input (e.g. delete/backspace or context). No regressions to add/move or to general delete/eraser behaviour. Community report (Lamp).
+
+---
+
+### **Ticket 089** – Level zero-score loophole (disallowed components inside custom chips)
+**Closed:** 2026-02-09  
+**Summary:** Fixed the loophole where players could get a score of 0 on levels by using custom chips that contained disallowed components (e.g. ROM) inside them; level mode previously only restricted top-level chips. Solution: level validation now checks subchips (or score reflects actual component use) so disallowed components inside custom chips are rejected or no longer allow an invalid zero score. Leaderboard integrity restored.
+
+---
+
+### **Ticket 077** – About / Discord link (iOS) – partial
+**Closed:** 2026-02-09 (partial)  
+**Summary:** Addressed by Ticket 092: Discord icon in About menu now displays correctly (was white rectangle). Remaining from original 077 scope: link opening Discord app instead of server invite, and "Coming soon" text using Discord ID (carpen_swe) not username—can be follow-up ticket if needed.
+
+---
 
 ### **Ticket 092** – Discord logo in About menu (white rectangle)
 **Closed:** 2026-02-09  

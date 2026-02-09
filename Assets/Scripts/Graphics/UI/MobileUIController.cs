@@ -481,13 +481,15 @@ public class MobileUIController : MonoBehaviour
 			return;
 		}
 		
-		// Check if any elements are selected
-		bool hasSelection = Project.ActiveProject?.controller?.SelectedElements?.Count > 0;
-		
-		if (hasSelection)
+		// Check if any elements are selected (including wire edit segment)
+		var controller = Project.ActiveProject?.controller;
+		bool hasSelection = controller?.SelectedElements?.Count > 0;
+		bool hasWireEditSegmentSelected = controller?.wireToEdit != null && controller.wireEditPointIndex != -1;
+
+		if (hasSelection || hasWireEditSegmentSelected)
 		{
-			// Delete selected elements
-			Project.ActiveProject.controller.DeleteSelected();
+			// Delete selected elements or wire segment (in wire edit mode)
+			controller.DeleteSelected();
 			Debug.Log("[MobileUIController] Deleted selected elements via trash can");
 		}
 		else

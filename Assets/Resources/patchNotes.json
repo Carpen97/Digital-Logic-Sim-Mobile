@@ -1,6 +1,45 @@
 {
   "versions": [
     {
+      "version": "2.1.6.12",
+      "releaseDate": "TBD",
+      "newFeatures": [
+        {
+          "text": "RGB LED Chip - New display component with true colour! The RGB LED chip has three 8-bit inputs (R, G, B), each 0–255. An on-chip light shows the colour defined by those inputs and updates in real time as you change them. Find it in the chip library under DISPLAY. Perfect for colour output, visual feedback, and learning about RGB encoding.",
+          "userFacing": true,
+          "editNotes": ""
+        }
+      ],
+      "improvements": [],
+      "bugFixes": [
+        {
+          "text": "Level zero-score loophole - Fixed an exploit where players could get a score of 0 on levels by hiding disallowed components (e.g. ROM) inside custom chips. Level validation now checks subchips so this is no longer possible; leaderboard scores are fair.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Customization view pin layout - Fixed pin positioning in chip Customization view when saving a chip. Rectangle shape: Custom layout now allows dragging pins to place them. Non-rectangle shapes (e.g. hexagon): Default layout now correctly applies auto-calculated pin positions. Both Default and Custom layout options work for all chip shapes.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "About menu Discord logo - Fixed the Discord icon in the About menu that was showing as a white rectangle. The correct Discord logo now displays so users can recognise and tap it to open the Discord server link.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Wire edit segment deletion - Restored the ability to delete wire segments (remove vertices) in wire edit mode. After the new delete behaviour, add and move vertices still worked but segment deletion did not; it now works again via the intended input (e.g. delete/backspace or context).",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Delete-mode ghost hitbox - Fixed the area at the top where the delete-mode popup appears staying non-interactive after the popup is closed, which blocked moving or placing chips there. The zone no longer blocks input when the popup is hidden.",
+          "userFacing": true,
+          "editNotes": ""
+        }
+      ]
+    },
+    {
       "version": "2.1.6.11",
       "releaseDate": "October 23, 2025",
       "newFeatures": [
@@ -58,11 +97,6 @@
           "text": "TextDisplay Chip - Revolutionary new component that displays programmable text strings! The TextDisplay chip takes an 8-bit input (0-255) and displays the corresponding text from its 256 programmable string slots. The chip's displayed name updates in real-time based on the input value, enabling dynamic labeled states like 'IDLE' → 'RUNNING' → 'ERROR'. Perfect for state machines, circuit debugging, and visual feedback. Edit all 256 text entries through an intuitive ROM-style editor with presets and copy/paste functionality. Teaches lookup tables, memory-mapped displays, and character encoding concepts.",
           "userFacing": true,
           "editNotes": ""
-        },
-        {
-          "text": "RGB LED Chip - New display component with true colour! The RGB LED chip has three 8-bit inputs (R, G, B), each 0–255. An on-chip light shows the colour defined by those inputs and updates in real time as you change them. Find it in the chip library under DISPLAY. Perfect for colour output, visual feedback, and learning about RGB encoding.",
-          "userFacing": true,
-          "editNotes": ""
         }
       ],
       "improvements": [
@@ -102,18 +136,7 @@
           "editNotes": ""
         }
       ],
-      "bugFixes": [
-        {
-          "text": "Customization view pin layout - Fixed pin positioning in chip Customization view when saving a chip. Rectangle shape: Custom layout now allows dragging pins to place them. Non-rectangle shapes (e.g. hexagon): Default layout now correctly applies auto-calculated pin positions. Both Default and Custom layout options work for all chip shapes.",
-          "userFacing": true,
-          "editNotes": ""
-        },
-        {
-          "text": "About menu Discord logo - Fixed the Discord icon in the About menu that was showing as a white rectangle. The correct Discord logo now displays so users can recognise and tap it to open the Discord server link.",
-          "userFacing": true,
-          "editNotes": ""
-        }
-      ]
+      "bugFixes": []
     },
     {
       "version": "2.1.6.10",

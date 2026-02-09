@@ -72,12 +72,6 @@ Mobile Port (origin)
 
 ---
 
-### 🔄 In Progress
-
-* (None)
-
----
-
 ### ✨ Open Tickets
 
 | ID  | Type    | Name                                   | Status | Notes                                                                                                                                                                                                                                 |
@@ -101,10 +95,7 @@ Mobile Port (origin)
 | ID  | Type    | Name                                   | Status  | Notes                                                                                                                                                                                                                                 |
 | --- | ------- | -------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 074 | Bug     | Simulation speed not saving | Backlog | Custom sim speed (ticks per second / steps per clock tick) resets to 250/1000 on confirm. Fix persistence and application of user-entered values. Community report (Kritiv). |
-| 075 | Bug     | Wire edit: restore segment deletion | Backlog | After new delete behaviour, edit-wire mode allows add/move vertices but deleting wire segments no longer works. Restore or reimplement wire-segment deletion in edit mode. Community report (Lamp). |
 | 076 | Bug     | Level validation overflow / expected output | Backlog | Validation shows wrong expected output for overflow (e.g. 15+15). Fix expected-output computation and display for overflow cases so validation matches correct result. Community report (Lamp). |
-| 077 | Bug     | About / Discord link (iOS) | Backlog | About: Discord icon not showing; link opens Discord app instead of server. "Coming soon" text should use Discord ID (e.g. carpen_swe) not username. Fix icon, URL, and copy. iOS report (QuanChanUwU). |
-| 078 | Bug     | Delete-mode ghost hitbox | Backlog | Area at top where delete-mode popup appears stays non-interactive when popup is closed; chips cannot be moved there. Fix so zone does not block input when popup hidden. Community report (Lamp). |
 | 079 | Bug     | Wire hitboxes when wires close together | Backlog | Wire hitboxes tricky when wires within 1 square. Improve hitbox/hit-test so intended wire is selected reliably (distance, priority, or feedback). Community report (Lamp). |
 | 080 | Improvement | RTC / SPS abbreviations legend | Backlog | Add tooltips or short legend in sim/clock UI explaining RTC (Real Time Clock), SPS (Steps Per Second), SPCT, etc. for new players. Community request. |
 | 081 | Improvement | Hall of Fame sort by score + leaderboard year | Backlog | Add option or view to sort Hall of Fame by score; add year to leaderboard entries. Community request (myithspa). |
@@ -114,7 +105,6 @@ Mobile Port (origin)
 | 085 | Feature | Project or circuit descriptions | Backlog | Add optional description field for projects or individual circuits; show in project/circuit UI. Community request (QuanChanUwU). |
 | 086 | Bug     | Import project / empty project bug | Backlog | Investigate: import project and "0 projects" flow show wrong or persistent error message. Repro from Discord (QuanChanUwU, iOS). |
 | 087 | Feature | Progress sync between devices | Backlog | Research/backlog: cloud or account sync for progress (and optionally projects) across devices. Larger scope; auth/backend TBD. Community request (myithspa). |
-| 089 | Bug     | Level zero-score loophole (disallowed components inside custom chips) | Backlog | Players can get score 0 on levels by using custom chips that contain disallowed components (e.g. ROM) inside them; level mode only restricts top-level chips. Investigate how score is computed and how level restrictions are enforced; fix so either (1) subchips are validated and disallowed components inside custom chips reject the solution or (2) score reflects actual NAND/component use so 0 is impossible when using such chips. Delegate codebase investigation and fix to worker agent. |
 | 090 | Improvement | Sync with Community Edition (merge community into mobile) | Backlog | Pull latest changes from Community Edition (remote `community`, branch `community/dev`) into integration branch `merge/mobile-community`; resolve conflicts; review and test; merge `merge/mobile-community` into `main` when ready. Per project Git workflow: community is logic-mindful/Digital-Logic-Sim-Community-Edit; mobile is Carpen97/Digital-Logic-Sim-Mobile. Remember Unity scene safety: save all scenes before any branch/merge operations. |
 ---
 
@@ -122,8 +112,8 @@ Mobile Port (origin)
 ## 📋 **Project Manager Workflow**
 
 ### **📦 Current Version Information:**
-- **Latest Released Version:** 2.1.6.10 (Released: 2025-10-12)
-- **Next Version:** 2.1.6.11 (In Development)
+- **Latest Released Version:** 2.1.6.11 (Released)
+- **Next Version:** 2.1.6.12 (In Development)
 - **Update this section after each release!**
 
 ---
@@ -148,7 +138,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **📝 Patch Notes Workflow:**
 - **Location:** `Assets/Resources/patchNotes.json` (single source of truth)
-- **Version Tracking:** All new changes go into the NEXT version (currently 2.1.6.11)
+- **Version Tracking:** All new changes go into the NEXT version (currently 2.1.6.12)
 - **Philosophy:** Log everything, refine before release
 - **After Each Release:** 
   1. Update "Current Version Information" section above with new released version and next version number
@@ -179,6 +169,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 ### **Current Status:**
 - **8 Open Tickets** available for selection (019, 024, 026, 039, 046, 064, 069, 071)
 - **0 In Progress** tickets
-- **Tickets 070, 088, 091, 092** – completed (pre-release build, customization view pin layout, RGB LED chip, Discord logo in About menu)
-- **16 Backlog** tickets (074–087, 089, 090); move to Open Tickets when ready to prioritize
+- **Tickets 070, 075, 078, 088, 089, 091, 092** – completed (pre-release build, wire edit segment deletion, delete-mode ghost hitbox, customization view pin layout, level zero-score loophole fix, RGB LED chip, Discord logo in About menu)
+- **12 Backlog** tickets (074, 076, 079–087, 090); move to Open Tickets when ready to prioritize. (077 About/Discord iOS removed—icon fix done in 092; link/carpen_swe may need follow-up.)
 - **Note:** After community merge, if ProjectPlan was reverted, restore Backlog and ticket list from this version. 044 (Unity security) may have come from community—add to Open if needed.

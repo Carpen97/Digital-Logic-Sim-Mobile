@@ -432,11 +432,18 @@ namespace DLS.Game
 
 			if(Input.touchCount == 1){
 				Touch touch = Input.GetTouch(0);
-				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) || InteractionState.MouseIsOverUI) return;
+				// When already in an active circuit operation (drag, place, create wire), don't let banner UI block
+				// Moved/Ended—otherwise finger over banner creates a dead zone mid-drag.
+				bool inActiveCircuitOperation = IsPlacingOrMovingElementOrCreatingWire;
+				bool blockForUI = !inActiveCircuitOperation || touch.phase == TouchPhase.Began;
+				bool overEventSystemUI = UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId);
+				bool wouldReturnForUI = blockForUI && (overEventSystemUI || InteractionState.MouseIsOverUI);
+
+				if (wouldReturnForUI) return;
 				if (MobileUIControllerWrapper.IsWrenchToolActive) return;
 				
-				// Don't process touch input if touching the wire placement banner
-				if (DLS.Graphics.WirePlacementBanner.IsTouchOverBanner(touch.position)) return;
+				// Only block for wire placement banner when we're actually placing a wire (otherwise stale bounds create invisible dead zone)
+				if (IsCreatingWire && DLS.Graphics.WirePlacementBanner.IsTouchOverBanner(touch.position)) return;
 			
 				if(touch.phase == TouchPhase.Began){
 					HandleSingleTap();
