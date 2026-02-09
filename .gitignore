@@ -92,6 +92,9 @@ TestData/
 sysinfo.txt
 
 # Unity packages
+# Builds
+*.apk
+*.aab
 *.unitypackage
 
 # Crashlytics generated file
@@ -105,7 +108,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /.idea
 /.vsconfig
-
 # CMake and ninja build artifacts
 CMakeFiles/
 CMakeCache.txt
@@ -143,3 +145,6 @@ GameAssembly.so
 UnityPlayer.so
 libdecor*.so*
 *.x86_64
+
+# Test data (community)
+/TestData/*

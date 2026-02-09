@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Scripts/Seb/SebVis/Internal/Resources/Fonts/Born2bSporty/Born2bSportyV2.bytes.meta
 guid: 2e484b40584d9e648b256204b036241b
+========
+guid: 724ed887532ee7b468893359c33ddfd7
+>>>>>>>> community/dev:Assets/Scripts/Seb/SebVis/Internal/Resources/Fonts/DepartureMono/DepartureMono-Regular.bytes.meta
 TextScriptImporter:
   externalObjects: {}
   userData: 

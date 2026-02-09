@@ -26,10 +26,24 @@ MonoBehaviour:
     m_Scopes: []
     m_IsDefault: 1
     m_Capabilities: 7
+<<<<<<< HEAD
     m_ConfigSource: 0
   m_UserSelectedRegistryName: 
   m_UserAddingNewScopedRegistry: 0
   m_RegistryInfoDraft:
+=======
+  m_UserSelectedRegistryName: 
+  m_UserAddingNewScopedRegistry: 0
+  m_RegistryInfoDraft:
+    m_ErrorMessage: 
+    m_Original:
+      m_Id: 
+      m_Name: 
+      m_Url: 
+      m_Scopes: []
+      m_IsDefault: 0
+      m_Capabilities: 0
+>>>>>>> community/dev
     m_Modified: 0
     m_ErrorMessage: 
     m_UserModificationsInstanceId: -872

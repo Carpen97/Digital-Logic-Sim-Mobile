@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Build/DLS_mobile_backup.unity.meta
 guid: 8bb12ef4093de894c94c81480cac1370
+========
+guid: 2da367956fa863745aef91ce6b381275
+>>>>>>>> community/dev:Assets/Dev/VidTools/Scenes/Dev.unity.meta
 DefaultImporter:
   externalObjects: {}
   userData: 
