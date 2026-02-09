@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 58
-- **Most Recent**: Ticket 091 (February 9, 2026)
+- **Total Completed Tickets**: 59
+- **Most Recent**: Ticket 092 (February 9, 2026)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 092** – Discord logo in About menu (white rectangle)
+**Closed:** 2026-02-09  
+**Summary:** Fixed the Discord logo/icon in the About menu, which was displaying as a white rectangle instead of the correct Discord icon. Corrected asset reference, sprite assignment, or rendering so the Discord icon now displays properly. Users can recognise and tap the icon (e.g. to open the Discord server link). No regressions to the rest of the About menu or Discord link behaviour.
+
+---
 
 ### **Ticket 091** – RGB LED chip
 **Closed:** 2026-02-09  

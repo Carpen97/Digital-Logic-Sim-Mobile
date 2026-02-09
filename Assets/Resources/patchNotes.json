@@ -107,6 +107,11 @@
           "text": "Customization view pin layout - Fixed pin positioning in chip Customization view when saving a chip. Rectangle shape: Custom layout now allows dragging pins to place them. Non-rectangle shapes (e.g. hexagon): Default layout now correctly applies auto-calculated pin positions. Both Default and Custom layout options work for all chip shapes.",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "About menu Discord logo - Fixed the Discord icon in the About menu that was showing as a white rectangle. The correct Discord logo now displays so users can recognise and tap it to open the Discord server link.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ]
     },

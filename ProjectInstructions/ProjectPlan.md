@@ -74,9 +74,7 @@ Mobile Port (origin)
 
 ### 🔄 In Progress
 
-| ID  | Type    | Name        | Status     | Notes                                                                                                                                                                                                                                 |
-| --- | ------- | ----------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 092 | Bug     | Discord logo in About menu (white rectangle) | In Progress | About menu Discord icon displays as white rectangle instead of Discord logo. Fix asset/reference/rendering so icon displays correctly. Kick-off: `Ticket_092_Discord_Logo_About_Kickoff.md`. Report: `Ticket_092_Discord_Logo_About_Report.md`. |
+* (None)
 
 ---
 
@@ -180,7 +178,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **Current Status:**
 - **8 Open Tickets** available for selection (019, 024, 026, 039, 046, 064, 069, 071)
-- **1 In Progress** ticket (092 – Discord logo in About menu)
-- **Tickets 070, 088, 091** – completed (pre-release build, customization view pin layout, RGB LED chip)
+- **0 In Progress** tickets
+- **Tickets 070, 088, 091, 092** – completed (pre-release build, customization view pin layout, RGB LED chip, Discord logo in About menu)
 - **16 Backlog** tickets (074–087, 089, 090); move to Open Tickets when ready to prioritize
 - **Note:** After community merge, if ProjectPlan was reverted, restore Backlog and ticket list from this version. 044 (Unity security) may have come from community—add to Open if needed.
