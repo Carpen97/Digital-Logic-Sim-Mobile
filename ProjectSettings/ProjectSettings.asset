@@ -70,10 +70,6 @@ PlayerSettings:
   androidStartInFullscreen: 1
   androidRenderOutsideSafeArea: 1
   androidUseSwappy: 1
-<<<<<<< HEAD
-=======
-  androidDisplayOptions: 1
->>>>>>> community/dev
   androidBlitType: 0
   androidResizeableActivity: 0
   androidDefaultWindowWidth: 1920
@@ -86,11 +82,7 @@ PlayerSettings:
   androidApplicationEntry: 1
   defaultIsNativeResolution: 1
   macRetinaSupport: 1
-<<<<<<< HEAD
   runInBackground: 0
-=======
-  runInBackground: 1
->>>>>>> community/dev
   muteOtherAudioSources: 0
   Prepare IOS For Recording: 0
   Force IOS Speakers When Recording: 0
@@ -150,11 +142,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-<<<<<<< HEAD
   bundleVersion: 2.1.6.11
-=======
-  bundleVersion: 2.1.6
->>>>>>> community/dev
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -173,7 +161,6 @@ PlayerSettings:
   targetPixelDensity: 30
   resolutionScalingMode: 0
   resetResolutionOnWindowResize: 0
-<<<<<<< HEAD
   androidSupportedAspectRatio: 2
   androidMaxAspectRatio: 2.1
   androidMinAspectRatio: 1
@@ -190,22 +177,6 @@ PlayerSettings:
   AndroidBundleVersionCode: 22
   AndroidMinSdkVersion: 23
   AndroidTargetSdkVersion: 34
-=======
-  androidSupportedAspectRatio: 1
-  androidMaxAspectRatio: 2.1
-  androidMinAspectRatio: 1
-  applicationIdentifier:
-    Standalone: com.DefaultCompany.2DProject
-  buildNumber:
-    Standalone: 0
-    VisionOS: 0
-    iPhone: 0
-    tvOS: 0
-  overrideDefaultApplicationIdentifier: 1
-  AndroidBundleVersionCode: 1
-  AndroidMinSdkVersion: 25
-  AndroidTargetSdkVersion: 0
->>>>>>> community/dev
   AndroidPreferredInstallLocation: 1
   AndroidPreferredDataLocation: 1
   aotOptions: 
@@ -226,11 +197,7 @@ PlayerSettings:
   tvOSSdkVersion: 0
   tvOSSimulatorArchitecture: 0
   tvOSRequireExtendedGameController: 0
-<<<<<<< HEAD
   tvOSTargetOSVersionString: 13.0
-=======
-  tvOSTargetOSVersionString: 15.0
->>>>>>> community/dev
   VisionOSSdkVersion: 0
   VisionOSTargetOSVersionString: 1.0
   uIPrerenderedIcon: 0
@@ -293,7 +260,6 @@ PlayerSettings:
   templateDefaultScene: Assets/Scenes/SampleScene.unity
   useCustomMainManifest: 0
   useCustomLauncherManifest: 0
-<<<<<<< HEAD
   useCustomMainGradleTemplate: 1
   useCustomLauncherGradleManifest: 1
   useCustomBaseGradleTemplate: 1
@@ -305,20 +271,6 @@ PlayerSettings:
   androidSplashScreen: {fileID: 0}
   AndroidKeystoreName: '{dedicated}: Desktop/DLS.keystore'
   AndroidKeyaliasName: dls
-=======
-  useCustomMainGradleTemplate: 0
-  useCustomLauncherGradleManifest: 0
-  useCustomBaseGradleTemplate: 0
-  useCustomGradlePropertiesTemplate: 0
-  useCustomGradleSettingsTemplate: 0
-  useCustomProguardFile: 0
-  AndroidTargetArchitectures: 1
-  AndroidAllowedArchitectures: -1
-  AndroidSplashScreenScale: 0
-  androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: 
-  AndroidKeyaliasName: 
->>>>>>> community/dev
   AndroidEnableArmv9SecurityFeatures: 0
   AndroidEnableArm64MTE: 0
   AndroidBuildApkPerCpuArchitecture: 0
@@ -443,7 +395,6 @@ PlayerSettings:
       m_Height: 36
       m_Kind: 0
       m_SubKind: 
-<<<<<<< HEAD
   - m_BuildTarget: iPhone
     m_Icons:
     - m_Textures: []
@@ -541,8 +492,6 @@ PlayerSettings:
       m_Height: 1024
       m_Kind: 4
       m_SubKind: App Store
-=======
->>>>>>> community/dev
   m_BuildTargetBatching:
   - m_BuildTarget: Standalone
     m_StaticBatching: 0
@@ -606,12 +555,9 @@ PlayerSettings:
   - serializedVersion: 3
     m_BuildTarget: Android
     m_Formats: 03000000
-<<<<<<< HEAD
   - serializedVersion: 3
     m_BuildTarget: iOS
     m_Formats: 03000000
-=======
->>>>>>> community/dev
   playModeTestRunnerEnabled: 0
   runPlayModeTestAsEditModeTest: 0
   actionOnDotNetUnhandledException: 1
@@ -623,11 +569,7 @@ PlayerSettings:
   locationUsageDescription: 
   microphoneUsageDescription: 
   bluetoothUsageDescription: 
-<<<<<<< HEAD
   macOSTargetOSVersion: 11.0
-=======
-  macOSTargetOSVersion: 12.0
->>>>>>> community/dev
   switchNMETAOverride: 
   switchNetLibKey: 
   switchSocketMemoryPoolSize: 6144
@@ -911,11 +853,7 @@ PlayerSettings:
   suppressCommonWarnings: 1
   allowUnsafeCode: 0
   useDeterministicCompilation: 1
-<<<<<<< HEAD
   additionalIl2CppArgs: --compiler-flags=-O0
-=======
-  additionalIl2CppArgs: 
->>>>>>> community/dev
   scriptingRuntimeVersion: 1
   gcIncremental: 0
   gcWBarrierValidation: 0
@@ -1001,19 +939,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 0
   windowsGamepadBackendHint: 0
-<<<<<<< HEAD
   cloudProjectId: f63f0334-8915-44a4-9312-c7b3eba69dc7
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
   projectName: Digital-Logic-Sim
   organizationId: carpen97
-=======
-  cloudProjectId: 
-  framebufferDepthMemorylessMode: 0
-  qualitySettingsNames: []
-  projectName: 
-  organizationId: 
->>>>>>> community/dev
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
@@ -1024,7 +954,3 @@ PlayerSettings:
   androidVulkanAllowFilterList: []
   androidVulkanDeviceFilterListAsset: {fileID: 0}
   d3d12DeviceFilterListAsset: {fileID: 0}
-<<<<<<< HEAD
-=======
-  allowedHttpConnections: 3
->>>>>>> community/dev

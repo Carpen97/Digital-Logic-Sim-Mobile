@@ -65,18 +65,10 @@ public class MobileUIController : MonoBehaviour
 		
 		if (!isMobilePlatform)
 		{
-			// Disable the parent Canvas GameObject on desktop platforms
-			if (transform.parent != null)
-			{
-				transform.parent.gameObject.SetActive(false);
-				Debug.Log("[MobileUIController] Disabled parent Canvas on desktop platform");
-			}
-			else
-			{
-				// Fallback: if for some reason there's no parent, just disable this GameObject
-				gameObject.SetActive(false);
-				Debug.Log("[MobileUIController] Disabled on desktop platform (no parent Canvas)");
-			}
+			// On desktop: only disable this child (MobileUIController), not the whole Canvas.
+			// The Canvas also contains AboutMenu (YouTube/Discord logos) which should stay visible on PC.
+			gameObject.SetActive(false);
+			Debug.Log("[MobileUIController] Disabled on desktop platform (mobile UI only)");
 			return; // Exit Awake early for desktop platforms
 		}
 		else
