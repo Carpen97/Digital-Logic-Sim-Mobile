@@ -800,6 +800,9 @@ namespace DLS.Graphics
 				Seb.Vis.UI.UI.DrawScrollView(ID_ErrorLogsScrollView, scrollViewPos, scrollViewSize, Anchor.TopLeft, theme.ScrollTheme, (topLeft, width, isLayoutPass) =>
 				{
 					float spacing = 0.5f;
+					// Calculate max characters per line based on available width
+					int maxCharsPerLine = (int)(width / (theme.FontSizeRegular * 0.5f * 0.6f));
+					
 					foreach (string log in projectCreationDebugLogs)
 					{
 						Color logColor = Color.white;
@@ -808,7 +811,9 @@ namespace DLS.Graphics
 						else if (log.Contains("null"))
 							logColor = new Color(1f, 0.7f, 0.3f);
 						
-						Seb.Vis.UI.UI.DrawText(log, theme.FontRegular, theme.FontSizeRegular * 0.5f, topLeft, Anchor.TopLeft, logColor);
+						// Wrap text to fit within the scroll view width
+						string wrappedLog = WrapText(log, maxCharsPerLine);
+						Seb.Vis.UI.UI.DrawText(wrappedLog, theme.FontRegular, theme.FontSizeRegular * 0.5f, topLeft, Anchor.TopLeft, logColor);
 						topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * spacing;
 					}
 				});

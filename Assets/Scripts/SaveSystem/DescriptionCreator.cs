@@ -138,21 +138,22 @@ namespace DLS.SaveSystem
 			);
 		}
 
-		public static uint[] CreateDefaultInstanceData(ChipType type)
+	public static uint[] CreateDefaultInstanceData(ChipType type)
+	{
+		return type switch
 		{
-			return type switch
-			{
-				ChipType.Rom_256x16 => new uint[256], // ROM contents
-				ChipType.EEPROM_256x16 => new uint[257], // EEPROM contents + Rising-Edge detection
-				ChipType.Key => new uint[] { 'K' }, // Key binding
-				ChipType.Pulse => new uint[] { 50, 0, 0 }, // Pulse width, ticks remaining, input state old
-				ChipType.DisplayLED => new uint[] { 0 }, // LED colour
-				ChipType.Button => new uint[] { 0 }, // Button colour
-				ChipType.Toggle => new uint[] { 0 }, // Toggle State 
-				ChipType.Constant_8Bit => new uint[] { 0 }, // Content
-				_ => ChipTypeHelper.IsBusType(type) ? new uint[2] : null
-			};
-		}
+			ChipType.Rom_256x16 => new uint[256], // ROM contents
+			ChipType.EEPROM_256x16 => new uint[257], // EEPROM contents + Rising-Edge detection
+			ChipType.Key => new uint[] { 'K' }, // Key binding
+			ChipType.Pulse => new uint[] { 50, 0, 0 }, // Pulse width, ticks remaining, input state old
+			ChipType.DisplayLED => new uint[] { 0 }, // LED colour
+			ChipType.Button => new uint[] { 0 }, // Button colour
+			ChipType.Toggle => new uint[] { 0 }, // Toggle State 
+			ChipType.Constant_8Bit => new uint[] { 0 }, // Content
+			ChipType.TextDisplay => new uint[1344], // Text display: 256 strings × max 21 bytes each (1 length + 20 chars) ÷ 4 bytes per uint = 1344 uints
+			_ => ChipTypeHelper.IsBusType(type) ? new uint[2] : null
+		};
+	}
 
 		public static void UpdateWireIndicesForDescriptionCreation(DevChipInstance chip)
 		{

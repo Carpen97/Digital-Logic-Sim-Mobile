@@ -24,104 +24,118 @@ namespace DLS.Graphics
 		static Vector2 mouseDownPos;
 		static Vector2 displayPosInitial;
 		static float displayScaleInitial;
-        public static PinInstance selectedPin;
-        public static bool isDraggingPin;
-        public static bool isPinPositionValid;
-        static readonly float minPinSpacing = 0.025f;
+		public static PinInstance selectedPin;
+		public static bool isDraggingPin;
+		public static bool isPinPositionValid;
+		static readonly float minPinSpacing = 0.025f;
 
-	// Polygon editing state
-	static int selectedPolygonVertex = -1;
-	static int selectedPolygonEdge = -1;
-	static bool isDraggingVertex = false;
-	static bool isDraggingEdgeCurve = false;
-	static bool isDraggingRotation = false;
-	static Vector2 rotationHandleStartMouse;
-	static float rotationHandleStartAngle;
-	
-	// Public accessors for polygon selection state
-	public static int SelectedPolygonVertex => selectedPolygonVertex;
-	public static int SelectedPolygonEdge => selectedPolygonEdge;
+		// Polygon editing state
+		static int selectedPolygonVertex = -1;
+		static int selectedPolygonEdge = -1;
+		static bool isDraggingVertex = false;
+		static bool isDraggingEdgeCurve = false;
+		static bool isDraggingRotation = false;
+		static Vector2 rotationHandleStartMouse;
+		static float rotationHandleStartAngle;
 
- 		public static bool IsResizingChip => selectedChipResizeDir != Vector2Int.zero;
+		// Public accessors for polygon selection state
+		public static int SelectedPolygonVertex => selectedPolygonVertex;
+		public static int SelectedPolygonEdge => selectedPolygonEdge;
+		public static bool IsEditingPolygon => isDraggingVertex || isDraggingEdgeCurve || isDraggingRotation;
+
+		public static bool IsResizingChip => selectedChipResizeDir != Vector2Int.zero;
 		static SubChipInstance CustomizeChip => ChipSaveMenu.ActiveCustomizeChip;
 		public static bool IsPlacingDisplay => displayInteractState == DisplayInteractState.Placing;
+		public static bool IsInCustomizationMode => ChipSaveMenu.ActiveCustomizeChip != null;
 
-	public static void DrawCustomizationScene()
-	{
-		SubChipInstance chip = ChipSaveMenu.ActiveCustomizeChip;
-		HandleKeyboardShortcuts();
-
-		DevSceneDrawer.DrawSubChip(chip);
-		WorldDrawer.DrawGridIfActive(ColHelper.MakeCol255(0, 0, 0, 100));
-
-		Draw.StartLayer(Vector2.zero, 1, false);
-		DevSceneDrawer.DrawSubchipDisplays(chip, null, true);
-
-	bool chipResizeHascontrol = HandleChipResizing(chip);
-	HandleDisplaySelection(!chipResizeHascontrol);
-
-	HandlePinDragging();
-	HandlePolygonEditing(chip);
-
-	if (SelectedDisplay == null)
+		public static void DrawCustomizationScene()
 		{
-			if (DisplayUnderMouse != null) HandleDeleteDisplayUnderMouse();
-		}
-		else
-		{
-			if (displayInteractState == DisplayInteractState.Scaling)
+			SubChipInstance chip = ChipSaveMenu.ActiveCustomizeChip;
+			HandleKeyboardShortcuts();
+
+			DevSceneDrawer.DrawSubChip(chip);
+			WorldDrawer.DrawGridIfActive(ColHelper.MakeCol255(0, 0, 0, 100));
+
+			Draw.StartLayer(Vector2.zero, 1, false);
+			DevSceneDrawer.DrawSubchipDisplays(chip, null, true);
+
+			bool chipResizeHascontrol = HandleChipResizing(chip);
+			HandleDisplaySelection(!chipResizeHascontrol);
+
+			HandlePinDragging();
+			HandlePolygonEditing(chip);
+
+			if (SelectedDisplay == null)
 			{
-				HandleDisplayScaling();
+				if (DisplayUnderMouse != null) HandleDeleteDisplayUnderMouse();
 			}
 			else
 			{
-				HandleDisplayMovement();
+				if (displayInteractState == DisplayInteractState.Scaling)
+				{
+					HandleDisplayScaling();
+				}
+				else
+				{
+					HandleDisplayMovement();
+				}
+			}
+
+			// Draw pins on top layer so they're always visible
+			Draw.StartLayer(Vector2.zero, 1, false);
+			DrawChipPins(chip);
+
+			// Display highlighted pin name
+			if (InteractionState.ElementUnderMouse is PinInstance highlightedPin)
+			{
+				Draw.StartLayer(Vector2.zero, 1, false);
+				DevSceneDrawer.DrawPinLabel(highlightedPin);
 			}
 		}
 
-		// Draw pins on top layer so they're always visible
-		Draw.StartLayer(Vector2.zero, 1, false);
-		DrawChipPins(chip);
+		static void DrawChipPins(SubChipInstance chip)
+		{
+			// Draw all pins on top layer
+			for (int i = 0; i < chip.AllPins.Length; i++)
+			{
+				// Hide input pin on bus origin chips
+				if (i == 0 && ChipTypeHelper.IsBusOriginType(chip.Description.ChipType)) continue;
 
-		// Display highlighted pin name
-		if (InteractionState.ElementUnderMouse is PinInstance highlightedPin)
-		{
-			Draw.StartLayer(Vector2.zero, 1, false);
-			DevSceneDrawer.DrawPinLabel(highlightedPin);
+				DevSceneDrawer.DrawPin(chip.AllPins[i]);
+			}
 		}
-	}
-	
-	static void DrawChipPins(SubChipInstance chip)
-	{
-		// Draw all pins on top layer
-		for (int i = 0; i < chip.AllPins.Length; i++)
-		{
-			// Hide input pin on bus origin chips
-			if (i == 0 && ChipTypeHelper.IsBusOriginType(chip.Description.ChipType)) continue;
-			
-			DevSceneDrawer.DrawPin(chip.AllPins[i]);
-		}
-	}
 
 		static void HandleKeyboardShortcuts()
 		{
-			
+
 		}
 
-		public static void StartPlacingDisplay(SubChipInstance subChipToDisplay)
+	public static void StartPlacingDisplay(SubChipInstance subChipToDisplay)
+	{
+		SelectedDisplay = new DisplayInstance();
+		
+		// For TextDisplay, calculate the display scale based on chip size
+		float displayScale = 1;
+		if (ChipTypeHelper.IsTextDisplayType(subChipToDisplay.ChipType))
 		{
-			SelectedDisplay = new DisplayInstance();
-			SelectedDisplay.Desc = new DisplayDescription(subChipToDisplay.ID, Vector2.zero, 1);
-			SelectedDisplay.ChildDisplays = subChipToDisplay.Displays;
+			// TextDisplay scale should match the chip width minus padding
+			displayScale = subChipToDisplay.Size.x - DrawSettings.GridSize * 2;
+		}
+		
+		SelectedDisplay.Desc = new DisplayDescription(subChipToDisplay.ID, Vector2.zero, displayScale);
+		SelectedDisplay.ChildDisplays = subChipToDisplay.Displays;
+		SelectedDisplay.DisplayType = subChipToDisplay.ChipType;
+		
+		UnityEngine.Debug.Log($"[StartPlacingDisplay] Creating display for subChip ID={subChipToDisplay.ID}, ChipType={subChipToDisplay.ChipType}, Scale={displayScale}");
 
-			displayInteractState = DisplayInteractState.Placing;
-			displayMoveMouseOffset = Vector2.zero;
-			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+		displayInteractState = DisplayInteractState.Placing;
+		displayMoveMouseOffset = Vector2.zero;
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
 			MobileUIControllerWrapper.ShowPlacementButtons(
 				confirmPlacement,
 				cancelPlacement
 			);
-			#endif
+#endif
 		}
 
 		public static void OnCustomizationMenuClosed()
@@ -136,11 +150,11 @@ namespace DLS.Graphics
 		static void HandleDisplayScaling()
 		{
 
-			#if UNITY_ANDROID || UNITY_IOS
+#if UNITY_ANDROID || UNITY_IOS
 			Touch touch = Input.GetTouch(0);
 			if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) ||
 				InteractionState.MouseIsOverUI) return;
-			# endif
+#endif
 			Draw.StartLayer(Vector2.zero, 1, false);
 
 			Color scaleCol = new(0.4f, 1, 0.2f);
@@ -190,20 +204,21 @@ namespace DLS.Graphics
 					displayInteractState = DisplayInteractState.None;
 				}
 			}
-			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
 			MobileUIControllerWrapper.HidePlacementButtons();
-			#endif
+#endif
 		}
 
 		static void HandleDisplayMovement()
 		{
-			#if UNITY_ANDROID || UNITY_IOS
-			if(Input.touchCount == 1){
+#if UNITY_ANDROID || UNITY_IOS
+			if (Input.touchCount == 1)
+			{
 				Touch touch = Input.GetTouch(0);
 				if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId) ||
 					InteractionState.MouseIsOverUI) return;
 			}
-			# endif
+#endif
 			Draw.StartLayer(Vector2.zero, 1, false);
 			Vector2 targetPos = InputHelper.MousePosWorld + displayMoveMouseOffset;
 
@@ -234,7 +249,7 @@ namespace DLS.Graphics
 			}
 			else
 			{
-				#if !(UNITY_ANDROID || UNITY_IOS)
+#if !(UNITY_ANDROID || UNITY_IOS)
 				// Confirm placement
 				bool confirmPlacement = InputHelper.IsMouseDownThisFrame(MouseButton.Left);
 				confirmPlacement |= displayInteractState == DisplayInteractState.Moving && InputHelper.IsMouseUpThisFrame(MouseButton.Left);
@@ -245,28 +260,30 @@ namespace DLS.Graphics
 					SelectedDisplay = null;
 					displayInteractState = DisplayInteractState.None;
 				}
-				#endif
+#endif
 			}
 		}
 
-		static void confirmPlacement(){
-			if(SelectedDisplay != null)
+		static void confirmPlacement()
+		{
+			if (SelectedDisplay != null)
 				ChipSaveMenu.ActiveCustomizeChip.Displays.Add(SelectedDisplay);
 			SelectedDisplay = null;
 			displayInteractState = DisplayInteractState.None;
-			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
 			MobileUIControllerWrapper.HidePlacementButtons();
-			#endif
+#endif
 		}
 
-		static void cancelPlacement(){
-			if(SelectedDisplay != null)
+		static void cancelPlacement()
+		{
+			if (SelectedDisplay != null)
 				SelectedDisplay.Desc.Position = displayPosInitial;
 			SelectedDisplay = null;
 			displayInteractState = DisplayInteractState.None;
-			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
 			MobileUIControllerWrapper.HidePlacementButtons();
-			#endif
+#endif
 		}
 
 		static void HandleDeleteDisplayUnderMouse()
@@ -323,13 +340,13 @@ namespace DLS.Graphics
 							displayScaleInitial = display.Desc.Scale;
 							mouseDownPos = InputHelper.MousePosWorld;
 
-							if(IsResizingChip) return;
-							#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+							if (IsResizingChip) return;
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
 							MobileUIControllerWrapper.ShowPlacementButtons(
 								confirmPlacement,
 								cancelPlacement
 							);
-							#endif
+#endif
 
 							return; // exit now that a display has been selected
 						}
@@ -422,39 +439,39 @@ namespace DLS.Graphics
 					Vector2 mouseDelta = InputHelper.MousePosWorld - chipResizeMouseStartPos;
 					Vector2 desiredSize = chipResizeStartSize + Vector2.Scale(dir, mouseDelta) * 2;
 
-                    //  snaps if snapping is on or if chip has pins on top or bottom
-                    bool snapX = Project.ActiveProject.ShouldSnapToGrid;
-                    if (!snapX && chip.HasCustomLayout)
-                    {
-                        bool hasXFacePins = chip.InputPins.Concat(chip.OutputPins).Any(p => p.face == 0 || p.face == 2);
-                        snapX = hasXFacePins;
-                    }
+					//  snaps if snapping is on or if chip has pins on top or bottom
+					bool snapX = Project.ActiveProject.ShouldSnapToGrid;
+					if (!snapX && chip.HasCustomLayout)
+					{
+						bool hasXFacePins = chip.InputPins.Concat(chip.OutputPins).Any(p => p.face == 0 || p.face == 2);
+						snapX = hasXFacePins;
+					}
 
-                    // snaps if snapping is on or if chip has pins on left or right. if default layout then forces snapping on Y
-                    bool snapY = true;
-                    if (chip.HasCustomLayout)
-                    {
-                        bool hasYFacePins = chip.InputPins.Concat(chip.OutputPins).Any(p => p.face == 1 || p.face == 3);
-                        snapY = hasYFacePins || Project.ActiveProject.ShouldSnapToGrid;
-                    }
+					// snaps if snapping is on or if chip has pins on left or right. if default layout then forces snapping on Y
+					bool snapY = true;
+					if (chip.HasCustomLayout)
+					{
+						bool hasYFacePins = chip.InputPins.Concat(chip.OutputPins).Any(p => p.face == 1 || p.face == 3);
+						snapY = hasYFacePins || Project.ActiveProject.ShouldSnapToGrid;
+					}
 
-                    if (snapY && dir.y != 0)
-                    {
-                        float deltaY = GridHelper.SnapToGrid(desiredSize.y - chip.MinSize.y);
-                        desiredSize.y = chip.MinSize.y + deltaY;
-                    }
+					if (snapY && dir.y != 0)
+					{
+						float deltaY = GridHelper.SnapToGrid(desiredSize.y - chip.MinSize.y);
+						desiredSize.y = chip.MinSize.y + deltaY;
+					}
 
-                    if (snapX && dir.x != 0)
-                    {
-                        desiredSize.x = GridHelper.SnapToGridForceEven(desiredSize.x) - DrawSettings.ChipOutlineWidth;
-                    }
+					if (snapX && dir.x != 0)
+					{
+						desiredSize.x = GridHelper.SnapToGridForceEven(desiredSize.x) - DrawSettings.ChipOutlineWidth;
+					}
 
-                    chip.updateMinSize();
+					chip.updateMinSize();
 					Vector2 sizeNew = Vector2.Max(desiredSize, chip.MinSize);
 
 					if (sizeNew != chip.Size)
 					{
-                        chip.Description.Size = Vector2.Max(desiredSize, chip.MinSize);
+						chip.Description.Size = Vector2.Max(desiredSize, chip.MinSize);
 						ChipSaveMenu.ActiveCustomizeChip.UpdatePinLayout();
 					}
 				}
@@ -469,784 +486,784 @@ namespace DLS.Graphics
 			}
 		}
 
-        static void HandlePinDragging()
-        {
-            if (!InteractionState.MouseIsOverUI)
-            {
-                // Start dragging a pin
-                if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
-                {
-                    if (InteractionState.ElementUnderMouse is PinInstance pin)
-                    {
-                        selectedPin = pin;
-                        isDraggingPin = true;
-                    }
-                }
+		static void HandlePinDragging()
+		{
+			if (!InteractionState.MouseIsOverUI)
+			{
+				// Start dragging a pin
+				if (InputHelper.IsMouseDownThisFrame(MouseButton.Left))
+				{
+					if (InteractionState.ElementUnderMouse is PinInstance pin)
+					{
+						selectedPin = pin;
+						isDraggingPin = true;
+					}
+				}
 
-                if (isDraggingPin && selectedPin?.parent is SubChipInstance chip)
-                {
-                    Vector2 mouseWorld = InputHelper.MousePosWorld;
-                    Vector2 chipCenter = chip.Position;
-                    Vector2 localMouse = mouseWorld - chipCenter;
-                    Debug.Log($"CUSTOMIZATION: mouseWorld = {mouseWorld}, chipCenter = {chipCenter}, localMouse = {localMouse}");
-                    Vector2 chipHalfSize = chip.Size / 2f;
+				if (isDraggingPin && selectedPin?.parent is SubChipInstance chip)
+				{
+					Vector2 mouseWorld = InputHelper.MousePosWorld;
+					Vector2 chipCenter = chip.Position;
+					Vector2 localMouse = mouseWorld - chipCenter;
+					Debug.Log($"CUSTOMIZATION: mouseWorld = {mouseWorld}, chipCenter = {chipCenter}, localMouse = {localMouse}");
+					Vector2 chipHalfSize = chip.Size / 2f;
 
-                    // DIRECTLY SET THE PIN POSITION TO THE GREEN DOT POSITION
-                    // Get the projected point (the green dot position we know is correct)
-                    Vector2 projectedPoint = GetProjectedPointForShape(chip.Description.ShapeType, chip.Description.ShapeRotation, localMouse, chipHalfSize);
-                    
-                    // Update the pin's position in the description
-                    UpdatePinPositionInDescription(selectedPin, projectedPoint);
-                    
-                    // DEBUG: Check what's happening
-                    Vector2 actualPinWorldPos = selectedPin.GetWorldPos();
-                    Vector2 expectedWorldPos = chipCenter + projectedPoint;
-                    Debug.Log($"ProjectedPoint: {projectedPoint}");
-                    Debug.Log($"ChipCenter: {chipCenter}");
-                    Debug.Log($"Expected World Pos: {expectedWorldPos}");
-                    Debug.Log($"Actual Pin World Pos: {actualPinWorldPos}");
-                    Debug.Log($"Updated Position in description");
+					// DIRECTLY SET THE PIN POSITION TO THE GREEN DOT POSITION
+					// Get the projected point (the green dot position we know is correct)
+					Vector2 projectedPoint = GetProjectedPointForShape(chip.Description.ShapeType, chip.Description.ShapeRotation, localMouse, chipHalfSize);
 
-                    PinInstance overlappedPin;
-                    isPinPositionValid = !DoesPinOverlap(selectedPin, out overlappedPin);
+					// Update the pin's position in the description
+					UpdatePinPositionInDescription(selectedPin, projectedPoint);
 
-                    // End drag on mouse release
-                    if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
-                    {
-                        if (isPinPositionValid)
-                        {
+					// DEBUG: Check what's happening
+					Vector2 actualPinWorldPos = selectedPin.GetWorldPos();
+					Vector2 expectedWorldPos = chipCenter + projectedPoint;
+					Debug.Log($"ProjectedPoint: {projectedPoint}");
+					Debug.Log($"ChipCenter: {chipCenter}");
+					Debug.Log($"Expected World Pos: {expectedWorldPos}");
+					Debug.Log($"Actual Pin World Pos: {actualPinWorldPos}");
+					Debug.Log($"Updated Position in description");
 
-                            if (!ChipCustomizationMenu.isCustomLayout)
-                            {
-                                ChipCustomizationMenu.isCustomLayout = true;
-                                Seb.Vis.UI.UI.GetWheelSelectorState(ChipCustomizationMenu.ID_LayoutOptions).index = 1;
-                                ChipSaveMenu.ActiveCustomizeChip.SetCustomLayout(true);
-                            }
-                        }
+					PinInstance overlappedPin;
+					isPinPositionValid = !DoesPinOverlap(selectedPin, out overlappedPin);
 
-                        isDraggingPin = false;
-                        selectedPin = null;
-                        isPinPositionValid = true;
-                    }
-                }
-            }
-        }
+					// End drag on mouse release
+					if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
+					{
+						if (isPinPositionValid)
+						{
 
-        public static void Reset()
+							if (!ChipCustomizationMenu.isCustomLayout)
+							{
+								ChipCustomizationMenu.isCustomLayout = true;
+								Seb.Vis.UI.UI.GetWheelSelectorState(ChipCustomizationMenu.ID_LayoutOptions).index = 1;
+								ChipSaveMenu.ActiveCustomizeChip.SetCustomLayout(true);
+							}
+						}
+
+						isDraggingPin = false;
+						selectedPin = null;
+						isPinPositionValid = true;
+					}
+				}
+			}
+		}
+
+		public static void Reset()
 		{
 			SelectedDisplay = null;
 			displayInteractState = DisplayInteractState.None;
 		}
 
-        public static bool DoesPinOverlap(PinInstance pin, out PinInstance overlappedPin)
-        {
-            overlappedPin = null;
-            if (!(pin.parent is SubChipInstance chip)) return false;
+		public static bool DoesPinOverlap(PinInstance pin, out PinInstance overlappedPin)
+		{
+			overlappedPin = null;
+			if (!(pin.parent is SubChipInstance chip)) return false;
 
-            // Get all pins on the same chip to check pins on the same face as selectedpin
-            List<PinInstance> pinsToCheck = new List<PinInstance>();
-            pinsToCheck.AddRange(chip.InputPins);
-            pinsToCheck.AddRange(chip.OutputPins);
+			// Get all pins on the same chip to check pins on the same face as selectedpin
+			List<PinInstance> pinsToCheck = new List<PinInstance>();
+			pinsToCheck.AddRange(chip.InputPins);
+			pinsToCheck.AddRange(chip.OutputPins);
 
-            foreach (PinInstance otherPin in pinsToCheck)
-            {
-                if (otherPin == pin) continue;
+			foreach (PinInstance otherPin in pinsToCheck)
+			{
+				if (otherPin == pin) continue;
 
-                // Only check pins on the same face
-                if (otherPin.face != pin.face) continue;
+				// Only check pins on the same face
+				if (otherPin.face != pin.face) continue;
 
-                float distanceAlongFace = Mathf.Abs(pin.LocalPosY - otherPin.LocalPosY);
+				float distanceAlongFace = Mathf.Abs(pin.LocalPosY - otherPin.LocalPosY);
 
-                // Calculate minimum required spacing based on pin sizes
-                float pinHeight = SubChipInstance.PinHeightFromBitCount(pin.bitCount);
+				// Calculate minimum required spacing based on pin sizes
+				float pinHeight = SubChipInstance.PinHeightFromBitCount(pin.bitCount);
 
-                float otherPinHeight = SubChipInstance.PinHeightFromBitCount(otherPin.bitCount);
+				float otherPinHeight = SubChipInstance.PinHeightFromBitCount(otherPin.bitCount);
 
-                // Required space is half each pin's height plus some buffer
-                float requiredSpacing = (pinHeight + otherPinHeight) / 2f + minPinSpacing;
+				// Required space is half each pin's height plus some buffer
+				float requiredSpacing = (pinHeight + otherPinHeight) / 2f + minPinSpacing;
 
-                if (distanceAlongFace < requiredSpacing)
-                {
-                    overlappedPin = otherPin;
-                    return true;
-                }
-            }
+				if (distanceAlongFace < requiredSpacing)
+				{
+					overlappedPin = otherPin;
+					return true;
+				}
+			}
 
-            return false;
-        }
+			return false;
+		}
 
-        static (int face, float offset) GetClosestPinPosition(ChipShapeType shapeType, float rotation, Vector2 localMouse, Vector2 chipHalfSize)
-        {
-            switch (shapeType)
-            {
-                case ChipShapeType.Rectangle:
-                    return GetClosestRectanglePinPosition(localMouse, chipHalfSize);
-                case ChipShapeType.Hexagon:
-                    return GetClosestHexagonPinPosition(localMouse, chipHalfSize, rotation);
-                case ChipShapeType.Triangle:
-                    return GetClosestTrianglePinPosition(localMouse, chipHalfSize, rotation);
-                case ChipShapeType.CustomPolygon:
-                    // For custom polygons, we don't need face logic since we use Position field
-                    return (0, 0); // Dummy values, not used
-                default:
-                    return GetClosestRectanglePinPosition(localMouse, chipHalfSize);
-            }
-        }
+		static (int face, float offset) GetClosestPinPosition(ChipShapeType shapeType, float rotation, Vector2 localMouse, Vector2 chipHalfSize)
+		{
+			switch (shapeType)
+			{
+				case ChipShapeType.Rectangle:
+					return GetClosestRectanglePinPosition(localMouse, chipHalfSize);
+				case ChipShapeType.Hexagon:
+					return GetClosestHexagonPinPosition(localMouse, chipHalfSize, rotation);
+				case ChipShapeType.Triangle:
+					return GetClosestTrianglePinPosition(localMouse, chipHalfSize, rotation);
+				case ChipShapeType.CustomPolygon:
+					// For custom polygons, we don't need face logic since we use Position field
+					return (0, 0); // Dummy values, not used
+				default:
+					return GetClosestRectanglePinPosition(localMouse, chipHalfSize);
+			}
+		}
 
-        static (int face, float offset) GetClosestRectanglePinPosition(Vector2 localMouse, Vector2 chipHalfSize)
-        {
-            // Original rectangle logic
-            float distTop = Mathf.Abs(localMouse.y - chipHalfSize.y);
-            float distBottom = Mathf.Abs(localMouse.y + chipHalfSize.y);
-            float distRight = Mathf.Abs(localMouse.x - chipHalfSize.x);
-            float distLeft = Mathf.Abs(localMouse.x + chipHalfSize.x);
+		static (int face, float offset) GetClosestRectanglePinPosition(Vector2 localMouse, Vector2 chipHalfSize)
+		{
+			// Original rectangle logic
+			float distTop = Mathf.Abs(localMouse.y - chipHalfSize.y);
+			float distBottom = Mathf.Abs(localMouse.y + chipHalfSize.y);
+			float distRight = Mathf.Abs(localMouse.x - chipHalfSize.x);
+			float distLeft = Mathf.Abs(localMouse.x + chipHalfSize.x);
 
-            int closestFace = 0;
-            float minDist = distTop;
+			int closestFace = 0;
+			float minDist = distTop;
 
-            if (distRight < minDist) { closestFace = 1; minDist = distRight; }
-            if (distBottom < minDist) { closestFace = 2; minDist = distBottom; }
-            if (distLeft < minDist) { closestFace = 3; }
+			if (distRight < minDist) { closestFace = 1; minDist = distRight; }
+			if (distBottom < minDist) { closestFace = 2; minDist = distBottom; }
+			if (distLeft < minDist) { closestFace = 3; }
 
-            float offset = closestFace == 0 || closestFace == 2 ? localMouse.x : localMouse.y;
-            return (closestFace, offset);
-        }
+			float offset = closestFace == 0 || closestFace == 2 ? localMouse.x : localMouse.y;
+			return (closestFace, offset);
+		}
 
-        static (int face, float offset) GetClosestHexagonPinPosition(Vector2 localMouse, Vector2 chipHalfSize, float rotation)
-        {
-            // Calculate the 6 vertices of the hexagon
-            float rotationRad = rotation * Mathf.Deg2Rad;
-            Vector2[] vertices = new Vector2[6];
-            
-            for (int i = 0; i < 6; i++)
-            {
-                float angle = i * Mathf.PI / 3f + rotationRad; // Match PinInstance.GetHexagonPinPosition
-                vertices[i] = new Vector2(
-                    Mathf.Cos(angle) * chipHalfSize.x,
-                    Mathf.Sin(angle) * chipHalfSize.y
-                );
-            }
-            
-            // DEBUG: Draw hexagon vertices and edges
-            for (int i = 0; i < 6; i++)
-            {
-                // Draw vertex points
-                Draw.Point(vertices[i], 0.1f, Color.red);
-                
-                // Draw edge lines
-                int next = (i + 1) % 6;
-                Draw.Line(vertices[i], vertices[next], 0.02f, Color.yellow);
-            }
-            
-            // Find the closest edge by projecting mouse position onto each edge
-            int closestFace = 0;
-            float closestDistance = float.MaxValue;
-            float bestOffset = 0f;
-            Vector2 bestProjectedPoint = Vector2.zero;
-            
-            for (int i = 0; i < 6; i++)
-            {
-                int next = (i + 1) % 6;
-                Vector2 edgeStart = vertices[i];
-                Vector2 edgeEnd = vertices[next];
-                Vector2 edgeDirection = edgeEnd - edgeStart;
-                
-                // Project mouse position onto this edge
-                Vector2 toMouse = localMouse - edgeStart;
-                float projectionLength = Vector2.Dot(toMouse, edgeDirection.normalized);
-                
-                // Clamp projection to edge bounds
-                float edgeLength = edgeDirection.magnitude;
-                projectionLength = Mathf.Clamp(projectionLength, 0f, edgeLength);
-                
-                // Calculate the projected point on the edge
-                Vector2 projectedPoint = edgeStart + edgeDirection.normalized * projectionLength;
-                
-                // Calculate distance from mouse to projected point
-                float distance = Vector2.Distance(localMouse, projectedPoint);
-                
-                // DEBUG: Draw projection line for this edge
-                Draw.Line(localMouse, projectedPoint, 0.01f, Color.cyan);
-                
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestFace = i;
-                    bestProjectedPoint = projectedPoint;
-                    
-                    // Calculate offset along the TANGENT direction (perpendicular to edge)
-                    // This matches how PinInstance.GetHexagonPinPosition uses localPosY
-                    float faceAngle = i * Mathf.PI / 3f + rotationRad; // Match PinInstance calculation
-                    Vector2 tangent = new Vector2(-Mathf.Sin(faceAngle), Mathf.Cos(faceAngle)); // Match PinInstance exactly
-                    float tangentOffset = Vector2.Dot(localMouse, tangent);
-                    bestOffset = tangentOffset;
-                }
-            }
-            
-            // DEBUG: Highlight the closest edge and projection
-            int nextClosest = (closestFace + 1) % 6;
-            Draw.Line(vertices[closestFace], vertices[nextClosest], 0.05f, Color.green);
-            Draw.Line(localMouse, bestProjectedPoint, 0.03f, Color.magenta);
-            Draw.Point(bestProjectedPoint, 0.08f, Color.green);
-            
-            return (closestFace, bestOffset);
-        }
+		static (int face, float offset) GetClosestHexagonPinPosition(Vector2 localMouse, Vector2 chipHalfSize, float rotation)
+		{
+			// Calculate the 6 vertices of the hexagon
+			float rotationRad = rotation * Mathf.Deg2Rad;
+			Vector2[] vertices = new Vector2[6];
 
-        static (int face, float offset) GetClosestTrianglePinPosition(Vector2 localMouse, Vector2 chipHalfSize, float rotation)
-        {
-            // Calculate the 3 vertices of the triangle
-            float rotationRad = rotation * Mathf.Deg2Rad;
-            Vector2[] vertices = new Vector2[3];
-            
-            for (int i = 0; i < 3; i++)
-            {
-                float angle = i * 2f * Mathf.PI / 3f + rotationRad; // Match PinInstance.GetTrianglePinPosition
-                vertices[i] = new Vector2(
-                    Mathf.Cos(angle) * chipHalfSize.x,
-                    Mathf.Sin(angle) * chipHalfSize.y
-                );
-            }
-            
-            // DEBUG: Draw triangle vertices and edges
-            for (int i = 0; i < 3; i++)
-            {
-                // Draw vertex points
-                Draw.Point(vertices[i], 0.1f, Color.red);
-                
-                // Draw edge lines
-                int next = (i + 1) % 3;
-                Draw.Line(vertices[i], vertices[next], 0.02f, Color.yellow);
-            }
-            
-            // Find the closest edge by projecting mouse position onto each edge
-            int closestFace = 0;
-            float closestDistance = float.MaxValue;
-            float bestOffset = 0f;
-            Vector2 bestProjectedPoint = Vector2.zero;
-            
-            for (int i = 0; i < 3; i++)
-            {
-                int next = (i + 1) % 3;
-                Vector2 edgeStart = vertices[i];
-                Vector2 edgeEnd = vertices[next];
-                Vector2 edgeDirection = edgeEnd - edgeStart;
-                
-                // Project mouse position onto this edge
-                Vector2 toMouse = localMouse - edgeStart;
-                float projectionLength = Vector2.Dot(toMouse, edgeDirection.normalized);
-                
-                // Clamp projection to edge bounds
-                float edgeLength = edgeDirection.magnitude;
-                projectionLength = Mathf.Clamp(projectionLength, 0f, edgeLength);
-                
-                // Calculate the projected point on the edge
-                Vector2 projectedPoint = edgeStart + edgeDirection.normalized * projectionLength;
-                
-                // Calculate distance from mouse to projected point
-                float distance = Vector2.Distance(localMouse, projectedPoint);
-                
-                // DEBUG: Draw projection line for this edge
-                Draw.Line(localMouse, projectedPoint, 0.01f, Color.cyan);
-                
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestFace = i;
-                    bestProjectedPoint = projectedPoint;
-                    
-                    // Calculate offset along the TANGENT direction (perpendicular to edge)
-                    // This matches how PinInstance.GetTrianglePinPosition uses localPosY
-                    float faceAngle = i * 2f * Mathf.PI / 3f + rotationRad; // Match PinInstance calculation
-                    Vector2 tangent = new Vector2(-Mathf.Sin(faceAngle), Mathf.Cos(faceAngle)); // Match PinInstance exactly
-                    float tangentOffset = Vector2.Dot(localMouse, tangent);
-                    bestOffset = tangentOffset;
-                }
-            }
-            
-            // DEBUG: Highlight the closest edge and projection
-            int nextClosest = (closestFace + 1) % 3;
-            Draw.Line(vertices[closestFace], vertices[nextClosest], 0.05f, Color.green);
-            Draw.Line(localMouse, bestProjectedPoint, 0.03f, Color.magenta);
-            Draw.Point(bestProjectedPoint, 0.08f, Color.green);
-            
-            return (closestFace, bestOffset);
-        }
+			for (int i = 0; i < 6; i++)
+			{
+				float angle = i * Mathf.PI / 3f + rotationRad; // Match PinInstance.GetHexagonPinPosition
+				vertices[i] = new Vector2(
+					Mathf.Cos(angle) * chipHalfSize.x,
+					Mathf.Sin(angle) * chipHalfSize.y
+				);
+			}
 
-        static float GetPinOffsetAlongFace(ChipShapeType shapeType, float rotation, int face, float offset, Vector2 chipHalfSize, float pinHeight, bool shouldSnapToGrid)
-        {
-            switch (shapeType)
-            {
-                case ChipShapeType.Rectangle:
-                    return GetRectanglePinOffset(face, offset, chipHalfSize, pinHeight, shouldSnapToGrid);
-                case ChipShapeType.Hexagon:
-                    return GetHexagonPinOffset(face, offset, chipHalfSize, pinHeight, shouldSnapToGrid);
-                case ChipShapeType.Triangle:
-                    return GetTrianglePinOffset(face, offset, chipHalfSize, pinHeight, shouldSnapToGrid);
-                default:
-                    return GetRectanglePinOffset(face, offset, chipHalfSize, pinHeight, shouldSnapToGrid);
-            }
-        }
+			// DEBUG: Draw hexagon vertices and edges
+			for (int i = 0; i < 6; i++)
+			{
+				// Draw vertex points
+				Draw.Point(vertices[i], 0.1f, Color.red);
 
-        static float GetRectanglePinOffset(int face, float offset, Vector2 chipHalfSize, float pinHeight, bool shouldSnapToGrid)
-        {
-            float maxOffset;
-            if (face == 0 || face == 2) // Horizontal faces
-            {
-                maxOffset = chipHalfSize.x - pinHeight / 2f;
-            }
-            else // Vertical faces
-            {
-                maxOffset = chipHalfSize.y - pinHeight / 2f;
-            }
-            
-            return shouldSnapToGrid ? GridHelper.ClampToGrid(offset, -maxOffset, maxOffset) :
-                Mathf.Clamp(offset, -maxOffset, maxOffset);
-        }
+				// Draw edge lines
+				int next = (i + 1) % 6;
+				Draw.Line(vertices[i], vertices[next], 0.02f, Color.yellow);
+			}
 
-        static float GetHexagonPinOffset(int face, float offset, Vector2 chipHalfSize, float pinHeight, bool shouldSnapToGrid)
-        {
-            // For hexagon, calculate the actual length of the face
-            // Each face of a hexagon has length = chipHalfSize.x (radius)
-            float faceLength = chipHalfSize.x;
-            float maxOffset = faceLength - pinHeight / 2f;
-            
-            return shouldSnapToGrid ? GridHelper.ClampToGrid(offset, -maxOffset, maxOffset) :
-                Mathf.Clamp(offset, -maxOffset, maxOffset);
-        }
+			// Find the closest edge by projecting mouse position onto each edge
+			int closestFace = 0;
+			float closestDistance = float.MaxValue;
+			float bestOffset = 0f;
+			Vector2 bestProjectedPoint = Vector2.zero;
 
-        static float GetTrianglePinOffset(int face, float offset, Vector2 chipHalfSize, float pinHeight, bool shouldSnapToGrid)
-        {
-            // For triangle, calculate the actual length of the face
-            // Each face of an equilateral triangle has length = chipHalfSize.x * sqrt(3)
-            float faceLength = chipHalfSize.x * Mathf.Sqrt(3f);
-            float maxOffset = faceLength - pinHeight / 2f;
-            
-            return shouldSnapToGrid ? GridHelper.ClampToGrid(offset, -maxOffset, maxOffset) :
-                Mathf.Clamp(offset, -maxOffset, maxOffset);
-        }
+			for (int i = 0; i < 6; i++)
+			{
+				int next = (i + 1) % 6;
+				Vector2 edgeStart = vertices[i];
+				Vector2 edgeEnd = vertices[next];
+				Vector2 edgeDirection = edgeEnd - edgeStart;
 
-        static Vector2 RotateVector(Vector2 vector, float rotationRad)
-        {
-            float cos = Mathf.Cos(rotationRad);
-            float sin = Mathf.Sin(rotationRad);
-            return new Vector2(
-                vector.x * cos - vector.y * sin,
-                vector.x * sin + vector.y * cos
-            );
-        }
+				// Project mouse position onto this edge
+				Vector2 toMouse = localMouse - edgeStart;
+				float projectionLength = Vector2.Dot(toMouse, edgeDirection.normalized);
 
-        static Vector2 GetProjectedPointForShape(ChipShapeType shapeType, float rotation, Vector2 localMouse, Vector2 chipHalfSize)
-        {
-            // Find the closest edge and get the projected point
-            switch (shapeType)
-            {
-                case ChipShapeType.Rectangle:
-                    return GetRectangleProjectedPointDirect(localMouse, chipHalfSize);
-                case ChipShapeType.Hexagon:
-                    return GetHexagonProjectedPointDirect(localMouse, chipHalfSize, rotation);
-                case ChipShapeType.Triangle:
-                    return GetTriangleProjectedPointDirect(localMouse, chipHalfSize, rotation);
-                case ChipShapeType.CustomPolygon:
-                    return GetCustomPolygonProjectedPointDirect(localMouse, chipHalfSize, rotation);
-                default:
-                    return GetRectangleProjectedPointDirect(localMouse, chipHalfSize);
-            }
-        }
+				// Clamp projection to edge bounds
+				float edgeLength = edgeDirection.magnitude;
+				projectionLength = Mathf.Clamp(projectionLength, 0f, edgeLength);
 
-        static Vector2 GetRectangleProjectedPoint(Vector2 localMouse, Vector2 chipHalfSize, int face)
-        {
-            // For rectangle, just return the mouse position clamped to the edge
-            switch (face)
-            {
-                case 0: return new Vector2(localMouse.x, chipHalfSize.y);
-                case 1: return new Vector2(chipHalfSize.x, localMouse.y);
-                case 2: return new Vector2(localMouse.x, -chipHalfSize.y);
-                case 3: return new Vector2(-chipHalfSize.x, localMouse.y);
-                default: return localMouse;
-            }
-        }
+				// Calculate the projected point on the edge
+				Vector2 projectedPoint = edgeStart + edgeDirection.normalized * projectionLength;
 
-        static Vector2 GetHexagonProjectedPoint(Vector2 localMouse, Vector2 chipHalfSize, int face, float rotation)
-        {
-            // Use the SAME method as PinInstance.GetHexagonPinPosition
-            float rotationRad = rotation * Mathf.Deg2Rad;
-            float angle = face * Mathf.PI / 3f + rotationRad;
-            
-            // Calculate the point on the hexagon edge (same as PinInstance)
-            float edgeX = Mathf.Cos(angle) * chipHalfSize.x;
-            float edgeY = Mathf.Sin(angle) * chipHalfSize.y;
-            Vector2 edgeCenter = new Vector2(edgeX, edgeY);
-            
-            // Calculate the tangent direction (same as PinInstance)
-            Vector2 tangent = new Vector2(-Mathf.Sin(angle), Mathf.Cos(angle));
-            
-            // Project mouse onto the tangent direction
-            Vector2 toMouse = localMouse - edgeCenter;
-            float tangentOffset = Vector2.Dot(toMouse, tangent);
-            
-            // Apply the offset along the tangent (same as PinInstance)
-            Vector2 offset = tangent * tangentOffset;
-            
-            // Move inward by the inset (same as PinInstance)
-            float outlineOffset = DrawSettings.ChipOutlineWidth / 2f;
-            float inset = DrawSettings.SubChipPinInset;
-            Vector2 inward = new Vector2(-Mathf.Cos(angle), -Mathf.Sin(angle)) * (outlineOffset - inset);
-            
-            // Return the final position (same as PinInstance)
-            return edgeCenter + offset + inward;
-        }
+				// Calculate distance from mouse to projected point
+				float distance = Vector2.Distance(localMouse, projectedPoint);
 
-        static Vector2 GetTriangleProjectedPoint(Vector2 localMouse, Vector2 chipHalfSize, int face, float rotation)
-        {
-            // Use the SAME method as PinInstance.GetTrianglePinPosition
-            float rotationRad = rotation * Mathf.Deg2Rad;
-            float angle = face * 2f * Mathf.PI / 3f + rotationRad;
-            
-            // Calculate the point on the triangle edge (same as PinInstance)
-            float edgeX = Mathf.Cos(angle) * chipHalfSize.x;
-            float edgeY = Mathf.Sin(angle) * chipHalfSize.y;
-            Vector2 edgeCenter = new Vector2(edgeX, edgeY);
-            
-            // Calculate the tangent direction (same as PinInstance)
-            Vector2 tangent = new Vector2(-Mathf.Sin(angle), Mathf.Cos(angle));
-            
-            // Project mouse onto the tangent direction
-            Vector2 toMouse = localMouse - edgeCenter;
-            float tangentOffset = Vector2.Dot(toMouse, tangent);
-            
-            // Apply the offset along the tangent (same as PinInstance)
-            Vector2 offset = tangent * tangentOffset;
-            
-            // Move inward by the inset (same as PinInstance)
-            float outlineOffset = DrawSettings.ChipOutlineWidth / 2f;
-            float inset = DrawSettings.SubChipPinInset;
-            Vector2 inward = new Vector2(-Mathf.Cos(angle), -Mathf.Sin(angle)) * (outlineOffset - inset);
-            
-            // Return the final position (same as PinInstance)
-            return edgeCenter + offset + inward;
-        }
+				// DEBUG: Draw projection line for this edge
+				Draw.Line(localMouse, projectedPoint, 0.01f, Color.cyan);
 
-        static Vector2 GetHexagonProjectedPointDirect(Vector2 localMouse, Vector2 chipHalfSize, float rotation)
-        {
-            // Calculate the hexagon vertices
-            float rotationRad = rotation * Mathf.Deg2Rad;
-            Vector2[] vertices = new Vector2[6];
-            
-            for (int i = 0; i < 6; i++)
-            {
-                float angle = i * Mathf.PI / 3f + rotationRad;
-                vertices[i] = new Vector2(
-                    Mathf.Cos(angle) * chipHalfSize.x,
-                    Mathf.Sin(angle) * chipHalfSize.y
-                );
-            }
-            
-            // DEBUG: Draw hexagon vertices and edges
-            for (int i = 0; i < 6; i++)
-            {
-                // Draw vertex points
-                Draw.Point(vertices[i], 0.1f, Color.red);
-                
-                // Draw edge lines
-                int next = (i + 1) % 6;
-                Draw.Line(vertices[i], vertices[next], 0.02f, Color.yellow);
-            }
-            
-            // Find the closest edge by projecting mouse position onto each edge
-            int closestFace = 0;
-            float closestDistance = float.MaxValue;
-            Vector2 bestProjectedPoint = Vector2.zero;
-            
-            for (int i = 0; i < 6; i++)
-            {
-                int next = (i + 1) % 6;
-                Vector2 edgeStart = vertices[i];
-                Vector2 edgeEnd = vertices[next];
-                Vector2 edgeDirection = edgeEnd - edgeStart;
-                
-                // Project mouse position onto this edge
-                Vector2 toMouse = localMouse - edgeStart;
-                float projectionLength = Vector2.Dot(toMouse, edgeDirection.normalized);
-                projectionLength = Mathf.Clamp(projectionLength, 0f, edgeDirection.magnitude);
-                
-                // Calculate the projected point on the edge
-                Vector2 projectedPoint = edgeStart + edgeDirection.normalized * projectionLength;
-                
-                // Calculate distance from mouse to projected point
-                float distance = Vector2.Distance(localMouse, projectedPoint);
-                
-                // DEBUG: Draw projection line for this edge
-                Draw.Line(localMouse, projectedPoint, 0.01f, Color.cyan);
-                
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestFace = i;
-                    bestProjectedPoint = projectedPoint;
-                }
-            }
-            
-            // DEBUG: Highlight the closest edge and projection
-            int nextClosest = (closestFace + 1) % 6;
-            Draw.Line(vertices[closestFace], vertices[nextClosest], 0.05f, Color.green);
-            Draw.Line(localMouse, bestProjectedPoint, 0.03f, Color.magenta);
-            Draw.Point(bestProjectedPoint, 0.08f, Color.green);
-            
-            // For direct positioning, just return the projected point without additional transformations
-            return bestProjectedPoint;
-        }
+				if (distance < closestDistance)
+				{
+					closestDistance = distance;
+					closestFace = i;
+					bestProjectedPoint = projectedPoint;
 
-        static Vector2 GetTriangleProjectedPointDirect(Vector2 localMouse, Vector2 chipHalfSize, float rotation)
-        {
-            // Calculate the triangle vertices
-            float rotationRad = rotation * Mathf.Deg2Rad;
-            Vector2[] vertices = new Vector2[3];
-            
-            for (int i = 0; i < 3; i++)
-            {
-                float angle = i * 2f * Mathf.PI / 3f + rotationRad;
-                vertices[i] = new Vector2(
-                    Mathf.Cos(angle) * chipHalfSize.x,
-                    Mathf.Sin(angle) * chipHalfSize.y
-                );
-            }
-            
-            // DEBUG: Draw triangle vertices and edges
-            for (int i = 0; i < 3; i++)
-            {
-                // Draw vertex points
-                Draw.Point(vertices[i], 0.1f, Color.red);
-                
-                // Draw edge lines
-                int next = (i + 1) % 3;
-                Draw.Line(vertices[i], vertices[next], 0.02f, Color.yellow);
-            }
-            
-            // Find the closest edge by projecting mouse position onto each edge
-            int closestFace = 0;
-            float closestDistance = float.MaxValue;
-            Vector2 bestProjectedPoint = Vector2.zero;
-            
-            for (int i = 0; i < 3; i++)
-            {
-                int next = (i + 1) % 3;
-                Vector2 edgeStart = vertices[i];
-                Vector2 edgeEnd = vertices[next];
-                Vector2 edgeDirection = edgeEnd - edgeStart;
-                
-                // Project mouse position onto this edge
-                Vector2 toMouse = localMouse - edgeStart;
-                float projectionLength = Vector2.Dot(toMouse, edgeDirection.normalized);
-                projectionLength = Mathf.Clamp(projectionLength, 0f, edgeDirection.magnitude);
-                
-                // Calculate the projected point on the edge
-                Vector2 projectedPoint = edgeStart + edgeDirection.normalized * projectionLength;
-                
-                // Calculate distance from mouse to projected point
-                float distance = Vector2.Distance(localMouse, projectedPoint);
-                
-                // DEBUG: Draw projection line for this edge
-                Draw.Line(localMouse, projectedPoint, 0.01f, Color.cyan);
-                
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestFace = i;
-                    bestProjectedPoint = projectedPoint;
-                }
-            }
-            
-            // DEBUG: Highlight the closest edge and projection
-            int nextClosest = (closestFace + 1) % 3;
-            Draw.Line(vertices[closestFace], vertices[nextClosest], 0.05f, Color.green);
-            Draw.Line(localMouse, bestProjectedPoint, 0.03f, Color.magenta);
-            Draw.Point(bestProjectedPoint, 0.08f, Color.green);
-            
-            // For direct positioning, just return the projected point without additional transformations
-            return bestProjectedPoint;
-        }
+					// Calculate offset along the TANGENT direction (perpendicular to edge)
+					// This matches how PinInstance.GetHexagonPinPosition uses localPosY
+					float faceAngle = i * Mathf.PI / 3f + rotationRad; // Match PinInstance calculation
+					Vector2 tangent = new Vector2(-Mathf.Sin(faceAngle), Mathf.Cos(faceAngle)); // Match PinInstance exactly
+					float tangentOffset = Vector2.Dot(localMouse, tangent);
+					bestOffset = tangentOffset;
+				}
+			}
 
-        static Vector2 GetCustomPolygonProjectedPointDirect(Vector2 localMouse, Vector2 chipHalfSize, float rotation)
-        {
-            // Get custom polygon data
-            CustomPolygonData polygon = ChipSaveMenu.ActiveCustomizeChip?.Description.CustomPolygon;
-            if (polygon == null || polygon.Vertices == null || polygon.Vertices.Length < 3)
-            {
-                // Fallback to rectangle
-                return GetRectangleProjectedPointDirect(localMouse, chipHalfSize);
-            }
+			// DEBUG: Highlight the closest edge and projection
+			int nextClosest = (closestFace + 1) % 6;
+			Draw.Line(vertices[closestFace], vertices[nextClosest], 0.05f, Color.green);
+			Draw.Line(localMouse, bestProjectedPoint, 0.03f, Color.magenta);
+			Draw.Point(bestProjectedPoint, 0.08f, Color.green);
 
-            float rotationRad = rotation * Mathf.Deg2Rad;
-            
-            // Convert normalized vertices to local positions
-            Vector2[] vertices = new Vector2[polygon.Vertices.Length];
-            for (int i = 0; i < polygon.Vertices.Length; i++)
-            {
-                Vector2 normalized = polygon.Vertices[i].ToVector2();
-                Vector2 scaled = new Vector2(normalized.x * chipHalfSize.x, normalized.y * chipHalfSize.y);
-                vertices[i] = RotateVector(scaled, rotationRad);
-            }
+			return (closestFace, bestOffset);
+		}
 
-            // Find the closest edge
-            float closestDistance = float.MaxValue;
-            Vector2 bestProjectedPoint = Vector2.zero;
+		static (int face, float offset) GetClosestTrianglePinPosition(Vector2 localMouse, Vector2 chipHalfSize, float rotation)
+		{
+			// Calculate the 3 vertices of the triangle
+			float rotationRad = rotation * Mathf.Deg2Rad;
+			Vector2[] vertices = new Vector2[3];
 
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                int next = (i + 1) % vertices.Length;
-                
-                // Check if this edge is curved
-                if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
-                {
-                    // Project onto curved edge using bezier curve
-                    Vector2 edgeMidpoint = (vertices[i] + vertices[next]) * 0.5f;
-                    Vector2 edgeDirection = vertices[next] - vertices[i];
-                    Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
-                    Vector2 controlPoint = edgeMidpoint + perpendicular * polygon.Edges[i].CurveStrength;
+			for (int i = 0; i < 3; i++)
+			{
+				float angle = i * 2f * Mathf.PI / 3f + rotationRad; // Match PinInstance.GetTrianglePinPosition
+				vertices[i] = new Vector2(
+					Mathf.Cos(angle) * chipHalfSize.x,
+					Mathf.Sin(angle) * chipHalfSize.y
+				);
+			}
 
-                    // Sample the curve and find the closest point
-                    int samples = 20;
-                    for (int s = 0; s <= samples; s++)
-                    {
-                        float t = s / (float)samples;
-                        Vector2 curvePoint = QuadraticBezier(vertices[i], controlPoint, vertices[next], t);
-                        float distance = Vector2.Distance(localMouse, curvePoint);
+			// DEBUG: Draw triangle vertices and edges
+			for (int i = 0; i < 3; i++)
+			{
+				// Draw vertex points
+				Draw.Point(vertices[i], 0.1f, Color.red);
 
-                        if (distance < closestDistance)
-                        {
-                            closestDistance = distance;
-                            bestProjectedPoint = curvePoint;
-                        }
-                    }
-                }
-                else
-                {
-                    // Project onto straight edge
-                    Vector2 edgeStart = vertices[i];
-                    Vector2 edgeEnd = vertices[next];
-                    Vector2 edgeDirection = edgeEnd - edgeStart;
-                    
-                    Vector2 toMouse = localMouse - edgeStart;
-                    float projectionLength = Vector2.Dot(toMouse, edgeDirection.normalized);
-                    projectionLength = Mathf.Clamp(projectionLength, 0f, edgeDirection.magnitude);
-                    
-                    Vector2 projectedPoint = edgeStart + edgeDirection.normalized * projectionLength;
-                    float distance = Vector2.Distance(localMouse, projectedPoint);
-                    
-                    if (distance < closestDistance)
-                    {
-                        closestDistance = distance;
-                        bestProjectedPoint = projectedPoint;
-                    }
-                }
-            }
+				// Draw edge lines
+				int next = (i + 1) % 3;
+				Draw.Line(vertices[i], vertices[next], 0.02f, Color.yellow);
+			}
 
-            return bestProjectedPoint;
-        }
+			// Find the closest edge by projecting mouse position onto each edge
+			int closestFace = 0;
+			float closestDistance = float.MaxValue;
+			float bestOffset = 0f;
+			Vector2 bestProjectedPoint = Vector2.zero;
 
-        static Vector2 QuadraticBezier(Vector2 p0, Vector2 p1, Vector2 p2, float t)
-        {
-            float u = 1 - t;
-            float tt = t * t;
-            float uu = u * u;
-            
-            Vector2 point = uu * p0;
-            point += 2 * u * t * p1;
-            point += tt * p2;
-            
-            return point;
-        }
+			for (int i = 0; i < 3; i++)
+			{
+				int next = (i + 1) % 3;
+				Vector2 edgeStart = vertices[i];
+				Vector2 edgeEnd = vertices[next];
+				Vector2 edgeDirection = edgeEnd - edgeStart;
 
-        static Vector2 GetRectangleProjectedPointDirect(Vector2 localMouse, Vector2 chipHalfSize)
-        {
-            // For rectangle, find the closest edge and project onto it
-            float distTop = Mathf.Abs(localMouse.y - chipHalfSize.y);
-            float distBottom = Mathf.Abs(localMouse.y + chipHalfSize.y);
-            float distRight = Mathf.Abs(localMouse.x - chipHalfSize.x);
-            float distLeft = Mathf.Abs(localMouse.x + chipHalfSize.x);
+				// Project mouse position onto this edge
+				Vector2 toMouse = localMouse - edgeStart;
+				float projectionLength = Vector2.Dot(toMouse, edgeDirection.normalized);
 
-            int closestFace = 0;
-            float minDist = distTop;
+				// Clamp projection to edge bounds
+				float edgeLength = edgeDirection.magnitude;
+				projectionLength = Mathf.Clamp(projectionLength, 0f, edgeLength);
 
-            if (distRight < minDist) { closestFace = 1; minDist = distRight; }
-            if (distBottom < minDist) { closestFace = 2; minDist = distBottom; }
-            if (distLeft < minDist) { closestFace = 3; }
+				// Calculate the projected point on the edge
+				Vector2 projectedPoint = edgeStart + edgeDirection.normalized * projectionLength;
 
-            // Return the projected point on the closest edge
-            switch (closestFace)
-            {
-                case 0: return new Vector2(localMouse.x, chipHalfSize.y);
-                case 1: return new Vector2(chipHalfSize.x, localMouse.y);
-                case 2: return new Vector2(localMouse.x, -chipHalfSize.y);
-                case 3: return new Vector2(-chipHalfSize.x, localMouse.y);
-                default: return localMouse;
-            }
-        }
+				// Calculate distance from mouse to projected point
+				float distance = Vector2.Distance(localMouse, projectedPoint);
 
-        static Vector2 GetEdgeDirectionForShape(ChipShapeType shapeType, float rotation, int face, Vector2 chipHalfSize)
-        {
-            switch (shapeType)
-            {
-                case ChipShapeType.Rectangle:
-                    return GetRectangleEdgeDirection(face, chipHalfSize);
-                case ChipShapeType.Hexagon:
-                    return GetHexagonEdgeDirection(face, chipHalfSize, rotation);
-                case ChipShapeType.Triangle:
-                    return GetTriangleEdgeDirection(face, chipHalfSize, rotation);
-                default:
-                    return GetRectangleEdgeDirection(face, chipHalfSize);
-            }
-        }
+				// DEBUG: Draw projection line for this edge
+				Draw.Line(localMouse, projectedPoint, 0.01f, Color.cyan);
 
-        static Vector2 GetRectangleEdgeDirection(int face, Vector2 chipHalfSize)
-        {
-            switch (face)
-            {
-                case 0: return new Vector2(1, 0); // Top edge (left to right)
-                case 1: return new Vector2(0, -1); // Right edge (top to bottom)
-                case 2: return new Vector2(-1, 0); // Bottom edge (right to left)
-                case 3: return new Vector2(0, 1); // Left edge (bottom to top)
-                default: return new Vector2(1, 0);
-            }
-        }
+				if (distance < closestDistance)
+				{
+					closestDistance = distance;
+					closestFace = i;
+					bestProjectedPoint = projectedPoint;
 
-        static Vector2 GetHexagonEdgeDirection(int face, Vector2 chipHalfSize, float rotation)
-        {
-            float rotationRad = rotation * Mathf.Deg2Rad;
-            Vector2[] vertices = new Vector2[6];
-            
-            for (int i = 0; i < 6; i++)
-            {
-                float angle = i * Mathf.PI / 3f + rotationRad;
-                vertices[i] = new Vector2(
-                    Mathf.Cos(angle) * chipHalfSize.x,
-                    Mathf.Sin(angle) * chipHalfSize.y
-                );
-            }
-            
-            int next = (face + 1) % 6;
-            return vertices[next] - vertices[face];
-        }
+					// Calculate offset along the TANGENT direction (perpendicular to edge)
+					// This matches how PinInstance.GetTrianglePinPosition uses localPosY
+					float faceAngle = i * 2f * Mathf.PI / 3f + rotationRad; // Match PinInstance calculation
+					Vector2 tangent = new Vector2(-Mathf.Sin(faceAngle), Mathf.Cos(faceAngle)); // Match PinInstance exactly
+					float tangentOffset = Vector2.Dot(localMouse, tangent);
+					bestOffset = tangentOffset;
+				}
+			}
 
-        static Vector2 GetTriangleEdgeDirection(int face, Vector2 chipHalfSize, float rotation)
-        {
-            float rotationRad = rotation * Mathf.Deg2Rad;
-            Vector2[] vertices = new Vector2[3];
-            
-            for (int i = 0; i < 3; i++)
-            {
-                float angle = i * 2f * Mathf.PI / 3f + rotationRad;
-                vertices[i] = new Vector2(
-                    Mathf.Cos(angle) * chipHalfSize.x,
-                    Mathf.Sin(angle) * chipHalfSize.y
-                );
-            }
-            
-            int next = (face + 1) % 3;
-            return vertices[next] - vertices[face];
-        }
+			// DEBUG: Highlight the closest edge and projection
+			int nextClosest = (closestFace + 1) % 3;
+			Draw.Line(vertices[closestFace], vertices[nextClosest], 0.05f, Color.green);
+			Draw.Line(localMouse, bestProjectedPoint, 0.03f, Color.magenta);
+			Draw.Point(bestProjectedPoint, 0.08f, Color.green);
 
-        static void HandlePolygonEditing(SubChipInstance chip)
+			return (closestFace, bestOffset);
+		}
+
+		static float GetPinOffsetAlongFace(ChipShapeType shapeType, float rotation, int face, float offset, Vector2 chipHalfSize, float pinHeight, bool shouldSnapToGrid)
+		{
+			switch (shapeType)
+			{
+				case ChipShapeType.Rectangle:
+					return GetRectanglePinOffset(face, offset, chipHalfSize, pinHeight, shouldSnapToGrid);
+				case ChipShapeType.Hexagon:
+					return GetHexagonPinOffset(face, offset, chipHalfSize, pinHeight, shouldSnapToGrid);
+				case ChipShapeType.Triangle:
+					return GetTrianglePinOffset(face, offset, chipHalfSize, pinHeight, shouldSnapToGrid);
+				default:
+					return GetRectanglePinOffset(face, offset, chipHalfSize, pinHeight, shouldSnapToGrid);
+			}
+		}
+
+		static float GetRectanglePinOffset(int face, float offset, Vector2 chipHalfSize, float pinHeight, bool shouldSnapToGrid)
+		{
+			float maxOffset;
+			if (face == 0 || face == 2) // Horizontal faces
+			{
+				maxOffset = chipHalfSize.x - pinHeight / 2f;
+			}
+			else // Vertical faces
+			{
+				maxOffset = chipHalfSize.y - pinHeight / 2f;
+			}
+
+			return shouldSnapToGrid ? GridHelper.ClampToGrid(offset, -maxOffset, maxOffset) :
+				Mathf.Clamp(offset, -maxOffset, maxOffset);
+		}
+
+		static float GetHexagonPinOffset(int face, float offset, Vector2 chipHalfSize, float pinHeight, bool shouldSnapToGrid)
+		{
+			// For hexagon, calculate the actual length of the face
+			// Each face of a hexagon has length = chipHalfSize.x (radius)
+			float faceLength = chipHalfSize.x;
+			float maxOffset = faceLength - pinHeight / 2f;
+
+			return shouldSnapToGrid ? GridHelper.ClampToGrid(offset, -maxOffset, maxOffset) :
+				Mathf.Clamp(offset, -maxOffset, maxOffset);
+		}
+
+		static float GetTrianglePinOffset(int face, float offset, Vector2 chipHalfSize, float pinHeight, bool shouldSnapToGrid)
+		{
+			// For triangle, calculate the actual length of the face
+			// Each face of an equilateral triangle has length = chipHalfSize.x * sqrt(3)
+			float faceLength = chipHalfSize.x * Mathf.Sqrt(3f);
+			float maxOffset = faceLength - pinHeight / 2f;
+
+			return shouldSnapToGrid ? GridHelper.ClampToGrid(offset, -maxOffset, maxOffset) :
+				Mathf.Clamp(offset, -maxOffset, maxOffset);
+		}
+
+		static Vector2 RotateVector(Vector2 vector, float rotationRad)
+		{
+			float cos = Mathf.Cos(rotationRad);
+			float sin = Mathf.Sin(rotationRad);
+			return new Vector2(
+				vector.x * cos - vector.y * sin,
+				vector.x * sin + vector.y * cos
+			);
+		}
+
+		static Vector2 GetProjectedPointForShape(ChipShapeType shapeType, float rotation, Vector2 localMouse, Vector2 chipHalfSize)
+		{
+			// Find the closest edge and get the projected point
+			switch (shapeType)
+			{
+				case ChipShapeType.Rectangle:
+					return GetRectangleProjectedPointDirect(localMouse, chipHalfSize);
+				case ChipShapeType.Hexagon:
+					return GetHexagonProjectedPointDirect(localMouse, chipHalfSize, rotation);
+				case ChipShapeType.Triangle:
+					return GetTriangleProjectedPointDirect(localMouse, chipHalfSize, rotation);
+				case ChipShapeType.CustomPolygon:
+					return GetCustomPolygonProjectedPointDirect(localMouse, chipHalfSize, rotation);
+				default:
+					return GetRectangleProjectedPointDirect(localMouse, chipHalfSize);
+			}
+		}
+
+		static Vector2 GetRectangleProjectedPoint(Vector2 localMouse, Vector2 chipHalfSize, int face)
+		{
+			// For rectangle, just return the mouse position clamped to the edge
+			switch (face)
+			{
+				case 0: return new Vector2(localMouse.x, chipHalfSize.y);
+				case 1: return new Vector2(chipHalfSize.x, localMouse.y);
+				case 2: return new Vector2(localMouse.x, -chipHalfSize.y);
+				case 3: return new Vector2(-chipHalfSize.x, localMouse.y);
+				default: return localMouse;
+			}
+		}
+
+		static Vector2 GetHexagonProjectedPoint(Vector2 localMouse, Vector2 chipHalfSize, int face, float rotation)
+		{
+			// Use the SAME method as PinInstance.GetHexagonPinPosition
+			float rotationRad = rotation * Mathf.Deg2Rad;
+			float angle = face * Mathf.PI / 3f + rotationRad;
+
+			// Calculate the point on the hexagon edge (same as PinInstance)
+			float edgeX = Mathf.Cos(angle) * chipHalfSize.x;
+			float edgeY = Mathf.Sin(angle) * chipHalfSize.y;
+			Vector2 edgeCenter = new Vector2(edgeX, edgeY);
+
+			// Calculate the tangent direction (same as PinInstance)
+			Vector2 tangent = new Vector2(-Mathf.Sin(angle), Mathf.Cos(angle));
+
+			// Project mouse onto the tangent direction
+			Vector2 toMouse = localMouse - edgeCenter;
+			float tangentOffset = Vector2.Dot(toMouse, tangent);
+
+			// Apply the offset along the tangent (same as PinInstance)
+			Vector2 offset = tangent * tangentOffset;
+
+			// Move inward by the inset (same as PinInstance)
+			float outlineOffset = DrawSettings.ChipOutlineWidth / 2f;
+			float inset = DrawSettings.SubChipPinInset;
+			Vector2 inward = new Vector2(-Mathf.Cos(angle), -Mathf.Sin(angle)) * (outlineOffset - inset);
+
+			// Return the final position (same as PinInstance)
+			return edgeCenter + offset + inward;
+		}
+
+		static Vector2 GetTriangleProjectedPoint(Vector2 localMouse, Vector2 chipHalfSize, int face, float rotation)
+		{
+			// Use the SAME method as PinInstance.GetTrianglePinPosition
+			float rotationRad = rotation * Mathf.Deg2Rad;
+			float angle = face * 2f * Mathf.PI / 3f + rotationRad;
+
+			// Calculate the point on the triangle edge (same as PinInstance)
+			float edgeX = Mathf.Cos(angle) * chipHalfSize.x;
+			float edgeY = Mathf.Sin(angle) * chipHalfSize.y;
+			Vector2 edgeCenter = new Vector2(edgeX, edgeY);
+
+			// Calculate the tangent direction (same as PinInstance)
+			Vector2 tangent = new Vector2(-Mathf.Sin(angle), Mathf.Cos(angle));
+
+			// Project mouse onto the tangent direction
+			Vector2 toMouse = localMouse - edgeCenter;
+			float tangentOffset = Vector2.Dot(toMouse, tangent);
+
+			// Apply the offset along the tangent (same as PinInstance)
+			Vector2 offset = tangent * tangentOffset;
+
+			// Move inward by the inset (same as PinInstance)
+			float outlineOffset = DrawSettings.ChipOutlineWidth / 2f;
+			float inset = DrawSettings.SubChipPinInset;
+			Vector2 inward = new Vector2(-Mathf.Cos(angle), -Mathf.Sin(angle)) * (outlineOffset - inset);
+
+			// Return the final position (same as PinInstance)
+			return edgeCenter + offset + inward;
+		}
+
+		static Vector2 GetHexagonProjectedPointDirect(Vector2 localMouse, Vector2 chipHalfSize, float rotation)
+		{
+			// Calculate the hexagon vertices
+			float rotationRad = rotation * Mathf.Deg2Rad;
+			Vector2[] vertices = new Vector2[6];
+
+			for (int i = 0; i < 6; i++)
+			{
+				float angle = i * Mathf.PI / 3f + rotationRad;
+				vertices[i] = new Vector2(
+					Mathf.Cos(angle) * chipHalfSize.x,
+					Mathf.Sin(angle) * chipHalfSize.y
+				);
+			}
+
+			// DEBUG: Draw hexagon vertices and edges
+			for (int i = 0; i < 6; i++)
+			{
+				// Draw vertex points
+				Draw.Point(vertices[i], 0.1f, Color.red);
+
+				// Draw edge lines
+				int next = (i + 1) % 6;
+				Draw.Line(vertices[i], vertices[next], 0.02f, Color.yellow);
+			}
+
+			// Find the closest edge by projecting mouse position onto each edge
+			int closestFace = 0;
+			float closestDistance = float.MaxValue;
+			Vector2 bestProjectedPoint = Vector2.zero;
+
+			for (int i = 0; i < 6; i++)
+			{
+				int next = (i + 1) % 6;
+				Vector2 edgeStart = vertices[i];
+				Vector2 edgeEnd = vertices[next];
+				Vector2 edgeDirection = edgeEnd - edgeStart;
+
+				// Project mouse position onto this edge
+				Vector2 toMouse = localMouse - edgeStart;
+				float projectionLength = Vector2.Dot(toMouse, edgeDirection.normalized);
+				projectionLength = Mathf.Clamp(projectionLength, 0f, edgeDirection.magnitude);
+
+				// Calculate the projected point on the edge
+				Vector2 projectedPoint = edgeStart + edgeDirection.normalized * projectionLength;
+
+				// Calculate distance from mouse to projected point
+				float distance = Vector2.Distance(localMouse, projectedPoint);
+
+				// DEBUG: Draw projection line for this edge
+				Draw.Line(localMouse, projectedPoint, 0.01f, Color.cyan);
+
+				if (distance < closestDistance)
+				{
+					closestDistance = distance;
+					closestFace = i;
+					bestProjectedPoint = projectedPoint;
+				}
+			}
+
+			// DEBUG: Highlight the closest edge and projection
+			int nextClosest = (closestFace + 1) % 6;
+			Draw.Line(vertices[closestFace], vertices[nextClosest], 0.05f, Color.green);
+			Draw.Line(localMouse, bestProjectedPoint, 0.03f, Color.magenta);
+			Draw.Point(bestProjectedPoint, 0.08f, Color.green);
+
+			// For direct positioning, just return the projected point without additional transformations
+			return bestProjectedPoint;
+		}
+
+		static Vector2 GetTriangleProjectedPointDirect(Vector2 localMouse, Vector2 chipHalfSize, float rotation)
+		{
+			// Calculate the triangle vertices
+			float rotationRad = rotation * Mathf.Deg2Rad;
+			Vector2[] vertices = new Vector2[3];
+
+			for (int i = 0; i < 3; i++)
+			{
+				float angle = i * 2f * Mathf.PI / 3f + rotationRad;
+				vertices[i] = new Vector2(
+					Mathf.Cos(angle) * chipHalfSize.x,
+					Mathf.Sin(angle) * chipHalfSize.y
+				);
+			}
+
+			// DEBUG: Draw triangle vertices and edges
+			for (int i = 0; i < 3; i++)
+			{
+				// Draw vertex points
+				Draw.Point(vertices[i], 0.1f, Color.red);
+
+				// Draw edge lines
+				int next = (i + 1) % 3;
+				Draw.Line(vertices[i], vertices[next], 0.02f, Color.yellow);
+			}
+
+			// Find the closest edge by projecting mouse position onto each edge
+			int closestFace = 0;
+			float closestDistance = float.MaxValue;
+			Vector2 bestProjectedPoint = Vector2.zero;
+
+			for (int i = 0; i < 3; i++)
+			{
+				int next = (i + 1) % 3;
+				Vector2 edgeStart = vertices[i];
+				Vector2 edgeEnd = vertices[next];
+				Vector2 edgeDirection = edgeEnd - edgeStart;
+
+				// Project mouse position onto this edge
+				Vector2 toMouse = localMouse - edgeStart;
+				float projectionLength = Vector2.Dot(toMouse, edgeDirection.normalized);
+				projectionLength = Mathf.Clamp(projectionLength, 0f, edgeDirection.magnitude);
+
+				// Calculate the projected point on the edge
+				Vector2 projectedPoint = edgeStart + edgeDirection.normalized * projectionLength;
+
+				// Calculate distance from mouse to projected point
+				float distance = Vector2.Distance(localMouse, projectedPoint);
+
+				// DEBUG: Draw projection line for this edge
+				Draw.Line(localMouse, projectedPoint, 0.01f, Color.cyan);
+
+				if (distance < closestDistance)
+				{
+					closestDistance = distance;
+					closestFace = i;
+					bestProjectedPoint = projectedPoint;
+				}
+			}
+
+			// DEBUG: Highlight the closest edge and projection
+			int nextClosest = (closestFace + 1) % 3;
+			Draw.Line(vertices[closestFace], vertices[nextClosest], 0.05f, Color.green);
+			Draw.Line(localMouse, bestProjectedPoint, 0.03f, Color.magenta);
+			Draw.Point(bestProjectedPoint, 0.08f, Color.green);
+
+			// For direct positioning, just return the projected point without additional transformations
+			return bestProjectedPoint;
+		}
+
+		static Vector2 GetCustomPolygonProjectedPointDirect(Vector2 localMouse, Vector2 chipHalfSize, float rotation)
+		{
+			// Get custom polygon data
+			CustomPolygonData polygon = ChipSaveMenu.ActiveCustomizeChip?.Description.CustomPolygon;
+			if (polygon == null || polygon.Vertices == null || polygon.Vertices.Length < 3)
+			{
+				// Fallback to rectangle
+				return GetRectangleProjectedPointDirect(localMouse, chipHalfSize);
+			}
+
+			float rotationRad = rotation * Mathf.Deg2Rad;
+
+			// Convert normalized vertices to local positions
+			Vector2[] vertices = new Vector2[polygon.Vertices.Length];
+			for (int i = 0; i < polygon.Vertices.Length; i++)
+			{
+				Vector2 normalized = polygon.Vertices[i].ToVector2();
+				Vector2 scaled = new Vector2(normalized.x * chipHalfSize.x, normalized.y * chipHalfSize.y);
+				vertices[i] = RotateVector(scaled, rotationRad);
+			}
+
+			// Find the closest edge
+			float closestDistance = float.MaxValue;
+			Vector2 bestProjectedPoint = Vector2.zero;
+
+			for (int i = 0; i < vertices.Length; i++)
+			{
+				int next = (i + 1) % vertices.Length;
+
+				// Check if this edge is curved
+				if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
+				{
+					// Project onto curved edge using bezier curve
+					Vector2 edgeMidpoint = (vertices[i] + vertices[next]) * 0.5f;
+					Vector2 edgeDirection = vertices[next] - vertices[i];
+					Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
+					Vector2 controlPoint = edgeMidpoint + perpendicular * polygon.Edges[i].CurveStrength;
+
+					// Sample the curve and find the closest point
+					int samples = 20;
+					for (int s = 0; s <= samples; s++)
+					{
+						float t = s / (float)samples;
+						Vector2 curvePoint = QuadraticBezier(vertices[i], controlPoint, vertices[next], t);
+						float distance = Vector2.Distance(localMouse, curvePoint);
+
+						if (distance < closestDistance)
+						{
+							closestDistance = distance;
+							bestProjectedPoint = curvePoint;
+						}
+					}
+				}
+				else
+				{
+					// Project onto straight edge
+					Vector2 edgeStart = vertices[i];
+					Vector2 edgeEnd = vertices[next];
+					Vector2 edgeDirection = edgeEnd - edgeStart;
+
+					Vector2 toMouse = localMouse - edgeStart;
+					float projectionLength = Vector2.Dot(toMouse, edgeDirection.normalized);
+					projectionLength = Mathf.Clamp(projectionLength, 0f, edgeDirection.magnitude);
+
+					Vector2 projectedPoint = edgeStart + edgeDirection.normalized * projectionLength;
+					float distance = Vector2.Distance(localMouse, projectedPoint);
+
+					if (distance < closestDistance)
+					{
+						closestDistance = distance;
+						bestProjectedPoint = projectedPoint;
+					}
+				}
+			}
+
+			return bestProjectedPoint;
+		}
+
+		static Vector2 QuadraticBezier(Vector2 p0, Vector2 p1, Vector2 p2, float t)
+		{
+			float u = 1 - t;
+			float tt = t * t;
+			float uu = u * u;
+
+			Vector2 point = uu * p0;
+			point += 2 * u * t * p1;
+			point += tt * p2;
+
+			return point;
+		}
+
+		static Vector2 GetRectangleProjectedPointDirect(Vector2 localMouse, Vector2 chipHalfSize)
+		{
+			// For rectangle, find the closest edge and project onto it
+			float distTop = Mathf.Abs(localMouse.y - chipHalfSize.y);
+			float distBottom = Mathf.Abs(localMouse.y + chipHalfSize.y);
+			float distRight = Mathf.Abs(localMouse.x - chipHalfSize.x);
+			float distLeft = Mathf.Abs(localMouse.x + chipHalfSize.x);
+
+			int closestFace = 0;
+			float minDist = distTop;
+
+			if (distRight < minDist) { closestFace = 1; minDist = distRight; }
+			if (distBottom < minDist) { closestFace = 2; minDist = distBottom; }
+			if (distLeft < minDist) { closestFace = 3; }
+
+			// Return the projected point on the closest edge
+			switch (closestFace)
+			{
+				case 0: return new Vector2(localMouse.x, chipHalfSize.y);
+				case 1: return new Vector2(chipHalfSize.x, localMouse.y);
+				case 2: return new Vector2(localMouse.x, -chipHalfSize.y);
+				case 3: return new Vector2(-chipHalfSize.x, localMouse.y);
+				default: return localMouse;
+			}
+		}
+
+		static Vector2 GetEdgeDirectionForShape(ChipShapeType shapeType, float rotation, int face, Vector2 chipHalfSize)
+		{
+			switch (shapeType)
+			{
+				case ChipShapeType.Rectangle:
+					return GetRectangleEdgeDirection(face, chipHalfSize);
+				case ChipShapeType.Hexagon:
+					return GetHexagonEdgeDirection(face, chipHalfSize, rotation);
+				case ChipShapeType.Triangle:
+					return GetTriangleEdgeDirection(face, chipHalfSize, rotation);
+				default:
+					return GetRectangleEdgeDirection(face, chipHalfSize);
+			}
+		}
+
+		static Vector2 GetRectangleEdgeDirection(int face, Vector2 chipHalfSize)
+		{
+			switch (face)
+			{
+				case 0: return new Vector2(1, 0); // Top edge (left to right)
+				case 1: return new Vector2(0, -1); // Right edge (top to bottom)
+				case 2: return new Vector2(-1, 0); // Bottom edge (right to left)
+				case 3: return new Vector2(0, 1); // Left edge (bottom to top)
+				default: return new Vector2(1, 0);
+			}
+		}
+
+		static Vector2 GetHexagonEdgeDirection(int face, Vector2 chipHalfSize, float rotation)
+		{
+			float rotationRad = rotation * Mathf.Deg2Rad;
+			Vector2[] vertices = new Vector2[6];
+
+			for (int i = 0; i < 6; i++)
+			{
+				float angle = i * Mathf.PI / 3f + rotationRad;
+				vertices[i] = new Vector2(
+					Mathf.Cos(angle) * chipHalfSize.x,
+					Mathf.Sin(angle) * chipHalfSize.y
+				);
+			}
+
+			int next = (face + 1) % 6;
+			return vertices[next] - vertices[face];
+		}
+
+		static Vector2 GetTriangleEdgeDirection(int face, Vector2 chipHalfSize, float rotation)
+		{
+			float rotationRad = rotation * Mathf.Deg2Rad;
+			Vector2[] vertices = new Vector2[3];
+
+			for (int i = 0; i < 3; i++)
+			{
+				float angle = i * 2f * Mathf.PI / 3f + rotationRad;
+				vertices[i] = new Vector2(
+					Mathf.Cos(angle) * chipHalfSize.x,
+					Mathf.Sin(angle) * chipHalfSize.y
+				);
+			}
+
+			int next = (face + 1) % 3;
+			return vertices[next] - vertices[face];
+		}
+
+		static void HandlePolygonEditing(SubChipInstance chip)
 		{
 			// Only handle polygon editing if we're using a custom polygon
 			if (chip.Description.ShapeType != ChipShapeType.CustomPolygon || chip.Description.CustomPolygon == null)
@@ -1288,15 +1305,15 @@ namespace DLS.Graphics
 				polygon.Vertices[selectedPolygonVertex].X = normalized.x;
 				polygon.Vertices[selectedPolygonVertex].Y = normalized.y;
 
-			// End drag on mouse release
-			if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
-			{
-				isDraggingVertex = false;
-				// Keep selectedPolygonVertex set (don't reset to -1) to maintain selection
-				selectedPolygonEdge = -1; // Deselect edge when vertex is selected
-				// Update pin positions after vertex change
-				UpdatePinPositionsForCustomPolygon(chip);
-			}
+				// End drag on mouse release
+				if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
+				{
+					isDraggingVertex = false;
+					// Keep selectedPolygonVertex set (don't reset to -1) to maintain selection
+					selectedPolygonEdge = -1; // Deselect edge when vertex is selected
+											  // Update pin positions after vertex change
+					UpdatePinPositionsForCustomPolygon(chip);
+				}
 			}
 			else if (isDraggingEdgeCurve && selectedPolygonEdge >= 0)
 			{
@@ -1313,15 +1330,15 @@ namespace DLS.Graphics
 				polygon.Edges[selectedPolygonEdge].CurveStrength = curveStrength;
 				polygon.Edges[selectedPolygonEdge].IsCurved = Mathf.Abs(curveStrength) > 0.01f;
 
-			// End drag on mouse release
-			if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
-			{
-				isDraggingEdgeCurve = false;
-				// Keep selectedPolygonEdge set (don't reset to -1) to maintain selection
-				selectedPolygonVertex = -1; // Deselect vertex when edge is selected
-				// Update pin positions after edge curve change
-				UpdatePinPositionsForCustomPolygon(chip);
-			}
+				// End drag on mouse release
+				if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
+				{
+					isDraggingEdgeCurve = false;
+					// Keep selectedPolygonEdge set (don't reset to -1) to maintain selection
+					selectedPolygonVertex = -1; // Deselect vertex when edge is selected
+												// Update pin positions after edge curve change
+					UpdatePinPositionsForCustomPolygon(chip);
+				}
 			}
 			else if (isDraggingRotation)
 			{
@@ -1330,13 +1347,13 @@ namespace DLS.Graphics
 				float currentAngle = Mathf.Atan2(toMouse.y, toMouse.x);
 				float angleDelta = currentAngle - rotationHandleStartAngle;
 				float newRotation = chip.Description.ShapeRotation + angleDelta * Mathf.Rad2Deg;
-				
+
 				// Keep rotation in reasonable range
 				newRotation = newRotation % 360f;
 				if (newRotation < 0) newRotation += 360f;
-				
+
 				chip.Description.ShapeRotation = newRotation;
-				
+
 				// Update the start angle to prevent accumulation
 				rotationHandleStartAngle = currentAngle;
 
@@ -1350,119 +1367,119 @@ namespace DLS.Graphics
 			}
 			else
 			{
-		// Check for mouse down to start dragging
-		if (InputHelper.IsMouseDownThisFrame(MouseButton.Left) && !InteractionState.MouseIsOverUI)
-		{
-			bool clickedOnSomething = false;
-			
-			// Check if clicking on a vertex
+				// Check for mouse down to start dragging
+				if (InputHelper.IsMouseDownThisFrame(MouseButton.Left) && !InteractionState.MouseIsOverUI)
+				{
+					bool clickedOnSomething = false;
+
+					// Check if clicking on a vertex
+					for (int i = 0; i < worldVertices.Length; i++)
+					{
+						if (Vector2.Distance(mouseWorld, worldVertices[i]) < vertexRadius)
+						{
+							selectedPolygonVertex = i;
+							selectedPolygonEdge = -1; // Deselect edge
+							isDraggingVertex = true;
+							clickedOnSomething = true;
+							break;
+						}
+					}
+
+					// If not clicking a vertex, check for edge midpoints
+					if (!isDraggingVertex)
+					{
+						for (int i = 0; i < worldVertices.Length; i++)
+						{
+							int next = (i + 1) % worldVertices.Length;
+							Vector2 edgeMidpoint;
+
+							// Calculate the actual curve midpoint if the edge is curved
+							if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
+							{
+								// For curved edges, use the midpoint of the actual curve
+								Vector2 edgeMidpointStraight = (worldVertices[i] + worldVertices[next]) * 0.5f;
+								Vector2 edgeDirection = worldVertices[next] - worldVertices[i];
+								Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
+								Vector2 controlPoint = edgeMidpointStraight + perpendicular * polygon.Edges[i].CurveStrength;
+
+								// Get the midpoint of the bezier curve (t = 0.5)
+								edgeMidpoint = QuadraticBezier(worldVertices[i], controlPoint, worldVertices[next], 0.5f);
+							}
+							else
+							{
+								// For straight edges, use the simple midpoint
+								edgeMidpoint = (worldVertices[i] + worldVertices[next]) * 0.5f;
+							}
+
+							if (Vector2.Distance(mouseWorld, edgeMidpoint) < edgeMidpointRadius)
+							{
+								selectedPolygonEdge = i;
+								selectedPolygonVertex = -1; // Deselect vertex
+								isDraggingEdgeCurve = true;
+								clickedOnSomething = true;
+								break;
+							}
+						}
+					}
+
+					// If not clicking vertices or edges, check for rotation handle
+					if (!isDraggingVertex && !isDraggingEdgeCurve)
+					{
+						Vector2 rotationHandleClickPos = chipCenter + Vector2.up * rotationHandleDistance;
+						if (Vector2.Distance(mouseWorld, rotationHandleClickPos) < rotationHandleRadius)
+						{
+							isDraggingRotation = true;
+							rotationHandleStartMouse = mouseWorld;
+							Vector2 toStartMouse = rotationHandleStartMouse - chipCenter;
+							rotationHandleStartAngle = Mathf.Atan2(toStartMouse.y, toStartMouse.x);
+							clickedOnSomething = true;
+						}
+						// If clicking empty space, deselect everything
+						else if (!clickedOnSomething)
+						{
+							selectedPolygonVertex = -1;
+							selectedPolygonEdge = -1;
+						}
+					}
+				}
+			}
+
+			// Draw vertex handles
 			for (int i = 0; i < worldVertices.Length; i++)
 			{
-				if (Vector2.Distance(mouseWorld, worldVertices[i]) < vertexRadius)
-				{
-					selectedPolygonVertex = i;
-					selectedPolygonEdge = -1; // Deselect edge
-					isDraggingVertex = true;
-					clickedOnSomething = true;
-					break;
-				}
+				// Show green if this vertex is selected (whether dragging or not)
+				Color vertexColor = (selectedPolygonVertex == i) ? Color.green : Color.yellow;
+				Draw.Point(worldVertices[i], vertexRadius, vertexColor);
 			}
 
-			// If not clicking a vertex, check for edge midpoints
-			if (!isDraggingVertex)
+			// Draw edge midpoint handles
+			for (int i = 0; i < worldVertices.Length; i++)
 			{
-				for (int i = 0; i < worldVertices.Length; i++)
+				int next = (i + 1) % worldVertices.Length;
+				Vector2 edgeMidpoint;
+
+				// Calculate the actual curve midpoint if the edge is curved
+				if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
 				{
-					int next = (i + 1) % worldVertices.Length;
-					Vector2 edgeMidpoint;
-					
-					// Calculate the actual curve midpoint if the edge is curved
-					if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
-					{
-						// For curved edges, use the midpoint of the actual curve
-						Vector2 edgeMidpointStraight = (worldVertices[i] + worldVertices[next]) * 0.5f;
-						Vector2 edgeDirection = worldVertices[next] - worldVertices[i];
-						Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
-						Vector2 controlPoint = edgeMidpointStraight + perpendicular * polygon.Edges[i].CurveStrength;
-						
-						// Get the midpoint of the bezier curve (t = 0.5)
-						edgeMidpoint = QuadraticBezier(worldVertices[i], controlPoint, worldVertices[next], 0.5f);
-					}
-					else
-					{
-						// For straight edges, use the simple midpoint
-						edgeMidpoint = (worldVertices[i] + worldVertices[next]) * 0.5f;
-					}
+					// For curved edges, show the midpoint of the actual curve
+					Vector2 edgeMidpointStraight = (worldVertices[i] + worldVertices[next]) * 0.5f;
+					Vector2 edgeDirection = worldVertices[next] - worldVertices[i];
+					Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
+					Vector2 controlPoint = edgeMidpointStraight + perpendicular * polygon.Edges[i].CurveStrength;
 
-					if (Vector2.Distance(mouseWorld, edgeMidpoint) < edgeMidpointRadius)
-					{
-						selectedPolygonEdge = i;
-						selectedPolygonVertex = -1; // Deselect vertex
-						isDraggingEdgeCurve = true;
-						clickedOnSomething = true;
-						break;
-					}
+					// Get the midpoint of the bezier curve (t = 0.5)
+					edgeMidpoint = QuadraticBezier(worldVertices[i], controlPoint, worldVertices[next], 0.5f);
 				}
-			}
-
-			// If not clicking vertices or edges, check for rotation handle
-			if (!isDraggingVertex && !isDraggingEdgeCurve)
-			{
-				Vector2 rotationHandleClickPos = chipCenter + Vector2.up * rotationHandleDistance;
-				if (Vector2.Distance(mouseWorld, rotationHandleClickPos) < rotationHandleRadius)
+				else
 				{
-					isDraggingRotation = true;
-					rotationHandleStartMouse = mouseWorld;
-					Vector2 toStartMouse = rotationHandleStartMouse - chipCenter;
-					rotationHandleStartAngle = Mathf.Atan2(toStartMouse.y, toStartMouse.x);
-					clickedOnSomething = true;
+					// For straight edges, use the simple midpoint
+					edgeMidpoint = (worldVertices[i] + worldVertices[next]) * 0.5f;
 				}
-				// If clicking empty space, deselect everything
-				else if (!clickedOnSomething)
-				{
-					selectedPolygonVertex = -1;
-					selectedPolygonEdge = -1;
-				}
-			}
-		}
-			}
 
-		// Draw vertex handles
-		for (int i = 0; i < worldVertices.Length; i++)
-		{
-			// Show green if this vertex is selected (whether dragging or not)
-			Color vertexColor = (selectedPolygonVertex == i) ? Color.green : Color.yellow;
-			Draw.Point(worldVertices[i], vertexRadius, vertexColor);
-		}
-
-		// Draw edge midpoint handles
-		for (int i = 0; i < worldVertices.Length; i++)
-		{
-			int next = (i + 1) % worldVertices.Length;
-			Vector2 edgeMidpoint;
-			
-			// Calculate the actual curve midpoint if the edge is curved
-			if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
-			{
-				// For curved edges, show the midpoint of the actual curve
-				Vector2 edgeMidpointStraight = (worldVertices[i] + worldVertices[next]) * 0.5f;
-				Vector2 edgeDirection = worldVertices[next] - worldVertices[i];
-				Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
-				Vector2 controlPoint = edgeMidpointStraight + perpendicular * polygon.Edges[i].CurveStrength;
-				
-				// Get the midpoint of the bezier curve (t = 0.5)
-				edgeMidpoint = QuadraticBezier(worldVertices[i], controlPoint, worldVertices[next], 0.5f);
+				// Show green if this edge is selected (whether dragging or not)
+				Color edgeColor = (selectedPolygonEdge == i) ? Color.green : Color.cyan;
+				Draw.Point(edgeMidpoint, edgeMidpointRadius, edgeColor);
 			}
-			else
-			{
-				// For straight edges, use the simple midpoint
-				edgeMidpoint = (worldVertices[i] + worldVertices[next]) * 0.5f;
-			}
-			
-			// Show green if this edge is selected (whether dragging or not)
-			Color edgeColor = (selectedPolygonEdge == i) ? Color.green : Color.cyan;
-			Draw.Point(edgeMidpoint, edgeMidpointRadius, edgeColor);
-		}
 
 			// Draw rotation handle
 			Vector2 rotationHandlePos;
@@ -1476,10 +1493,10 @@ namespace DLS.Graphics
 				// When not dragging, position it above the chip
 				rotationHandlePos = chipCenter + Vector2.up * rotationHandleDistance;
 			}
-			
+
 			Color rotationColor = isDraggingRotation ? Color.green : Color.magenta;
 			Draw.Point(rotationHandlePos, rotationHandleRadius, rotationColor);
-			
+
 			// Draw line from chip center to rotation handle
 			Draw.Line(chipCenter, rotationHandlePos, 0.02f, rotationColor);
 		}
@@ -1507,7 +1524,7 @@ namespace DLS.Graphics
 			if (pin.parent is SubChipInstance subchip)
 			{
 				var chipDesc = subchip.Description;
-				
+
 				// Search in input pins
 				if (chipDesc.InputPins != null)
 				{
@@ -1522,7 +1539,7 @@ namespace DLS.Graphics
 						}
 					}
 				}
-				
+
 				// Search in output pins
 				if (chipDesc.OutputPins != null)
 				{
@@ -1539,14 +1556,14 @@ namespace DLS.Graphics
 				}
 			}
 		}
-		
+
 		static Vector2 GetPinPositionFromDescription(PinInstance pin)
 		{
 			// Find the pin's position in the chip description
 			if (pin.parent is SubChipInstance subchip)
 			{
 				var chipDesc = subchip.Description;
-				
+
 				// Search in input pins
 				if (chipDesc.InputPins != null)
 				{
@@ -1558,7 +1575,7 @@ namespace DLS.Graphics
 						}
 					}
 				}
-				
+
 				// Search in output pins
 				if (chipDesc.OutputPins != null)
 				{
@@ -1571,7 +1588,7 @@ namespace DLS.Graphics
 					}
 				}
 			}
-			
+
 			return Vector2.zero;
 		}
 
@@ -1664,12 +1681,12 @@ namespace DLS.Graphics
 			return bestPoint;
 		}
 
-        enum DisplayInteractState
-	{
-		None,
-		Moving,
-		Placing,
-		Scaling
-	}
+		enum DisplayInteractState
+		{
+			None,
+			Moving,
+			Placing,
+			Scaling
+		}
 	}
 }

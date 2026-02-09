@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using DLS.Online;
 using DLS.Game;
+using DLS.Levels;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis;
@@ -16,6 +17,7 @@ namespace DLS.Graphics
     {
         // ---------- State ----------
         static string _levelId = "";
+        static string _levelName = "";
         static List<ScoreEntry> _scores = new();
         static bool _isLoading = false;
         static string _errorMessage = "";
@@ -45,9 +47,10 @@ namespace DLS.Graphics
         static Vector2 currentPos;
 
         // ---------- Public API ----------
-        public static void Open(string levelId)
+        public static void Open(string levelId, string levelName = null)
         {
             _levelId = levelId;
+            _levelName = levelName ?? levelId; // Use levelId as fallback if name not provided
             _scores.Clear();
             _isLoading = true;
             _errorMessage = "";
@@ -110,7 +113,7 @@ namespace DLS.Graphics
                 Color labelCol = Color.white;
 
                 // --- LEADERBOARD header (centered like other popups) ---
-                string title = $"LEADERBOARD - {_levelId}";
+                string title = $"LEADERBOARD - {_levelName}";
                 Seb.Vis.UI.UI.DrawText(title, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, Seb.Vis.UI.UI.Centre + Vector2.up * 22f, Anchor.TextCentre, headerCol);
                 AddHeaderSpacing(); // Large spacing like PreferencesMenu
 
@@ -378,5 +381,6 @@ namespace DLS.Graphics
                 Debug.LogError($"[Leaderboard] Error viewing solution: {ex.Message}");
             }
         }
+
     }
 }

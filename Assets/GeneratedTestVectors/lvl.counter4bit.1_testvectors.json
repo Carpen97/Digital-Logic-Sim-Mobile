@@ -1,0 +1,53 @@
+{
+    "id": "lvl.counter4bit.1",
+    "name": "4-bit Counter",
+    "chapterId": "ch.sequential",
+    "description": "Count from 0 to 15 and repeat. Use clock input.",
+    "inputCount": 1,
+    "outputCount": 4,
+    "inputLabels": [],
+    "outputLabels": [],
+    "inputBitCounts": [
+        1
+    ],
+    "outputBitCounts": [
+        1,
+        1,
+        1,
+        1
+    ],
+    "inputPinLabels": [
+        {
+            "name": "Clock",
+            "abbr": "CLK"
+        }
+    ],
+    "outputPinLabels": [
+        {
+            "name": "A 8's",
+            "abbr": "8"
+        },
+        {
+            "name": "B 4's",
+            "abbr": "4"
+        },
+        {
+            "name": "C 2's",
+            "abbr": "2"
+        },
+        {
+            "name": "D 1's",
+            "abbr": "1"
+        }
+    ],
+    "testVectors": [
+        {
+            "inputs": "0",
+            "expected": ""
+        },
+        {
+            "inputs": "1",
+            "expected": ""
+        }
+    ]
+}

@@ -585,13 +585,52 @@ namespace DLS.Simulation
             		break;
                 }
 
-				case ChipType.Buzzer:
-				{
-					int freqIndex = (int)chip.InputPins[0].State.GetShortValues();
-					uint volumeIndex = chip.InputPins[1].State.GetShortValues();
-					audioState.RegisterNote(freqIndex, volumeIndex);
-					break;
-				}
+			case ChipType.Buzzer:
+			{
+				int freqIndex = (int)chip.InputPins[0].State.GetShortValues();
+				uint volumeIndex = chip.InputPins[1].State.GetShortValues();
+				audioState.RegisterNote(freqIndex, volumeIndex);
+				break;
+			}
+		case ChipType.Speaker:
+		{
+			int freqIndex = (int)chip.InputPins[0].State.GetShortValues();
+			uint volume = chip.InputPins[1].State.GetShortValues();
+			int waveType = (int)chip.InputPins[2].State.GetShortValues();
+			uint enable = chip.InputPins[3].State.GetShortValues();
+			
+			// Only play if enabled
+			if (enable > 0)
+			{
+				// Clamp wave type to valid range (0-3)
+				waveType = Math.Clamp(waveType, 0, 3);
+				audioState.RegisterNote(freqIndex, volume, waveType);
+			}
+			break;
+		}
+	case ChipType.SpeakerV2:
+	{
+		// InputPins are in creation order
+		uint pitchHi = chip.InputPins[0].State.GetShortValues();  // PITCH_HI (upper 8 bits)
+		uint pitchLo = chip.InputPins[1].State.GetShortValues();  // PITCH_LO (lower 8 bits)
+		uint volume = chip.InputPins[2].State.GetShortValues();   // VOLUME (8-bit)
+		uint enable = chip.InputPins[3].State.GetShortValues();   // ENABLE (1-bit)
+		
+		// Combine 2x 8-bit values into 16-bit pitch (0-65535)
+		int pitch16 = (int)((pitchHi << 8) | pitchLo);
+		
+		// Calculate frequency directly from 16-bit pitch
+		double pitchValue = pitch16 / 256.0;  // Convert to fractional index
+		float frequency = SimAudio.CalculateFrequency(pitchValue);
+		
+		// If disabled, set volume to 0 (will fade out smoothly)
+		uint effectiveVolume = enable > 0 ? volume : 0;
+		
+		// Always register tone (even when disabled) to properly fade out
+		audioState.RegisterTone(frequency, effectiveVolume);
+		
+		break;
+	}
 				case ChipType.SPS:
 				{
 					double tps = Project.ActiveProject.simAvgTicksPerSec;
@@ -621,17 +660,25 @@ namespace DLS.Simulation
 					chip.InputPins[0].State.HandleSplit(ref chip.OutputPins);
 						break;
 				}
-				case ChipType.Detector:
-				{
-					uint state = chip.InputPins[0].State.GetSmallTristatedValue();
-					chip.OutputPins[0].State.SmallSet(1 << 16);
-                    chip.OutputPins[1].State.SmallSet(1 << 16);
-					chip.OutputPins[2].State.SmallSet(1 << 16);
-					chip.OutputPins[state].State.SmallSet(1);
-					break;
-				}
+			case ChipType.Detector:
+			{
+				uint state = chip.InputPins[0].State.GetSmallTristatedValue();
+				chip.OutputPins[0].State.SmallSet(1 << 16);
+                chip.OutputPins[1].State.SmallSet(1 << 16);
+				chip.OutputPins[2].State.SmallSet(1 << 16);
+				chip.OutputPins[state].State.SmallSet(1);
+				break;
+			}
 
-				case ChipType.Merge_Pin:
+			case ChipType.TextDisplay:
+			{
+				// TextDisplay has no outputs - just visual display
+				// The 8-bit SELECT input (0-255) determines which text string to display
+				// Visual rendering handled in DevSceneDrawer
+				break;
+			}
+
+			case ChipType.Merge_Pin:
 				{	
 					chip.OutputPins[0].State.HandleMerge(chip.InputPins);
 					break;

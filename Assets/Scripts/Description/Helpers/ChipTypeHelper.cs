@@ -26,16 +26,19 @@ namespace DLS.Description
 		{ ChipType.Rom_1x16, $"ROM 1{mulSymbol}16_Variant" },
             { ChipType.EEPROM_256x16, $"EEPROM 256{mulSymbol}16" },
 
-			// ---- Displays -----
-			{ ChipType.DisplayRGB, "RGB DISPLAY" },
-			{ ChipType.DisplayRGBTouch, "TOUCHSCREEN RGB DISPLAY" },
-			{ ChipType.DisplayDot, "DOT DISPLAY" },
-			{ ChipType.SevenSegmentDisplay, "7-SEGMENT" },
-			{ ChipType.DisplayLED, "LED" },
+		// ---- Displays -----
+		{ ChipType.DisplayRGB, "RGB DISPLAY" },
+		{ ChipType.DisplayRGBTouch, "TOUCHSCREEN RGB DISPLAY" },
+		{ ChipType.DisplayDot, "DOT DISPLAY" },
+		{ ChipType.SevenSegmentDisplay, "7-SEGMENT" },
+	{ ChipType.DisplayLED, "LED" },
+	{ ChipType.TextDisplay, "TEXT DISPLAY" },
 
-			{ ChipType.Buzzer, "BUZZER" },
+		{ ChipType.Buzzer, "BUZZER" },
+		{ ChipType.Speaker, "SPEAKER" },
+		{ ChipType.SpeakerV2, "SPEAKER V2" },
 
-			{ ChipType.SPS, "SPS" },
+		{ ChipType.SPS, "SPS" },
 			{ ChipType.RTC, "RTC" },
 
 			// ---- Not really chips (but convenient to treat them as such anyway) ----
@@ -57,6 +60,8 @@ namespace DLS.Description
 		public static bool IsBusTerminusType(ChipType type) => type is ChipType.BusTerminus;
 
 		public static bool IsRomType(ChipType type) => type == ChipType.Rom_256x16 || type == ChipType.Rom_2x8 || type == ChipType.Rom_4x4 || type == ChipType.Rom_16x1 || type == ChipType.Rom_1x16 || type == ChipType.EEPROM_256x16;
+
+	public static bool IsTextDisplayType(ChipType type) => type == ChipType.TextDisplay;
 
 		/// <summary>
 		/// Gets the display name for a chip type, with special handling for ROM variants

@@ -162,13 +162,13 @@ namespace DLS.Graphics
 				{
 					foreach (var chapter in levelPack.chapters)
 					{
-						if (chapter.levels != null)
+						// Get all levels (V1 + V2 converted to V1)
+						var allLevels = chapter.GetAllLevelsAsV1();
+						
+						foreach (var level in allLevels)
 						{
-							foreach (var level in chapter.levels)
-							{
-								_allLevelIds.Add(level.id);
-								_levelIdToName[level.id] = level.name;
-							}
+							_allLevelIds.Add(level.id);
+							_levelIdToName[level.id] = level.name;
 						}
 					}
 				}
@@ -209,10 +209,9 @@ namespace DLS.Graphics
 				{
 					try
 					{
-						// Use the display name (level.name) instead of internal ID (level.id) for Firebase queries
-						string levelDisplayName = GetLevelDisplayName(levelId);
-						Debug.Log($"[HallOfFame] Loading scores for level {levelId} (display name: {levelDisplayName})");
-						var scores = await LeaderboardService.GetTopScoresAsync(levelDisplayName, 10);
+						// Query using levelId (not display name) to match how scores are saved
+						Debug.Log($"[HallOfFame] Loading scores for level {levelId}");
+						var scores = await LeaderboardService.GetTopScoresAsync(levelId, 10);
 						_allLevelScores[levelId] = scores;
 						
 						// Aggregate player statistics

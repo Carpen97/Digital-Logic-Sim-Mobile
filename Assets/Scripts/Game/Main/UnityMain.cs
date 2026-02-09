@@ -241,8 +241,12 @@ namespace DLS.Game
 				{
 					foreach (var ch in pack.chapters)
 					{
-						if (ch?.levels == null) continue;
-						foreach (var def in ch.levels)
+						if (ch == null) continue;
+						
+						// Get all levels (V1 + V2 converted to V1)
+						var allLevels = ch.GetAllLevelsAsV1();
+						
+						foreach (var def in allLevels)
 						{
 							if (def != null && def.id == levelId) return def;
 						}

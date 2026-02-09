@@ -10,7 +10,7 @@ namespace DLS.Levels
 	{
 		private readonly ISimulationAdapter _sim;
 		private readonly System.Random _random = new System.Random();
-		private const int MAX_COMBINATIONAL_TESTS = 40;
+		private const int MAX_COMBINATIONAL_TESTS = 200;
 
 		public LevelValidator(ISimulationAdapter sim) => _sim = sim;
 
@@ -37,9 +37,9 @@ namespace DLS.Levels
 			return report;
 		}
 
-	private void ValidateCombinational(LevelDefinition def, ValidationReport report)
-	{
-		var vectors = def.GetTestVectors();
+		private void ValidateCombinational(LevelDefinition def, ValidationReport report)
+		{
+			var vectors = def.GetTestVectors();
 
 			// Initialize AllTestResults for combinational levels
 			report.AllTestResults = new List<TestResult>();
@@ -68,7 +68,7 @@ namespace DLS.Levels
 
 				var ov = _sim.ReadOutputs();
 				var expected = BitVector.FromString(tv.expected);
-				bool passed = (ov.Length == expected.Length && ov.Raw == expected.Raw);
+				bool passed = ov.Length == expected.Length && ov.Raw == expected.Raw;
 
 				// Create test result for this vector
 				var testResult = new TestResult

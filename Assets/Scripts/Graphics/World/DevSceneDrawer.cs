@@ -20,11 +20,11 @@ namespace DLS.Graphics
 		public const int DisplayOffState = 0;
 		public const int DisplayOnState = 1;
 		public const int DisplayHighlightState = 2;
-		#if UNITY_ANDROID || UNITY_IOS
+#if UNITY_ANDROID || UNITY_IOS
 		public const float wireHitboxMultiplier = 40f;
-		#else
+#else
 		public const float wireHitboxMultiplier = 1f;
-		#endif
+#endif
 
 		static readonly List<WireInstance> orderedWires = new();
 		static readonly Comparison<WireInstance> WireComparison = WireOrderCompare;
@@ -156,10 +156,10 @@ namespace DLS.Graphics
 							DrawDevPin(pin);
 							break;
 						case SubChipInstance subchip:
-						{
-							DrawSubChip(subchip);
-							break;
-						}
+							{
+								DrawSubChip(subchip);
+								break;
+							}
 					}
 				}
 
@@ -206,7 +206,7 @@ namespace DLS.Graphics
 			FontType font = FontBold;
 
 			Vector2 size = Draw.CalculateTextBoundsSize(text, FontSizePinLabel, font) + LabelBackgroundPadding;
-			Vector2 centre = pin.GetWorldPos() + pin.FacingDir * size/2 + offset;
+			Vector2 centre = pin.GetWorldPos() + pin.FacingDir * size / 2 + offset;
 
 			Draw.Quad(centre, size, ActiveTheme.PinLabelCol);
 			Draw.Text(font, text, FontSizePinLabel, centre, Anchor.TextFirstLineCentre, Color.white);
@@ -230,7 +230,8 @@ namespace DLS.Graphics
 		static void CopyToCharBuffer(DevPinInstance pin, string text)
 		{
 			char[] chars = text.ToCharArray();
-			for (int i = 0; i < chars.Length; i++) {
+			for (int i = 0; i < chars.Length; i++)
+			{
 				pin.decimalDisplayCharBuffer[i] = chars[i];
 			}
 		}
@@ -240,7 +241,7 @@ namespace DLS.Graphics
 
 			int charCount;
 
-			if (pin.Pin.State.IsValueBiggerThanInt() || (((pin.GetStateDecimalDisplayValue()&(1<<31)) == (1<<31)) && pin.pinValueDisplayMode!=PinValueDisplayMode.SignedDecimal) )
+			if (pin.Pin.State.IsValueBiggerThanInt() || (((pin.GetStateDecimalDisplayValue() & (1 << 31)) == (1 << 31)) && pin.pinValueDisplayMode != PinValueDisplayMode.SignedDecimal))
 			{
 				charCount = 7;
 				CopyToCharBuffer(pin, "TOO BIG");
@@ -262,7 +263,7 @@ namespace DLS.Graphics
 				charCount = StringHelper.CreateHexStringNonAlloc(pin.decimalDisplayCharBuffer, pin.GetStateDecimalDisplayValue());
 			}
 
-			
+
 
 			FontType font = FontBold;
 			Bounds2D parentBounds = pin.BoundingBox;
@@ -366,6 +367,21 @@ namespace DLS.Graphics
 					// Skip default single-call draw below
 					return;
 				}
+				else if (ChipTypeHelper.IsTextDisplayType(subchip.ChipType))
+				{
+					// TextDisplay shows the currently selected text string based on input value
+					// Get sim representation to read current input state
+					DevChipInstance devChip = Project.ActiveProject?.ViewedChip;
+					SimChip sim = devChip?.SimChip?.TryGetSubChipFromID(subchip.ID).chip;
+					string displayText = GetTextDisplayString(subchip, sim);
+
+					// Draw the text in the chip center with custom font size
+					float fontSizeMultiplier = TextDisplayEditMenu.GetFontSizeMultiplier(subchip);
+					float fs = FontSizeChipName * fontSizeMultiplier;
+					Draw.Text(FontBold, displayText, fs, textPos, textAnchor, nameTextCol, ChipNameLineSpacing);
+					// Skip default single-call draw below
+					return;
+				}
 				else if (Draw.CalculateTextBoundsSize(subchip.Description.Name, FontSizeChipName, FontBold).x < subchip.Size.x - PinRadius * 2.5f)
 				{
 					displayName = subchip.Description.Name;
@@ -390,6 +406,13 @@ namespace DLS.Graphics
 
 		public static void DrawSubchipDisplays(SubChipInstance subchip, SimChip sim = null, bool outOfBoundsDisplay = false)
 		{
+			// Don't draw displays for TextDisplay chips when used standalone (they render text directly)
+			// Only draw displays when TextDisplay is used AS a display component on custom chips
+			if (ChipTypeHelper.IsTextDisplayType(subchip.ChipType))
+			{
+				return;
+			}
+
 			Bounds2D subchipMask = Bounds2D.CreateFromCentreAndSize(subchip.Position, subchip.Size);
 
 			Span<Bounds2D> allBounds = outOfBoundsDisplay ? stackalloc Bounds2D[subchip.Displays.Count] : null;
@@ -492,6 +515,14 @@ namespace DLS.Graphics
 
 				bounds = DrawDisplay_LED(posWorld, scaleWorld, col);
 			}
+		else if (display.DisplayType == ChipType.TextDisplay)
+		{
+			// Get the TextDisplay's sim from the parent sim (same as Custom displays)
+			SimChip textDisplaySim = sim?.GetSubChipFromID(display.Desc.SubChipID);
+			UnityEngine.Debug.Log($"[DrawDisplay] TextDisplay SubChipID={display.Desc.SubChipID}, got sim={textDisplaySim != null}");
+			// TextDisplay as a display component - shows text based on the TextDisplay's simulation state
+			bounds = DrawDisplay_TextDisplay(posWorld, scaleWorld, textDisplaySim, rootChip, display.Desc.SubChipID);
+		}
 
 			else if (ChipTypeHelper.IsClickableDisplayType(display.DisplayType))
 			{
@@ -632,19 +663,19 @@ namespace DLS.Graphics
 		{
 			const float pixelSizeT = 0.975f;
 			Vector2 pixelDrawSize = Vector2.one * (scale * pixelSizeT);
-			
+
 			Draw.Quad(centre, Vector2.one * scale, Color.black);
 			Draw.Quad(centre, pixelDrawSize, col);
-			
+
 			return Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
 		}
 
 		public static Bounds2D DrawClickableDisplay(DisplayInstance display, Vector2 posParent, float parentScale, SubChipInstance rootChip, SimChip sim = null)
 		{
-            Bounds2D bounds = Bounds2D.CreateEmpty();
-            Vector2 posLocal = display.Desc.Position;	
-            Vector2 posWorld = posParent + posLocal * parentScale;
-            float scaleWorld = display.Desc.Scale * parentScale;
+			Bounds2D bounds = Bounds2D.CreateEmpty();
+			Vector2 posLocal = display.Desc.Position;
+			Vector2 posWorld = posParent + posLocal * parentScale;
+			float scaleWorld = display.Desc.Scale * parentScale;
 
 			bool inBounds = false;
 			bool clicked = false;
@@ -666,16 +697,16 @@ namespace DLS.Graphics
 			}
 
 			if (inBounds)
-				{
-					InteractionState.NotifyElementUnderMouse(display);
-				}
+			{
+				InteractionState.NotifyElementUnderMouse(display);
+			}
 
 			rootChip.IsSelected = clicked ? false : rootChip.IsSelected;
 
 			display.LastDrawBounds = bounds;
 			return bounds;
-        }
-		
+		}
+
 		public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_RGBTouch(Vector2 centre, float scale, SimChip simSource)
 		{
 			Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
@@ -734,7 +765,7 @@ namespace DLS.Graphics
 			}
 		}
 
-        public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Button(Vector2 centre, float scale, SimChip chipSource)
+		public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Button(Vector2 centre, float scale, SimChip chipSource)
 		{
 			Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
 			bool inBounds = false;
@@ -759,61 +790,62 @@ namespace DLS.Graphics
 			return (bounds, inBounds, pressed);
 		}
 
-        public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Toggle(Vector2 centre, float scale, SimChip chipSource)
-        {
+		public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Toggle(Vector2 centre, float scale, SimChip chipSource)
+		{
 
-            Vector2 ratio = new Vector2(1f, 2f);
-            Bounds2D wholeBounds = Bounds2D.CreateFromCentreAndSize(centre, ratio * scale);
+			Vector2 ratio = new Vector2(1f, 2f);
+			Bounds2D wholeBounds = Bounds2D.CreateFromCentreAndSize(centre, ratio * scale);
 
-            const float switchHorizontalDrawRatio = 0.875f;
+			const float switchHorizontalDrawRatio = 0.875f;
 
-            bool inBounds = false;
-            bool gettingClicked = false;
+			bool inBounds = false;
+			bool gettingClicked = false;
 
-            int currentSwitchHeadPos = 1;
-            int nextSwitchHeadPos = 1;
-
-
-            const float toggleSize = 1f;
-            Color col = ActiveTheme.StateDisconnectedCol;
-
-            Vector2 toggleDrawSize = ratio * (scale * toggleSize);
-            Vector2 switchDrawSize = switchHorizontalDrawRatio * scale * toggleSize * Vector2.one;
-            Vector2 innerSwitchDrawSize = switchDrawSize * 0.775f;
-
-            float verticalOffset = (toggleDrawSize.y / 2 - (switchDrawSize.y / switchHorizontalDrawRatio) / 2);
+			int currentSwitchHeadPos = 1;
+			int nextSwitchHeadPos = 1;
 
 
-            if (chipSource != null)
-            {
+			const float toggleSize = 1f;
+			Color col = ActiveTheme.StateDisconnectedCol;
+
+			Vector2 toggleDrawSize = ratio * (scale * toggleSize);
+			Vector2 switchDrawSize = switchHorizontalDrawRatio * scale * toggleSize * Vector2.one;
+			Vector2 innerSwitchDrawSize = switchDrawSize * 0.775f;
+
+			float verticalOffset = (toggleDrawSize.y / 2 - (switchDrawSize.y / switchHorizontalDrawRatio) / 2);
+
+
+			if (chipSource != null)
+			{
 				bool currentState = (chipSource.InternalState[0] & 1) == 1 ? true : false;
 				currentSwitchHeadPos = currentState ? -1 : 1;
-                Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre + Vector2.up * verticalOffset * currentSwitchHeadPos, switchDrawSize);
-                inBounds = bounds.PointInBounds(InputHelper.MousePosWorld);
-                gettingClicked = inBounds && InputHelper.IsMouseDownThisFrame(MouseButton.Left) && controller.CanInteractWithButton;
+				Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre + Vector2.up * verticalOffset * currentSwitchHeadPos, switchDrawSize);
+				inBounds = bounds.PointInBounds(InputHelper.MousePosWorld);
+				gettingClicked = inBounds && InputHelper.IsMouseDownThisFrame(MouseButton.Left) && controller.CanInteractWithButton;
 				bool nextState = gettingClicked ? !currentState : currentState;
 				chipSource.OutputPins[0].State.SmallSet(nextState ? Constants.LOGIC_HIGH : Constants.LOGIC_LOW);
 
 
 				nextSwitchHeadPos = nextState ? -1 : 1;
 
-				if (currentState != nextState) {
+				if (currentState != nextState)
+				{
 					chipSource.InternalState[0] = (uint)(nextState ? 1 : 0);
 					Project.ActiveProject.NotifyToggleStateChanged(chipSource);
 				}
-            }
-            verticalOffset *= nextSwitchHeadPos;
+			}
+			verticalOffset *= nextSwitchHeadPos;
 
 			Draw.Quad(centre, toggleDrawSize, col);
 			Draw.Quad(centre + Vector2.up * verticalOffset, switchDrawSize, ActiveTheme.BackgroundCol);
 			Draw.Quad(centre + Vector2.up * verticalOffset, innerSwitchDrawSize, ActiveTheme.DevPinHandleHighlighted);
 
 
-            return (wholeBounds, inBounds, gettingClicked);
-        }
+			return (wholeBounds, inBounds, gettingClicked);
+		}
 
 
-        public static void DrawDevPin(DevPinInstance devPin)
+		public static void DrawDevPin(DevPinInstance devPin)
 		{
 			if (devPin.BitCount == (uint)1)
 			{
@@ -889,7 +921,7 @@ namespace DLS.Graphics
 					bool mouseOverStateToggle = InputHelper.MouseInsideBounds_World(pos, squareDisplaySize);
 					bool isInteractingWithStateDisplay = mouseOverStateToggle && isInteractable;
 					Color stateCol = devPin.Pin.GetStateCol(currBitIndex, isInteractingWithStateDisplay, canEditViewedChip);
-					
+
 					uint bitState = devPin.Pin.State.GetTristatedValue(currBitIndex);
 
 					if (isInteractingWithStateDisplay)
@@ -918,7 +950,7 @@ namespace DLS.Graphics
 			// ---- Movement handle ----
 			bool mouseOverHandle = InputHelper.MouseInsideBounds_World(pos, size);
 			bool isInteracting = mouseOverHandle && (controller.CanInteractWithPinHandle || InteractionState.ElementUnderMousePrevFrame == item);
-			
+
 			Color handleCol;
 			if (isInteracting)
 			{
@@ -934,7 +966,7 @@ namespace DLS.Graphics
 			{
 				handleCol = ActiveTheme.DevPinHandle;
 			}
-			
+
 			Draw.Quad(pos, size, handleCol);
 
 			if (isInteracting)
@@ -1034,13 +1066,13 @@ namespace DLS.Graphics
 				WireLayoutHelper.CreateMultiBitWireLayout(wire.BitWires, wire, WireThickness);
 			}
 
-			int length = wire.BitWires.Length / (wire.bitCount <= 64 ? 1 : wire.bitCount <=512 ? 8 : 64);
+			int length = wire.BitWires.Length / (wire.bitCount <= 64 ? 1 : wire.bitCount <= 512 ? 8 : 64);
 			// Draw
 			for (int bitIndex = 0; bitIndex < length; bitIndex++)
 			{
 				WireInstance.BitWire bitWire = wire.BitWires[bitIndex];
 				Color col = wire.GetColour(bitIndex);
-				float sqrInteractDst = WireDrawer.DrawWire(bitWire.Points, thickness, col, mousePos, isMulti:true);
+				float sqrInteractDst = WireDrawer.DrawWire(bitWire.Points, thickness, col, mousePos, isMulti: true);
 				if (canInteract && sqrInteractDst < sqrDstThreshold) InteractionState.NotifyElementUnderMouse(wire);
 			}
 
@@ -1082,7 +1114,7 @@ namespace DLS.Graphics
 				}
 			}
 
-			#if !(UNITY_ANDROID || UNITY_IOS)
+#if !(UNITY_ANDROID || UNITY_IOS)
 			// If no highlighted point, and mouse over wire, then draw insertion point
 			if (controller.wireEditPointIndex == -1 && InteractionState.ElementUnderMouse == wire && canInteract)
 			{
@@ -1095,12 +1127,12 @@ namespace DLS.Graphics
 					Draw.Point(insertionPoint, insertionPointDisplayRadius, Color.white);
 				}
 			}
-			#endif
+#endif
 		}
 
-	public static void DrawPin(PinInstance pin)
-	{
-		if (pin.bitCount == PinBitCount.Bit1)
+		public static void DrawPin(PinInstance pin)
+		{
+			if (pin.bitCount == PinBitCount.Bit1)
 			{
 				DrawSingleBitPin(pin);
 			}
@@ -1109,29 +1141,29 @@ namespace DLS.Graphics
 				DrawMultiBitPin(pin);
 			}
 
-            //makes pins red if too close
-            if (CustomizationSceneDrawer.isDraggingPin && CustomizationSceneDrawer.selectedPin == pin && !CustomizationSceneDrawer.isPinPositionValid)
-            {
-                Vector2 pinPos = pin.GetWorldPos();
-                if (pin.bitCount == PinBitCount.Bit1)
-                {
-                    Draw.Quad(pinPos, Vector2.one * PinRadius * 2.4f, Color.red);
-                }
-                else
-                {
-                    float pinWidth = PinRadius * 2 * 0.95f;
-                    float pinHeight = SubChipInstance.PinHeightFromBitCount(pin.bitCount);
+			//makes pins red if too close
+			if (CustomizationSceneDrawer.isDraggingPin && CustomizationSceneDrawer.selectedPin == pin && !CustomizationSceneDrawer.isPinPositionValid)
+			{
+				Vector2 pinPos = pin.GetWorldPos();
+				if (pin.bitCount == PinBitCount.Bit1)
+				{
+					Draw.Quad(pinPos, Vector2.one * PinRadius * 2.4f, Color.red);
+				}
+				else
+				{
+					float pinWidth = PinRadius * 2 * 0.95f;
+					float pinHeight = SubChipInstance.PinHeightFromBitCount(pin.bitCount);
 
-                    Vector2 pinSize = (pin.face == 0 || pin.face == 2)
-                        ? new Vector2(pinHeight, pinWidth)  // horizontal pin
-                        : new Vector2(pinWidth, pinHeight); // vertical pin
+					Vector2 pinSize = (pin.face == 0 || pin.face == 2)
+						? new Vector2(pinHeight, pinWidth)  // horizontal pin
+						: new Vector2(pinWidth, pinHeight); // vertical pin
 
-                    Draw.Quad(pinPos, pinSize * 1.2f, Color.red);
-                }
-            }
-        }
+					Draw.Quad(pinPos, pinSize * 1.2f, Color.red);
+				}
+			}
+		}
 
-        static void DrawSingleBitPin(PinInstance pin)
+		static void DrawSingleBitPin(PinInstance pin)
 		{
 			Vector2 pinPos = pin.GetWorldPos();
 			Vector2 pinSelectionBoundsPos = pinPos + pin.ForwardDir * 0.02f;
@@ -1188,96 +1220,96 @@ namespace DLS.Graphics
 			bool isInputToCustomChip = pin.parent is SubChipInstance;
 			if (isInputToCustomChip && false)
 			{
-                // Check if pin is connect to any wire for the Is Disconnected setting
-                
-                List<WireInstance> wireList = Project.ActiveProject.controller.ActiveDevChip.Wires;
-                bool isConnected = false;
-                for (int i = wireList.Count - 1; i >= 0; i--)
-                {
-                    WireInstance wire = wireList[i];
-                    if (PinAddress.Equals(wire.SourcePin.Address, pin.Address) || PinAddress.Equals(wire.TargetPin.Address, pin.Address))
-                    {
-                        isConnected = true;
-                        break;
-                    }
+				// Check if pin is connect to any wire for the Is Disconnected setting
 
-                }
-                //set up display mode based on settings
-                int pinIndicatorMode = Project.ActiveProject.description.Perfs_PinIndicators;
-                bool drawIndicator = false;
-                switch (pinIndicatorMode)
-                {
-                    case 1: // "On Hover"
-                        drawIndicator = mouseOverPin;
-                        break;
-                    case 2: // "Tab To Toggle"
-                        drawIndicator = Project.ActiveProject.PinNameDisplayIsTabToggledOn;
-                        break;
-                    case 3: // "If Pin is not connected"
-                        drawIndicator = !isConnected;
-                        break;
-                    case 4: // "Always"
-                        drawIndicator = true;
-                        break;
-
-                }
-                if (drawIndicator)
-
-                {
-						Draw.Point(pinPos, PinRadius, new Color(34f / 255f, 34f / 255f, 34f / 255f, 1f));
-						float angle = 0;
-						float wedgeSpan = 0f;
-
-						if (!pin.IsSourcePin)
-						{
-							wedgeSpan = 100f; //edit angle of input
-							angle = Mathf.Atan2(-dir.y, -dir.x) * Mathf.Rad2Deg;
-						}
-						else
-						{
-							wedgeSpan = 150f; //edits angle of output
-							angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-						}
-						float angleStart = angle - wedgeSpan / 2f;
-						float angleEnd = angle + wedgeSpan / 2f;
-						Draw.WedgePolygon(pinPos, PinRadius, angleStart, angleEnd, ActiveTheme.PinCol, pin.face, pin.IsSourcePin);
+				List<WireInstance> wireList = Project.ActiveProject.controller.ActiveDevChip.Wires;
+				bool isConnected = false;
+				for (int i = wireList.Count - 1; i >= 0; i--)
+				{
+					WireInstance wire = wireList[i];
+					if (PinAddress.Equals(wire.SourcePin.Address, pin.Address) || PinAddress.Equals(wire.TargetPin.Address, pin.Address))
+					{
+						isConnected = true;
+						break;
 					}
+
+				}
+				//set up display mode based on settings
+				int pinIndicatorMode = Project.ActiveProject.description.Perfs_PinIndicators;
+				bool drawIndicator = false;
+				switch (pinIndicatorMode)
+				{
+					case 1: // "On Hover"
+						drawIndicator = mouseOverPin;
+						break;
+					case 2: // "Tab To Toggle"
+						drawIndicator = Project.ActiveProject.PinNameDisplayIsTabToggledOn;
+						break;
+					case 3: // "If Pin is not connected"
+						drawIndicator = !isConnected;
+						break;
+					case 4: // "Always"
+						drawIndicator = true;
+						break;
+
+				}
+				if (drawIndicator)
+
+				{
+					Draw.Point(pinPos, PinRadius, new Color(34f / 255f, 34f / 255f, 34f / 255f, 1f));
+					float angle = 0;
+					float wedgeSpan = 0f;
+
+					if (!pin.IsSourcePin)
+					{
+						wedgeSpan = 100f; //edit angle of input
+						angle = Mathf.Atan2(-dir.y, -dir.x) * Mathf.Rad2Deg;
+					}
+					else
+					{
+						wedgeSpan = 150f; //edits angle of output
+						angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+					}
+					float angleStart = angle - wedgeSpan / 2f;
+					float angleEnd = angle + wedgeSpan / 2f;
+					Draw.WedgePolygon(pinPos, PinRadius, angleStart, angleEnd, ActiveTheme.PinCol, pin.face, pin.IsSourcePin);
 				}
 			}
+		}
 		static void DrawMultiBitPin(PinInstance pin)
-        {
-            Vector2 pinPos = pin.GetWorldPos();
+		{
+			Vector2 pinPos = pin.GetWorldPos();
 
-            bool isHorizontal = pin.face == 0 || pin.face == 2;
-            float pinWidth = PinRadius * 2 * 0.95f;
-            float pinHeight = SubChipInstance.PinHeightFromBitCount(pin.bitCount);
-            Vector2 pinSize = isHorizontal ? new Vector2(pinHeight, pinWidth) : new Vector2(pinWidth, pinHeight);
+			bool isHorizontal = pin.face == 0 || pin.face == 2;
+			float pinWidth = PinRadius * 2 * 0.95f;
+			float pinHeight = SubChipInstance.PinHeightFromBitCount(pin.bitCount);
+			Vector2 pinSize = isHorizontal ? new Vector2(pinHeight, pinWidth) : new Vector2(pinWidth, pinHeight);
 
-            // Determine direction for selection offset (used for mouse interaction)
-            Vector2 offsetDir = Vector2.zero;
-            switch (pin.face)
-            {
-                case 1: offsetDir = Vector2.left; break;  // right face
-                case 3: offsetDir = Vector2.right; break; // left face
-            }
+			// Determine direction for selection offset (used for mouse interaction)
+			Vector2 offsetDir = Vector2.zero;
+			switch (pin.face)
+			{
+				case 1: offsetDir = Vector2.left; break;  // right face
+				case 3: offsetDir = Vector2.right; break; // left face
+			}
 
 
-            Vector2 pinSelectionBoundsPos = pinPos + offsetDir * 0.02f;
-            bool mouseOverPin = !InteractionState.MouseIsOverUI &&
-                                InputHelper.MouseInsideBounds_World(pinSelectionBoundsPos, pinSize);
-            if (mouseOverPin)
-                InteractionState.NotifyElementUnderMouse(pin);
+			Vector2 pinSelectionBoundsPos = pinPos + offsetDir * 0.02f;
+			bool mouseOverPin = !InteractionState.MouseIsOverUI &&
+								InputHelper.MouseInsideBounds_World(pinSelectionBoundsPos, pinSize);
+			if (mouseOverPin)
+				InteractionState.NotifyElementUnderMouse(pin);
 
-            bool canInteract = controller.CanInteractWithPin;
+			bool canInteract = controller.CanInteractWithPin;
 
-            Color pinCol = mouseOverPin && canInteract ? ActiveTheme.PinHighlightCol : ActiveTheme.PinCol;
-            // If hovering over pin while creating a wire, colour should indicate whether it is a valid connection
-            if (mouseOverPin && canInteract && controller.IsCreatingWire && !controller.CanCompleteWireConnection(pin))
-            {
-                pinCol = ActiveTheme.PinInvalidCol;
-            }
+			Color pinCol = mouseOverPin && canInteract ? ActiveTheme.PinHighlightCol : ActiveTheme.PinCol;
+			// If hovering over pin while creating a wire, colour should indicate whether it is a valid connection
+			if (mouseOverPin && canInteract && controller.IsCreatingWire && !controller.CanCompleteWireConnection(pin))
+			{
+				pinCol = ActiveTheme.PinInvalidCol;
+			}
 
-            Draw.Quad(pinPos, pinSize, pinCol);
+			Draw.Quad(pinPos, pinSize, pinCol);
 
 
 			// Draw pin indicator
@@ -1287,80 +1319,80 @@ namespace DLS.Graphics
 				Draw.Quad(pinPos + pin.FacingDir * 0.25f * pinWidth, depthIndicatorSize, ActiveTheme.PinSizeIndicatorColors[pin.bitCount.GetTier()]);
 			}
 
-            // Draws input/output indicators on subchip pins only
-            bool isOnCustomChip = pin.parent is SubChipInstance;
+			// Draws input/output indicators on subchip pins only
+			bool isOnCustomChip = pin.parent is SubChipInstance;
 			if (isOnCustomChip)
 			{
-                // Check if pin is connect to any wire 
-                List<WireInstance> wireList = Project.ActiveProject.controller.ActiveDevChip.Wires;
-                bool isConnected = false;
-                for (int i = wireList.Count - 1; i >= 0; i--)
+				// Check if pin is connect to any wire 
+				List<WireInstance> wireList = Project.ActiveProject.controller.ActiveDevChip.Wires;
+				bool isConnected = false;
+				for (int i = wireList.Count - 1; i >= 0; i--)
 				{
 					WireInstance wire = wireList[i];
-                    if (PinAddress.Equals(wire.SourcePin.Address, pin.Address) || PinAddress.Equals(wire.TargetPin.Address, pin.Address))
+					if (PinAddress.Equals(wire.SourcePin.Address, pin.Address) || PinAddress.Equals(wire.TargetPin.Address, pin.Address))
 					{
 						isConnected = true;
 						break;
-                    }
-					
+					}
+
 				}
-                //set up display mode based on settings
-                int pinIndicatorMode = Project.ActiveProject.description.Perfs_PinIndicators;
-                bool drawIndicator = false;
-                switch (pinIndicatorMode)
-                {
-                    case 1: // "On Hover"
-                        drawIndicator = mouseOverPin;
-                        break;
-                    case 2: // "Tab To Toggle"
-                        drawIndicator = Project.ActiveProject.PinNameDisplayIsTabToggledOn;
-                        break;
-                    case 3: // "If Pin is not connected"
-                        drawIndicator = !isConnected;
-                        break;
-                    case 4: // "Always"
-                        drawIndicator = true;
-                        break;   
-                }
-                if (drawIndicator)
+				//set up display mode based on settings
+				int pinIndicatorMode = Project.ActiveProject.description.Perfs_PinIndicators;
+				bool drawIndicator = false;
+				switch (pinIndicatorMode)
 				{
-                    Vector2 dir;
-                    switch (pin.face)
-                    {
-                        case 0: dir = Vector2.down; break;
-                        case 1: dir = Vector2.left; break;
-                        case 2: dir = Vector2.up; break;
-                        case 3: dir = Vector2.right; break;
-                        default: dir = Vector2.zero; break;
-                    }
-                    if (pin.IsSourcePin) { dir = -dir; }
-                    float pinThickness = isHorizontal ? pinSize.y : pinSize.x;
-                    float arrowLength = pinThickness / 2f;
-                    float arrowWidth = arrowLength * 2f;
-                    Vector2 perp = new Vector2(-dir.y, dir.x);
+					case 1: // "On Hover"
+						drawIndicator = mouseOverPin;
+						break;
+					case 2: // "Tab To Toggle"
+						drawIndicator = Project.ActiveProject.PinNameDisplayIsTabToggledOn;
+						break;
+					case 3: // "If Pin is not connected"
+						drawIndicator = !isConnected;
+						break;
+					case 4: // "Always"
+						drawIndicator = true;
+						break;
+				}
+				if (drawIndicator)
+				{
+					Vector2 dir;
+					switch (pin.face)
+					{
+						case 0: dir = Vector2.down; break;
+						case 1: dir = Vector2.left; break;
+						case 2: dir = Vector2.up; break;
+						case 3: dir = Vector2.right; break;
+						default: dir = Vector2.zero; break;
+					}
+					if (pin.IsSourcePin) { dir = -dir; }
+					float pinThickness = isHorizontal ? pinSize.y : pinSize.x;
+					float arrowLength = pinThickness / 2f;
+					float arrowWidth = arrowLength * 2f;
+					Vector2 perp = new Vector2(-dir.y, dir.x);
 
 
-                    float edgeOffset = pinThickness / 4f;
+					float edgeOffset = pinThickness / 4f;
 
-                    //Shifts arrow based on if input/output to ensure its not hidden behind subchip
-                    Vector2 centerOffset = dir * edgeOffset * (pin.IsSourcePin ? 1 : -1);
-                    Vector2 arrowCenter = pinPos + centerOffset;
+					//Shifts arrow based on if input/output to ensure its not hidden behind subchip
+					Vector2 centerOffset = dir * edgeOffset * (pin.IsSourcePin ? 1 : -1);
+					Vector2 arrowCenter = pinPos + centerOffset;
 
-                    Vector2 tip = arrowCenter + dir * (arrowLength / 2f);
-                    Vector2 baseCenter = arrowCenter - dir * (arrowLength / 2f);
-                    Vector2 baseLeft = baseCenter + perp * (arrowWidth / 2f);
-                    Vector2 baseRight = baseCenter - perp * (arrowWidth / 2f);
-                    Draw.Triangle(tip, baseLeft, baseRight, new Color(34f / 255f, 34f / 255f, 34f / 255f, 1f));
-                }
+					Vector2 tip = arrowCenter + dir * (arrowLength / 2f);
+					Vector2 baseCenter = arrowCenter - dir * (arrowLength / 2f);
+					Vector2 baseLeft = baseCenter + perp * (arrowWidth / 2f);
+					Vector2 baseRight = baseCenter - perp * (arrowWidth / 2f);
+					Draw.Triangle(tip, baseLeft, baseRight, new Color(34f / 255f, 34f / 255f, 34f / 255f, 1f));
+				}
 			}
 
 
-        }
-        public static void DrawGrid(Color gridCol)
+		}
+		public static void DrawGrid(Color gridCol)
 		{
 			// Check which grid type to draw (0 = Square, 1 = Hexagon)
 			int gridType = Project.ActiveProject.description.Prefs_GridType;
-			
+
 			if (gridType == 1)
 			{
 				DrawHexagonGrid(gridCol);
@@ -1422,15 +1454,15 @@ namespace DLS.Graphics
 
 			// Use the same skip logic as square grid
 			int skip = cam.orthographicSize < 8 ? 1 : cam.orthographicSize < 32 ? 4 : 16;
-			
+
 			// Scale hexagon size based on skip factor (like square grid spacing)
 			float baseHexSize = GridSize * 1.5f;
 			float hexSize = baseHexSize * skip; // Make hexagons bigger when zoomed out
-			
+
 			// For proper hexagonal tessellation:
 			float hexWidth = hexSize * Mathf.Sqrt(3f); // Width between flat sides
 			float hexHeight = hexSize * 2f; // Height between pointy ends
-			
+
 			// Proper hexagonal grid spacing for tessellation
 			float horizontalSpacing = hexWidth; // Distance between column centers
 			float verticalSpacing = hexHeight * 0.75f; // Distance between row centers
@@ -1519,27 +1551,27 @@ namespace DLS.Graphics
 			DrawChipShape(centre, size, col, shapeType, 0f, null);
 		}
 
-	static void DrawChipShape(Vector2 centre, Vector2 size, Color col, ChipShapeType shapeType, float rotation, CustomPolygonData customPolygon = null)
-	{
-		switch (shapeType)
+		static void DrawChipShape(Vector2 centre, Vector2 size, Color col, ChipShapeType shapeType, float rotation, CustomPolygonData customPolygon = null)
 		{
-			case ChipShapeType.Rectangle:
-				Draw.Quad(centre, size, col);
-				break;
-				
-			case ChipShapeType.Hexagon:
-				DrawHexagon(centre, size, col, rotation);
-				break;
-				
-			case ChipShapeType.Triangle:
-				DrawTriangle(centre, size, col, rotation);
-				break;
-				
-			case ChipShapeType.CustomPolygon:
-				DrawCustomPolygon(centre, size, col, rotation, customPolygon);
-				break;
+			switch (shapeType)
+			{
+				case ChipShapeType.Rectangle:
+					Draw.Quad(centre, size, col);
+					break;
+
+				case ChipShapeType.Hexagon:
+					DrawHexagon(centre, size, col, rotation);
+					break;
+
+				case ChipShapeType.Triangle:
+					DrawTriangle(centre, size, col, rotation);
+					break;
+
+				case ChipShapeType.CustomPolygon:
+					DrawCustomPolygon(centre, size, col, rotation, customPolygon);
+					break;
+			}
 		}
-	}
 
 		static void DrawHexagon(Vector2 centre, Vector2 size, Color col)
 		{
@@ -1552,7 +1584,7 @@ namespace DLS.Graphics
 			float halfWidth = size.x * 0.5f;
 			float halfHeight = size.y * 0.5f;
 			float rotationRad = rotation * Mathf.Deg2Rad;
-			
+
 			// Hexagon vertices (6 points)
 			Vector2[] vertices = new Vector2[6];
 			for (int i = 0; i < 6; i++)
@@ -1563,7 +1595,7 @@ namespace DLS.Graphics
 					Mathf.Sin(angle) * halfHeight
 				);
 			}
-			
+
 			// Draw hexagon as 6 triangles from center
 			for (int i = 0; i < 6; i++)
 			{
@@ -1577,121 +1609,387 @@ namespace DLS.Graphics
 			DrawTriangle(centre, size, col, 0f);
 		}
 
-	static void DrawTriangle(Vector2 centre, Vector2 size, Color col, float rotation)
-	{
-		// Draw triangle using the same vertex calculation as pin positioning
-		float halfWidth = size.x * 0.5f;
-		float halfHeight = size.y * 0.5f;
-		float rotationRad = rotation * Mathf.Deg2Rad;
-		
-		// Triangle vertices (3 points) - same calculation as GetTriangleProjectedPointDirect
-		Vector2[] vertices = new Vector2[3];
-		for (int i = 0; i < 3; i++)
+		static void DrawTriangle(Vector2 centre, Vector2 size, Color col, float rotation)
 		{
-			float angle = i * 2f * Mathf.PI / 3f + rotationRad;
-			vertices[i] = centre + new Vector2(
-				Mathf.Cos(angle) * halfWidth,
-				Mathf.Sin(angle) * halfHeight
+			// Draw triangle using the same vertex calculation as pin positioning
+			float halfWidth = size.x * 0.5f;
+			float halfHeight = size.y * 0.5f;
+			float rotationRad = rotation * Mathf.Deg2Rad;
+
+			// Triangle vertices (3 points) - same calculation as GetTriangleProjectedPointDirect
+			Vector2[] vertices = new Vector2[3];
+			for (int i = 0; i < 3; i++)
+			{
+				float angle = i * 2f * Mathf.PI / 3f + rotationRad;
+				vertices[i] = centre + new Vector2(
+					Mathf.Cos(angle) * halfWidth,
+					Mathf.Sin(angle) * halfHeight
+				);
+			}
+
+			Draw.Triangle(vertices[0], vertices[1], vertices[2], col);
+		}
+
+		static Vector2 RotateVector(Vector2 vector, float rotationRad)
+		{
+			float cos = Mathf.Cos(rotationRad);
+			float sin = Mathf.Sin(rotationRad);
+			return new Vector2(
+				vector.x * cos - vector.y * sin,
+				vector.x * sin + vector.y * cos
 			);
 		}
+
+		static void DrawCustomPolygon(Vector2 centre, Vector2 size, Color col, float rotation, CustomPolygonData customPolygon)
+		{
+			// Use the passed custom polygon data
+			if (customPolygon == null)
+			{
+				// Fallback to rectangle if no custom polygon data
+				Draw.Quad(centre, size, col);
+				return;
+			}
+
+			CustomPolygonData polygon = customPolygon;
+			if (polygon.Vertices == null || polygon.Vertices.Length < 3)
+			{
+				// Need at least 3 vertices for a polygon
+				Draw.Quad(centre, size, col);
+				return;
+			}
+
+			float halfWidth = size.x * 0.5f;
+			float halfHeight = size.y * 0.5f;
+			float rotationRad = rotation * Mathf.Deg2Rad;
+
+			// Convert normalized vertices to world positions
+			Vector2[] worldVertices = new Vector2[polygon.Vertices.Length];
+			for (int i = 0; i < polygon.Vertices.Length; i++)
+			{
+				Vector2 normalizedPos = polygon.Vertices[i].ToVector2();
+				Vector2 scaledPos = new Vector2(normalizedPos.x * halfWidth, normalizedPos.y * halfHeight);
+				worldVertices[i] = centre + RotateVector(scaledPos, rotationRad);
+			}
+
+			// Draw polygon as triangles from center
+			for (int i = 0; i < worldVertices.Length; i++)
+			{
+				int next = (i + 1) % worldVertices.Length;
+
+				// Check if this edge is curved
+				if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
+				{
+					// Draw curved edge as multiple segments
+					DrawCurvedEdge(centre, worldVertices[i], worldVertices[next], polygon.Edges[i], col);
+				}
+				else
+				{
+					// Draw straight edge as triangle
+					Draw.Triangle(centre, worldVertices[i], worldVertices[next], col);
+				}
+			}
+		}
+
+		static void DrawCurvedEdge(Vector2 centre, Vector2 start, Vector2 end, PolygonEdge edge, Color col)
+		{
+			// For now, draw curved edges as multiple straight segments
+			// using quadratic bezier curve
+			int segments = 8; // Number of segments to approximate the curve
+
+			// Calculate control point
+			Vector2 edgeMidpoint = (start + end) * 0.5f;
+			Vector2 edgeDirection = end - start;
+			Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
+			Vector2 controlPoint = edgeMidpoint + perpendicular * edge.CurveStrength;
+
+			// Draw curve as series of triangles
+			Vector2 prevPoint = start;
+			for (int i = 1; i <= segments; i++)
+			{
+				float t = i / (float)segments;
+				Vector2 curvePoint = QuadraticBezier(start, controlPoint, end, t);
+				Draw.Triangle(centre, prevPoint, curvePoint, col);
+				prevPoint = curvePoint;
+			}
+		}
+
+		static Vector2 QuadraticBezier(Vector2 p0, Vector2 p1, Vector2 p2, float t)
+		{
+			float u = 1 - t;
+			float tt = t * t;
+			float uu = u * u;
+
+			Vector2 point = uu * p0;
+			point += 2 * u * t * p1;
+			point += tt * p2;
+
+			return point;
+		}
+
+		/// <summary>
+		/// Draws a TextDisplay as a display component on a custom chip
+		/// </summary>
+	static Bounds2D DrawDisplay_TextDisplay(Vector2 centre, float scale, SimChip sim, SubChipInstance rootChip, int textDisplaySubChipID)
+	{
+		// When TextDisplay is used as a display component (similar to 7-segment):
+		// - sim is the SimChip of the TextDisplay itself (passed from DrawDisplay)
+		// - We read the SELECT input from sim.InputPins[0]
+		// - We read the InternalData (strings) from sim.InternalState
+
+		string displayText = "TEXT"; // Default
 		
-		Draw.Triangle(vertices[0], vertices[1], vertices[2], col);
-	}
-
-	static Vector2 RotateVector(Vector2 vector, float rotationRad)
-	{
-		float cos = Mathf.Cos(rotationRad);
-		float sin = Mathf.Sin(rotationRad);
-		return new Vector2(
-			vector.x * cos - vector.y * sin,
-			vector.x * sin + vector.y * cos
-		);
-	}
-
-	static void DrawCustomPolygon(Vector2 centre, Vector2 size, Color col, float rotation, CustomPolygonData customPolygon)
-	{
-		// Use the passed custom polygon data
-		if (customPolygon == null)
+		if (sim != null)
 		{
-			// Fallback to rectangle if no custom polygon data
-			Draw.Quad(centre, size, col);
-			return;
-		}
-
-		CustomPolygonData polygon = customPolygon;
-		if (polygon.Vertices == null || polygon.Vertices.Length < 3)
-		{
-			// Need at least 3 vertices for a polygon
-			Draw.Quad(centre, size, col);
-			return;
-		}
-
-		float halfWidth = size.x * 0.5f;
-		float halfHeight = size.y * 0.5f;
-		float rotationRad = rotation * Mathf.Deg2Rad;
-
-		// Convert normalized vertices to world positions
-		Vector2[] worldVertices = new Vector2[polygon.Vertices.Length];
-		for (int i = 0; i < polygon.Vertices.Length; i++)
-		{
-			Vector2 normalizedPos = polygon.Vertices[i].ToVector2();
-			Vector2 scaledPos = new Vector2(normalizedPos.x * halfWidth, normalizedPos.y * halfHeight);
-			worldVertices[i] = centre + RotateVector(scaledPos, rotationRad);
-		}
-
-		// Draw polygon as triangles from center
-		for (int i = 0; i < worldVertices.Length; i++)
-		{
-			int next = (i + 1) % worldVertices.Length;
+			// Read SELECT input from the TextDisplay's simulation
+			uint selectValue = 0;
+			if (sim.InputPins != null && sim.InputPins.Length > 0)
+			{
+				selectValue = sim.InputPins[0].State.GetShortValues() & 0xFF;
+			}
 			
-			// Check if this edge is curved
-			if (polygon.Edges != null && i < polygon.Edges.Length && polygon.Edges[i].IsCurved)
+			UnityEngine.Debug.Log($"[DrawDisplay_TextDisplay] SelectValue={selectValue}, InternalStateLength={sim.InternalState?.Length ?? 0}");
+
+			// Decode the text string from InternalState (which contains the same data as InternalData)
+			displayText = DecodeTextDisplayStringDirect(sim.InternalState, (int)selectValue);
+			UnityEngine.Debug.Log($"[DrawDisplay_TextDisplay] DecodedText='{displayText}'");
+
+			// Get font size from InternalState
+			uint fontSizeValue = 0;
+			if (sim.InternalState != null && sim.InternalState.Length > 0)
 			{
-				// Draw curved edge as multiple segments
-				DrawCurvedEdge(centre, worldVertices[i], worldVertices[next], polygon.Edges[i], col);
+				fontSizeValue = (sim.InternalState[0] >> 24) & 0xFF;
 			}
-			else
+			float fontSizeMultiplier = fontSizeValue == 0 ? 1.0f : (fontSizeValue / 100f);
+			
+			if (string.IsNullOrEmpty(displayText))
 			{
-				// Draw straight edge as triangle
-				Draw.Triangle(centre, worldVertices[i], worldVertices[next], col);
+				displayText = "TEXT";
 			}
+
+			// Store font size for rendering
+			float baseFontSize = scale * 0.15f;
+			float fontSize = baseFontSize * fontSizeMultiplier;
+
+			// Draw background panel
+			Vector2 panelSize = new Vector2(scale, scale * 0.4f);
+			Color bgCol = new Color(0.2f, 0.3f, 0.4f);
+			Color textCol = Color.white;
+
+			Draw.Quad(centre, panelSize, bgCol);
+			Draw.Text(FontBold, displayText, fontSize, centre, Anchor.TextCentre, textCol);
+
+			return Bounds2D.CreateFromCentreAndSize(centre, panelSize);
 		}
+
+		// Fallback if sim is null
+		Vector2 fallbackPanelSize = new Vector2(scale, scale * 0.4f);
+		Color fallbackBgCol = new Color(0.2f, 0.3f, 0.4f);
+		Color fallbackTextCol = Color.white;
+
+		Draw.Quad(centre, fallbackPanelSize, fallbackBgCol);
+		Draw.Text(FontBold, displayText, scale * 0.15f, centre, Anchor.TextCentre, fallbackTextCol);
+
+		return Bounds2D.CreateFromCentreAndSize(centre, fallbackPanelSize);
 	}
 
-	static void DrawCurvedEdge(Vector2 centre, Vector2 start, Vector2 end, PolygonEdge edge, Color col)
+	/// <summary>
+	/// Gets the text string to display for a TextDisplay chip based on its current input value
+	/// </summary>
+	static string GetTextDisplayString(SubChipInstance textDisplayChip, SimChip sim)
 	{
-		// For now, draw curved edges as multiple straight segments
-		// using quadratic bezier curve
-		int segments = 8; // Number of segments to approximate the curve
-		
-		// Calculate control point
-		Vector2 edgeMidpoint = (start + end) * 0.5f;
-		Vector2 edgeDirection = end - start;
-		Vector2 perpendicular = new Vector2(-edgeDirection.y, edgeDirection.x).normalized;
-		Vector2 controlPoint = edgeMidpoint + perpendicular * edge.CurveStrength;
+		// Get the input value (0-255) from simulation state
+		uint selectValue = 0;
 
-		// Draw curve as series of triangles
-		Vector2 prevPoint = start;
-		for (int i = 1; i <= segments; i++)
+		if (sim != null && sim.InputPins != null && sim.InputPins.Length > 0)
 		{
-			float t = i / (float)segments;
-			Vector2 curvePoint = QuadraticBezier(start, controlPoint, end, t);
-			Draw.Triangle(centre, prevPoint, curvePoint, col);
-			prevPoint = curvePoint;
+			// Read from simulation state
+			selectValue = sim.InputPins[0].State.GetShortValues() & 0xFF;
+		}
+
+		// Decode the string from InternalData
+		string result = DecodeTextDisplayString(textDisplayChip, (int)selectValue);
+
+		// If string is empty, show the chip name instead
+		if (string.IsNullOrEmpty(result))
+		{
+			result = "TEXT DISPLAY";
+		}
+
+		return result;
+	}
+
+	/// <summary>
+	/// Decodes a specific text string directly from InternalData array
+	/// </summary>
+	static string DecodeTextDisplayStringDirect(uint[] internalData, int stringIndex)
+	{
+		if (internalData == null || internalData.Length == 0)
+		{
+			return "";
+		}
+
+		// Navigate through the packed strings to find the one at stringIndex
+		// Byte 3 of InternalData[0] is reserved for font size, so skip it
+		int dataIndex = 0;
+		int byteOffset = 0;
+
+	for (int i = 0; i <= stringIndex && dataIndex < internalData.Length; i++)
+	{
+		// Read length byte (check for skip BEFORE reading)
+		if (dataIndex >= internalData.Length) return "";
+		
+		// Skip byte 3 of the first uint (font size byte) BEFORE reading
+		if (dataIndex == 0 && byteOffset == 3)
+		{
+			byteOffset = 0;
+			dataIndex = 1;
+			if (dataIndex >= internalData.Length) return "";
+		}
+
+		uint currentData = internalData[dataIndex];
+		byte length = (byte)((currentData >> (byteOffset * 8)) & 0xFF);
+
+		byteOffset++;
+		if (byteOffset >= 4) { byteOffset = 0; dataIndex++; }
+
+		// If this is the string we want, decode it
+		if (i == stringIndex)
+		{
+			System.Text.StringBuilder sb = new System.Text.StringBuilder();
+			for (int charIdx = 0; charIdx < length && charIdx < 20; charIdx++)
+			{
+				if (dataIndex >= internalData.Length) break;
+				
+				// Skip byte 3 of the first uint (font size byte) BEFORE reading
+				if (dataIndex == 0 && byteOffset == 3)
+				{
+					byteOffset = 0;
+					dataIndex = 1;
+					if (dataIndex >= internalData.Length) break;
+				}
+
+				currentData = internalData[dataIndex];
+				byte charByte = (byte)((currentData >> (byteOffset * 8)) & 0xFF);
+
+				if (charByte >= 32 && charByte <= 126)
+				{
+					sb.Append((char)charByte);
+				}
+
+				byteOffset++;
+				if (byteOffset >= 4) { byteOffset = 0; dataIndex++; }
+			}
+			return sb.ToString();
+		}
+		else
+		{
+			// Skip past this string's characters
+			for (int charIdx = 0; charIdx < length && charIdx < 20; charIdx++)
+			{
+				if (dataIndex >= internalData.Length) break;
+				
+				// Skip byte 3 of the first uint (font size byte) BEFORE reading
+				if (dataIndex == 0 && byteOffset == 3)
+				{
+					byteOffset = 0;
+					dataIndex = 1;
+					if (dataIndex >= internalData.Length) break;
+				}
+
+				byteOffset++;
+				if (byteOffset >= 4) { byteOffset = 0; dataIndex++; }
+			}
 		}
 	}
 
-	static Vector2 QuadraticBezier(Vector2 p0, Vector2 p1, Vector2 p2, float t)
+		return "";
+	}
+
+	/// <summary>
+	/// Decodes a specific text string from TextDisplay's InternalData
+	/// </summary>
+	static string DecodeTextDisplayString(SubChipInstance textDisplayChip, int stringIndex)
 	{
-		float u = 1 - t;
-		float tt = t * t;
-		float uu = u * u;
+		if (textDisplayChip.InternalData == null || textDisplayChip.InternalData.Length == 0)
+		{
+			return "";
+		}
+
+		// Navigate through the packed strings to find the one at stringIndex
+		// Byte 3 of InternalData[0] is reserved for font size, so skip it
+		int dataIndex = 0;
+		int byteOffset = 0;
+
+	for (int i = 0; i <= stringIndex && dataIndex < textDisplayChip.InternalData.Length; i++)
+	{
+		// Read length byte (check for skip BEFORE reading)
+		if (dataIndex >= textDisplayChip.InternalData.Length) return "";
 		
-		Vector2 point = uu * p0;
-		point += 2 * u * t * p1;
-		point += tt * p2;
-		
-		return point;
+		// Skip byte 3 of the first uint (font size byte) BEFORE reading
+		if (dataIndex == 0 && byteOffset == 3)
+		{
+			byteOffset = 0;
+			dataIndex = 1;
+			if (dataIndex >= textDisplayChip.InternalData.Length) return "";
+		}
+
+		uint currentData = textDisplayChip.InternalData[dataIndex];
+		byte length = (byte)((currentData >> (byteOffset * 8)) & 0xFF);
+
+		byteOffset++;
+		if (byteOffset >= 4) { byteOffset = 0; dataIndex++; }
+
+		// If this is the string we want, decode it
+		if (i == stringIndex)
+		{
+			System.Text.StringBuilder sb = new System.Text.StringBuilder();
+			for (int charIdx = 0; charIdx < length && charIdx < 20; charIdx++)
+			{
+				if (dataIndex >= textDisplayChip.InternalData.Length) break;
+				
+				// Skip byte 3 of the first uint (font size byte) BEFORE reading
+				if (dataIndex == 0 && byteOffset == 3)
+				{
+					byteOffset = 0;
+					dataIndex = 1;
+					if (dataIndex >= textDisplayChip.InternalData.Length) break;
+				}
+
+				currentData = textDisplayChip.InternalData[dataIndex];
+				byte charByte = (byte)((currentData >> (byteOffset * 8)) & 0xFF);
+
+				if (charByte >= 32 && charByte <= 126)
+				{
+					sb.Append((char)charByte);
+				}
+
+				byteOffset++;
+				if (byteOffset >= 4) { byteOffset = 0; dataIndex++; }
+			}
+			return sb.ToString();
+		}
+		else
+		{
+			// Skip past this string's characters
+			for (int charIdx = 0; charIdx < length && charIdx < 20; charIdx++)
+			{
+				if (dataIndex >= textDisplayChip.InternalData.Length) break;
+				
+				// Skip byte 3 of the first uint (font size byte) BEFORE reading
+				if (dataIndex == 0 && byteOffset == 3)
+				{
+					byteOffset = 0;
+					dataIndex = 1;
+					if (dataIndex >= textDisplayChip.InternalData.Length) break;
+				}
+
+				byteOffset++;
+				if (byteOffset >= 4) { byteOffset = 0; dataIndex++; }
+			}
+		}
 	}
+
+		return "";
 	}
+}
 }

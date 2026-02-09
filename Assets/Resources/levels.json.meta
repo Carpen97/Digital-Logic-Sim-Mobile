@@ -1,10 +1,7 @@
 fileFormatVersion: 2
 guid: 6bd7589b76463ae46b3de6bcfebde519
-TextAssetImporter:
+TextScriptImporter:
   externalObjects: {}
   userData: 
-  assetBundleName: 
-  assetBundleVariant: 
-  forceTextSerialization: 0
   assetBundleName: 
   assetBundleVariant: 

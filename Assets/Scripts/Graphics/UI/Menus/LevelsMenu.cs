@@ -37,7 +37,56 @@ namespace DLS.Graphics
 	// -------- Data --------
 	[Serializable] class DefsWrapper { public LevelDefinition[] levels; }
 	[Serializable] public class LocalLevelPack { public LevelPackChapter[] chapters; }
-	[Serializable] public class LevelPackChapter { public string chapterId; public string chapterName; public string chapterDescription; public List<LevelDefinition> levels; }
+	[Serializable] public class LevelPackChapter 
+	{ 
+		public string chapterId; 
+		public string chapterName; 
+		public string chapterDescription; 
+		public List<LevelDefinition> levels;
+		public List<LevelDefinitionV2> levelsV2;
+		
+		/// <summary>
+		/// Get all levels in V1 format (converting V2 if necessary).
+		/// </summary>
+		public List<LevelDefinition> GetAllLevelsAsV1()
+		{
+			var result = new List<LevelDefinition>();
+
+			// Add V1 levels
+			if (levels != null)
+			{
+				result.AddRange(levels);
+			}
+
+			// Convert and add V2 levels
+			if (levelsV2 != null)
+			{
+				foreach (var v2Level in levelsV2)
+				{
+					try
+					{
+						// Validate V2 level first
+						if (!v2Level.Validate(out string error))
+						{
+							Debug.LogError($"[LevelsMenu] Invalid V2 level '{v2Level.id}': {error}");
+							continue;
+						}
+
+						// Convert to V1
+						var v1Level = v2Level.ToV1();
+						result.Add(v1Level);
+						Debug.Log($"[LevelsMenu] Converted V2 level '{v2Level.id}' to V1 format");
+					}
+					catch (Exception ex)
+					{
+						Debug.LogError($"[LevelsMenu] Failed to convert V2 level '{v2Level.id}': {ex.Message}");
+					}
+				}
+			}
+
+			return result;
+		}
+	}
 
 	class LevelPackEntry
 	{
@@ -472,9 +521,18 @@ namespace DLS.Graphics
 
 	static void OpenLeaderboard()
 	{
-		// Get the current level ID for the leaderboard
-		string levelId = GetCurrentLevelId();
-		LeaderboardPopup.Open(levelId);
+		// Get the current level ID and name for the leaderboard
+		if (_allLevels.Count > 0)
+		{
+			var selectedLevel = _allLevels[0]; // Always use index 0 since _allLevels only contains the current selection
+			string levelId = selectedLevel.def?.id ?? "Unknown Level";
+			string levelName = selectedLevel.def?.name ?? levelId;
+			LeaderboardPopup.Open(levelId, levelName);
+		}
+		else
+		{
+			LeaderboardPopup.Open("Unknown Level", "Unknown Level");
+		}
 	}
 	
 	static void OpenHallOfFame()
@@ -530,7 +588,10 @@ namespace DLS.Graphics
 				{
 					foreach (var ch in pack.chapters)
 					{
-						if (ch?.levels == null) continue;
+						if (ch == null) continue;
+						
+						// Get all levels (V1 + V2 converted to V1)
+						var allLevels = ch.GetAllLevelsAsV1();
 						
 						var levelPack = new LevelPackEntry
 						{
@@ -540,7 +601,7 @@ namespace DLS.Graphics
 							isToggledOpen = false
 						};
 						
-						foreach (var def in ch.levels)
+						foreach (var def in allLevels)
 						{
 							if (def == null || string.IsNullOrEmpty(def.id)) continue;
 							

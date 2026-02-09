@@ -411,21 +411,26 @@ namespace DLS.Game
 			return list;
 		}
 
-		static DisplayInstance CreateDisplayInstance(DisplayDescription displayDesc, ChipDescription chipDesc)
+	static DisplayInstance CreateDisplayInstance(DisplayDescription displayDesc, ChipDescription chipDesc)
+	{
+		DisplayInstance instance = new();
+		instance.Desc = displayDesc;
+		
+		// For custom chips with display components, we need to look up the actual chip type being displayed
+		if (chipDesc.ChipType == ChipType.Custom)
 		{
-			DisplayInstance instance = new();
-			instance.Desc = displayDesc;
-			instance.DisplayType = chipDesc.ChipType;
-
-			if (chipDesc.ChipType == ChipType.Custom)
-			{
-				ChipDescription childDesc = GetDescriptionOfDisplayedSubChip(chipDesc, displayDesc.SubChipID);
-				instance.ChildDisplays = CreateDisplayInstances(childDesc);
-			}
-
-
-			return instance;
+			ChipDescription childDesc = GetDescriptionOfDisplayedSubChip(chipDesc, displayDesc.SubChipID);
+			instance.DisplayType = childDesc.ChipType;  // Use the displayed chip's type, not the parent's!
+			instance.ChildDisplays = CreateDisplayInstances(childDesc);
 		}
+		else
+		{
+			// For builtin chips with their own displays (like 7-segment), use the chip's own type
+			instance.DisplayType = chipDesc.ChipType;
+		}
+
+		return instance;
+	}
 
 
 		static ChipDescription GetDescriptionOfDisplayedSubChip(ChipDescription chipDesc, int subchipID)

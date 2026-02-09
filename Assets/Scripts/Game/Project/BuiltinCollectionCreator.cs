@@ -40,13 +40,14 @@ namespace DLS.Game
 					"BUS-4",
 					"BUS-8"
 				),
-				CreateChipCollection("DISPLAY",
-					ChipType.SevenSegmentDisplay,
-					ChipType.DisplayDot,
-					ChipType.DisplayRGB,
-					ChipType.DisplayRGBTouch,
-					ChipType.DisplayLED
-				),
+			CreateChipCollection("DISPLAY",
+				ChipType.SevenSegmentDisplay,
+				ChipType.DisplayDot,
+				ChipType.DisplayRGB,
+				ChipType.DisplayRGBTouch,
+				ChipType.DisplayLED,
+				ChipType.TextDisplay
+			),
 				CreateChipCollection("MEMORY",
 					ChipType.Rom_256x16,
 					ChipType.EEPROM_256x16,

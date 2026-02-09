@@ -16,24 +16,63 @@ using static DLS.Graphics.DrawSettings;
 using static Seb.Vis.UI.ButtonTheme;
 using System.Security.Cryptography.X509Certificates;
 
-// Data structures for levels.json parsing
+// Data structures for levels.json parsing (matching LevelsMenu structure)
 [System.Serializable]
-public class LevelsData
+public class LevelPackData
 {
-	public int schemaVersion;
-	public string packId;
-	public string packName;
-	public string packDescription;
-	public Chapter[] chapters;
+	public LevelPackChapterData[] chapters;
 }
 
 [System.Serializable]
-public class Chapter
+public class LevelPackChapterData
 {
 	public string chapterId;
 	public string chapterName;
 	public string chapterDescription;
 	public LevelDefinition[] levels;
+	public LevelDefinitionV2[] levelsV2;
+	
+	/// <summary>
+	/// Get all levels in V1 format (converting V2 if necessary).
+	/// </summary>
+	public List<LevelDefinition> GetAllLevelsAsV1()
+	{
+		var result = new List<LevelDefinition>();
+
+		// Add V1 levels
+		if (levels != null)
+		{
+			result.AddRange(levels);
+		}
+
+		// Convert and add V2 levels
+		if (levelsV2 != null)
+		{
+			foreach (var v2Level in levelsV2)
+			{
+				try
+				{
+					// Validate V2 level first
+					if (!v2Level.Validate(out string error))
+					{
+						Debug.LogError($"[LevelValidationPopup] Invalid V2 level '{v2Level.id}': {error}");
+						continue;
+					}
+
+					// Convert to V1
+					var v1Level = v2Level.ToV1();
+					result.Add(v1Level);
+					Debug.Log($"[LevelValidationPopup] Converted V2 level '{v2Level.id}' to V1 format");
+				}
+				catch (Exception ex)
+				{
+					Debug.LogError($"[LevelValidationPopup] Failed to convert V2 level '{v2Level.id}': {ex.Message}");
+				}
+			}
+		}
+
+		return result;
+	}
 }
 
 namespace DLS.Graphics
@@ -71,7 +110,7 @@ namespace DLS.Graphics
         private static float defaultZoom;
 
 		// ---------- Display Mode State ----------
-		static int _displayMode = 0; // 0 = Binary, 1 = Graphical
+		static int _displayMode = 1; // 0 = Binary, 1 = Graphical
 		static readonly string[] _displayModeNames = { "Binary", "Graphical" };
 
 		// ---------- Scrolling State ----------
@@ -319,6 +358,16 @@ namespace DLS.Graphics
 			int nandCount = GetNandGateCount();
 			Seb.Vis.UI.UI.DrawText($"Score: {nandCount}", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TopLeft, Color.yellow);
 
+			// Upload status (if uploading)
+			if (_isUploading || !string.IsNullOrEmpty(_uploadStatus))
+			{
+				Vector2 uploadStatusPos = scorePos + new Vector2(0f, -RowHeight * 1.1f);
+				Color statusColor = _uploadStatus.Contains("success") ? Color.green : 
+								   _uploadStatus.Contains("failed") || _uploadStatus.Contains("timeout") ? Color.red : 
+								   Color.yellow;
+				Seb.Vis.UI.UI.DrawText(_uploadStatus, ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, uploadStatusPos, Anchor.TopLeft, statusColor);
+			}
+
 			// Display mode selector (above zoom buttons)
 			Vector2 displayModePos = scorePos + new Vector2(0f, -RowHeight * 1.4f) + Vector2.up * (buttonHeight + spacing);;
 			_displayMode = Seb.Vis.UI.UI.WheelSelector(
@@ -515,7 +564,13 @@ namespace DLS.Graphics
 			// Handle button actions
 			if (applyTestPressed && hasValidSelection) ApplySelectedTestInputs();
 			if (uploadPressed && levelPassed) UserNameInputPopup.Open(OnUserNameConfirmed, OnUserNameCancelled);
-			if (leaderboardPressed) LeaderboardPopup.Open(GetCurrentLevelId());
+			if (leaderboardPressed)
+			{
+				var levelManager = LevelManager.Instance;
+				string levelId = levelManager?.Current?.id ?? "Unknown Level";
+				string levelName = levelManager?.Current?.name ?? levelId;
+				LeaderboardPopup.Open(levelId, levelName);
+			}
 			if (saveAsChipPressed && levelPassed)
 			{
 				ChipSaveMenu.SetReturnMenu(UIDrawer.MenuType.LevelValidationResult);
@@ -1202,13 +1257,163 @@ namespace DLS.Graphics
 		// ---------- User Name Input Callbacks ----------
 		static void OnUserNameConfirmed(string userName, bool shouldRemember, bool shareSolution)
 		{
-			// TODO: Implement upload logic
-			Debug.Log($"[LevelValidationPopup] Upload confirmed: {userName}, share: {shareSolution}");
+			// Start upload with user name and solution sharing preference
+			_ = UploadToLeaderboard(userName, shareSolution);
 		}
 
 		static void OnUserNameCancelled()
 		{
-			Debug.Log("[LevelValidationPopup] Upload cancelled");
+			// User cancelled, do nothing
+			Debug.Log("[LevelValidationPopup] User cancelled name input");
+		}
+
+		static async System.Threading.Tasks.Task UploadToLeaderboard(string userName = null, bool shareSolution = false)
+		{
+			// Ultimate safety wrapper to prevent any crashes
+			try
+			{
+				_isUploading = true;
+				_uploadStatus = "Initializing...";
+				Debug.Log("[Leaderboard] Starting upload process...");
+
+				// Simple approach: Disable solution sharing in Editor to prevent crashes
+#if UNITY_EDITOR
+				if (shareSolution)
+				{
+					Debug.Log("[Leaderboard] Editor mode - disabling solution sharing to prevent crashes");
+					shareSolution = false;
+				}
+#endif
+
+				// Step 1: Initialize Firebase with timeout
+				_uploadStatus = "Connecting to Firebase...";
+				Debug.Log("[Leaderboard] Step 1: Initializing Firebase...");
+
+				using (var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(30)))
+				{
+					try
+					{
+						var initTask = FirebaseBootstrap.InitializeAsync();
+						var timeoutTask = Task.Delay(30000, cts.Token);
+						await Task.WhenAny(initTask, timeoutTask);
+						if (timeoutTask.IsCompleted)
+						{
+							throw new OperationCanceledException("Firebase initialization timed out");
+						}
+						await initTask;
+						Debug.Log($"[Leaderboard] Firebase initialized: {FirebaseBootstrap.IsInitialized}, UserId: {FirebaseBootstrap.UserId}");
+					}
+					catch (OperationCanceledException)
+					{
+						Debug.LogWarning("[Leaderboard] Firebase initialization timed out after 30 seconds");
+						_uploadStatus = "Connection timeout - using offline mode";
+						await System.Threading.Tasks.Task.Delay(1000);
+						_isUploading = false;
+						_uploadStatus = "";
+						return;
+					}
+				}
+
+				// Step 2: Calculate score
+				_uploadStatus = "Calculating score...";
+				Debug.Log("[Leaderboard] Step 2: Calculating score...");
+				int score = GetNandGateCount();
+				Debug.Log($"[Leaderboard] Calculated score: {score}");
+
+				// Step 3: Get level ID
+				_uploadStatus = "Preparing upload...";
+				Debug.Log("[Leaderboard] Step 3: Getting level ID...");
+				string levelId = GetCurrentLevelId();
+				Debug.Log($"[Leaderboard] Level ID: {levelId}");
+
+				// Step 4: Upload based on sharing preference
+				string completeSolutionId = null;
+
+				if (shareSolution)
+				{
+					_uploadStatus = "Creating complete solution...";
+					Debug.Log("[Leaderboard] Step 4: Creating complete solution...");
+
+					// Create complete solution with all custom chip definitions
+					var completeSolution = SolutionSerializer.CreateCompleteSolutionFromCurrentProject(levelId, score, userName);
+					Debug.Log($"[Leaderboard] Complete solution created with {completeSolution.CustomChipDefinitions.Count} custom chips");
+
+					_uploadStatus = "Uploading complete solution...";
+					Debug.Log("[Leaderboard] Step 5: Uploading complete solution...");
+
+					using (var uploadCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(60)))
+					{
+						try
+						{
+							var uploadTask = LeaderboardService.SaveCompleteSolutionAsync(completeSolution, null);
+							var timeoutTask = Task.Delay(60000, uploadCts.Token);
+							await Task.WhenAny(uploadTask, timeoutTask);
+							if (timeoutTask.IsCompleted)
+							{
+								throw new OperationCanceledException("Complete solution upload timed out");
+							}
+							completeSolutionId = await uploadTask;
+							_uploadStatus = "Complete solution uploaded!";
+							Debug.Log($"[Leaderboard] Complete solution uploaded successfully for level {levelId}!");
+						}
+						catch (OperationCanceledException)
+						{
+							Debug.LogWarning("[Leaderboard] Complete solution upload timed out after 60 seconds");
+							_uploadStatus = "Upload timeout - please try again";
+							await System.Threading.Tasks.Task.Delay(2000);
+							_isUploading = false;
+							_uploadStatus = "";
+							return;
+						}
+					}
+				}
+
+				// Step 5: Upload score (with or without complete solution)
+				_uploadStatus = "Uploading score...";
+				Debug.Log("[Leaderboard] Step 6: Uploading score...");
+
+				using (var uploadCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(25)))
+				{
+					try
+					{
+						var uploadTask = LeaderboardService.SaveScoreAsync(levelId, score, null, null, userName, completeSolutionId);
+						var timeoutTask = Task.Delay(25000, uploadCts.Token);
+						await Task.WhenAny(uploadTask, timeoutTask);
+						if (timeoutTask.IsCompleted)
+						{
+							throw new OperationCanceledException("Upload timed out");
+						}
+						await uploadTask;
+						_uploadStatus = "Upload successful!";
+						Debug.Log($"[Leaderboard] Score {score} uploaded successfully for level {levelId}!");
+					}
+					catch (OperationCanceledException)
+					{
+						Debug.LogWarning("[Leaderboard] Upload timed out after 25 seconds");
+						_uploadStatus = "Upload timeout - please try again";
+						await System.Threading.Tasks.Task.Delay(2000);
+						_isUploading = false;
+						_uploadStatus = "";
+						return;
+					}
+				}
+
+				// Reset status after a brief delay
+				await System.Threading.Tasks.Task.Delay(1500);
+				_isUploading = false;
+				_uploadStatus = "";
+			}
+			catch (Exception ex)
+			{
+				_uploadStatus = "Upload failed!";
+				Debug.LogError($"[Leaderboard] Upload failed: {ex.Message}");
+				Debug.LogError($"[Leaderboard] Stack trace: {ex.StackTrace}");
+
+				// Reset status after showing error
+				await System.Threading.Tasks.Task.Delay(2000);
+				_isUploading = false;
+				_uploadStatus = "";
+			}
 		}
 
 		static void PlayNextLevel()
@@ -1269,61 +1474,100 @@ namespace DLS.Graphics
 			}
 		}
 
-		static LevelDefinition GetNextLevelDefinition()
+	static LevelDefinition GetNextLevelDefinition()
+	{
+		var levelManager = LevelManager.Instance;
+		if (levelManager?.Current == null)
 		{
-			var levelManager = LevelManager.Instance;
-			if (levelManager?.Current == null) return null;
+			Debug.LogWarning("[LevelValidationPopup] Cannot get next level: LevelManager or Current level is null");
+			return null;
+		}
 
-			var currentLevel = levelManager.Current;
+		var currentLevel = levelManager.Current;
+		Debug.Log($"[LevelValidationPopup] Looking for next level after: {currentLevel.id} (name: {currentLevel.name})");
 
-			try
+		try
+		{
+			// Load levels data
+			var levelsText = Resources.Load<TextAsset>("levels");
+			if (levelsText == null)
 			{
-				// Load levels data
-				var levelsText = Resources.Load<TextAsset>("levels");
-				if (levelsText == null) return null;
+				Debug.LogError("[LevelValidationPopup] Could not load levels.json from Resources");
+				return null;
+			}
 
-				var levelsData = JsonUtility.FromJson<LevelsData>(levelsText.text);
-				if (levelsData?.chapters == null) return null;
+			var levelPackData = JsonUtility.FromJson<LevelPackData>(levelsText.text);
+			if (levelPackData?.chapters == null)
+			{
+				Debug.LogError("[LevelValidationPopup] Failed to parse levels.json or no chapters found");
+				return null;
+			}
 
-				// Find current level across all chapters
-				foreach (var chapter in levelsData.chapters)
+			Debug.Log($"[LevelValidationPopup] Loaded {levelPackData.chapters.Length} chapters from levels.json");
+
+			// Find current level across all chapters (including V2 levels converted to V1)
+			for (int chapterIdx = 0; chapterIdx < levelPackData.chapters.Length; chapterIdx++)
+			{
+				var chapter = levelPackData.chapters[chapterIdx];
+				if (chapter == null) continue;
+				
+				// Get all levels (V1 + V2 converted to V1)
+				var allLevels = chapter.GetAllLevelsAsV1();
+				if (allLevels == null || allLevels.Count == 0) continue;
+
+				for (int i = 0; i < allLevels.Count; i++)
 				{
-					if (chapter.levels == null) continue;
-
-					for (int i = 0; i < chapter.levels.Length; i++)
+					var level = allLevels[i];
+					
+					// Try matching by ID first, then by name as fallback
+					bool isMatch = level.id == currentLevel.id || 
+					               (string.IsNullOrEmpty(level.id) && level.name == currentLevel.name);
+					
+					if (isMatch)
 					{
-						if (chapter.levels[i].id == currentLevel.id)
+						Debug.Log($"[LevelValidationPopup] Found current level in chapter '{chapter.chapterName}' at index {i}");
+						
+						// Found current level, check if there's a next level in this chapter
+						if (i < allLevels.Count - 1)
 						{
-							// Found current level, check if there's a next level in this chapter
-							if (i < chapter.levels.Length - 1)
+							var nextLevel = allLevels[i + 1];
+							Debug.Log($"[LevelValidationPopup] Next level found in same chapter: {nextLevel.id} (name: {nextLevel.name})");
+							return nextLevel;
+						}
+						// If this is the last level in the chapter, look for next chapter
+						else
+						{
+							Debug.Log($"[LevelValidationPopup] Current level is last in chapter, looking for next chapter...");
+							// Find next chapter with levels
+							for (int j = chapterIdx + 1; j < levelPackData.chapters.Length; j++)
 							{
-								return chapter.levels[i + 1];
-							}
-							// If this is the last level in the chapter, look for next chapter
-							else
-							{
-								// Find next chapter with levels
-								int currentChapterIndex = Array.IndexOf(levelsData.chapters, chapter);
-								for (int j = currentChapterIndex + 1; j < levelsData.chapters.Length; j++)
+								var nextChapter = levelPackData.chapters[j];
+								if (nextChapter == null) continue;
+								
+								var nextChapterLevels = nextChapter.GetAllLevelsAsV1();
+								if (nextChapterLevels != null && nextChapterLevels.Count > 0)
 								{
-									if (levelsData.chapters[j].levels != null && levelsData.chapters[j].levels.Length > 0)
-									{
-										return levelsData.chapters[j].levels[0]; // First level of next chapter
-									}
+									var nextLevel = nextChapterLevels[0];
+									Debug.Log($"[LevelValidationPopup] Next level found in next chapter '{nextChapter.chapterName}': {nextLevel.id} (name: {nextLevel.name})");
+									return nextLevel;
 								}
-								return null; // No more levels
 							}
+							Debug.Log("[LevelValidationPopup] No more levels after this one");
+							return null; // No more levels
 						}
 					}
 				}
+			}
 
-				return null; // Current level not found
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError($"[LevelValidationPopup] Error getting next level: {ex.Message}");
-				return null;
-			}
+			Debug.LogWarning($"[LevelValidationPopup] Current level not found in levels.json: {currentLevel.id} (name: {currentLevel.name})");
+			return null; // Current level not found
 		}
+		catch (Exception ex)
+		{
+			Debug.LogError($"[LevelValidationPopup] Error getting next level: {ex.Message}");
+			Debug.LogError($"[LevelValidationPopup] Stack trace: {ex.StackTrace}");
+			return null;
+		}
+	}
 	}
 }

@@ -91,7 +91,8 @@ namespace DLS.Graphics
         public static void OnMenuOpened()
 		{
 			DevChipInstance chip = Project.ActiveProject.ViewedChip;
-			subChipsWithDisplays = chip.GetSubchips().Where(c => c.Description.HasDisplay()).OrderBy(c => c.Position.x).ThenBy(c => c.Position.y).ToArray();
+			// Include chips that have displays OR are displayable chip types (like TextDisplay)
+			subChipsWithDisplays = chip.GetSubchips().Where(c => c.Description.HasDisplay() || ChipTypeHelper.IsTextDisplayType(c.ChipType)).OrderBy(c => c.Position.x).ThenBy(c => c.Position.y).ToArray();
 			CustomizationSceneDrawer.OnCustomizationMenuOpened();
 			displayLabelString = $"DISPLAYS ({subChipsWithDisplays.Length}):";
             isCustomLayout = false;
@@ -954,9 +955,15 @@ namespace DLS.Graphics
         {
             // Position the panel to the right of existing panels
             // Main panel width + right panel width + padding
+            #if UNITY_ANDROID || UNITY_IOS
+            float existingPanelsWidth = width; // Main panel + right panel + padding
+            Vector2 panelPos = new Vector2(existingPanelsWidth, Seb.Vis.UI.UI.Height); // Bottom right
+            Vector2 panelSize = new Vector2(width, 16f);
+            #else
             float existingPanelsWidth = width; // Main panel + right panel + padding
             Vector2 panelPos = new Vector2(existingPanelsWidth, Seb.Vis.UI.UI.Height); // Bottom right
             Vector2 panelSize = new Vector2(width-6.5f, 14f);
+            #endif
             
             if (customPolygonPanelExpanded)
             {
@@ -997,7 +1004,22 @@ namespace DLS.Graphics
 
             Vector2 currentPos = startPos;
 
-            // Warning message
+            #if UNITY_ANDROID || UNITY_IOS
+            Color warningColor = new Color(1f, 0.7f, 0.2f); // Orange/yellow warning color
+            Seb.Vis.UI.UI.DrawText("WARNING: Custom shapes is", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, new Vector2(currentPos.x*2+1, Seb.Vis.UI.UI.Height), Anchor.TopLeft, warningColor);
+            Seb.Vis.UI.UI.DrawText("an experimental feature", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, new Vector2(currentPos.x*2+1, Seb.Vis.UI.UI.Height)+ Vector2.down * (UIThemeLibrary.FontSizeSmall + pad * 0.3f), Anchor.TopLeft, warningColor);
+            currentPos += Vector2.down * (UIThemeLibrary.FontSizeSmall + pad * 1.5f);
+
+            // Display current vertex count
+            Seb.Vis.UI.UI.DrawText($"Vertices: {polygon.Vertices.Length}", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeDefault, currentPos, Anchor.TopLeft, Color.white);
+            currentPos += Vector2.down * (UIThemeLibrary.FontSizeDefault + pad);
+
+            // Add/Remove vertex buttons
+            Vector2 btnSize = new Vector2(panelWidth / 2 - 5, DrawSettings.ButtonHeight);
+            Vector2 leftBtnPos = currentPos;
+            Vector2 btnSize2 = new Vector2(panelWidth / 2 - 7.8f, DrawSettings.ButtonHeight);
+            Vector2 rightBtnPos = leftBtnPos - new Vector2(0, DrawSettings.ButtonHeight + pad);
+            #else
             Color warningColor = new Color(1f, 0.7f, 0.2f); // Orange/yellow warning color
             Seb.Vis.UI.UI.DrawText("WARNING: Custom shapes is an", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, warningColor);
             currentPos += Vector2.down * (UIThemeLibrary.FontSizeSmall + pad * 0.3f);
@@ -1013,6 +1035,8 @@ namespace DLS.Graphics
             Vector2 leftBtnPos = currentPos;
             Vector2 btnSize2 = new Vector2(panelWidth / 2 - 7.8f, DrawSettings.ButtonHeight);
             Vector2 rightBtnPos = leftBtnPos - new Vector2(0, DrawSettings.ButtonHeight + pad);
+            #endif
+            
 
             // Get selection state from CustomizationSceneDrawer
             int selectedEdge = CustomizationSceneDrawer.SelectedPolygonEdge;
@@ -1036,14 +1060,18 @@ namespace DLS.Graphics
                 Debug.Log($"After remove: vertex count: {polygon.Vertices.Length}");
             }
 
-            currentPos += Vector2.down * (DrawSettings.ButtonHeight*2 + pad*2);
+            currentPos += Vector2.down * (DrawSettings.ButtonHeight * 2 + pad * 2);
 
-            // Instructions
-            Seb.Vis.UI.UI.DrawText("Yellow: Vertices (drag to move)", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
-            currentPos += Vector2.down * (UIThemeLibrary.FontSizeSmall + pad * 0.5f);
-            Seb.Vis.UI.UI.DrawText("Cyan: Edges (drag to curve)", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
-            currentPos += Vector2.down * (UIThemeLibrary.FontSizeSmall + pad * 0.5f);
-            Seb.Vis.UI.UI.DrawText("Green: Selected", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
+            #if UNITY_ANDROID || UNITY_IOS
+
+            #else
+                // Instructions
+                Seb.Vis.UI.UI.DrawText("Yellow: Vertices (drag to move)", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
+                currentPos += Vector2.down * (UIThemeLibrary.FontSizeSmall + pad * 0.5f);
+                Seb.Vis.UI.UI.DrawText("Cyan: Edges (drag to curve)", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
+                currentPos += Vector2.down * (UIThemeLibrary.FontSizeSmall + pad * 0.5f);
+                Seb.Vis.UI.UI.DrawText("Green: Selected", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, currentPos, Anchor.TopLeft, new Color(0.7f, 0.7f, 0.7f));
+            #endif
         }
 		
 		static void UpdatePinPositionInDescription(PinInstance pin, Vector2 newPosition)

@@ -43,16 +43,19 @@ namespace DLS.Game
 
 				// ---- Merge / Split ----
 
-				// ---- Displays ----
-				CreateDisplay7Seg(),
-				CreateDisplayRGB(),
-				CreateDisplayRGBTouch(),
-				CreateDisplayDot(),
-				CreateDisplayLED(),
-				// ---- Audio ----
-				CreateBuzzer(),
-				// ---- Clock ----
-				CreateSPSChip(),
+			// ---- Displays ----
+			CreateDisplay7Seg(),
+			CreateDisplayRGB(),
+			CreateDisplayRGBTouch(),
+			CreateDisplayDot(),
+			CreateDisplayLED(),
+			CreateTextDisplay(),
+		// ---- Audio ----
+		CreateBuzzer(),
+		CreateSpeaker(),
+		CreateSpeakerV2(),
+		// ---- Clock ----
+		CreateSPSChip(),
 				// ---- Time ----
 				CreateRTC()
 			}
@@ -182,22 +185,59 @@ namespace DLS.Game
 			return CreateBuiltinChipDescription(ChipType.Nand, size, col, inputPins, outputPins);
 		}
 
-		static ChipDescription CreateBuzzer()
+	static ChipDescription CreateBuzzer()
+	{
+		Color col = GetColor(new(0, 0, 0));
+
+		PinDescription[] inputPins =
 		{
-			Color col = GetColor(new(0, 0, 0));
+			CreatePinDescription("PITCH", 1, PinBitCount.Bit8),
+			CreatePinDescription("VOLUME", 0, PinBitCount.Bit4),
+		};
 
-			PinDescription[] inputPins =
-			{
-				CreatePinDescription("PITCH", 1, PinBitCount.Bit8),
-				CreatePinDescription("VOLUME", 0, PinBitCount.Bit4),
-			};
+		float height = SubChipInstance.MinChipHeightForPins(inputPins, null);
+		Vector2 size = new(CalculateGridSnappedWidth(GridSize * 9), height);
 
-			float height = SubChipInstance.MinChipHeightForPins(inputPins, null);
-			Vector2 size = new(CalculateGridSnappedWidth(GridSize * 9), height);
+		return CreateBuiltinChipDescription(ChipType.Buzzer, size, col, inputPins, null, null, canBeCached: false);
+	}
 
-			return CreateBuiltinChipDescription(ChipType.Buzzer, size, col, inputPins, null, null, canBeCached: false);
-		}
-		static ChipDescription CreateSPSChip()
+	static ChipDescription CreateSpeaker()
+	{
+		Color col = GetColor(new(0, 0, 0));
+
+		PinDescription[] inputPins =
+		{
+			CreatePinDescription("PITCH", 3, PinBitCount.Bit8),
+			CreatePinDescription("VOLUME", 2, PinBitCount.Bit8),
+			CreatePinDescription("WAVE", 1, 2),  // 2-bit pin for wave type (0-3)
+			CreatePinDescription("ENABLE", 0, PinBitCount.Bit1),
+		};
+
+		float height = SubChipInstance.MinChipHeightForPins(inputPins, null);
+		Vector2 size = new(CalculateGridSnappedWidth(GridSize * 9), height);
+
+		return CreateBuiltinChipDescription(ChipType.Speaker, size, col, inputPins, null, null, canBeCached: false);
+	}
+
+	static ChipDescription CreateSpeakerV2()
+	{
+		Color col = GetColor(new(0, 0, 0));
+
+		PinDescription[] inputPins =
+		{
+			CreatePinDescription("PITCH_HI", 3, PinBitCount.Bit8),  // High byte of 16-bit pitch
+			CreatePinDescription("PITCH_LO", 2, PinBitCount.Bit8),  // Low byte of 16-bit pitch
+			CreatePinDescription("VOLUME", 1, PinBitCount.Bit8),
+			CreatePinDescription("ENABLE", 0, PinBitCount.Bit1),
+		};
+
+		float height = SubChipInstance.MinChipHeightForPins(inputPins, null);
+		Vector2 size = new(CalculateGridSnappedWidth(GridSize * 9), height);
+
+		return CreateBuiltinChipDescription(ChipType.SpeakerV2, size, col, inputPins, null, null, canBeCached: false);
+	}
+
+	static ChipDescription CreateSPSChip()
 		{
 			Color col = new(0.4f, 0.3f, 0.3f);
 
@@ -667,33 +707,50 @@ namespace DLS.Game
 			return CreateBuiltinChipDescription(ChipType.Bus, BusChipSize(bitCount), col, inputs, outputs, null, NameDisplayLocation.Hidden, name:name);
 		}
 
-		static ChipDescription CreateDisplayLED()
+	static ChipDescription CreateDisplayLED()
+	{
+		PinDescription[] inputPins =
 		{
-			PinDescription[] inputPins =
+			CreatePinDescription("IN", 0)
+		};
+
+		float height = SubChipInstance.MinChipHeightForPins(inputPins, null);
+		float width = height;
+		float displayWidth = height - GridSize * 0.5f;
+
+		Color col = GetColor(new(0.1f, 0.1f, 0.1f));
+		Vector2 size = new(width, height);
+
+
+		DisplayDescription[] displays =
+		{
+			new()
 			{
-				CreatePinDescription("IN", 0)
-			};
+				Position = Vector2.zero,
+				Scale = displayWidth,
+				SubChipID = -1
+			}
+		};
 
-			float height = SubChipInstance.MinChipHeightForPins(inputPins, null);
-			float width = height;
-			float displayWidth = height - GridSize * 0.5f;
+		return CreateBuiltinChipDescription(ChipType.DisplayLED, size, col, inputPins, null, displays, NameDisplayLocation.Hidden, canBeCached: false);
+	}
 
-			Color col = GetColor(new(0.1f, 0.1f, 0.1f));
-			Vector2 size = new(width, height);
+	static ChipDescription CreateTextDisplay()
+	{
+		PinDescription[] inputPins =
+		{
+			CreatePinDescription("SELECT", 0, PinBitCount.Bit8)
+		};
 
+		Color col = GetColor(new(0.2f, 0.3f, 0.4f));
+		float height = SubChipInstance.MinChipHeightForPins(inputPins, null);
+		Vector2 size = new(GridSize * 12, height);
+		
+		// TextDisplay should NOT have a Displays array in its builtin definition
+		// It will be added to the available displays list through IsDisplayableChipType() check instead
 
-			DisplayDescription[] displays =
-			{
-				new()
-				{
-					Position = Vector2.zero,
-					Scale = displayWidth,
-					SubChipID = -1
-				}
-			};
-
-			return CreateBuiltinChipDescription(ChipType.DisplayLED, size, col, inputPins, null, displays, NameDisplayLocation.Hidden, canBeCached: false);
-		}
+		return CreateBuiltinChipDescription(ChipType.TextDisplay, size, col, inputPins, null, null, NameDisplayLocation.Centre, canBeCached: false);
+	}
 
 
 		public static ChipDescription CreateBusTerminus(PinBitCount bitCount)

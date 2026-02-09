@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DLS.Description;
 using DLS.Graphics;
 using Seb.Helpers;
 using Seb.Types;
@@ -74,22 +75,23 @@ namespace DLS.Game
 				}
 
 #if UNITY_ANDROID || UNITY_IOS
-				if (!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip &&
-				   !DLS.Graphics.CustomizationSceneDrawer.IsPlacingDisplay &&
-				   DLS.Graphics.CustomizationSceneDrawer.SelectedDisplay == null &&
-				!UI.IsInteractingWithColorPicker &&
-				!UI.IsScrolling &&
-				!Project.ActiveProject.controller.isMovingWireEditPoint &&
-				!DLS.Graphics.CustomizationSceneDrawer.isDraggingPin)
-				{
+			if (!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip &&
+			   !DLS.Graphics.CustomizationSceneDrawer.IsPlacingDisplay &&
+			   DLS.Graphics.CustomizationSceneDrawer.SelectedDisplay == null &&
+			!UI.IsInteractingWithColorPicker &&
+			!UI.IsScrolling &&
+			!Project.ActiveProject.controller.isMovingWireEditPoint &&
+			!DLS.Graphics.CustomizationSceneDrawer.isDraggingPin &&
+			!DLS.Graphics.CustomizationSceneDrawer.IsEditingPolygon)
+			{
 
 
-					//if(!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip){
-					Vector2 touchScreenPos = TouchInputHelper.Instance.TouchPosition;
-					Vector2 touchWorldPos = camera.ScreenToWorldPoint(touchScreenPos);
-					HandlePanInput(touchScreenPos, touchWorldPos);
-					HandleZoomInputMobile();
-				}
+				//if(!DLS.Graphics.CustomizationSceneDrawer.IsResizingChip){
+				Vector2 touchScreenPos = TouchInputHelper.Instance.TouchPosition;
+				Vector2 touchWorldPos = camera.ScreenToWorldPoint(touchScreenPos);
+				HandlePanInput(touchScreenPos, touchWorldPos);
+				HandleZoomInputMobile();
+			}
 #else
 					// Editor, including when simulating Android
 					Vector2 mouseScreenPos = InputHelper.MousePos;
@@ -196,18 +198,24 @@ namespace DLS.Game
 			if (CanMove)
 			{
 #if UNITY_ANDROID || UNITY_IOS
-				bool isPlacingWire = Project.ActiveProject.controller.IsCreatingWire;
-				// During wire placement, require two fingers for panning. Otherwise, use single finger.
-				int requiredTouchCount = isPlacingWire ? 2 : 1;
-				bool canPanWithCurrentTouchCount = UnityEngine.Input.touchCount >= requiredTouchCount;
+			bool isPlacingWire = Project.ActiveProject.controller.IsCreatingWire;
+			bool isInCustomizationMode = DLS.Graphics.CustomizationSceneDrawer.IsInCustomizationMode;
+			// During wire placement or customization mode, require two fingers for panning. Otherwise, use single finger.
+			int requiredTouchCount = (isPlacingWire || isInCustomizationMode) ? 2 : 1;
+			bool canPanWithCurrentTouchCount = UnityEngine.Input.touchCount >= requiredTouchCount;
 
-				if (TouchInputHelper.Instance != null &&
-					TouchInputHelper.Instance.Dragging &&
-					canPanWithCurrentTouchCount &&
-					Project.ActiveProject.controller.SelectedElements.Count == 0 &&
-					!MobileUIControllerWrapper.IsBoxSelectToolActive &&
-					!DLS.Game.EraserModeController.IsActive  // Disable camera panning when eraser mode is active
-				)
+			// Check if touching a clickable display (Button, Toggle, or RGB Touch Display)
+			bool isTouchingClickableDisplay = InteractionState.ElementUnderMouse is DisplayInstance display && 
+											  ChipTypeHelper.IsClickableDisplayType(display.DisplayType);
+
+			if (TouchInputHelper.Instance != null &&
+				TouchInputHelper.Instance.Dragging &&
+				canPanWithCurrentTouchCount &&
+				Project.ActiveProject.controller.SelectedElements.Count == 0 &&
+				!MobileUIControllerWrapper.IsBoxSelectToolActive &&
+				!DLS.Game.EraserModeController.IsActive &&  // Disable camera panning when eraser mode is active
+				!isTouchingClickableDisplay  // Disable camera panning when touching clickable displays
+			)
 				{
 					if (!isTouchPanning)
 					{

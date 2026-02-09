@@ -79,19 +79,36 @@ namespace DLS.Graphics
                 
                 if (profile != null && !string.IsNullOrEmpty(profile.username))
                 {
-                    // User already has a claimed username
+                    // User already has a claimed username in Firebase
                     _userName = profile.username;
                     _originalUserName = profile.username; // Store original for change detection
                     _hasClaimedUsername = true;
                     _validationMessage = $"✓ Verified user: {profile.username}";
                     _rememberName = true; // Enable remember checkbox for claimed users
+                    
+                    // Update the input field with the verified username
+                    var inputState = Seb.Vis.UI.UI.GetInputFieldState(ID_UserNameInput);
+                    inputState.SetText(_userName, false);
                 }
                 else
                 {
-                    // User has no claimed username, check local preferences
+                    // User has no claimed username in Firebase, check local preferences
                     LoadSavedUserName();
+                    
+                    // If we have a local username but no Firebase profile, treat as unclaimed
+                    // This handles the case where Firebase was reset but local cache still exists
                     _hasClaimedUsername = false;
+                    _originalUserName = _userName; // Store for change detection, but treat as unclaimed
                     _validationMessage = "";
+                    
+                    // Update the input field with the local username (if any)
+                    if (!string.IsNullOrEmpty(_userName))
+                    {
+                        var inputState = Seb.Vis.UI.UI.GetInputFieldState(ID_UserNameInput);
+                        inputState.SetText(_userName, false);
+                    }
+                    
+                    Debug.Log($"[UserNameInputPopup] No Firebase profile found. Local username: '{_userName}' (treating as unclaimed)");
                 }
                 
                 _isLoadingProfile = false;
@@ -570,18 +587,39 @@ namespace DLS.Graphics
                 var result = await UserAuthService.ChangeUsernameAsync(_newUserName);
                 if (!result.success)
                 {
-                    throw new Exception(result.error);
+                    // Check if failure was due to missing profile (e.g., after Firebase reset)
+                    if (result.error.Contains("No profile found") || result.error.Contains("No profile"))
+                    {
+                        Debug.LogWarning($"[UserNameInputPopup] Profile not found, attempting to claim username instead");
+                        _validationMessage = "🔄 Claiming username...";
+                        
+                        // Fall back to claiming the username as a new user
+                        var claimResult = await UserAuthService.ClaimUsernameAsync(_newUserName);
+                        if (!claimResult.success)
+                        {
+                            throw new Exception(claimResult.error);
+                        }
+                        
+                        Debug.Log($"[UserNameInputPopup] Successfully claimed username: {_newUserName}");
+                    }
+                    else
+                    {
+                        throw new Exception(result.error);
+                    }
                 }
-                
-                Debug.Log($"[UserNameInputPopup] Successfully updated username to: {_newUserName}");
+                else
+                {
+                    Debug.Log($"[UserNameInputPopup] Successfully updated username to: {_newUserName}");
+                }
                 
                 // Update local state
                 _originalUserName = _newUserName;
                 _userName = _newUserName;
                 _showNameChangeConfirmation = false;
                 _newUserName = "";
+                _hasClaimedUsername = true; // Mark as claimed for future operations
                 
-                _validationMessage = $"✓ Username updated to: {_userName}";
+                _validationMessage = $"✓ Username set to: {_userName}";
                 
                 // Continue with the original upload
                 _onConfirm?.Invoke(_userName, _rememberName, _shareSolution);
@@ -589,8 +627,8 @@ namespace DLS.Graphics
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[UserNameInputPopup] Failed to update username: {ex.Message}");
-                _validationMessage = "Failed to update username. Please try again.";
+                Debug.LogError($"[UserNameInputPopup] Failed to set username: {ex.Message}");
+                _validationMessage = $"Failed to set username: {ex.Message}";
                 _showNameChangeConfirmation = false;
                 _newUserName = "";
             }

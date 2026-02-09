@@ -149,13 +149,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   openSaveDirectory: 0
-  openInMainMenu: 1
+  openInMainMenu: 0
   startInLevel: 0
-  startLevelId: lvl.adder4bit.1
+  startLevelId: lvl.counter4bit.1
   continueLevelFromSave: 1
-  testProjectName: Playthrough
+  testProjectName: TEST
   openA: 1
-  chipToOpenA: NOT
+  chipToOpenA: SpeakerTest
   chipToOpenB: TEST MergeSplit
   testVecA: {x: 100, y: 0.5333334}
   testVecB: {x: 1.71, y: 0.0025}

@@ -182,7 +182,7 @@ namespace DLS.Game.LevelsIntegration
             int totalCombinations = 1 << totalInputBits; // 2^totalInputBits
             const int maxTestVectors = 100;
             
-            Debug.Log($"[LevelManager] Generating all {totalCombinations} test vectors for {inputCount} input pins ({totalInputBits} total bits), {outputCount} output pins ({totalOutputBits} total bits)");
+            Debug.Log($"[LevelManager] Generating test vectors for {inputCount} input pins ({totalInputBits} total bits), {outputCount} output pins ({totalOutputBits} total bits). Total possible combinations: {totalCombinations}");
             if (Current.inputBitCounts != null && Current.inputBitCounts.Length > 0)
             {
                 Debug.Log($"[LevelManager] Input bit counts: [{string.Join(", ", Current.inputBitCounts)}]");
@@ -207,11 +207,31 @@ namespace DLS.Game.LevelsIntegration
             Debug.Log($"[LevelManager] Sorted input pins: [{string.Join(", ", sortedInputPins.Select(p => p.Name))}]");
             Debug.Log($"[LevelManager] Sorted output pins: [{string.Join(", ", sortedOutputPins.Select(p => p.Name))}]");
             
-            // List to store all test vectors
-            var allTestVectors = new List<TestVectorData>();
+            // Determine which input combinations to test
+            var testVectors = new List<TestVectorData>();
+            int numTestsToGenerate = Math.Min(totalCombinations, maxTestVectors);
             
-            // Loop through all possible input combinations
-            for (int i = 0; i < totalCombinations; i++)
+            // Generate list of input combination indices to test
+            List<int> testIndices;
+            if (totalCombinations <= maxTestVectors)
+            {
+                // Test all combinations if there are fewer than the limit
+                testIndices = Enumerable.Range(0, totalCombinations).ToList();
+                Debug.Log($"[LevelManager] Testing all {totalCombinations} combinations (under limit of {maxTestVectors})");
+            }
+            else
+            {
+                // Randomly sample indices without replacement
+                var random = new System.Random();
+                testIndices = Enumerable.Range(0, totalCombinations)
+                    .OrderBy(x => random.Next())
+                    .Take(maxTestVectors)
+                    .ToList();
+                Debug.Log($"[LevelManager] Randomly selected {maxTestVectors} combinations to test from {totalCombinations} total");
+            }
+            
+            // Simulate only the selected input combinations
+            foreach (int i in testIndices)
             {
                 // Convert index to binary input string
                 string inputBits = "";
@@ -225,39 +245,18 @@ namespace DLS.Game.LevelsIntegration
                 ApplyInputsInOrder(inputVector, sortedInputPins);
                 
                 // Let circuit settle
-                _sim.SettleWithin(5, out _);
+                _sim.SettleWithin(35, out _);
                 
                 // Read outputs (using SORTED pins)
                 var outputVector = ReadOutputsInOrder(sortedOutputPins);
                 string outputBits = outputVector.ToString();
                 
                 // Store test vector
-                allTestVectors.Add(new TestVectorData
+                testVectors.Add(new TestVectorData
                 {
                     inputs = inputBits,
                     expected = outputBits
                 });
-            }
-            
-            // Randomly sample up to maxTestVectors from all generated test vectors
-            var testVectors = new List<TestVectorData>();
-            if (allTestVectors.Count <= maxTestVectors)
-            {
-                // Use all test vectors if we have fewer than the limit
-                testVectors = allTestVectors;
-                Debug.Log($"[LevelManager] Using all {allTestVectors.Count} test vectors (under limit of {maxTestVectors})");
-            }
-            else
-            {
-                // Randomly sample maxTestVectors from all test vectors
-                var random = new System.Random();
-                var shuffledIndices = Enumerable.Range(0, allTestVectors.Count).OrderBy(x => random.Next()).Take(maxTestVectors);
-                
-                foreach (int index in shuffledIndices)
-                {
-                    testVectors.Add(allTestVectors[index]);
-                }
-                Debug.Log($"[LevelManager] Randomly sampled {maxTestVectors} test vectors from {allTestVectors.Count} total combinations");
             }
             
             // Create wrapper object for JSON export
@@ -523,7 +522,7 @@ namespace DLS.Game.LevelsIntegration
                 int bitCount = 1;
                 if (def.inputBitCounts != null && i < def.inputBitCounts.Length)
                 {
-                    bitCount = def.inputBitCounts[i];
+                    bitCount = def.inputBitCounts[def.inputCount-1-i];
                 }
                 
                 var desc = MakePinDescription(inLabels[i].name, id, pos, bitCount: (ushort)bitCount, PinColour.Red);
@@ -542,7 +541,7 @@ namespace DLS.Game.LevelsIntegration
                 int bitCount = 1;
                 if (def.outputBitCounts != null && i < def.outputBitCounts.Length)
                 {
-                    bitCount = def.outputBitCounts[i];
+                    bitCount = def.outputBitCounts[def.outputCount-1-i];
                 }
                 
                 var desc = MakePinDescription(outLabels[i].name, id, pos, bitCount: (ushort)bitCount, PinColour.Green);

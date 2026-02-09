@@ -20,12 +20,13 @@ namespace DLS.Description
 		Rom_1x16,        // 1x16-bit ROM (256 x 16-bit, output as 1 x 16-bit pin)
 		EEPROM_256x16,
 
-		// ---- Displays ----
-		SevenSegmentDisplay,
-		DisplayRGB,
-		DisplayDot,
-		DisplayLED,
-		DisplayRGBTouch,
+	// ---- Displays ----
+	SevenSegmentDisplay,
+	DisplayRGB,
+	DisplayDot,
+	DisplayLED,
+	DisplayRGBTouch,
+	TextDisplay,
 
 		// ---- Merge / Split ----
 		Merge_Pin,
@@ -46,11 +47,13 @@ namespace DLS.Description
         Bus,
 		BusTerminus,
 		
-		// ---- Audio ----
-		Buzzer,
+	// ---- Audio ----
+	Buzzer,
+	Speaker,
+	SpeakerV2,
 
-		// ---- Time ----
-		RTC,
+	// ---- Time ----
+	RTC,
 
 		// ---- Clock ----
 		SPS,

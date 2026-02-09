@@ -198,7 +198,7 @@ Example: Connect a pattern generator to create moving animations, or use it to d
 
 Tips: You can create letters, numbers, and simple graphics by carefully arranging which dots are lit.",
 
-			[ChipType.DisplayLED] = @"LED Display
+		[ChipType.DisplayLED] = @"LED Display
 
 What it is: A simple light-emitting diode that can be turned on (bright) or off (dark) based on an input signal.
 
@@ -215,7 +215,24 @@ Example: Connect an LED to a button to show when the button is pressed, or use i
 
 Tips: LEDs are simple but effective for providing immediate visual feedback about circuit states.",
 
-			[ChipType.DisplayRGBTouch] = @"RGB Touch Display
+		[ChipType.TextDisplay] = @"Text Display
+
+What it is: A programmable text display that can show 256 different text strings, selected by an 8-bit input address.
+
+How it works: The Text Display stores 256 programmable text strings (indexed 0-255). The 8-bit SELECT input determines which string to display. Each string can be up to 20 characters long and is programmed using the built-in editor (right-click and select 'Edit').
+
+When to use: Text displays are perfect for:
+• Showing labeled states in state machines (IDLE, RUNNING, ERROR)
+• Displaying status messages
+• Creating user-friendly interfaces
+• Debugging with readable output
+• Educational demonstrations of lookup tables
+
+Example: Program string 0 as 'IDLE', string 1 as 'RUNNING', and string 2 as 'ERROR'. Connect a 2-bit counter to the SELECT input to cycle through these states.
+
+Tips: The displayed text updates in real-time as the input changes. Use the editor to pre-program all 256 strings - any string left empty will display nothing. This chip demonstrates the concept of character lookup tables, similar to how computers display text using character codes.",
+
+		[ChipType.DisplayRGBTouch] = @"RGB Touch Display
 
 What it is: A color display with touch input capability that can show colored pixels and detect when you touch specific areas.
 
@@ -319,7 +336,129 @@ Example: Connect a buzzer to a timer to create an alarm, or use it to provide au
 
 Tips: Buzzers add an important audio dimension to your circuits, making them more interactive and user-friendly.",
 
-			[ChipType.RTC] = @"Real-Time Clock
+		[ChipType.Speaker] = @"Speaker (Enhanced Audio Synthesizer)
+
+What it is: An advanced audio output device that allows you to control pitch, volume, waveform type, and enables sophisticated sound synthesis beyond the basic buzzer.
+
+How it works: The speaker has four inputs:
+• PITCH (8-bit, 0-255): Controls the frequency, same as the buzzer. Higher values produce higher pitches.
+• VOLUME (8-bit, 0-255): Controls output volume with 256 levels of granularity (vs buzzer's 16 levels).
+• WAVE (2-bit, 0-3): Selects the waveform type:
+  - 0: Sine wave (pure, smooth tone)
+  - 1: Square wave (harsh, retro video game sound)
+  - 2: Sawtooth wave (bright, buzzy tone)
+  - 3: Triangle wave (mellow, hollow tone)
+• ENABLE (1-bit): Turns the speaker on (1) or off (0).
+
+When to use: The speaker is ideal for:
+• Creating rich musical compositions with different timbres
+• Generating diverse sound effects with distinct characters
+• Learning about wave synthesis and audio properties
+• Building advanced audio systems requiring precise volume control
+• Teaching concepts of digital signal processing
+
+Example: Set PITCH to 128 for middle frequency, VOLUME to 200 for moderately loud, WAVE to 0 for a pure sine tone, and ENABLE to 1 to hear a smooth sustained note. Change WAVE to 1 (square) to hear a retro game-like sound, or to 3 (triangle) for a softer, mellower tone.
+
+Technical Details:
+• Sine waves sound smooth and pure (like a flute or tuning fork)
+• Square waves sound harsh and electronic (classic arcade games)
+• Sawtooth waves sound bright and buzzy (synthesizer leads)
+• Triangle waves sound soft and hollow (8-bit game music)
+
+Tips: The speaker builds on buzzer knowledge - start with familiar PITCH values and experiment with different WAVE types to hear how waveforms affect tone quality. Combine with counters and logic circuits to create complex musical sequences!",
+
+		[ChipType.SpeakerV2] = @"Speaker V2 (High-Resolution Audio)
+
+What it is: A high-resolution audio output with 16-bit pitch control for extremely precise frequency selection and pure sine wave output.
+
+How it works: The Speaker V2 has four inputs providing high-fidelity audio generation:
+
+• PITCH_HI (8-bit, 0-255): Upper 8 bits of 16-bit pitch value
+  - Combined with PITCH_LO to create 16-bit pitch (0-65535)
+  - Allows for extremely fine frequency control
+  - Higher values = higher pitch
+  
+• PITCH_LO (8-bit, 0-255): Lower 8 bits of 16-bit pitch value
+  - Fine adjustment within the range selected by PITCH_HI
+  - Together with PITCH_HI: 65,536 different frequencies!
+  - Example: PITCH_HI=1, PITCH_LO=0 = pitch value 256
+
+• VOLUME (8-bit, 0-255): Precise volume control
+  - 256 levels of granularity for smooth volume fades
+  - Linear volume response for predictable control
+
+• ENABLE (1-bit): Master on/off switch
+  - 1 = Sound plays, 0 = Silent
+  - Clean on/off switching without pops or clicks
+
+When to use: Speaker V2 is perfect for:
+• High-precision frequency synthesis requiring fine control
+• Pure sine wave tones for testing and measurement
+• Musical applications needing precise pitch
+• Smooth frequency sweeps and glides
+• Teaching concepts of binary number representation (2x 8-bit = 16-bit)
+• Clean audio output without harmonics or overtones
+• Precise frequency modulation and control
+
+Example - Middle frequency:
+Set PITCH_HI=128, PITCH_LO=0, VOLUME=150, ENABLE=1
+Result: Clean sine tone at pitch value 32768 (middle range)
+
+Example - Low frequency bass:
+Set PITCH_HI=10, PITCH_LO=0, VOLUME=200, ENABLE=1
+Result: Deep bass sine tone at pitch value 2560
+
+Example - High frequency tone:
+Set PITCH_HI=200, PITCH_LO=0, VOLUME=150, ENABLE=1
+Result: High sine tone at pitch value 51200
+
+Example - Fine frequency adjustment:
+Set PITCH_HI=100, PITCH_LO=0 vs PITCH_LO=1 vs PITCH_LO=2
+Result: Extremely small frequency steps for precise control
+
+16-Bit Pitch Theory:
+• Two 8-bit values combine to create 16-bit precision
+• Calculation: pitch_value = (PITCH_HI × 256) + PITCH_LO
+• Range: 0 to 65,535 (65,536 possible frequencies)
+• PITCH_HI controls coarse frequency (large steps)
+• PITCH_LO provides fine-tuning within that range
+• This is 256× more resolution than 8-bit pitch!
+
+Technical Details - Sine Wave Output:
+• Sine waves are the purest form of sound (single frequency, no harmonics)
+• No overtones or distortion - just the fundamental frequency
+• Ideal for testing, measurement, and clean audio
+• All other waveforms can be built from sine waves (Fourier series)
+• Smooth and pleasant to listen to at all frequencies
+
+Tips for Using 16-Bit Pitch:
+• Start with PITCH_HI only, set PITCH_LO=0 for coarse control
+• Use PITCH_LO for fine-tuning once you're in the right range
+• Example: PITCH_HI=100 gives you 256 frequencies (when varying PITCH_LO)
+• For smooth frequency sweeps, increment PITCH_LO with a counter
+• For big jumps, change PITCH_HI
+
+Tips for Binary/Hex Users:
+• Think of pitch as a 16-bit value: 0x0000 to 0xFFFF
+• Upper byte (PITCH_HI) = most significant bits
+• Lower byte (PITCH_LO) = least significant bits  
+• Example: 0x1A2B = PITCH_HI=0x1A (26), PITCH_LO=0x2B (43)
+
+Volume Control:
+• VOLUME=0: Silent
+• VOLUME=64: Quiet (25%)
+• VOLUME=128: Medium (50%)
+• VOLUME=192: Loud (75%)
+• VOLUME=255: Maximum (100%)
+
+Upgrade from Speaker (V1):
+• 16-bit pitch vs 8-bit pitch = 256× more frequency resolution
+• Simplified to pure sine wave only (clean, predictable sound)
+• 4 pins vs 6 pins (simpler to use)
+• No waveform/detune/width complexity
+• Perfect for applications needing precision over variety",
+
+		[ChipType.RTC] = @"Real-Time Clock
 
 What it is: A clock that keeps track of real-world time, providing hours, minutes, and seconds.
 

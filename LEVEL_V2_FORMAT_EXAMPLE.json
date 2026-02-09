@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "packId": "pack.basics",
+  "packName": "Digital Logic – Basics",
+  "packDescription": "",
+  "chapters": [
+    {
+      "chapterId": "ch.basics",
+      "chapterName": "Basics",
+      "chapterDescription": "Master the building blocks of digital electronics!",
+      
+      "levels": [
+        {
+          "id": "lvl.not.1.old",
+          "chapterId": "ch.basics",
+          "name": "NOT Gate (V1 Format)",
+          "description": "Old format example - Output should be the inverse of input.",
+          "inputCount": 1,
+          "outputCount": 1,
+          "inputBitCounts": [1],
+          "outputBitCounts": [1],
+          "inputPinLabels": [
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputPinLabels": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testVectors": [
+            {
+              "inputs": "0",
+              "expected": "1"
+            },
+            {
+              "inputs": "1",
+              "expected": "0"
+            }
+          ]
+        }
+      ],
+      
+      "levelsV2": [
+        {
+          "id": "lvl.not.1.new",
+          "name": "NOT Gate (V2 Format)",
+          "chapterId": "ch.basics",
+          "description": "New format example - Output should be the inverse of input.",
+          "inputStructure": [
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputStructure": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testsInline": [
+            "0|1",
+            "1|0"
+          ]
+        },
+        {
+          "id": "lvl.and.1.new",
+          "name": "AND Gate (V2 Format)",
+          "chapterId": "ch.basics",
+          "description": "Output should be 1 only if both inputs are 1.",
+          "inputStructure": [
+            {
+              "name": "B",
+              "abbr": "B"
+            },
+            {
+              "name": "A",
+              "abbr": "A"
+            }
+          ],
+          "outputStructure": [
+            {
+              "name": "Y",
+              "abbr": "Y"
+            }
+          ],
+          "testsInline": [
+            "0_0|0",
+            "0_1|0",
+            "1_0|0",
+            "1_1|1"
+          ]
+        },
+        {
+          "id": "lvl.8bit.adder.1.new",
+          "name": "8-Bit Adder (V2 Format)",
+          "chapterId": "ch.8bit",
+          "description": "Add two 8-bit numbers with carry output.",
+          "inputStructure": [
+            {
+              "name": "Data A",
+              "abbr": "A",
+              "nBits": 8
+            },
+            {
+              "name": "Data B",
+              "abbr": "B",
+              "nBits": 8
+            }
+          ],
+          "outputStructure": [
+            {
+              "name": "Sum",
+              "abbr": "SUM",
+              "nBits": 8
+            },
+            {
+              "name": "Carry Out",
+              "abbr": "C"
+            }
+          ],
+          "testsInline": [
+            "00000000_00000000|00000000_0",
+            "00000001_00000001|00000010_0",
+            "11111111_00000001|00000000_1",
+            "10101010_01010101|11111111_0"
+          ]
+        },
+        {
+          "id": "lvl.4bit.adder.1.new",
+          "name": "4-Bit Adder (V2 Format - Binary File)",
+          "chapterId": "ch.arithmetic",
+          "description": "Add two 4-bit numbers. Uses binary test file.",
+          "type": "combinational",
+          "inputStructure": [
+            {
+              "name": "A0"
+            },
+            {
+              "name": "A1"
+            },
+            {
+              "name": "A2"
+            },
+            {
+              "name": "A3"
+            },
+            {
+              "name": "B0"
+            },
+            {
+              "name": "B1"
+            },
+            {
+              "name": "B2"
+            },
+            {
+              "name": "B3"
+            }
+          ],
+          "outputStructure": [
+            {
+              "name": "Sum Bit 0",
+              "abbr": "S0"
+            },
+            {
+              "name": "Sum Bit 1",
+              "abbr": "S1"
+            },
+            {
+              "name": "Sum Bit 2",
+              "abbr": "S2"
+            },
+            {
+              "name": "Sum Bit 3",
+              "abbr": "S3"
+            },
+            {
+              "name": "Carry Out",
+              "abbr": "Co"
+            }
+          ],
+          "testsBinaryPath": "GeneratedTestVectors/lvl.adder4bit.1"
+        },
+        {
+          "id": "lvl.srlatch.1.new",
+          "name": "SR Latch (V2 Sequential Format)",
+          "chapterId": "ch.sequential",
+          "description": "Sequential circuit example. Set when S=1, Reset when R=1, Hold when both are 0.",
+          "type": "sequential",
+          "inputStructure": [
+            {
+              "name": "Reset",
+              "abbr": "R"
+            },
+            {
+              "name": "Set",
+              "abbr": "S"
+            }
+          ],
+          "outputStructure": [
+            {
+              "name": "Output",
+              "abbr": "Q"
+            },
+            {
+              "name": "Output Inverted",
+              "abbr": "N"
+            }
+          ],
+          "testsInline": [
+            "0_1|1_0",
+            "0_0|1_0",
+            "1_0|0_1",
+            "0_0|0_1",
+            "0_1|1_0",
+            "0_0|1_0"
+          ]
+        },
+        {
+          "id": "lvl.dlatch.1.new",
+          "name": "D Latch (V2 Sequential with Setup)",
+          "chapterId": "ch.sequential",
+          "description": "D Latch with setup sequence. When Enable=1, Q follows D. When Enable=0, Q holds.",
+          "type": "sequential",
+          "inputStructure": [
+            {
+              "name": "Data",
+              "abbr": "D"
+            },
+            {
+              "name": "Enable",
+              "abbr": "E"
+            }
+          ],
+          "outputStructure": [
+            {
+              "name": "Output",
+              "abbr": "Q"
+            },
+            {
+              "name": "Output Inverted",
+              "abbr": "N"
+            }
+          ],
+          "setup": [
+            "0_0",
+            "1_0",
+            "0_0"
+          ],
+          "testsInline": [
+            "0_1|1_0",
+            "0_0|1_0",
+            "1_0|1_0",
+            "1_1|0_1",
+            "0_1|0_1",
+            "0_0|0_1",
+            "1_0|1_0"
+          ]
+        }
+      ]
+    }
+  ]
+}
+

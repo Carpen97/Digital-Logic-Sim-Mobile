@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using DLS.Description;
 using DLS.Game;
 using Seb.Helpers;
@@ -53,15 +54,15 @@ namespace DLS.Graphics
 			MenuHelper.DrawBackgroundOverlay();
 
 			// Calculate window dimensions
-			const float windowWidth = 50f;
-			const float windowHeight = 40f; // Increased height for more content space
+			float windowWidth = Seb.Vis.UI.UI.Width * 0.8f;
+			float windowHeight = Seb.Vis.UI.UI.Height * 0.6f;
 			const float titleHeight = 3f;
 			const float buttonHeight = 1f;
 			const float margin = 1f;
 			
 			// Calculate content area (window minus title and button areas)
 			// Account for margins: title margin + content margins + button margin
-			const float contentHeight = windowHeight - titleHeight - buttonHeight - margin * 5;
+			float contentHeight = windowHeight - titleHeight - buttonHeight - margin * 5;
 			
 			Vector2 windowSize = new(windowWidth, windowHeight);
 			Vector2 windowPos = Seb.Vis.UI.UI.Centre;
@@ -162,7 +163,7 @@ namespace DLS.Graphics
 				FontType lineFont = isHeader ? MenuHelper.Theme.FontBold : font;
 				
 				// Wrap the text to fit within the available width
-				string[] wrappedLines = WrapText(line, width, lineFont, fontSize);
+				string[] wrappedLines = StringHelper.WrapText(line, width, lineFont, fontSize);
 				
 				foreach (string wrappedLine in wrappedLines)
 				{
@@ -183,53 +184,7 @@ namespace DLS.Graphics
 			}
 		}
 		
-		/// <summary>
-		/// Wraps text to fit within the specified width
-		/// </summary>
-		static string[] WrapText(string text, float maxWidth, FontType font, float fontSize)
-		{
-			if (string.IsNullOrEmpty(text)) return new string[] { "" };
-			
-			// Calculate approximate character width (this is a rough estimate)
-			float charWidth = fontSize * 0.6f; // Approximate character width
-			int maxCharsPerLine = Mathf.FloorToInt(maxWidth / charWidth);
-			
-			if (text.Length <= maxCharsPerLine) return new string[] { text };
-			
-			string[] words = text.Split(' ');
-			List<string> lines = new List<string>();
-			string currentLine = "";
-			
-			foreach (string word in words)
-			{
-				string testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
-				
-				if (testLine.Length <= maxCharsPerLine)
-				{
-					currentLine = testLine;
-				}
-				else
-				{
-					if (currentLine.Length > 0)
-					{
-						lines.Add(currentLine);
-						currentLine = word;
-					}
-					else
-					{
-						// Word is too long, add it anyway
-						lines.Add(word);
-					}
-				}
-			}
-			
-			if (currentLine.Length > 0)
-			{
-				lines.Add(currentLine);
-			}
-			
-			return lines.ToArray();
-		}
+
 
 		static void DrawCloseButton(Vector2 position, Vector2 size)
 		{

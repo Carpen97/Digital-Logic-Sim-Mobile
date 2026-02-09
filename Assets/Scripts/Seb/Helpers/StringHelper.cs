@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Seb.Vis;
+using UnityEngine;
 
 namespace Seb.Helpers
 {
@@ -12,6 +14,53 @@ namespace Seb.Helpers
 		{
 			StringSplitOptions options = removeEmptyEntries ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None;
 			return text.Split(newLineStrings, options);
+		}
+		/// <summary>
+		/// Wraps text to fit within the specified width
+		/// </summary>
+		public static string[] WrapText(string text, float maxWidth, FontType font, float fontSize)
+		{
+			if (string.IsNullOrEmpty(text)) return new string[] { "" };
+			
+			// Calculate approximate character width (this is a rough estimate)
+			float charWidth = fontSize * 0.6f; // Approximate character width
+			int maxCharsPerLine = Mathf.FloorToInt(maxWidth / charWidth);
+			
+			if (text.Length <= maxCharsPerLine) return new string[] { text };
+			
+			string[] words = text.Split(' ');
+			List<string> lines = new List<string>();
+			string currentLine = "";
+			
+			foreach (string word in words)
+			{
+				string testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
+				
+				if (testLine.Length <= maxCharsPerLine)
+				{
+					currentLine = testLine;
+				}
+				else
+				{
+					if (currentLine.Length > 0)
+					{
+						lines.Add(currentLine);
+						currentLine = word;
+					}
+					else
+					{
+						// Word is too long, add it anyway
+						lines.Add(word);
+					}
+				}
+			}
+			
+			if (currentLine.Length > 0)
+			{
+				lines.Add(currentLine);
+			}
+			
+			return lines.ToArray();
 		}
 
 		public static string CreateBinaryString(uint value, bool removeLeadingZeroes = false)

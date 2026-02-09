@@ -13,9 +13,6 @@ namespace DLS.Graphics
 {
 	public static class LevelBannerUI
 	{
-		static int stepCountPrev;
-		static string stepString;
-		
 		public static void DrawLevelBanner()
 		{
 			// Safety check - should not be called if level is not active
@@ -24,10 +21,27 @@ namespace DLS.Graphics
 				Debug.LogWarning("[LevelBannerUI] DrawLevelBanner called but no active level");
 				return;
 			}
+
+			string description = LevelManager.Instance.Current.description;
+			float fontSize = MenuHelper.Theme.FontSizeRegular * 0.8f;
+			FontType lineFont = MenuHelper.Theme.FontBold;
+#if UNITY_ANDROID || UNITY_IOS
+			string[] wrappedLines = StringHelper.WrapText(description, Seb.Vis.UI.UI.Width * 0.62f, lineFont, fontSize);
+			int nLines = wrappedLines.Length;	
+			float height = InfoBarHeight*1.4f;
+			height += (nLines) * 1.5f;
+#else
+			string[] wrappedLines = StringHelper.WrapText(description, Seb.Vis.UI.UI.Width * 0.9f, lineFont, fontSize);
+			int nLines = wrappedLines.Length;	
+			float height = InfoBarHeight*2.1f;
+			height += (nLines) * 1.5f;
+#endif
+
 			
 			// Draw the banner panel with same colors as other banners
-			Seb.Vis.UI.UI.DrawPanel(Seb.Vis.UI.UI.TopLeft, new Vector2(Seb.Vis.UI.UI.Width, InfoBarHeight*2.1f), new Color(0,0,0,0.5f), Anchor.TopLeft);
+			Seb.Vis.UI.UI.DrawPanel(Seb.Vis.UI.UI.TopLeft, new Vector2(Seb.Vis.UI.UI.Width, height), new Color(0,0,0,0.5f), Anchor.TopLeft);
 			Bounds2D panelBounds = Seb.Vis.UI.UI.PrevBounds;
+
 
 			// Make the banner clickable for validation
 			bool canValidate = Project.ActiveProject != null && Project.ActiveProject.CanEditViewedChip;
@@ -43,23 +57,44 @@ namespace DLS.Graphics
 			Bounds2D screenBounds = Seb.Vis.UI.UI.UIToScreenSpace(hitboxBounds);
 			bool mouseOverHitbox = Seb.Helpers.InputHelper.MouseInBounds_ScreenSpace(screenBounds.Centre, screenBounds.Size);
 			bool clicked = mouseOverHitbox && Seb.Helpers.InputHelper.IsMouseDownThisFrame(Seb.Helpers.MouseButton.Left);
-			
+
 			if (canValidate && clicked)
 			{
 				OnValidateButtonPressed();
 			}
 
+#if UNITY_ANDROID || UNITY_IOS
+			Vector2 titlePos = Seb.Vis.UI.UI.CentreTop + Vector2.down * 2.5f + Vector2.left * 1.0f;
+			Vector2 pos = Seb.Vis.UI.UI.CentreTop + Vector2.down * 4.5f;
+#else
+			Vector2 titlePos = panelBounds.Centre + Vector2.up * 1.5f + Vector2.left * 1.0f;
+			Vector2 pos = panelBounds.Centre + Vector2.down*0.5f; 
+#endif
+
 			// Draw level title
-			Seb.Vis.UI.UI.DrawText($" <color=#ffffff> {LevelManager.Instance.Current.name}", MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular*1.25f, panelBounds.Centre + Vector2.up*1.5f+ Vector2.left*1.0f, Anchor.TextCentre, Color.yellow);
-			
+			Seb.Vis.UI.UI.DrawText(
+				$" <color=#ffffff> {LevelManager.Instance.Current.name}",
+				MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular * 1.25f,
+				titlePos,
+				Anchor.TextCentre,
+				Color.yellow
+			);
+
 			// Draw level description (closer to title for PC)
-			Seb.Vis.UI.UI.DrawText($"{LevelManager.Instance.Current.description}", MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular*0.8f, panelBounds.Centre + Vector2.down*0.5f, Anchor.TextCentre, Color.yellow);
+
+			for(int i = 0; i < wrappedLines.Length; i++)
+            {
+				Seb.Vis.UI.UI.DrawText($"{wrappedLines[i]}", lineFont, fontSize, pos, Anchor.TextCentre, Color.yellow);
+				pos += Vector2.down * 1.5f;
+            }
 			
+			pos += Vector2.down * .5f;
 			// Draw "Press here to validate" text
 			if (canValidate)
 			{
-				Seb.Vis.UI.UI.DrawText("Press here to validate", MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular*0.7f, panelBounds.Centre + Vector2.down*2.5f, Anchor.TextCentre, Color.white);
+				Seb.Vis.UI.UI.DrawText("Press here to validate", MenuHelper.Theme.FontBold, MenuHelper.Theme.FontSizeRegular*0.7f,pos, Anchor.TextCentre, Color.white);
 			}
+
 
 		}
 
