@@ -97,7 +97,13 @@
           "editNotes": ""
         }
       ],
-      "bugFixes": []
+      "bugFixes": [
+        {
+          "text": "Customization view pin layout - Fixed pin positioning in chip Customization view when saving a chip. Rectangle shape: Custom layout now allows dragging pins to place them. Non-rectangle shapes (e.g. hexagon): Default layout now correctly applies auto-calculated pin positions. Both Default and Custom layout options work for all chip shapes.",
+          "userFacing": true,
+          "editNotes": ""
+        }
+      ]
     },
     {
       "version": "2.1.6.10",

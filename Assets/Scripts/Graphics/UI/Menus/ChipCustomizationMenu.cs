@@ -215,6 +215,9 @@ namespace DLS.Graphics
                     ChipSaveMenu.ActiveCustomizeChip.Description.Size.y = ChipSaveMenu.ActiveCustomizeChip.MinSize.y;
                 }
                 ChipSaveMenu.ActiveCustomizeChip.UpdatePinLayout();
+                // Non-rectangle shapes use Position field; populate default positions on the shape edges
+                if (ChipSaveMenu.ActiveCustomizeDescription.ShapeType != ChipShapeType.Rectangle)
+                    ApplyDefaultPinPositionsForNonRectangleShape();
             }
             else if (layoutMode == 1 && !isCustomLayout)
             {
@@ -453,6 +456,12 @@ namespace DLS.Graphics
             WheelSelectorState layoutWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_LayoutOptions);
             layoutWheelState.index = isCustomLayout ? 1 : 0;
 
+            // When Default layout and non-rectangle shape, ensure default pin positions are applied
+            if (!isCustomLayout && ChipSaveMenu.ActiveCustomizeDescription.ShapeType != ChipShapeType.Rectangle)
+            {
+                ApplyDefaultPinPositionsForNonRectangleShape();
+            }
+
             // Init shape mode
             WheelSelectorState shapeWheelState = Seb.Vis.UI.UI.GetWheelSelectorState(ID_ShapeOptions);
             shapeWheelState.index = (int)ChipSaveMenu.ActiveCustomizeDescription.ShapeType;
@@ -624,6 +633,55 @@ namespace DLS.Graphics
             {
                 var pin = chip.OutputPins[i];
                 RelocatePin(pin, newShapeType, chipCenter, chipHalfSize);
+            }
+        }
+
+        /// <summary>
+        /// Computes and applies default pin positions for non-rectangle shapes when layout is Default.
+        /// Uses the same distribution as rectangle (inputs left, outputs right, Y from default layout) projected onto the shape edges.
+        /// </summary>
+        static void ApplyDefaultPinPositionsForNonRectangleShape()
+        {
+            var chip = ChipSaveMenu.ActiveCustomizeChip;
+            var desc = ChipSaveMenu.ActiveCustomizeDescription;
+            ChipShapeType shapeType = desc.ShapeType;
+            if (shapeType == ChipShapeType.Rectangle) return;
+
+            Vector2 chipHalfSize = chip.Size / 2f;
+            float rotation = desc.ShapeRotation;
+
+            float[] GetDefaultLocalY(PinInstance[] pins)
+            {
+                if (pins == null || pins.Length == 0) return Array.Empty<float>();
+                var (chipHeight, pinGridY) = SubChipInstance.CalculateDefaultPinLayout(pins.Select(p => p.bitCount).ToArray());
+                float startY = chipHalfSize.y;
+                float[] localY = new float[pins.Length];
+                for (int i = 0; i < pins.Length; i++)
+                    localY[i] = startY + pinGridY[i] * DrawSettings.GridSize;
+                float spaceRemaining = chip.Size.y - chipHeight;
+                if (spaceRemaining > 0 && pins.Length > 1)
+                {
+                    float spacingBetweenPins = spaceRemaining / (pins.Length - 1);
+                    for (int i = 1; i < pins.Length; i++)
+                        localY[i] -= spacingBetweenPins * i;
+                }
+                return localY;
+            }
+
+            float[] inputY = GetDefaultLocalY(chip.InputPins);
+            for (int i = 0; i < chip.InputPins.Length; i++)
+            {
+                Vector2 defaultLocal = new Vector2(-chipHalfSize.x, inputY[i]);
+                Vector2 projected = ProjectOntoShapeEdge(shapeType, rotation, defaultLocal, chipHalfSize);
+                UpdatePinPositionInDescription(chip.InputPins[i], projected);
+            }
+
+            float[] outputY = GetDefaultLocalY(chip.OutputPins);
+            for (int i = 0; i < chip.OutputPins.Length; i++)
+            {
+                Vector2 defaultLocal = new Vector2(chipHalfSize.x, outputY[i]);
+                Vector2 projected = ProjectOntoShapeEdge(shapeType, rotation, defaultLocal, chipHalfSize);
+                UpdatePinPositionInDescription(chip.OutputPins[i], projected);
             }
         }
 

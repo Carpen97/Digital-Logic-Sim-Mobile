@@ -488,6 +488,8 @@ namespace DLS.Graphics
 
 		static void HandlePinDragging()
 		{
+			// Only allow pin dragging when Custom layout is selected
+			if (!ChipCustomizationMenu.isCustomLayout) return;
 			if (!InteractionState.MouseIsOverUI)
 			{
 				// Start dragging a pin
@@ -505,24 +507,26 @@ namespace DLS.Graphics
 					Vector2 mouseWorld = InputHelper.MousePosWorld;
 					Vector2 chipCenter = chip.Position;
 					Vector2 localMouse = mouseWorld - chipCenter;
-					Debug.Log($"CUSTOMIZATION: mouseWorld = {mouseWorld}, chipCenter = {chipCenter}, localMouse = {localMouse}");
 					Vector2 chipHalfSize = chip.Size / 2f;
 
-					// DIRECTLY SET THE PIN POSITION TO THE GREEN DOT POSITION
-					// Get the projected point (the green dot position we know is correct)
+					// Get the projected point on the shape edge
 					Vector2 projectedPoint = GetProjectedPointForShape(chip.Description.ShapeType, chip.Description.ShapeRotation, localMouse, chipHalfSize);
 
-					// Update the pin's position in the description
-					UpdatePinPositionInDescription(selectedPin, projectedPoint);
-
-					// DEBUG: Check what's happening
-					Vector2 actualPinWorldPos = selectedPin.GetWorldPos();
-					Vector2 expectedWorldPos = chipCenter + projectedPoint;
-					Debug.Log($"ProjectedPoint: {projectedPoint}");
-					Debug.Log($"ChipCenter: {chipCenter}");
-					Debug.Log($"Expected World Pos: {expectedWorldPos}");
-					Debug.Log($"Actual Pin World Pos: {actualPinWorldPos}");
-					Debug.Log($"Updated Position in description");
+					// For rectangle, pin position is determined by face + LocalPosY (not Position), so update those
+					if (chip.Description.ShapeType == ChipShapeType.Rectangle)
+					{
+						(int face, float offset) = GetClosestRectanglePinPosition(localMouse, chipHalfSize);
+						float pinHeight = SubChipInstance.PinHeightFromBitCount(selectedPin.bitCount);
+						float clampedOffset = GetPinOffsetAlongFace(ChipShapeType.Rectangle, 0, face, offset, chipHalfSize, pinHeight, Project.ActiveProject.ShouldSnapToGrid);
+						selectedPin.face = face;
+						selectedPin.LocalPosY = clampedOffset;
+						UpdatePinFaceAndOffsetInDescription(selectedPin, face, clampedOffset);
+					}
+					else
+					{
+						// Non-rectangle shapes use Position field in description
+						UpdatePinPositionInDescription(selectedPin, projectedPoint);
+					}
 
 					PinInstance overlappedPin;
 					isPinPositionValid = !DoesPinOverlap(selectedPin, out overlappedPin);
@@ -530,20 +534,49 @@ namespace DLS.Graphics
 					// End drag on mouse release
 					if (InputHelper.IsMouseUpThisFrame(MouseButton.Left))
 					{
-						if (isPinPositionValid)
+						if (isPinPositionValid && !ChipCustomizationMenu.isCustomLayout)
 						{
-
-							if (!ChipCustomizationMenu.isCustomLayout)
-							{
-								ChipCustomizationMenu.isCustomLayout = true;
-								Seb.Vis.UI.UI.GetWheelSelectorState(ChipCustomizationMenu.ID_LayoutOptions).index = 1;
-								ChipSaveMenu.ActiveCustomizeChip.SetCustomLayout(true);
-							}
+							ChipCustomizationMenu.isCustomLayout = true;
+							Seb.Vis.UI.UI.GetWheelSelectorState(ChipCustomizationMenu.ID_LayoutOptions).index = 1;
+							ChipSaveMenu.ActiveCustomizeChip.SetCustomLayout(true);
 						}
-
 						isDraggingPin = false;
 						selectedPin = null;
 						isPinPositionValid = true;
+					}
+				}
+			}
+		}
+
+		static void UpdatePinFaceAndOffsetInDescription(PinInstance pin, int face, float localOffset)
+		{
+			if (!(pin.parent is SubChipInstance subchip)) return;
+			var chipDesc = subchip.Description;
+			if (chipDesc.InputPins != null)
+			{
+				for (int i = 0; i < chipDesc.InputPins.Length; i++)
+				{
+					if (chipDesc.InputPins[i].ID == pin.ID)
+					{
+						var d = chipDesc.InputPins[i];
+						d.face = face;
+						d.LocalOffset = localOffset;
+						chipDesc.InputPins[i] = d;
+						return;
+					}
+				}
+			}
+			if (chipDesc.OutputPins != null)
+			{
+				for (int i = 0; i < chipDesc.OutputPins.Length; i++)
+				{
+					if (chipDesc.OutputPins[i].ID == pin.ID)
+					{
+						var d = chipDesc.OutputPins[i];
+						d.face = face;
+						d.LocalOffset = localOffset;
+						chipDesc.OutputPins[i] = d;
+						return;
 					}
 				}
 			}

@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 56
-- **Most Recent**: Ticket 070 (February 9, 2026)
+- **Total Completed Tickets**: 57
+- **Most Recent**: Ticket 088 (February 9, 2026)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 088** – Customization view: pin layout by shape
+**Closed:** 2026-02-09  
+**Summary:** Fixed pin layout behaviour in the chip Customization view (when saving a chip). **Bug 1 (Rectangle):** With layout set to Custom, pin dragging did not work for the default rectangle shape; users could not place pins manually. Fixed so Custom layout allows dragging and placing pins on rectangle chips. **Bug 2 (Non-rectangle shapes):** For shapes such as hexagon, Default layout had no effect and did not apply auto-calculated pin positions. Fixed so Default layout correctly computes and applies default pin positions for all shapes. Layout options (Default = auto positions, Custom = drag to place) now work consistently for both rectangle and non-rectangle chip shapes.
+
+---
 
 ### **Ticket 070** – Pre-release build for testers (v2.1.6.11)
 **Closed:** 2026-02-09  
