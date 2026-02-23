@@ -36,6 +36,11 @@
           "text": "Delete-mode ghost hitbox - Fixed the area at the top where the delete-mode popup appears staying non-interactive after the popup is closed, which blocked moving or placing chips there. The zone no longer blocks input when the popup is hidden.",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Unity security update (Android) - App now built with the latest patched Unity Editor to address a security vulnerability that affected Android builds. Ensures compliance with Google Play policies and keeps the app secure.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ]
     },

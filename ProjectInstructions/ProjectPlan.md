@@ -94,6 +94,8 @@ Mobile Port (origin)
 
 | ID  | Type    | Name                                   | Status  | Notes                                                                                                                                                                                                                                 |
 | --- | ------- | -------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 094 | Improvement | PC key bindings / shortcuts | Backlog | On PC: add keyboard shortcuts (and optionally configurable key bindings) for actions in the edit menu and other relevant menus (e.g. delete, edit wire, duplicate, etc.). Improves desktop workflow without relying only on context menus. |
+| 095 | Feature | Rotate chips | Backlog | Add the ability to rotate chips (e.g. 90° steps). Enables better circuit layout and orientation of components. Consider UI: context menu, shortcut, or toolbar; persistence of rotation in save/load. |
 | 074 | Bug     | Simulation speed not saving | Backlog | Custom sim speed (ticks per second / steps per clock tick) resets to 250/1000 on confirm. Fix persistence and application of user-entered values. Community report (Kritiv). |
 | 076 | Bug     | Level validation overflow / expected output | Backlog | Validation shows wrong expected output for overflow (e.g. 15+15). Fix expected-output computation and display for overflow cases so validation matches correct result. Community report (Lamp). |
 | 079 | Bug     | Wire hitboxes when wires close together | Backlog | Wire hitboxes tricky when wires within 1 square. Improve hitbox/hit-test so intended wire is selected reliably (distance, priority, or feedback). Community report (Lamp). |
@@ -169,6 +171,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 ### **Current Status:**
 - **8 Open Tickets** available for selection (019, 024, 026, 039, 046, 064, 069, 071)
 - **0 In Progress** tickets
-- **Tickets 070, 075, 078, 088, 089, 091, 092** – completed (pre-release build, wire edit segment deletion, delete-mode ghost hitbox, customization view pin layout, level zero-score loophole fix, RGB LED chip, Discord logo in About menu)
-- **12 Backlog** tickets (074, 076, 079–087, 090); move to Open Tickets when ready to prioritize. (077 About/Discord iOS removed—icon fix done in 092; link/carpen_swe may need follow-up.)
+- **Tickets 070, 075, 078, 088, 089, 091, 092, 093** – completed (093: Unity Android security – upgraded to latest Unity editor; next release build will be compliant; upload to Play by Feb 26) (pre-release build, wire edit segment deletion, delete-mode ghost hitbox, customization view pin layout, level zero-score loophole fix, RGB LED chip, Discord logo in About menu)
+- **14 Backlog** tickets (074, 076, 079–087, 090, 094, 095); move to Open Tickets when ready to prioritize. (077 About/Discord iOS removed—icon fix done in 092; link/carpen_swe may need follow-up.)
 - **Note:** After community merge, if ProjectPlan was reverted, restore Backlog and ticket list from this version. 044 (Unity security) may have come from community—add to Open if needed.

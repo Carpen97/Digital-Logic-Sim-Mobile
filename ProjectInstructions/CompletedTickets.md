@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 63
-- **Most Recent**: Ticket 078 (February 9, 2026)
+- **Total Completed Tickets**: 64
+- **Most Recent**: Ticket 093 (February 2026)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 093** – Unity Android security (Google Play compliance)
+**Closed:** February 2026  
+**Summary:** Addressed Google Play policy violation (Device and Network Abuse – Unity security vulnerability affecting Unity 2017.1+ Android builds). Solution: upgraded to the latest Unity Editor (patched version). The next release build will be built with the patched editor and will satisfy the compliance requirement. **Remaining action:** Upload the new build (e.g. 2.1.6.12) to Google Play and update all release tracks before the Feb 26, 2026 deadline so the store has the compliant version.
+
+---
 
 ### **Ticket 078** – Delete-mode ghost hitbox
 **Closed:** 2026-02-09  
