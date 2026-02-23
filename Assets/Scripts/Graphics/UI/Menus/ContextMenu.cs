@@ -190,6 +190,14 @@ namespace DLS.Graphics
 				bool inCustomizeMenu = UIDrawer.ActiveMenu == UIDrawer.MenuType.ChipCustomization;
 				IInteractable hoverElement = InteractionState.ElementUnderMouse;
 
+				// Right-click on button/toggle center (DisplayInstance) → resolve to parent subchip for context menu
+				if (hoverElement is DisplayInstance display && ChipTypeHelper.IsClickableDisplayType(display.DisplayType))
+				{
+					var chip = Project.ActiveProject?.ViewedChip;
+					if (chip != null && chip.TryGetSubChipOwningDisplay(display, out SubChipInstance owningSub))
+						hoverElement = owningSub;
+				}
+
 				bool openSubChipContextMenu = hoverElement is SubChipInstance && !inCustomizeMenu;
 				bool openDevPinContextMenu = (hoverElement is PinInstance pin && pin.parent is DevPinInstance) || hoverElement is DevPinInstance;
 				bool openWireContextMenu = hoverElement is WireInstance;

@@ -173,10 +173,10 @@ namespace Seb.Vis.UI
 		public static void DrawSlider(Vector2 pos, Vector2 size, Anchor anchor, ref SliderState state)
 		{
 			Vector2 centre = CalculateCentre(pos, size, anchor);
-			(Vector2 centre, Vector2 size) ss = UIToScreenSpace(pos, size);
+			(Vector2 centre, Vector2 size) ss = UIToScreenSpace(centre, size);
 
-			Draw.Quad(ss.centre, ss.size, Color.white);
-
+			Color trackCol = new Color(0.22f, 0.22f, 0.22f);
+			Draw.Quad(ss.centre, ss.size, trackCol);
 
 			Vector2 handlePos_ss = Vector2.Lerp(ss.centre + Vector2.left * ss.size.x / 2, ss.centre + Vector2.right * ss.size.x / 2, state.progressT);
 			float handleSize_ss = ss.size.y * 1.5f;
@@ -198,7 +198,8 @@ namespace Seb.Vis.UI
 				state.progressT = (InputHelper.MousePos.x - minX) / (maxX - minX);
 			}
 
-			Draw.Point(handlePos_ss, handleSize_ss, mouseOverHandle || state.handleSelected ? Color.red : Color.yellow);
+			Color handleCol = (mouseOverHandle || state.handleSelected) ? new Color(0.85f, 0.85f, 0.85f) : new Color(0.55f, 0.55f, 0.55f);
+			Draw.Point(handlePos_ss, handleSize_ss, handleCol);
 			OnFinishedDrawingUIElement(centre, size);
 		}
 

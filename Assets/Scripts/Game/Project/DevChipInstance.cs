@@ -419,6 +419,33 @@ namespace DLS.Game
 			return false;
 		}
 
+		/// <summary>Finds the SubChipInstance that owns the given display (for right-click context menu).</summary>
+		public bool TryGetSubChipOwningDisplay(DisplayInstance display, out SubChipInstance owningSub)
+		{
+			owningSub = null;
+			if (display == null) return false;
+			foreach (IMoveable element in Elements)
+			{
+				if (element is SubChipInstance sub && sub.Displays != null && ContainsDisplay(sub.Displays, display))
+				{
+					owningSub = sub;
+					return true;
+				}
+			}
+			return false;
+		}
+
+		static bool ContainsDisplay(List<DisplayInstance> displays, DisplayInstance target)
+		{
+			if (displays == null) return false;
+			foreach (var d in displays)
+			{
+				if (ReferenceEquals(d, target)) return true;
+				if (d.ChildDisplays != null && ContainsDisplay(d.ChildDisplays, target)) return true;
+			}
+			return false;
+		}
+
 		// Update the currently viewed chip from the state of the corresponding simChip.
 		// Optionally don't set input pins since player controls these (at least when editing a chip, rather than viewing it)
 		public void UpdateStateFromSim(SimChip simChip, bool updateInputPins)

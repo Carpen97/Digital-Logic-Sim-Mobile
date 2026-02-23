@@ -205,8 +205,8 @@ namespace DLS.Game
 			bool canPanWithCurrentTouchCount = UnityEngine.Input.touchCount >= requiredTouchCount;
 
 			// Check if touching a clickable display (Button, Toggle, or RGB Touch Display)
-			bool isTouchingClickableDisplay = InteractionState.ElementUnderMouse is DisplayInstance display && 
-											  ChipTypeHelper.IsClickableDisplayType(display.DisplayType);
+			bool isTouchingClickableDisplay = (InteractionState.ElementUnderMouse is DisplayInstance display && ChipTypeHelper.IsClickableDisplayType(display.DisplayType))
+				|| (InteractionState.ElementUnderMouse is SubChipInstance sub && ChipTypeHelper.IsClickableDisplayType(sub.ChipType));
 
 			if (TouchInputHelper.Instance != null &&
 				TouchInputHelper.Instance.Dragging &&

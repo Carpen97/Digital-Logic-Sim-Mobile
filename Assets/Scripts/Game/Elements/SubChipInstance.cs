@@ -29,6 +29,7 @@ namespace DLS.Game
 		public readonly PinInstance[] OutputPins;
 		public string activationKeyString; // input char for the 'key chip' type (stored as string to avoid allocating when drawing)
 		public string Label;
+		public Vector2 LabelOffset; // x in [-1,1], y in [0,1]; (0,1) = centred below chip
 		public bool HasCustomLayout;
 
 		public bool anchoredToLevel { get; set; } = false;
@@ -43,6 +44,8 @@ namespace DLS.Game
 			Position = subChipDesc.Position;
 			ID = subChipDesc.ID;
 			Label = subChipDesc.Label;
+			// LabelOffset is always serialized. Old saves without it deserialize to (0,0); (0,0) is valid (centre) so we use as-is.
+			LabelOffset = subChipDesc.LabelOffset;
 			IsBus = ChipTypeHelper.IsBusType(ChipType);
 			MultiLineName = CreateMultiLineName(description.Name);
 			MinSize = CalculateMinChipSize(description.InputPins, description.OutputPins, description.Name);

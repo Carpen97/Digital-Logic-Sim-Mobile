@@ -171,6 +171,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 ### **Current Status:**
 - **8 Open Tickets** available for selection (019, 024, 026, 039, 046, 064, 069, 071)
 - **0 In Progress** tickets
-- **Tickets 070, 075, 078, 088, 089, 091, 092, 093** – completed (093: Unity Android security – upgraded to latest Unity editor; next release build will be compliant; upload to Play by Feb 26) (pre-release build, wire edit segment deletion, delete-mode ghost hitbox, customization view pin layout, level zero-score loophole fix, RGB LED chip, Discord logo in About menu)
+- **Tickets 070, 075, 078, 088, 089, 091, 092, 093, 096** – completed (096: Button chip label) (093: Unity Android security – upgraded to latest Unity editor; next release build will be compliant; upload to Play by Feb 26) (pre-release build, wire edit segment deletion, delete-mode ghost hitbox, customization view pin layout, level zero-score loophole fix, RGB LED chip, Discord logo in About menu)
 - **14 Backlog** tickets (074, 076, 079–087, 090, 094, 095); move to Open Tickets when ready to prioritize. (077 About/Discord iOS removed—icon fix done in 092; link/carpen_swe may need follow-up.)
 - **Note:** After community merge, if ProjectPlan was reverted, restore Backlog and ticket list from this version. 044 (Unity security) may have come from community—add to Open if needed.

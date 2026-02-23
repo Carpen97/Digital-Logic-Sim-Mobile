@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace DLS.Description
@@ -7,6 +8,9 @@ namespace DLS.Description
 		public string Name;
 		public int ID; // Unique within parent chip. ID > 0
 		public string Label;
+		/// <summary>Label position offset: x,y in [-1,1]. 0=centre, positive=right/down, negative=left/up. Default (0,1) = centred below.</summary>
+		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
+		public Vector2 LabelOffset;
 		public Vector2 Position;
 		public OutputPinColourInfo[] OutputPinColourInfo;
 
@@ -17,11 +21,14 @@ namespace DLS.Description
 		// Otherwise is null
 		public uint[] InternalData;
 
-		public SubChipDescription(string name, int id, string label, Vector2 position, OutputPinColourInfo[] outputPinColInfo, uint[] internalData = null)
+		public static readonly Vector2 DefaultLabelOffset = new(0, 1);
+
+		public SubChipDescription(string name, int id, string label, Vector2 position, OutputPinColourInfo[] outputPinColInfo, uint[] internalData = null, Vector2? labelOffset = null)
 		{
 			Name = name;
 			ID = id;
 			Label = label;
+			LabelOffset = labelOffset ?? DefaultLabelOffset;
 			Position = position;
 			OutputPinColourInfo = outputPinColInfo;
 			InternalData = internalData;

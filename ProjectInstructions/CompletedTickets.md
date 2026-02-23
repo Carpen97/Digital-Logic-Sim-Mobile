@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 64
-- **Most Recent**: Ticket 093 (February 2026)
+- **Total Completed Tickets**: 65
+- **Most Recent**: Ticket 096 (Button chip label)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 096** – Button chip label
+**Closed:** 2026  
+**Summary:** Implemented user-configurable labels for the button chip (built-in pressable input). Labels are visible when the button is on the main canvas and when it is a subchip inside a custom chip. Label position (X and Y offset) is adjustable via ChipLabelMenu (sliders, snap checkbox, bottom/centre/top presets) and persists across save/load. Button interaction improvements: right-click anywhere opens context menu; when selected, the chip can be dragged from anywhere including the button centre. Report: Ticket_096_Button_Chip_Label_Report.md.
+
+---
 
 ### **Ticket 093** – Unity Android security (Google Play compliance)
 **Closed:** February 2026  

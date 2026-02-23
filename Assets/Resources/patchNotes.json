@@ -8,6 +8,11 @@
           "text": "RGB LED Chip - New display component with true colour! The RGB LED chip has three 8-bit inputs (R, G, B), each 0–255. An on-chip light shows the colour defined by those inputs and updates in real time as you change them. Find it in the chip library under DISPLAY. Perfect for colour output, visual feedback, and learning about RGB encoding.",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Button chip labels - Add a custom label to any button chip (e.g. \"START\", \"RESET\"). Labels are visible on the main canvas and when the button is inside a custom chip. Use the LABEL option in the context menu to set text and adjust label position (sliders and presets: bottom, centre, top). Right-click anywhere on a button to open the menu; when selected, you can drag the button from anywhere including the centre.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "improvements": [],

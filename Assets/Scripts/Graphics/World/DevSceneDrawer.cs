@@ -120,6 +120,8 @@ namespace DLS.Graphics
 						}
 					}
 
+					// Button labels use DrawSubChipLabel (below chip); drawing in DrawInteractable_Button
+					// would be clipped by the subchip display mask
 					DrawSubChipLabel(subchip);
 				}
 			}
@@ -217,11 +219,14 @@ namespace DLS.Graphics
 			string text = chip.Label;
 			if (string.IsNullOrWhiteSpace(text)) return;
 
-			const float offsetY = 0.2f;
+			const float baseOffsetY = 0.2f;
+			float unitY = chip.Size.y / 2 + baseOffsetY;
+			float unitX = chip.Size.x * 0.5f;
+			Vector2 offset = new(chip.LabelOffset.x * unitX, -chip.LabelOffset.y * unitY); // Y positive = down
 			FontType font = FontBold;
 
 			Vector2 size = Draw.CalculateTextBoundsSize(text, FontSizePinLabel, font) + LabelBackgroundPadding;
-			Vector2 centre = chip.Position + Vector2.down * (chip.Size.y / 2 + offsetY);
+			Vector2 centre = chip.Position + offset;
 
 			Draw.Quad(centre, size, ActiveTheme.PinLabelCol);
 			Draw.Text(font, text, FontSizePinLabel, centre, Anchor.TextFirstLineCentre, Color.white);
@@ -692,6 +697,19 @@ namespace DLS.Graphics
 			return Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
 		}
 
+		static (string label, Vector2 offset) ResolveButtonLabelAndOffsetForNestedDisplay(DisplayInstance display, SubChipInstance parentChip)
+		{
+			if (display.Desc.SubChipID < 0) return (null, SubChipDescription.DefaultLabelOffset);
+			if (controller.ActiveDevChip != null && controller.ActiveDevChip.TryGetSubChipByID(display.Desc.SubChipID, out SubChipInstance btn))
+				return (btn.Label, btn.LabelOffset);
+			if (parentChip.Description?.SubChips != null)
+			{
+				foreach (SubChipDescription sc in parentChip.Description.SubChips)
+					if (sc.ID == display.Desc.SubChipID) return (sc.Label, sc.LabelOffset);
+			}
+			return (null, SubChipDescription.DefaultLabelOffset);
+		}
+
 		public static Bounds2D DrawClickableDisplay(DisplayInstance display, Vector2 posParent, float parentScale, SubChipInstance rootChip, SimChip sim = null)
 		{
 			Bounds2D bounds = Bounds2D.CreateEmpty();
@@ -702,25 +720,32 @@ namespace DLS.Graphics
 			bool inBounds = false;
 			bool clicked = false;
 
-			// Calls to draw functions for each clickable display -- must include isSelected == false in the mouse detection to work.
+			// When chip is selected, treat any click as drag - don't trigger button/toggle, notify subchip for move
+			bool chipIsSelected = rootChip.IsSelected;
+
+			// Calls to draw functions for each clickable display
 			if (display.DisplayType == ChipType.Button)
 			{
-				(bounds, inBounds, clicked) = DrawInteractable_Button(posWorld, scaleWorld, sim);
+				// For nested button (on custom chip face): draw label here - we're inside parent chip mask, so no clipping.
+				// For top-level button: DrawSubChipLabel handles it (would be clipped by button's own mask here).
+				(string label, Vector2 labelOffset) resolved = rootChip.ChipType == ChipType.Custom ? ResolveButtonLabelAndOffsetForNestedDisplay(display, rootChip) : (null, default);
+				(bounds, inBounds, clicked) = DrawInteractable_Button(posWorld, scaleWorld, sim, resolved.label, resolved.labelOffset, chipIsSelected);
 			}
 
 			else if (display.DisplayType == ChipType.Toggle)
 			{
-				(bounds, inBounds, clicked) = DrawInteractable_Toggle(posWorld, scaleWorld, sim);
+				(bounds, inBounds, clicked) = DrawInteractable_Toggle(posWorld, scaleWorld, sim, chipIsSelected);
 			}
 
 			else if (display.DisplayType == ChipType.DisplayRGBTouch)
 			{
-				(bounds, inBounds, clicked) = DrawInteractable_RGBTouch(posWorld, scaleWorld, sim);
+				(bounds, inBounds, clicked) = DrawInteractable_RGBTouch(posWorld, scaleWorld, sim, chipIsSelected);
 			}
 
 			if (inBounds)
 			{
-				InteractionState.NotifyElementUnderMouse(display);
+				// When selected, notify subchip so user can drag from anywhere; otherwise notify display (center only for move)
+				InteractionState.NotifyElementUnderMouse(chipIsSelected ? rootChip : display);
 			}
 
 			rootChip.IsSelected = clicked ? false : rootChip.IsSelected;
@@ -729,7 +754,7 @@ namespace DLS.Graphics
 			return bounds;
 		}
 
-		public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_RGBTouch(Vector2 centre, float scale, SimChip simSource)
+		public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_RGBTouch(Vector2 centre, float scale, SimChip simSource, bool chipIsSelected = false)
 		{
 			Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
 			bool pressed = false;
@@ -770,7 +795,8 @@ namespace DLS.Graphics
 					if (simSource != null)
 					{
 						if (pixelBounds.PointInBounds(InputHelper.MousePosWorld)) inBounds = true;
-						if (inBounds && InputHelper.IsMouseHeld(MouseButton.Left) && controller.CanInteractWithButton) pressed = true;
+						// When selected, don't register as press - user intends to drag
+						if (!chipIsSelected && inBounds && InputHelper.IsMouseHeld(MouseButton.Left) && controller.CanInteractWithButton) pressed = true;
 						if (addr == null) addr = pressed ? (uint)address : null;
 						simSource.OutputPins[4].State.SmallSet(pressed ? Constants.LOGIC_HIGH : Constants.LOGIC_LOW);
 					}
@@ -787,7 +813,7 @@ namespace DLS.Graphics
 			}
 		}
 
-		public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Button(Vector2 centre, float scale, SimChip chipSource)
+		public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Button(Vector2 centre, float scale, SimChip chipSource, string label = null, Vector2? labelOffset = null, bool chipIsSelected = false)
 		{
 			Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
 			bool inBounds = false;
@@ -799,7 +825,8 @@ namespace DLS.Graphics
 			if (chipSource != null)
 			{
 				inBounds = bounds.PointInBounds(InputHelper.MousePosWorld);
-				pressed = inBounds && InputHelper.IsMouseHeld(MouseButton.Left) && controller.CanInteractWithButton;
+				// When selected, don't register as press - user intends to drag
+				pressed = !chipIsSelected && inBounds && InputHelper.IsMouseHeld(MouseButton.Left) && controller.CanInteractWithButton;
 				uint displayColIndex = chipSource.InternalState[0];
 				col = GetStateColour(pressed, displayColIndex);
 				chipSource.OutputPins[0].State.SmallSet(pressed ? Constants.LOGIC_HIGH : Constants.LOGIC_LOW);
@@ -809,10 +836,24 @@ namespace DLS.Graphics
 			Draw.Squircle(centre, Vector2.one * scale, 0.15f * scale, ActiveTheme.DevPinHandle);
 			Draw.Squircle(centre, buttonDrawSize, 0.15f * scale * buttonSize, col);
 
+			// Draw label for nested button (only passed when on custom chip face; top-level uses DrawSubChipLabel)
+			if (!string.IsNullOrWhiteSpace(label))
+			{
+				Vector2 off = labelOffset ?? SubChipDescription.DefaultLabelOffset;
+				const float baseOffsetY = 0.35f;
+				float unitY = scale / 2f + baseOffsetY;
+				float unitX = scale * 0.5f;
+				Vector2 offset = new(off.x * unitX, -off.y * unitY);
+				Vector2 labelCentre = centre + offset;
+				Vector2 size = Draw.CalculateTextBoundsSize(label, FontSizePinLabel, FontBold) + LabelBackgroundPadding;
+				Draw.Quad(labelCentre, size, ActiveTheme.PinLabelCol);
+				Draw.Text(FontBold, label, FontSizePinLabel, labelCentre, Anchor.TextFirstLineCentre, Color.white);
+			}
+
 			return (bounds, inBounds, pressed);
 		}
 
-		public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Toggle(Vector2 centre, float scale, SimChip chipSource)
+		public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Toggle(Vector2 centre, float scale, SimChip chipSource, bool chipIsSelected = false)
 		{
 
 			Vector2 ratio = new Vector2(1f, 2f);
@@ -843,7 +884,8 @@ namespace DLS.Graphics
 				currentSwitchHeadPos = currentState ? -1 : 1;
 				Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre + Vector2.up * verticalOffset * currentSwitchHeadPos, switchDrawSize);
 				inBounds = bounds.PointInBounds(InputHelper.MousePosWorld);
-				gettingClicked = inBounds && InputHelper.IsMouseDownThisFrame(MouseButton.Left) && controller.CanInteractWithButton;
+				// When selected, don't register as click - user intends to drag
+				gettingClicked = !chipIsSelected && inBounds && InputHelper.IsMouseDownThisFrame(MouseButton.Left) && controller.CanInteractWithButton;
 				bool nextState = gettingClicked ? !currentState : currentState;
 				chipSource.OutputPins[0].State.SmallSet(nextState ? Constants.LOGIC_HIGH : Constants.LOGIC_LOW);
 
