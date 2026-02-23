@@ -530,24 +530,7 @@ namespace DLS.Simulation
 					chip.OutputPins[2].State.SetShort((data >> 4) & mask);
 					chip.OutputPins[3].State.SetShort(data & mask);
 			
-                    break;
-				}
-
-				{
-					const uint mask = 0x03;
-					uint address = chip.InputPins[0].State.GetShortValues();
-					uint data = chip.InternalState[address];
-
-					chip.OutputPins[0].State.SetShort((data >> 14) & mask);
-					chip.OutputPins[1].State.SetShort((data >> 12) & mask);
-					chip.OutputPins[2].State.SetShort((data >> 10) & mask);
-					chip.OutputPins[3].State.SetShort((data >> 8) & mask);
-					chip.OutputPins[4].State.SetShort((data >> 6) & mask);
-					chip.OutputPins[5].State.SetShort((data >> 4) & mask);
-					chip.OutputPins[6].State.SetShort((data >> 2) & mask);
-					chip.OutputPins[7].State.SetShort(data & mask);
-			
-                    break;
+				break;
 				}
 
 				case ChipType.Rom_16x1:    // 16x1-bit ROM

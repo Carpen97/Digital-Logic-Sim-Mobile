@@ -14,6 +14,7 @@ namespace DLS.Integration.Discord
 	/// </summary>
 	public class DiscordActivityTracker : MonoBehaviour
 	{
+		#if DISCORD_SUPPORTED
 		[Header("Update Settings")]
 		[Tooltip("How often to check for game state changes (seconds). Discord limit: 15s")]
 		[SerializeField] private float updateInterval = 15f;
@@ -28,6 +29,7 @@ namespace DLS.Integration.Discord
 		private string lastState = "";
 		private string lastLargeIcon = "";
 		private string lastSmallIcon = "";
+		#endif
 
 		void Start()
 		{

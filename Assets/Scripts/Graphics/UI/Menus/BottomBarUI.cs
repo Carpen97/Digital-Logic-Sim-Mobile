@@ -77,8 +77,10 @@ namespace DLS.Graphics
 		static int toggleMenuFrame;
 		static int collectionInteractFrame;
 		static ChipCollection activeCollection;
-        private static string hoveredNestedCollectionName;
-        static Vector2 collectionPopupBottomLeft;
+#if !(UNITY_ANDROID || UNITY_IOS)
+		private static string hoveredNestedCollectionName;
+#endif
+		static Vector2 collectionPopupBottomLeft;
 		static Bounds2D barBounds_ScreenSpace;
 
 		// Nested collection expansion state
@@ -472,7 +474,9 @@ namespace DLS.Graphics
 				else if (KeyboardShortcuts.CancelShortcutTriggered || (InputHelper.IsAnyMouseButtonDownThisFrame_IgnoreConsumed() && Time.frameCount != collectionInteractFrame) || UIDrawer.ActiveMenu != UIDrawer.MenuType.None)
 				{
 					activeCollection = null;
+#if !(UNITY_ANDROID || UNITY_IOS)
 					hoveredNestedCollectionName = null; // Clear hover state when collection closes
+#endif
 				}
 			}
 		}
@@ -982,7 +986,9 @@ namespace DLS.Graphics
 			isDraggingChipBar = false;
 			activeCollection = null;
 			activeNestedCollection = null;
+#if !(UNITY_ANDROID || UNITY_IOS)
 			hoveredNestedCollectionName = null;
+#endif
 			clickedItemY = 0;
 		}
 

@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/Dev.meta
 guid: 20f38acfa994de44e9421c09e06ac02b
-========
-guid: 04309b9aa0438754cb919a249a23aa2f
->>>>>>>> community/dev:Assets/Build.meta
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}

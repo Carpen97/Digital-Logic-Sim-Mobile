@@ -857,7 +857,7 @@ namespace DLS.Graphics
 			// Top section - Main about text
 		string about_text_1 = "This is an extension of Sebastian Lague's project Digital-Logic-Sim.";
 		about_text_1 = WrapText(about_text_1, 45) + "\n";
-		string about_text_2 = "The original goal of the extension was to make the simulator available on mobile. Since then more features have also been added such as the levels system (still very much a work in progress). Note this version also includes changes introduced by the Community Edit (synced Feb 2026; check out Discord for more info).";
+		string about_text_2 = "The original goal of the extension was to make the simulator available on mobile. Since then more features have also been added such as the levels system (still very much a work in progress). This version also includes changes introduced by the Community Edit (synced Feb 2026; check out Discord for more info).";
 		about_text_2 = WrapText(about_text_2, 45);
 		string about_text = about_text_1 + about_text_2;
 		Seb.Vis.UI.UI.DrawText(about_text, theme.font, theme.fontSize*0.6f, new Vector2(leftTextStartX, Seb.Vis.UI.UI.Centre.y + 11), Anchor.TopLeft, Color.white);

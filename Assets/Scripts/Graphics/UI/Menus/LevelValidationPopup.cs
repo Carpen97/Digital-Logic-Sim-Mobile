@@ -102,7 +102,6 @@ namespace DLS.Graphics
 		static int _out_len;
 		static readonly List<TestRow> _rows = new();
 		static int _selectedIndex = -1;
-		static bool _isSequentialLevel = false;
 
 		// ---------- Zoom State ----------
 		static float _tableZoom = DefaultZoom;
@@ -130,7 +129,6 @@ namespace DLS.Graphics
 		static List<float> _inputBitGroupXPositions = new List<float>();  // x positions for input bit groups
 		static List<float> _expectedBitGroupXPositions = new List<float>(); // x positions for expected bit groups
 		static List<float> _outputBitGroupXPositions = new List<float>();   // x positions for output bit groups
-		static bool _bitGroupPositionsCalculated = false; // Flag to track if positions have been calculated
 
 		// ---------- Internal row model ----------
 		struct TestRow
@@ -162,7 +160,6 @@ namespace DLS.Graphics
 		{
 			_rows.Clear();
 			_selectedIndex = -1;
-			_bitGroupPositionsCalculated = false; // Reset flag when new data is loaded
 			_in_len = report.AllTestResults[0].Inputs.Length;
 			_out_len = report.AllTestResults[0].Expected.Length;
 
@@ -426,19 +423,16 @@ namespace DLS.Graphics
 			if (zoomInPressed && _tableZoom < MaxZoom)
 			{
 				_tableZoom = Mathf.Min(_tableZoom + ZoomStep, MaxZoom);
-				_bitGroupPositionsCalculated = false; // Recalculate positions with new zoom
 			}
 			if (zoomOutPressed && _tableZoom > MinZoom)
 			{
 				_tableZoom = Mathf.Max(_tableZoom - ZoomStep, MinZoom);
-				_bitGroupPositionsCalculated = false; // Recalculate positions with new zoom
 			}
 			if (fitWidthPressed)
 			{
 				Debug.Log($"[LevelValidationPopup] Fit button pressed - Setting _tableZoom from {_tableZoom} to {defaultZoom}");
 				_tableZoom = defaultZoom;
 				_hScroll = 0;
-				_bitGroupPositionsCalculated = false; // Recalculate positions with new zoom
 			}
 
 			// Buttons (moved down to make room for display mode and zoom buttons)
