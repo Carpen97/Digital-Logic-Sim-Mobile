@@ -146,6 +146,7 @@ namespace DLS.Graphics
 		// ---------- Firebase test state ----------
 		static bool _isUploading = false;
 		static string _uploadStatus = "";
+		static bool _hasDisallowedSubchips = false;
         private static bool defaultZoomSet;
         private static float _viewportWidth;
 
@@ -200,6 +201,12 @@ namespace DLS.Graphics
 			_hScroll = 0f;
 			defaultZoomSet = false;
 			Debug.Log($"[LevelValidationPopup] Opening popup - Reset _tableZoom to {_tableZoom}, defaultZoomSet = false");
+
+			// Check for disallowed subchips (e.g. ROM inside custom chip) - block upload if found
+			var adapter = new MobileSimulationAdapter();
+			_hasDisallowedSubchips = adapter.ContainsDisallowedSubchips();
+			if (_hasDisallowedSubchips)
+				Debug.Log("[LevelValidationPopup] Solution contains disallowed subchips - upload and save blocked");
 
 			UIDrawer.SetActiveMenu(UIDrawer.MenuType.LevelValidationResult);
 		}
@@ -355,6 +362,13 @@ namespace DLS.Graphics
 			int nandCount = GetNandGateCount();
 			Seb.Vis.UI.UI.DrawText($"Score: {nandCount}", ActiveUITheme.FontBold, ActiveUITheme.FontSizeRegular, scorePos, Anchor.TopLeft, Color.yellow);
 
+			// Disallowed subchips warning (blocks upload/save)
+			if (_hasDisallowedSubchips)
+			{
+				Vector2 disallowedPos = scorePos + new Vector2(0f, -RowHeight * 1.0f);
+				Seb.Vis.UI.UI.DrawText("This solution uses components that are not allowed in levels (e.g. ROM inside a custom chip). Remove them to submit a valid score.", ActiveUITheme.FontRegular, UIThemeLibrary.FontSizeSmall, disallowedPos, Anchor.TopLeft, new Color(1f, 0.6f, 0.2f));
+			}
+
 			// Upload status (if uploading)
 			if (_isUploading || !string.IsNullOrEmpty(_uploadStatus))
 			{
@@ -439,6 +453,7 @@ namespace DLS.Graphics
 			Vector2 btnPos = displayModePos + Vector2.down * (buttonHeight + spacing) * 2; // Move down to make room
 
 			bool levelPassed = _rows.Count > 0 && _rows.All(r => r.Passed);
+			bool canUploadOrSave = levelPassed && !_hasDisallowedSubchips;
 			bool hasValidSelection = _selectedIndex >= 0 && _selectedIndex < _rows.Count;
 
 			// Apply Test button
@@ -461,7 +476,7 @@ namespace DLS.Graphics
 				MenuHelper.Theme.ButtonTheme,
 				btnPos,
 				new Vector2(contentWidth, buttonHeight),
-				levelPassed,
+				canUploadOrSave,
 				false,
 				false,
 				MenuHelper.Theme.ButtonTheme.buttonCols,
@@ -489,7 +504,7 @@ namespace DLS.Graphics
 				MenuHelper.Theme.ButtonTheme,
 				btnPos,
 					new Vector2(contentWidth, buttonHeight),
-				levelPassed,
+				canUploadOrSave,
 				false,
 				false,
 				MenuHelper.Theme.ButtonTheme.buttonCols,
@@ -557,7 +572,7 @@ namespace DLS.Graphics
 
 			// Handle button actions
 			if (applyTestPressed && hasValidSelection) ApplySelectedTestInputs();
-			if (uploadPressed && levelPassed) UserNameInputPopup.Open(OnUserNameConfirmed, OnUserNameCancelled);
+			if (uploadPressed && canUploadOrSave) UserNameInputPopup.Open(OnUserNameConfirmed, OnUserNameCancelled);
 			if (leaderboardPressed)
 			{
 				var levelManager = LevelManager.Instance;
@@ -565,7 +580,7 @@ namespace DLS.Graphics
 				string levelName = levelManager?.Current?.name ?? levelId;
 				LeaderboardPopup.Open(levelId, levelName);
 			}
-			if (saveAsChipPressed && levelPassed)
+			if (saveAsChipPressed && canUploadOrSave)
 			{
 				ChipSaveMenu.SetReturnMenu(UIDrawer.MenuType.LevelValidationResult);
 				UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipSave);
@@ -1263,6 +1278,15 @@ namespace DLS.Graphics
 
 		static async System.Threading.Tasks.Task UploadToLeaderboard(string userName = null, bool shareSolution = false)
 		{
+			// Block upload if solution contains disallowed subchips (e.g. ROM in custom chip)
+			if (_hasDisallowedSubchips)
+			{
+				_uploadStatus = "Upload blocked: solution uses disallowed components";
+				await System.Threading.Tasks.Task.Delay(2000);
+				_uploadStatus = "";
+				return;
+			}
+
 			// Ultimate safety wrapper to prevent any crashes
 			try
 			{

@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 65
-- **Most Recent**: Ticket 096 (Button chip label)
+- **Total Completed Tickets**: 66
+- **Most Recent**: Ticket 097 (Level cheating: reject solutions with disallowed subchips)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 097** – Level cheating: reject solutions with disallowed subchips
+**Closed:** 2026-02-10  
+**Summary:** Re-implemented the level zero-score loophole fix. Solutions that contain disallowed components anywhere in the chip hierarchy (e.g. ROM nested inside a custom chip) are now rejected at validation/upload; placement of such chips is also blocked when in level mode. Added ChipTypeHelper.IsDisabledInLevels(); recursive check in MobileSimulationAdapter (ContainsDisallowedSubchips) and ChipLibrary (ChipDescriptionContainsDisallowedSubchipsForLevel); LevelValidationPopup blocks upload and shows clear message when disallowed subchips present; BottomBarUI and ChipInteractionController block placement of custom chips containing disallowed components when in a level. All checks are level-gated. Report: Ticket_097_Level_Cheating_Disallowed_Subchips_Report.md.
+
+---
 
 ### **Ticket 096** – Button chip label
 **Closed:** 2026  

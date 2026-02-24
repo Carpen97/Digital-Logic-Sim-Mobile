@@ -69,6 +69,11 @@ namespace DLS.Game
 			SimpleMessagePopup.Open("This chip type is disabled for this level");
 		}
 
+		static void ShowNestedDisallowedMessage()
+		{
+			SimpleMessagePopup.Open("This chip contains components that are not allowed in levels (e.g. ROM inside it). Remove them to use it.");
+		}
+
 		// ---- Control scheme settings ----
 		public bool UseDragAndDropMode => project.description.Prefs_UseDragAndDropMode;
 
@@ -1444,6 +1449,14 @@ namespace DLS.Game
 		if (IsSpecialChipDisabledInLevel(chipDescription.ChipType))
 		{
 			ShowSpecialChipDisabledMessage();
+			return null;
+		}
+
+		// Check if custom chip contains disallowed subchips (e.g. ROM inside a custom chip) – only when IN a level
+		var lm = DLS.Game.LevelsIntegration.LevelManager.Instance;
+		if (lm != null && lm.IsActive && project.chipLibrary.ChipDescriptionContainsDisallowedSubchipsForLevel(chipDescription))
+		{
+			ShowNestedDisallowedMessage();
 			return null;
 		}
 		

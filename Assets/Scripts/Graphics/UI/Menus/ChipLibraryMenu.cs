@@ -1285,8 +1285,11 @@ namespace DLS.Graphics
 				{
 					// Resolve legacy ROM variant names to default ROM to avoid missing keys
 					string resolvedName = ResolveLibraryChipName(selectedChipName);
-					project.controller.StartPlacing(project.chipLibrary.GetChipDescription(resolvedName));
-					ExitLibrary();
+					var desc = project.chipLibrary.GetChipDescription(resolvedName);
+					var placed = project.controller.StartPlacing(desc, InputHelper.MousePosWorld, false);
+					// Only exit when placement actually started; when blocked (e.g. disallowed chip in level), popup is shown - don't overwrite it
+					if (placed != null)
+						ExitLibrary();
 				}
 				else if (chipActionIndex == 1) // open
 				{

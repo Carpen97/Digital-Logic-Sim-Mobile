@@ -835,6 +835,7 @@ namespace DLS.Graphics
 
 		/// <summary>
 		/// Try to start placing a chip. If it's an Input/Output pin or special chip in a level, show a message instead.
+		/// Also blocks custom chips that contain disallowed subchips (e.g. ROM nested inside).
 		/// </summary>
 		static void TryStartPlacing(Project project, string chipName)
 		{
@@ -851,6 +852,14 @@ namespace DLS.Graphics
 			if (IsSpecialChipDisabledInLevel(desc.ChipType))
 			{
 				ShowSpecialChipDisabledMessage();
+				return;
+			}
+
+			// Check if custom chip contains disallowed subchips (e.g. ROM inside a custom chip) – only when IN a level
+			var lm = LevelManager.Instance;
+			if (lm != null && lm.IsActive && project.chipLibrary.ChipDescriptionContainsDisallowedSubchipsForLevel(desc))
+			{
+				ShowNestedDisallowedMessage();
 				return;
 			}
 
@@ -872,6 +881,14 @@ namespace DLS.Graphics
 		static void ShowSpecialChipDisabledMessage()
 		{
 			SimpleMessagePopup.Open("This chip type is disabled for this level");
+		}
+
+		/// <summary>
+		/// Shows message when a custom chip contains nested disallowed components (e.g. ROM inside it)
+		/// </summary>
+		static void ShowNestedDisallowedMessage()
+		{
+			SimpleMessagePopup.Open("This chip contains components that are not allowed in levels (e.g. ROM inside it). Remove them to use it.");
 		}
 
 		static void ExitToMainMenu()

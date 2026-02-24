@@ -168,5 +168,42 @@ namespace DLS.Game
 			       chipType == ChipType.Rom_4x4 || 
 			       chipType == ChipType.Rom_16x1;
 		}
+
+		/// <summary>
+		/// Returns true if the chip (or any of its subchips, recursively) contains a chip type disallowed in levels.
+		/// Used to block placement of custom chips that have ROM, Button, etc. nested inside them.
+		/// </summary>
+		public bool ChipDescriptionContainsDisallowedSubchipsForLevel(ChipDescription desc)
+		{
+			if (desc == null) return false;
+			var visited = new HashSet<string>(ChipDescription.NameComparer);
+			return ChipDescriptionContainsDisallowedSubchipsRecursive(desc, visited);
+		}
+
+		bool ChipDescriptionContainsDisallowedSubchipsRecursive(ChipDescription desc, HashSet<string> visited)
+		{
+			if (desc == null) return false;
+
+			if (desc.ChipType != ChipType.Custom)
+			{
+				return ChipTypeHelper.IsDisabledInLevels(desc.ChipType);
+			}
+
+			// Custom chip: recurse into subchips
+			if (visited.Add(desc.Name) == false) return false; // Already visiting (circular ref)
+			if (desc.SubChips == null) return false;
+
+			foreach (var subChip in desc.SubChips)
+			{
+				if (TryGetChipDescription(subChip.Name, out ChipDescription subDesc))
+				{
+					if (ChipDescriptionContainsDisallowedSubchipsRecursive(subDesc, visited))
+						return true;
+				}
+			}
+
+			visited.Remove(desc.Name);
+			return false;
+		}
 	}
 }

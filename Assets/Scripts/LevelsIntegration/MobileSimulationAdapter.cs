@@ -214,4 +214,30 @@ public sealed class MobileSimulationAdapter : ISimulationAdapter
 		return count;
 	}
 
+	/// <summary>
+	/// Returns true if the level solution contains any chip type that is disallowed in levels (ROM, Clock, Button, etc.)
+	/// anywhere in the hierarchy, including inside custom chips. Used to block score upload for cheating solutions.
+	/// </summary>
+	public bool ContainsDisallowedSubchips()
+	{
+		if (_simChip == null) return false;
+		return ContainsDisallowedSubchipsRecursive(_simChip);
+	}
+
+	private static bool ContainsDisallowedSubchipsRecursive(SimChip chip)
+	{
+		if (chip == null) return false;
+
+		if (DLS.Description.ChipTypeHelper.IsDisabledInLevels(chip.ChipType))
+			return true;
+
+		foreach (var subChip in chip.SubChips)
+		{
+			if (ContainsDisallowedSubchipsRecursive(subChip))
+				return true;
+		}
+
+		return false;
+	}
+
 }

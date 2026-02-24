@@ -62,6 +62,36 @@ namespace DLS.Description
 
 		public static bool IsRomType(ChipType type) => type == ChipType.Rom_256x16 || type == ChipType.Rom_2x8 || type == ChipType.Rom_4x4 || type == ChipType.Rom_16x1 || type == ChipType.Rom_1x16 || type == ChipType.EEPROM_256x16;
 
+	/// <summary>
+	/// Returns true for chip types that are not allowed in level solutions (anywhere in the hierarchy, including inside custom chips).
+	/// Must match the set used by ChipInteractionController.IsSpecialChipDisabledInLevel and ShouldHideChipInLevel for consistency.
+	/// </summary>
+	public static bool IsDisabledInLevels(ChipType type)
+	{
+		// In/Out pins as subchips: custom chips may not add extra pins beyond level-provided ones
+		if (type == ChipType.In_Pin || type == ChipType.Out_Pin) return true;
+		// All ROM variants (including those not in IsSpecialChipDisabledInLevel)
+		if (IsRomType(type)) return true;
+		// Special chips disabled in level mode (same as ChipInteractionController.IsSpecialChipDisabledInLevel)
+		return type == ChipType.dev_Ram_8Bit ||
+		       type == ChipType.SevenSegmentDisplay ||
+		       type == ChipType.DisplayRGB ||
+		       type == ChipType.DisplayRGBTouch ||
+		       type == ChipType.DisplayDot ||
+		       type == ChipType.DisplayLED ||
+		       type == ChipType.DisplayRGBLED ||
+		       type == ChipType.Pulse ||
+		       type == ChipType.Clock ||
+		       type == ChipType.Key ||
+		       type == ChipType.Button ||
+		       type == ChipType.Toggle ||
+		       type == ChipType.Detector ||
+		       type == ChipType.Buzzer ||
+		       type == ChipType.RTC ||
+		       type == ChipType.SPS ||
+		       type == ChipType.Constant_8Bit;
+	}
+
 	public static bool IsTextDisplayType(ChipType type) => type == ChipType.TextDisplay;
 
 		/// <summary>
