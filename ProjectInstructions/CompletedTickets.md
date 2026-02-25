@@ -13,12 +13,24 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 66
-- **Most Recent**: Ticket 097 (Level cheating: reject solutions with disallowed subchips)
+- **Total Completed Tickets**: 68
+- **Most Recent**: Ticket 074 (Simulation speed not saving)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 074** – Simulation speed not saving
+**Closed:** 2026-02  
+**Summary:** Fixed the bug where simulation settings (Steps per clock tick, Steps per second target) were reset to 250/1000 when the user confirmed the preferences menu with the Simulation section collapsed. Only read and assign simulation form values when the Simulation section is expanded; when collapsed, keep existing project.description values. PreferencesMenu.cs reworked to match Display/Editing section pattern. Community report (Kritiv). Report: Ticket_074_Simulation_Speed_Not_Saving_Report.md.
+
+---
+
+### **Ticket 087** – Progress sync between devices / Project sharing (level upload & auth)
+**Closed:** 2026-02  
+**Summary:** Level upload and Project Sharing auth/UX: Share Solution checkbox restored in UserNameInputPopup and wired through to upload; upload score UI layout (2×2 grid for not-logged-in, spacing); Case 1b for users logged in without username (Claim Username flow); logout clears auth cache so Level Upload no longer shows stale "Signed in" after logout from Project Sharing; auth sync so Project Sharing reflects login from Level Upload. Report: Level_Upload_Project_Sharing_Auth_Report.md.
+
+---
 
 ### **Ticket 097** – Level cheating: reject solutions with disallowed subchips
 **Closed:** 2026-02-10  

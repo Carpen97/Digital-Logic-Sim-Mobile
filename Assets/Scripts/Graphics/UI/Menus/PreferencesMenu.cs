@@ -305,19 +305,26 @@ namespace DLS.Graphics
 			int controlSchemeMode = project.description.Prefs_UseDragAndDropMode ? 1 : 0; // Always use existing value on PC
 			#endif
 				
-				bool pauseSim = IsSimulationSectionExpanded() ? (Seb.Vis.UI.UI.GetWheelSelectorState(ID_SimStatus).index == 1) : project.description.Prefs_SimPaused;
-				InputFieldState clockSpeedInputFieldState = IsSimulationSectionExpanded() ? Seb.Vis.UI.UI.GetInputFieldState(ID_ClockSpeedInput) : new InputFieldState();
-				InputFieldState freqState = IsSimulationSectionExpanded() ? Seb.Vis.UI.UI.GetInputFieldState(ID_SimFrequencyField) : new InputFieldState();
-				
-				int.TryParse(clockSpeedInputFieldState.text, out int clockSpeed);
-				int.TryParse(freqState.text, out int targetSimTicksPerSecond);
-				
-				// Apply defaults for invalid values - use aggressive defaults to override wrong values
-				if (clockSpeed <= 0 || clockSpeed < 10) clockSpeed = 250;
-				if (targetSimTicksPerSecond <= 0 || targetSimTicksPerSecond < 100) targetSimTicksPerSecond = 1000;
-				
-				targetSimTicksPerSecond = Mathf.Max(1, targetSimTicksPerSecond);
-				if (project.targetTicksPerSecond != targetSimTicksPerSecond || project.simPaused != pauseSim) lastSimTickRateSetTime = Time.time;
+				// Simulation section: only read and assign when expanded (same pattern as Display/Editing)
+				int simTargetStepsPerSecond = project.description.Prefs_SimTargetStepsPerSecond;
+				int simStepsPerClockTick = project.description.Prefs_SimStepsPerClockTick;
+				bool pauseSim = project.description.Prefs_SimPaused;
+				if (IsSimulationSectionExpanded())
+				{
+					InputFieldState clockSpeedInputFieldState = Seb.Vis.UI.UI.GetInputFieldState(ID_ClockSpeedInput);
+					InputFieldState freqState = Seb.Vis.UI.UI.GetInputFieldState(ID_SimFrequencyField);
+					int.TryParse(clockSpeedInputFieldState.text, out int clockSpeed);
+					int.TryParse(freqState.text, out int targetSimTicksPerSecond);
+					// Apply defaults for invalid values
+					if (clockSpeed <= 0 || clockSpeed < 10) clockSpeed = 250;
+					if (targetSimTicksPerSecond <= 0 || targetSimTicksPerSecond < 100) targetSimTicksPerSecond = 1000;
+					targetSimTicksPerSecond = Mathf.Max(1, targetSimTicksPerSecond);
+					simTargetStepsPerSecond = targetSimTicksPerSecond;
+					simStepsPerClockTick = clockSpeed;
+					pauseSim = Seb.Vis.UI.UI.GetWheelSelectorState(ID_SimStatus).index == 1;
+					if (project.targetTicksPerSecond != simTargetStepsPerSecond || project.simPaused != pauseSim)
+						lastSimTickRateSetTime = Time.time;
+				}
 
 			// Assign changes immediately so can see them take effect in background
 			project.description.Prefs_MainPinNamesDisplayMode = mainPinNamesMode;
@@ -329,8 +336,8 @@ namespace DLS.Graphics
 			// UIThemeMode assignment removed - only Squiggles Theme is used
 				project.description.Prefs_Snapping = snappingMode;
 				project.description.Prefs_StraightWires = straightWireMode;
-				project.description.Prefs_SimTargetStepsPerSecond = targetSimTicksPerSecond;
-				project.description.Prefs_SimStepsPerClockTick = clockSpeed;
+				project.description.Prefs_SimTargetStepsPerSecond = simTargetStepsPerSecond;
+				project.description.Prefs_SimStepsPerClockTick = simStepsPerClockTick;
 				project.description.Prefs_SimPaused = pauseSim;
 				project.description.Perfs_PinIndicators = pinIndicatorsMode;
 				project.description.Prefs_UseDragAndDropMode = controlSchemeMode == 1;

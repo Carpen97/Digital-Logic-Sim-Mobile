@@ -10,15 +10,26 @@
           "editNotes": ""
         },
         {
-          "text": "Button chip labels - Add a custom label to any button chip (e.g. \"START\", \"RESET\"). Labels are visible on the main canvas and when the button is inside a custom chip. Use the LABEL option in the context menu to set text and adjust label position (sliders and presets: bottom, centre, top). Right-click anywhere on a button to open the menu; when selected, you can drag the button from anywhere including the centre.",
+          "text": "Labels on buttons - You can now add labels to button chips as well as other chips, and position the labels (e.g. bottom, centre, top).",
           "userFacing": true,
           "editNotes": ""
         }
       ],
-      "improvements": [],
+      "improvements": [
+        {
+          "text": "Level upload UI - Improved layout of the upload score dialog: 2×2 button grid when not logged in (Create Account, Login, Upload as Anonymous, Cancel), better spacing, Share Solution checkbox restored and moved for clarity.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Project Sharing & Level Upload login sync - If you sign in via Level Upload, Project Sharing now correctly shows you as logged in. Auth state is synced when entering Project Sharing.",
+          "userFacing": true,
+          "editNotes": ""
+        }
+      ],
       "bugFixes": [
         {
-          "text": "Level zero-score loophole - Fixed an exploit where players could get a score of 0 on levels by hiding disallowed components (e.g. ROM) inside custom chips. Level validation now checks subchips so this is no longer possible; leaderboard scores are fair.",
+          "text": "Level zero-score loophole - Fixed an exploit where players could get a score of 0 on levels by hiding disallowed components (e.g. ROM) inside custom chips. Level validation now checks subchips so this is no longer possible; leaderboard scores are fair (for now. until the next exploit.).",
           "userFacing": true,
           "editNotes": ""
         },
@@ -44,6 +55,16 @@
         },
         {
           "text": "Unity security update (Android) - App now built with the latest patched Unity Editor to address a security vulnerability that affected Android builds. Ensures compliance with Google Play policies and keeps the app secure.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Level Upload / Project Sharing auth - Fixed stale \"Signed in as X\" in Level Upload after logging out from Project Sharing; logout now clears auth cache. Users logged in without a username (e.g. old accounts) now get a proper Claim Username flow instead of being stuck.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Simulation speed not saving - Fixed custom simulation settings (Steps per clock tick, Steps per second target) being reset to 250/1000 when confirming the preferences menu with the Simulation section collapsed. Your chosen values now persist correctly.",
           "userFacing": true,
           "editNotes": ""
         }
