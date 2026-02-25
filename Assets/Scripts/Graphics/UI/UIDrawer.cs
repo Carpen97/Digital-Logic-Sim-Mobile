@@ -26,6 +26,7 @@ namespace DLS.Graphics
 			ProjectStats,
 			PulseEdit,
 			ConstantEdit,
+			LabelEdit,
 			UnsavedChanges,
 			LevelUnsavedChanges,
 			Search,
@@ -106,6 +107,7 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.ChipLabelPopup) ChipLabelMenu.DrawMenu();
 			else if (menuToDraw == MenuType.PulseEdit) PulseEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ConstantEdit) ConstantEditMenu.DrawMenu();
+			else if (menuToDraw == MenuType.LabelEdit) LabelEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.SpecialChipMaker) SpecialChipMakerMenu.DrawMenu();
 			else if (menuToDraw == MenuType.Levels) LevelsMenu.DrawMenu();
 			else if (menuToDraw == MenuType.LevelValidationResult) LevelValidationPopup.DrawMenu();
@@ -169,6 +171,7 @@ namespace DLS.Graphics
 				else if (ActiveMenu == MenuType.PulseEdit) PulseEditMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.ProjectStats) ProjectStatsMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.ConstantEdit) ConstantEditMenu.OnMenuOpened();
+				else if (ActiveMenu == MenuType.LabelEdit) LabelEditMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.SpecialChipMaker) SpecialChipMakerMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.HallOfFame) HallOfFameMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.Levels) LevelsMenu.OnMenuOpened();

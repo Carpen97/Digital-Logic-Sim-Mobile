@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using DLS.Description;
 using DLS.Game;
 using DLS.Game.LevelsIntegration;
@@ -122,7 +123,9 @@ namespace DLS.Graphics
 
 					// Button labels use DrawSubChipLabel (below chip); drawing in DrawInteractable_Button
 					// would be clipped by the subchip display mask
-					DrawSubChipLabel(subchip);
+					// Skip Label chips - their text is drawn as the chip body, not as annotation below
+					if (subchip.ChipType != ChipType.Label)
+						DrawSubChipLabel(subchip);
 				}
 			}
 
@@ -214,14 +217,93 @@ namespace DLS.Graphics
 			Draw.Text(font, text, FontSizePinLabel, centre, Anchor.TextFirstLineCentre, Color.white);
 		}
 
+		/// <summary>Wraps label text by max width in world units. Preserves existing newlines.</summary>
+		static string WrapLabelText(string text, float maxWidth, float fontSize)
+		{
+			if (string.IsNullOrEmpty(text)) return text;
+			StringBuilder result = new();
+			string[] lines = text.Split('\n');
+			for (int i = 0; i < lines.Length; i++)
+			{
+				if (i > 0) result.Append('\n');
+				string[] words = lines[i].Split(' ');
+				StringBuilder line = new();
+				foreach (string word in words)
+				{
+					string toAdd = line.Length == 0 ? word : " " + word;
+					string test = line + toAdd;
+					float w = Draw.CalculateTextBoundsSize(test, fontSize, FontBold).x;
+					if (w > maxWidth && line.Length > 0)
+					{
+						result.Append(line).Append('\n');
+						line.Clear();
+						line.Append(word);
+					}
+					else
+					{
+						if (line.Length > 0) line.Append(' ');
+						line.Append(word);
+					}
+				}
+				if (line.Length > 0) result.Append(line);
+			}
+			return result.ToString();
+		}
+
+		/// <summary>Returns the box size for a label chip. Width is fixed (user choice); height grows to fit wrapped text.</summary>
+		public static Vector2 CalculateLabelChipBoxSize(string text, float width, float fontSize)
+		{
+			if (string.IsNullOrWhiteSpace(text)) text = "Label";
+			// Text wraps within box width (minus padding for border)
+			float textMaxWidth = Mathf.Max(0.1f, width - LabelBackgroundPadding.x);
+			string wrapped = WrapLabelText(text, textMaxWidth, fontSize);
+			Vector2 textSize = Draw.CalculateTextBoundsSize(wrapped, fontSize, FontBold);
+			// Fixed width from slider; height from wrapped text
+			return new Vector2(width, textSize.y + LabelBackgroundPadding.y);
+		}
+
+		public static Color GetLabelChipBackgroundColour(SubChipInstance subchip)
+		{
+			uint packed = subchip.InternalData != null && subchip.InternalData.Length > 0 ? subchip.InternalData[0] : 0;
+			return LabelEditMenu.GetLabelColourFromStored(packed);
+		}
+
+		static void DrawLabelChip(SubChipInstance subchip)
+		{
+			string text = string.IsNullOrWhiteSpace(subchip.Label) ? "Label" : subchip.Label;
+			float width = LabelEditMenu.GetLabelWidthFromStored(subchip);
+			float fontSize = LabelEditMenu.GetLabelFontSizeFromStored(subchip);
+			string wrapped = WrapLabelText(text, width, fontSize);
+			Vector2 pos = subchip.Position;
+			Vector2 size = CalculateLabelChipBoxSize(text, width, fontSize);
+			Color bgCol = GetLabelChipBackgroundColour(subchip);
+
+			// Black on light backgrounds, white on dark (no gray for low saturation)
+			bool useBlackText = ColHelper.ShouldUseBlackText(bgCol);
+			Color textCol = useBlackText ? Color.black : Color.white;
+
+			Draw.Quad(pos, size, bgCol);
+			Draw.Text(FontBold, wrapped, fontSize, pos, Anchor.TextCentre, textCol);
+
+			if (InputHelper.MouseInsideBounds_World(pos, size))
+			{
+				if (InteractionState.PinUnderMouse == null || InteractionState.PinUnderMouse.parent != subchip)
+					InteractionState.NotifyElementUnderMouse(subchip);
+			}
+		}
+
 		public static void DrawSubChipLabel(SubChipInstance chip)
 		{
 			string text = chip.Label;
 			if (string.IsNullOrWhiteSpace(text)) return;
 
+			// Use display scale for button chips so label matches DrawInteractable_Button; otherwise chip size
+			float refScale = chip.Size.x;
+			if (chip.ChipType == ChipType.Button && chip.Description?.Displays != null && chip.Description.Displays.Length > 0)
+				refScale = chip.Description.Displays[0].Scale;
 			const float baseOffsetY = 0.2f;
-			float unitY = chip.Size.y / 2 + baseOffsetY;
-			float unitX = chip.Size.x * 0.5f;
+			float unitY = refScale / 2f + baseOffsetY;
+			float unitX = refScale * 0.5f;
 			Vector2 offset = new(chip.LabelOffset.x * unitX, -chip.LabelOffset.y * unitY); // Y positive = down
 			FontType font = FontBold;
 
@@ -293,6 +375,13 @@ namespace DLS.Graphics
 
 		public static void DrawSubChip(SubChipInstance subchip)
 		{
+			// Label chip: draw as label box (same look as other labels), fitted to text
+			if (subchip.ChipType == ChipType.Label)
+			{
+				DrawLabelChip(subchip);
+				return;
+			}
+
 			ChipDescription desc = subchip.Description;
 			Color chipCol = desc.Colour;
 			Vector2 pos = subchip.Position;
@@ -414,6 +503,11 @@ namespace DLS.Graphics
 			// Don't draw displays for TextDisplay chips when used standalone (they render text directly)
 			// Only draw displays when TextDisplay is used AS a display component on custom chips
 			if (ChipTypeHelper.IsTextDisplayType(subchip.ChipType))
+			{
+				return;
+			}
+			// Label chip has no displays; it draws as a label box in DrawSubChip
+			if (subchip.ChipType == ChipType.Label)
 			{
 				return;
 			}
@@ -840,7 +934,7 @@ namespace DLS.Graphics
 			if (!string.IsNullOrWhiteSpace(label))
 			{
 				Vector2 off = labelOffset ?? SubChipDescription.DefaultLabelOffset;
-				const float baseOffsetY = 0.35f;
+				const float baseOffsetY = 0.2f; // Match DrawSubChipLabel so preset vs slider produce identical positions
 				float unitY = scale / 2f + baseOffsetY;
 				float unitX = scale * 0.5f;
 				Vector2 offset = new(off.x * unitX, -off.y * unitY);

@@ -51,6 +51,7 @@ namespace DLS.Game
 			CreateDisplayLED(),
 			CreateDisplayRGBLED(),
 			CreateTextDisplay(),
+		CreateLabel(),
 		// ---- Audio ----
 		CreateBuzzer(),
 		CreateSpeaker(),
@@ -780,6 +781,13 @@ namespace DLS.Game
 		// It will be added to the available displays list through IsDisplayableChipType() check instead
 
 		return CreateBuiltinChipDescription(ChipType.TextDisplay, size, col, inputPins, null, null, NameDisplayLocation.Centre, canBeCached: false);
+	}
+
+	static ChipDescription CreateLabel()
+	{
+		Color col = GetColor(new(0.25f, 0.35f, 0.45f));
+		Vector2 size = new(GridSize * 8, GridSize * 3);
+		return CreateBuiltinChipDescription(ChipType.Label, size, col, null, null, null, NameDisplayLocation.Hidden, canBeCached: false);
 	}
 
 

@@ -34,6 +34,7 @@ namespace DLS.Description
 	{ ChipType.DisplayLED, "LED" },
 	{ ChipType.DisplayRGBLED, "RGB LED" },
 	{ ChipType.TextDisplay, "TEXT DISPLAY" },
+	{ ChipType.Label, "LABEL" },
 
 		{ ChipType.Buzzer, "BUZZER" },
 		{ ChipType.Speaker, "SPEAKER" },

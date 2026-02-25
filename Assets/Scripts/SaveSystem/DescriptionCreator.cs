@@ -128,11 +128,12 @@ namespace DLS.SaveSystem
 
 		public static SubChipDescription CreateBuiltinSubChipDescriptionForPlacement(ChipType type, string name, int id, Vector2 position)
 		{
+			string defaultLabel = type == ChipType.Label ? "Label" : string.Empty;
 			return new SubChipDescription
 			(
 				name,
 				id,
-				string.Empty,
+				defaultLabel,
 				position,
 				Array.Empty<OutputPinColourInfo>(),
 				CreateDefaultInstanceData(type)
@@ -153,6 +154,7 @@ namespace DLS.SaveSystem
 			ChipType.Toggle => new uint[] { 0 }, // Toggle State 
 			ChipType.Constant_8Bit => new uint[] { 0 }, // Content
 			ChipType.TextDisplay => new uint[1344], // Text display: 256 strings × max 21 bytes each (1 length + 20 chars) ÷ 4 bytes per uint = 1344 uints
+			ChipType.Label => new uint[] { 0, 70, 200 }, // [0] colour, [1] width×100, [2] fontSize×1000 (70=0.7, 200=0.2)
 			_ => ChipTypeHelper.IsBusType(type) ? new uint[2] : null
 		};
 	}

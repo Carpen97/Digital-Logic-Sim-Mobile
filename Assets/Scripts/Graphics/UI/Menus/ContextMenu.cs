@@ -104,6 +104,13 @@ namespace DLS.Graphics
             deleteEntry
         };
 
+		static readonly MenuEntry[] entries_builtinLabelChip =
+		{
+			new(Format("EDIT"), OpenLabelEditMenu, CanEditCurrentChip),
+			infoEntry,
+			deleteEntry
+		};
+
 
 
         static readonly MenuEntry[] entries_subChipOutput = pinColEntries;
@@ -233,6 +240,7 @@ namespace DLS.Graphics
 							else if (subChip.ChipType == ChipType.DisplayLED) activeContextMenuEntries = entries_builtinLED;
 							else if (subChip.ChipType == ChipType.Button) activeContextMenuEntries = entries_builtinButton;
 							else if (subChip.ChipType == ChipType.Constant_8Bit) activeContextMenuEntries = entries_builtinConstantChip;
+							else if (subChip.ChipType == ChipType.Label) activeContextMenuEntries = entries_builtinLabelChip;
 
 							else activeContextMenuEntries = entries_builtinSubchip;
 						}
@@ -488,6 +496,7 @@ namespace DLS.Graphics
 	static void OpenPulseEditMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.PulseEdit);
 
 		static void OpenConstantEditMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ConstantEdit);
+		static void OpenLabelEditMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.LabelEdit);
 
 		static void OpenChipInfo()
 		{
@@ -628,6 +637,7 @@ namespace DLS.Graphics
 				else if (subChip.ChipType == ChipType.DisplayLED) activeContextMenuEntries = entries_builtinLED;
 				else if (subChip.ChipType == ChipType.Button) activeContextMenuEntries = entries_builtinButton;
 				else if (subChip.ChipType == ChipType.Constant_8Bit) activeContextMenuEntries = entries_builtinConstantChip;
+				else if (subChip.ChipType == ChipType.Label) activeContextMenuEntries = entries_builtinLabelChip;
 				else activeContextMenuEntries = entries_builtinSubchip;
 			}
 			

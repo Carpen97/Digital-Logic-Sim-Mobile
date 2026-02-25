@@ -669,6 +669,11 @@ namespace DLS.Simulation
 				// Visual rendering handled in DevSceneDrawer
 				break;
 			}
+			case ChipType.Label:
+			{
+				// Label chip: display-only, no pins, no simulation
+				break;
+			}
 
 			case ChipType.Merge_Pin:
 				{	

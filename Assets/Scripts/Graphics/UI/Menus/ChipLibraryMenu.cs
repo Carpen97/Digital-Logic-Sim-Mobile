@@ -2563,6 +2563,15 @@ namespace DLS.Graphics
 				Seb.Vis.UI.UI.DrawPanel(displayPos, Vector2.one * displayScale, new Color(0.2f, 0.2f, 0.2f), Anchor.Centre);
 				Seb.Vis.UI.UI.DrawText("OUT", FontType.JetbrainsMonoRegular, displayScale * 0.3f, displayPos, Anchor.Centre, Color.white);
 			}
+			else if (chipType == ChipType.Label)
+			{
+				// Draw label chip preview (label-box style, same as in-game)
+				Color labelCol = DrawSettings.ActiveTheme.PinLabelCol;
+				Vector2 baseSize = Draw.CalculateTextBoundsSize("Label", DrawSettings.FontSizePinLabel, FontType.JetbrainsMonoBold) + DrawSettings.LabelBackgroundPadding;
+				Vector2 size = baseSize * (displayScale / Mathf.Max(baseSize.x, baseSize.y));
+				Seb.Vis.UI.UI.DrawPanel(displayPos, size, labelCol, Anchor.Centre);
+				Seb.Vis.UI.UI.DrawText("Label", FontType.JetbrainsMonoBold, DrawSettings.FontSizePinLabel * (size.x / baseSize.x), displayPos, Anchor.Centre, Color.white);
+			}
 			// Add other display types as needed
 		}
 

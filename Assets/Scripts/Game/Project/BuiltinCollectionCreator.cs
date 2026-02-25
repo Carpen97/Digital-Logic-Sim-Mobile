@@ -24,7 +24,8 @@ namespace DLS.Game
 					ChipType.Pulse,
 					ChipType.Key,
 					ChipType.TriStateBuffer,
-					ChipType.Constant_8Bit
+					ChipType.Constant_8Bit,
+					ChipType.Label
 				),
 				CreateInOutCollection(),
 				CreateByNames("MERGE/SPLIT",

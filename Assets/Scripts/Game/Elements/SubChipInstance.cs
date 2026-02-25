@@ -112,7 +112,9 @@ namespace DLS.Game
 
 		public int LinkedBusPairID => IsBus ? (int)InternalData[0] : -1;
 		public bool BusIsFlipped => IsBus && InternalData.Length > 1 && InternalData[1] == 1;
-		public Vector2 Size => Description.Size;
+		public Vector2 Size => (ChipType == ChipType.Label)
+			? DevSceneDrawer.CalculateLabelChipBoxSize(string.IsNullOrWhiteSpace(Label) ? "Label" : Label, LabelEditMenu.GetLabelWidthFromStored(this), LabelEditMenu.GetLabelFontSizeFromStored(this))
+			: Description.Size;
 		public Vector2 Position { get; set; }
 
 		public Vector2 MoveStartPosition { get; set; }

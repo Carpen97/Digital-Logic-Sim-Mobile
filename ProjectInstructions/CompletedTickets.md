@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 68
-- **Most Recent**: Ticket 074 (Simulation speed not saving)
+- **Total Completed Tickets**: 69
+- **Most Recent**: Ticket 098 (Label chip)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 098** – Label chip (text-only display component)
+**Closed:** 2026-02  
+**Summary:** Implemented the Label chip: a display-only component that shows user-editable text on the canvas. No pins, no simulation. ChipType.Label; placed from BASIC collection; context menu "Edit" opens LabelEditMenu (text + colour selector); text and colour persist with project (SubChipDescription.Label, InternalData[0]). Drawing as fitted label box (same style as chip labels); allowed in levels. Report: Ticket_098_Label_Chip_Report.md.
+
+---
 
 ### **Ticket 074** – Simulation speed not saving
 **Closed:** 2026-02  

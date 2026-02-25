@@ -13,6 +13,11 @@
           "text": "Labels on buttons - You can now add labels to button chips as well as other chips, and position the labels (e.g. bottom, centre, top).",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Label chip - A new component for annotations and circuit notes! Place a Label chip from the BASIC collection to display text on the canvas. No inputs or outputs—just editable text. Right-click and choose Edit to change the text and pick a background colour. Perfect for section labels, comments, and documentation. Persists with your project.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "improvements": [
