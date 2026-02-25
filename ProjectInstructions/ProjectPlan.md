@@ -112,8 +112,8 @@ Mobile Port (origin)
 ## 📋 **Project Manager Workflow**
 
 ### **📦 Current Version Information:**
-- **Latest Released Version:** 2.1.6.11 (Released)
-- **Next Version:** 2.1.6.12 (In Development)
+- **Latest Released Version:** 2.1.6.12 (Released February 25, 2026)
+- **Next Version:** 2.1.6.13 (In Development)
 - **Update this section after each release!**
 
 ---

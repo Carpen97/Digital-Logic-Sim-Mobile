@@ -2,7 +2,7 @@
   "versions": [
     {
       "version": "2.1.6.12",
-      "releaseDate": "TBD",
+      "releaseDate": "February 25, 2026",
       "newFeatures": [
         {
           "text": "RGB LED Chip - New display component with true colour! The RGB LED chip has three 8-bit inputs (R, G, B), each 0–255. An on-chip light shows the colour defined by those inputs and updates in real time as you change them. Find it in the chip library under DISPLAY. Perfect for colour output, visual feedback, and learning about RGB encoding.",
