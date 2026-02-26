@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "2.1.6.13",
+      "releaseDate": "TBD",
+      "newFeatures": [
+        {
+          "text": "Component grouping - Select multiple chips (or input/output pins), then use the context menu to \"Make group\". Clicking one member selects the whole group so you can move or edit them together. \"Ungroup\" splits them; \"Save group\" saves to the library (same place as chips, with a [G] marker). Saved groups can be placed like chips. Great for reusable subcircuits and keeping related parts together.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Rotate chips - Rotate placed chips in 90° steps. Use the context menu (\"Rotate 90° CW\" / \"Rotate 90° CCW\"), or on PC use Q/E keys or Ctrl+scroll when chips are selected. Rotation is saved with your project and wires stay connected.",
+          "userFacing": true,
+          "editNotes": ""
+        }
+      ],
+      "improvements": [],
+      "bugFixes": []
+    },
+    {
       "version": "2.1.6.12",
       "releaseDate": "February 25, 2026",
       "newFeatures": [
@@ -18,17 +36,22 @@
           "text": "Label chip - A new component for annotations and circuit notes! Place a Label chip from the BASIC collection to display text on the canvas. No inputs or outputs—just editable text. Right-click and choose Edit to change the text and pick a background colour. Perfect for section labels, comments, and documentation. Persists with your project.",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Speaker V2 (Experimental) - High-resolution audio output chip available in the chip library. Experimental feature; feedback welcome.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "improvements": [
         {
           "text": "Level upload UI - Improved layout of the upload score dialog: 2×2 button grid when not logged in (Create Account, Login, Upload as Anonymous, Cancel), better spacing, Share Solution checkbox restored and moved for clarity.",
-          "userFacing": true,
+          "userFacing": false,
           "editNotes": ""
         },
         {
           "text": "Project Sharing & Level Upload login sync - If you sign in via Level Upload, Project Sharing now correctly shows you as logged in. Auth state is synced when entering Project Sharing.",
-          "userFacing": true,
+          "userFacing": false,
           "editNotes": ""
         }
       ],

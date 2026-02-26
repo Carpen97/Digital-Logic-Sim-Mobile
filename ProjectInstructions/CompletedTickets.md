@@ -13,12 +13,24 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 69
-- **Most Recent**: Ticket 098 (Label chip)
+- **Total Completed Tickets**: 71
+- **Most Recent**: Ticket 095 (Rotate chips)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 095** – Rotate chips
+**Closed:** 2026-02  
+**Summary:** Implemented chip rotation in 90° steps. Users can rotate via context menu ("Rotate 90° CW" / "Rotate 90° CCW"), Q/E keys, or Ctrl+scroll when chips are selected. Rotation persists with save/load; wires stay connected; drawing and hit-test updated for rotated chips. Report: Ticket_095_Rotate_Chips_Report.md.
+
+---
+
+### **Ticket 024** – Component grouping system
+**Closed:** 2026-02  
+**Summary:** Implemented full component grouping: select multiple chips (or I/O pins) → context menu "Make group"; click one selects whole group; "Ungroup" and "Save group". Saved groups in library with [G] marker, GROUPS collection, place like chips with ghost/drag. Group preview in library; undo for make/ungroup. Report: Ticket_024_Component_Grouping_System_Report.md.
+
+---
 
 ### **Ticket 098** – Label chip (text-only display component)
 **Closed:** 2026-02  
