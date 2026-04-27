@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using DLS.Description;
 using DLS.Game;
 using DLS.SaveSystem;
 using DLS.Simulation;
+using DLS.Online;
+using Firebase.Auth;
 using Seb.Helpers;
 using Seb.Vis;
 using Seb.Vis.UI;
@@ -25,6 +28,46 @@ namespace DLS.Graphics
 	static int selectedPatchNoteIndex = 0; // Track which patch note version is selected
 	static PatchNotesData patchNotesData;
 
+	// Project Sharing state
+	static bool _projectSharingSignedIn;
+	static bool _projectSharingIsGuest;
+	static string _projectSharingAuthError;
+	static bool _projectSharingCreateAccountInitialFocusDone;
+	static bool _projectSharingLoginInitialFocusDone;
+	static int _projectSharingUploadSelectedIndex;
+	static bool _projectSharingUploadIsPublic = true;
+	static bool _projectSharingUploadIncludeLevels = true;
+	static bool _projectSharingUploadInProgress;
+	static string _projectSharingUploadStatus;
+	static List<LibraryService.LibraryEntry> _projectSharingLibraryEntries;
+	static bool _projectSharingLibraryLoading;
+	static string _projectSharingImportStatus;
+	static string _projectSharingImportInProgressId;
+	static LibraryService.LibraryEntry _projectSharingImportSelectedEntry;
+	static LibraryService.LibraryFilterMode _projectSharingImportFilter = LibraryService.LibraryFilterMode.Public;
+	static LibraryService.LibrarySortOrder _projectSharingImportSortOrder = LibraryService.LibrarySortOrder.Newest;
+	static List<LibraryService.LibraryEntry> _projectSharingMyProjectsEntries;
+	static bool _projectSharingMyProjectsLoading;
+	static LibraryService.LibraryFilterMode _projectSharingMyProjectsFilter = LibraryService.LibraryFilterMode.All;
+	static LibraryService.LibraryEntry _projectSharingDeleteConfirmEntry;
+	static LibraryService.LibraryEntry _projectSharingEditEntry;
+	static LibraryService.LibraryEntry _projectSharingMyProjectsSelectedEntry;
+	static string _projectSharingUploadPendingProjectName;
+	static string _projectSharingLoggedInAs;
+	static bool _projectSharingLoggedInAsLoadRequested;
+	static bool _projectSharingAuthSyncRequested;
+	static bool _projectSharingChangeUsernameInitialized;
+	static string _projectSharingChangeUsernameOriginal;
+	static bool _projectSharingChangeUsernameHasUsername;
+	static bool _projectSharingChangeUsernameShowConfirm;
+	static string _projectSharingChangeUsernameNewName;
+	static string _projectSharingChangeUsernameError;
+	static bool _projectSharingChangeUsernameInProgress;
+	static string _projectSharingUploadProjectDisplayNameDefault;
+	static bool _projectSharingUploadProjectDisplayNameInitialized;
+	static bool _projectSharingEditProjectDisplayNameInitialized;
+	static bool _projectSharingEditIsPublic;
+
 	static readonly UIHandle ID_ProjectNameInput = new("MainMenu_ProjectNameInputField");
 	static readonly UIHandle ID_DisplayResolutionWheel = new("MainMenu_DisplayResolutionWheel");
 	static readonly UIHandle ID_DisplayWidthWheel = new("MainMenu_DisplayWidthWheel");
@@ -36,6 +79,18 @@ namespace DLS.Graphics
 	static readonly UIHandle ID_ProjectsScrollView = new("MainMenu_ProjectsScrollView");
 	static readonly UIHandle ID_ErrorLogsScrollView = new("MainMenu_ErrorLogsScrollView");
 	static readonly UIHandle ID_PatchNotesScrollView = new("MainMenu_PatchNotesScrollView");
+	static readonly UIHandle ID_ProjectSharing_CreateAccountEmail = new("ProjectSharing_CreateAccountEmail");
+	static readonly UIHandle ID_ProjectSharing_CreateAccountPassword = new("ProjectSharing_CreateAccountPassword");
+	static readonly UIHandle ID_ProjectSharing_CreateAccountConfirm = new("ProjectSharing_CreateAccountConfirm");
+	static readonly UIHandle ID_ProjectSharing_CreateAccountUsername = new("ProjectSharing_CreateAccountUsername");
+	static readonly UIHandle ID_ProjectSharing_LoginEmail = new("ProjectSharing_LoginEmail");
+	static readonly UIHandle ID_ProjectSharing_LoginPassword = new("ProjectSharing_LoginPassword");
+	static readonly UIHandle ID_ProjectSharing_LibraryScrollView = new("ProjectSharing_LibraryScrollView");
+	static readonly UIHandle ID_ProjectSharing_UploadProjectDisplayName = new("ProjectSharing_UploadProjectDisplayName");
+	static readonly UIHandle ID_ProjectSharing_EditProjectDisplayName = new("ProjectSharing_EditProjectDisplayName");
+	static readonly UIHandle ID_ProjectSharing_MyProjectsScrollView = new("ProjectSharing_MyProjectsScrollView");
+	static readonly UIHandle ID_ProjectSharing_UploadScrollView = new("ProjectSharing_UploadScrollView");
+	static readonly UIHandle ID_ProjectSharing_ChangeUsername = new("ProjectSharing_ChangeUsername");
 
 		#if UNITY_ANDROID || UNITY_IOS
 		static readonly string[] SettingsWheelFullScreenOptions = { "AUTO","WINDOWED", "MAXIMIZED", "BORDERLESS", "EXCLUSIVE" };
@@ -45,7 +100,7 @@ namespace DLS.Graphics
 		static readonly FullScreenMode[] FullScreenModes = { FullScreenMode.Windowed, FullScreenMode.MaximizedWindow, FullScreenMode.FullScreenWindow, FullScreenMode.ExclusiveFullScreen };
 		#endif
 		static readonly string[] SettingsWheelOrientationOptions = { "LEFT LANDSCAPE", "RIGHT LANDSCAPE"};
-		static readonly string[] SettingsWheelBottomBarScrollingOptions = { "ARROWS","ARROWS (inverted)", "OFF"};
+		static readonly string[] SettingsWheelBottomBarScrollingOptions = { "ARROWS", "ARROWS (inverted)", "TOUCH DRAG (no arrows)", "OFF" };
 		static readonly string[] SettingsWheelUIScalingOptions = { "SMALL","MEDIUM", "LARGE"};
 		static readonly string[] SettingsWheelVSyncOptions = { "DISABLED", "ENABLED" };
 		#if !UNITY_ANDROID && !UNITY_IOS
@@ -60,6 +115,7 @@ namespace DLS.Graphics
 		{
 			FormatButtonString("New Project"),
 			FormatButtonString("Open Project"),
+			FormatButtonString("Project Sharing"),
 			FormatButtonString("Settings"),
 			FormatButtonString("About"),
 			FormatButtonString("Quit")
@@ -139,6 +195,29 @@ namespace DLS.Graphics
 
 		static readonly string[] WidthName = WidthOptions.Select(w => $"{Main.FullScreenResolution.x}").ToArray();
 		static readonly string[] HeightName = HeightOptions.Select(h => $"{Main.FullScreenResolution.y}").ToArray();
+		static readonly string[] projectSharingAuthButtonNames =
+		{
+			FormatButtonString("Create Account"),
+			FormatButtonString("Login"),
+			FormatButtonString("Sign in as Guest")
+		};
+
+		static readonly string[] projectSharingMainButtonNames =
+		{
+			FormatButtonString("Export project"),
+			FormatButtonString("Import projects"),
+			FormatButtonString("My projects"),
+			FormatButtonString("Change username"),
+			FormatButtonString("Log Out")
+		};
+		static readonly string[] projectSharingMainButtonNamesGuest =
+		{
+			FormatButtonString("Export project"),
+			FormatButtonString("Import projects"),
+			FormatButtonString("My projects"),
+			FormatButtonString("Log Out")
+		};
+
 		static readonly string[] settingsButtonGroupNames = { "EXIT", "APPLY" };
 		static readonly bool[] settingsButtonGroupStates = new bool[settingsButtonGroupNames.Length];
 
@@ -223,6 +302,9 @@ namespace DLS.Graphics
 				case MenuScreen.Settings:
 					DrawSettingsScreen();
 					break;
+				case MenuScreen.ProjectSharing:
+					DrawProjectSharingScreen();
+					break;
 				case MenuScreen.About:
 					DrawAboutScreen();
 					break;
@@ -251,6 +333,33 @@ namespace DLS.Graphics
 		case PopupKind.PatchNotes:
 			DrawPatchNotesPopup();
 			break;
+		case PopupKind.ProjectSharing_CreateAccount:
+			DrawProjectSharingCreateAccountPopup();
+			break;
+		case PopupKind.ProjectSharing_Login:
+			DrawProjectSharingLoginPopup();
+			break;
+		case PopupKind.ProjectSharing_UploadConfirm:
+			DrawProjectSharingUploadConfirmPopup();
+			break;
+		case PopupKind.ProjectSharing_ImportList:
+			DrawProjectSharingImportListPopup();
+			break;
+		case PopupKind.ProjectSharing_MyProjects:
+			DrawProjectSharingMyProjectsPopup();
+			break;
+		case PopupKind.ProjectSharing_UploadDisplayName:
+			DrawProjectSharingUploadDisplayNamePopup();
+			break;
+		case PopupKind.ProjectSharing_DeleteConfirm:
+			DrawProjectSharingDeleteConfirmPopup();
+			break;
+		case PopupKind.ProjectSharing_EditEntry:
+			DrawProjectSharingEditEntryPopup();
+			break;
+		case PopupKind.ProjectSharing_ChangeUsername:
+			DrawProjectSharingChangeUsernamePopup();
+			break;
 	}
 	}
 
@@ -277,10 +386,12 @@ namespace DLS.Graphics
 
 			#if UNITY_ANDROID || UNITY_IOS
 			float buttonWidth = 40;
-			int buttonIndex = Seb.Vis.UI.UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, Seb.Vis.UI.UI.Centre + Vector2.up * 8, new Vector2(buttonWidth, 0.5f), false, true, 1);
+			const float buttonHeight = 0.5f;
+			int buttonIndex = Seb.Vis.UI.UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, Seb.Vis.UI.UI.Centre + Vector2.up * (10f + buttonHeight * 0.5f), new Vector2(buttonWidth, buttonHeight), false, true, 1);
 			#else
 			float buttonWidth = 15;
-			int buttonIndex = Seb.Vis.UI.UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, Seb.Vis.UI.UI.Centre + Vector2.up * 6, new Vector2(buttonWidth, 0), false, true, 1);
+			const float halfButtonOffset = 1f; // move group up by ~half a button height
+			int buttonIndex = Seb.Vis.UI.UI.VerticalButtonGroup(menuButtonNames, theme.MainMenuButtonTheme, Seb.Vis.UI.UI.Centre + Vector2.up * (7f + halfButtonOffset), new Vector2(buttonWidth, 0), false, true, 1);
 			#endif
 
 			if (buttonIndex == 0 || KeyboardShortcuts.MainMenu_NewProjectShortcutTriggered) // New project
@@ -296,17 +407,21 @@ namespace DLS.Graphics
 				selectedProjectIndex = -1;
 				activeMenuScreen = MenuScreen.LoadProject;
 			}
-			else if (buttonIndex == 2 || KeyboardShortcuts.MainMenu_SettingsShortcutTriggered) // Settings
+			else if (buttonIndex == 2) // Project Sharing
+			{
+				activeMenuScreen = MenuScreen.ProjectSharing;
+			}
+			else if (buttonIndex == 3 || KeyboardShortcuts.MainMenu_SettingsShortcutTriggered) // Settings
 			{
 				EditedAppSettings = Main.ActiveAppSettings;
 				activeMenuScreen = MenuScreen.Settings;
 				OnSettingsMenuOpened();
 			}
-			else if (buttonIndex == 3) // About
+			else if (buttonIndex == 4) // About
 			{
 				activeMenuScreen = MenuScreen.About;
 			}
-			else if (buttonIndex == 4 || KeyboardShortcuts.MainMenu_QuitShortcutTriggered) // Quit
+			else if (buttonIndex == 5 || KeyboardShortcuts.MainMenu_QuitShortcutTriggered) // Quit
 			{
 				Quit();
 			}
@@ -444,6 +559,12 @@ namespace DLS.Graphics
 
 	static void BackToMain()
 	{
+		// Invalidate Project Sharing username cache when leaving - user may have changed it elsewhere (e.g. level score popup)
+		if (activeMenuScreen == MenuScreen.ProjectSharing)
+		{
+			_projectSharingLoggedInAsLoadRequested = false;
+			_projectSharingAuthSyncRequested = false;
+		}
 		Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectNameInput).ClearText();
 		activeMenuScreen = MenuScreen.Main;
 		activePopup = PopupKind.None;
@@ -832,9 +953,1313 @@ namespace DLS.Graphics
 		}
 	}
 
-	static void DrawAboutScreen()
-	{
-		ButtonTheme theme = DrawSettings.ActiveUITheme.MainMenuButtonTheme;
+		// Project Sharing layout - screen-relative (fractions of Width/Height for responsive mobile)
+		const float ProjectSharing_ButtonWidthFrac = 0.55f;
+		const float ProjectSharing_ButtonGroupOffsetFrac = 0.14f;
+		const float ProjectSharing_LoggedInOffsetFrac = 0.26f;
+		// Popup layout
+		const float Popup_TitleOffsetFrac = 0.18f;
+		const float Popup_ScrollOffsetFrac = 0.12f;
+		const float Popup_ScrollWidthFrac = 0.52f;
+		const float Popup_ScrollHeightFrac = 0.28f;
+		const float ProjectSharing_ListPopupContentMinFrac = 0.2f;
+		const float ProjectSharing_ListPopupContentMaxFrac = 0.8f;
+		const float ProjectSharing_ListPopupContentSpanFrac = ProjectSharing_ListPopupContentMaxFrac - ProjectSharing_ListPopupContentMinFrac;
+		const float ProjectSharing_ListPopupWidthFrac = 0.8f;
+		const float ProjectSharing_ListPopupHeightFrac = ProjectSharing_ListPopupContentSpanFrac;
+		const float ProjectSharing_ListPopupBottomExtensionFrac = 0.08f + (ProjectSharing_ListPopupButtonsTopGapFrac - Popup_SpacingFrac);
+		const float ProjectSharing_ListPopupPanelPadding = 2f;
+		const float ProjectSharing_ListPopupTitleTopInsetFrac = 0.02f;
+		const float ProjectSharing_ListPopupFilterTopInsetFrac = 0.095f;
+		const float ProjectSharing_ListPopupScrollTopInsetFrac = 0.14f;
+		const float ProjectSharing_ListPopupScrollHeightFrac = 0.46f;
+		const float ProjectSharing_ListPopupButtonsTopGapFrac = 0.06f;
+		const float ProjectSharing_ListPopupTitleFontScale = 1f;
+		const float ProjectSharing_ListPopupItemFontScale = 0.9f;
+		const float ProjectSharing_ListPopupWheelFontScale = 0.9f;
+		const float Popup_SpacingFrac = 0.035f;
+		const float Popup_RowHeightFrac = 0.028f;
+		const float Popup_ProjectRowGapFrac = 0.012f;
+		const float Popup_SettingsToButtonsGapFrac = 0.022f;
+
+		static void DrawProjectSharingScreen()
+		{
+			if (activePopup != PopupKind.None) return;
+
+			// Sync with actual Firebase auth when showing "not signed in" - user may have logged in elsewhere (e.g. level upload)
+			if (!_projectSharingSignedIn && !_projectSharingAuthSyncRequested)
+			{
+				_projectSharingAuthSyncRequested = true;
+				_ = ProjectSharingSyncAuthStateAsync();
+			}
+
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			float w = Seb.Vis.UI.UI.Width;
+			float h = Seb.Vis.UI.UI.Height;
+
+			float buttonWidth = w * ProjectSharing_ButtonWidthFrac;
+			Vector2 buttonGroupPos = Seb.Vis.UI.UI.Centre + Vector2.up * (h * ProjectSharing_ButtonGroupOffsetFrac);
+
+			if (!_projectSharingSignedIn)
+			{
+				// Auth choice: Create Account, Login, Sign in as Guest
+				int authButtonIndex = Seb.Vis.UI.UI.VerticalButtonGroup(projectSharingAuthButtonNames, theme.MainMenuButtonTheme, buttonGroupPos, new Vector2(buttonWidth, 0.5f), false, true, 1);
+
+				if (authButtonIndex == 0)
+				{
+					_projectSharingAuthError = "";
+					_projectSharingCreateAccountInitialFocusDone = false;
+					Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectSharing_CreateAccountEmail).SetText("user@example.com");
+					Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectSharing_CreateAccountUsername).SetText("");
+					activePopup = PopupKind.ProjectSharing_CreateAccount;
+					_ = ProjectSharingPreloadCreateAccountProfileAsync();
+				}
+				else if (authButtonIndex == 1)
+				{
+					_projectSharingAuthError = "";
+					_projectSharingLoginInitialFocusDone = false;
+					Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectSharing_LoginEmail).SetText("user@example.com");
+					activePopup = PopupKind.ProjectSharing_Login;
+				}
+				else if (authButtonIndex == 2)
+					_ = ProjectSharingSignInAsGuestAsync();
+
+				if (!string.IsNullOrEmpty(_projectSharingAuthError))
+				{
+					Vector2 errPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * 2;
+					Seb.Vis.UI.UI.DrawText(_projectSharingAuthError, theme.FontRegular, theme.FontSizeRegular * 0.7f, errPos, Anchor.TopLeft, Color.red);
+				}
+			}
+			else
+			{
+				// Load username from UserProfile when first showing signed-in state
+				if (!_projectSharingLoggedInAsLoadRequested)
+				{
+					_projectSharingLoggedInAsLoadRequested = true;
+					_ = ProjectSharingLoadLoggedInAsAsync();
+				}
+				string loggedInAs = !string.IsNullOrEmpty(_projectSharingLoggedInAs) ? _projectSharingLoggedInAs : "Guest";
+				Vector2 loggedInPos = Seb.Vis.UI.UI.Centre + Vector2.up * (h * ProjectSharing_LoggedInOffsetFrac);
+				Seb.Vis.UI.UI.DrawText($"Logged in as {loggedInAs}", theme.FontRegular, theme.FontSizeRegular, loggedInPos, Anchor.CentreTop, Color.white);
+
+				// Main content: Export, Import, My projects, (Change username when not guest), Log Out
+				string[] mainButtons = _projectSharingIsGuest ? projectSharingMainButtonNamesGuest : projectSharingMainButtonNames;
+				int mainButtonIndex = Seb.Vis.UI.UI.VerticalButtonGroup(mainButtons, theme.MainMenuButtonTheme, buttonGroupPos, new Vector2(buttonWidth, 0.5f), false, true, 1);
+
+				if (mainButtonIndex == 0)
+					ProjectSharingOpenExport();
+				else if (mainButtonIndex == 1)
+					ProjectSharingOpenImport();
+				else if (mainButtonIndex == 2)
+					ProjectSharingOpenMyProjects();
+				else if (mainButtonIndex == 3 && !_projectSharingIsGuest)
+				{
+					_projectSharingChangeUsernameInitialized = false;
+					_projectSharingChangeUsernameShowConfirm = false;
+					_projectSharingChangeUsernameError = "";
+					_projectSharingChangeUsernameInProgress = false;
+					activePopup = PopupKind.ProjectSharing_ChangeUsername;
+					_ = ProjectSharingChangeUsernamePreloadProfileAsync();
+				}
+				else if (mainButtonIndex == (_projectSharingIsGuest ? 3 : 4))
+					ProjectSharingLogOut();
+			}
+
+			// Back button: position below the last button with same spacing as between other buttons
+			Vector2 backButtonPos = new Vector2(Seb.Vis.UI.UI.Centre.x, Seb.Vis.UI.UI.PrevBounds.Bottom - DrawSettings.VerticalButtonSpacing);
+			if (Seb.Vis.UI.UI.Button("Back", theme.MainMenuButtonTheme, backButtonPos, Vector2.zero, true, true, true, theme.MainMenuButtonTheme.buttonCols, Anchor.CentreTop))
+				BackToMain();
+		}
+
+		static async Task ProjectSharingSyncAuthStateAsync()
+		{
+			try
+			{
+				// Delay before Firebase init on Windows build to reduce uWS crash (firebase-unity-sdk#1291).
+				// Skip delay in Editor for faster testing.
+				if (!Application.isEditor)
+					await Task.Delay(2000);
+				await FirebaseBootstrap.InitializeAsync();
+				var user = FirebaseAuth.DefaultInstance?.CurrentUser;
+				if (user != null && !user.IsAnonymous)
+				{
+					_projectSharingSignedIn = true;
+					_projectSharingIsGuest = false;
+				}
+			}
+			catch { /* ignore - user will see auth buttons */ }
+		}
+
+		static async Task ProjectSharingSignInAsGuestAsync()
+		{
+			_projectSharingAuthError = "";
+			_projectSharingIsGuest = true;
+			try
+			{
+				await FirebaseBootstrap.InitializeAsync();
+				if (FirebaseBootstrap.IsInitialized && FirebaseBootstrap.UserId != "anon")
+					_projectSharingSignedIn = true;
+				else
+					_projectSharingSignedIn = true; // still show main content for anon
+			}
+			catch (Exception ex)
+			{
+				_projectSharingAuthError = ex.Message;
+				Debug.LogError($"[ProjectSharing] Sign in as guest failed: {ex.Message}");
+			}
+		}
+
+		static void ProjectSharingOpenExport()
+		{
+			RefreshLoadedProjects();
+			if (allProjectDescriptions.Length == 0)
+			{
+				_projectSharingAuthError = "No projects to upload.";
+				return;
+			}
+			_projectSharingUploadSelectedIndex = 0;
+			_projectSharingUploadIsPublic = true;
+			_projectSharingUploadInProgress = false;
+			_projectSharingUploadStatus = "";
+			activePopup = PopupKind.ProjectSharing_UploadConfirm;
+		}
+
+		static void ProjectSharingOpenImport()
+		{
+			_projectSharingLibraryEntries = null;
+			_projectSharingLibraryLoading = true;
+			_projectSharingImportStatus = "Loading...";
+			_projectSharingImportSelectedEntry = null;
+			activePopup = PopupKind.ProjectSharing_ImportList;
+			_ = ProjectSharingLoadLibraryAsync();
+		}
+
+		static async Task ProjectSharingOpenUploadOptionsAsync()
+		{
+			_projectSharingUploadProjectDisplayNameDefault = _projectSharingUploadPendingProjectName;
+			try
+			{
+				var existing = await LibraryService.GetExistingEntryByProjectNameAsync(_projectSharingUploadPendingProjectName);
+				if (existing != null && !string.IsNullOrEmpty(existing.projectDisplayName))
+					_projectSharingUploadProjectDisplayNameDefault = existing.projectDisplayName;
+			}
+			catch { /* use project name */ }
+			_projectSharingUploadProjectDisplayNameInitialized = false;
+			activePopup = PopupKind.ProjectSharing_UploadDisplayName;
+		}
+
+		static async Task ProjectSharingLoadMyProjectsAsync()
+		{
+			try
+			{
+				var entries = await LibraryService.GetEntriesAsync(LibraryService.LibraryFilterMode.Private, LibraryService.LibrarySortOrder.Newest, 100);
+				if (_projectSharingMyProjectsFilter == LibraryService.LibraryFilterMode.Public)
+					entries = entries.Where(e => e.isPublic).ToList();
+				else if (_projectSharingMyProjectsFilter == LibraryService.LibraryFilterMode.Private)
+					entries = entries.Where(e => !e.isPublic).ToList();
+				_projectSharingMyProjectsEntries = entries;
+				// Clear selection if it's no longer in the list
+				if (_projectSharingMyProjectsSelectedEntry != null && !entries.Any(e => e.id == _projectSharingMyProjectsSelectedEntry.id))
+					_projectSharingMyProjectsSelectedEntry = null;
+			}
+			catch (Exception ex)
+			{
+				_projectSharingMyProjectsEntries = new List<LibraryService.LibraryEntry>();
+				_projectSharingMyProjectsSelectedEntry = null;
+				Debug.LogWarning($"[ProjectSharing] Load my projects failed: {ex.Message}");
+			}
+			_projectSharingMyProjectsLoading = false;
+		}
+
+		static void ProjectSharingOpenMyProjects()
+		{
+			_projectSharingMyProjectsEntries = null;
+			_projectSharingMyProjectsLoading = true;
+			_projectSharingMyProjectsSelectedEntry = null;
+			activePopup = PopupKind.ProjectSharing_MyProjects;
+			_ = ProjectSharingLoadMyProjectsAsync();
+		}
+
+		static async Task ProjectSharingLoadLibraryAsync()
+		{
+			try
+			{
+				var entries = await LibraryService.GetEntriesAsync(_projectSharingImportFilter, _projectSharingImportSortOrder, 50);
+				_projectSharingLibraryEntries = entries;
+				_projectSharingImportStatus = entries.Count == 0
+					? (_projectSharingImportFilter == LibraryService.LibraryFilterMode.Private ? "No projects of yours found." : _projectSharingImportFilter == LibraryService.LibraryFilterMode.Public ? "No public projects found." : "No projects found.")
+					: "";
+				if (_projectSharingImportSelectedEntry != null && !entries.Any(e => e.id == _projectSharingImportSelectedEntry.id))
+					_projectSharingImportSelectedEntry = null;
+			}
+			catch (Exception ex)
+			{
+				_projectSharingImportStatus = "Error: " + ex.Message;
+				_projectSharingLibraryEntries = new List<LibraryService.LibraryEntry>();
+				_projectSharingImportSelectedEntry = null;
+			}
+			_projectSharingLibraryLoading = false;
+		}
+
+		static void ProjectSharingLogOut()
+		{
+			try
+			{
+				FirebaseAuth.DefaultInstance?.SignOut();
+				FirebaseBootstrap.ResetAfterSignOut();
+				UserAuthService.ClearCache();
+			}
+			catch { /* ignore */ }
+			_projectSharingSignedIn = false;
+			_projectSharingIsGuest = false;
+			_projectSharingAuthError = "";
+			_projectSharingLoggedInAs = null;
+			_projectSharingLoggedInAsLoadRequested = false;
+		}
+
+		static async Task ProjectSharingLoadLoggedInAsAsync()
+		{
+			try
+			{
+				_projectSharingLoggedInAs = await LibraryService.GetCurrentUserAuthorNameAsync();
+			}
+			catch (Exception ex)
+			{
+				UnityEngine.Debug.LogWarning($"[MainMenu] Failed to load logged-in username: {ex.Message}");
+				_projectSharingLoggedInAs = "Guest";
+			}
+		}
+
+		static async Task ProjectSharingChangeUsernamePreloadProfileAsync()
+		{
+			try
+			{
+				var profile = await UserAuthService.GetCurrentUserProfileAsync();
+				_projectSharingChangeUsernameHasUsername = profile != null && !string.IsNullOrEmpty(profile.username);
+				_projectSharingChangeUsernameOriginal = _projectSharingChangeUsernameHasUsername ? profile.username : "";
+				// Update input field when profile loads (may run before or after first Draw)
+				Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectSharing_ChangeUsername).SetText(_projectSharingChangeUsernameOriginal ?? "");
+			}
+			catch
+			{
+				_projectSharingChangeUsernameHasUsername = false;
+				_projectSharingChangeUsernameOriginal = "";
+			}
+		}
+
+		/// <summary>
+		/// Pre-fills the Create Account username field from levels profile (if user has one).
+		/// </summary>
+		static async Task ProjectSharingPreloadCreateAccountProfileAsync()
+		{
+			try
+			{
+				await FirebaseBootstrap.InitializeAsync();
+				if (!FirebaseBootstrap.IsInitialized || FirebaseBootstrap.UserId == "anon") return;
+				var profile = await UserAuthService.GetCurrentUserProfileAsync();
+				if (profile != null && !string.IsNullOrEmpty(profile.username))
+					Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectSharing_CreateAccountUsername).SetText(profile.username);
+			}
+			catch { /* ignore - pre-fill is best-effort */ }
+		}
+
+		static void DrawProjectSharingCreateAccountPopup()
+		{
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			{
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+				InputFieldTheme inputTheme = theme.ChipNameInputField;
+				inputTheme.fontSize = theme.FontSizeRegular;
+				Vector2 centre = Seb.Vis.UI.UI.Centre;
+
+				Seb.Vis.UI.UI.DrawText("Create Account", theme.FontRegular, theme.FontSizeRegular * 1.1f, centre + Vector2.up * 12, Anchor.CentreTop, Color.white);
+				Vector2 pos = centre + Vector2.up * 8;
+
+				Seb.Vis.UI.UI.DrawText("Email", theme.FontRegular, theme.FontSizeRegular * 0.8f, pos, Anchor.CentreTop, Color.white);
+				pos += Vector2.down * 1.5f;
+				bool createAccountForceEmailFocus = !_projectSharingCreateAccountInitialFocusDone;
+				var emailState = Seb.Vis.UI.UI.InputField(ID_ProjectSharing_CreateAccountEmail, inputTheme, pos, new Vector2(30, 3), "user@example.com", Anchor.CentreTop, 1f, null, createAccountForceEmailFocus);
+				_projectSharingCreateAccountInitialFocusDone = true;
+				pos += Vector2.down * 4;
+
+				Seb.Vis.UI.UI.DrawText("Password", theme.FontRegular, theme.FontSizeRegular * 0.8f, pos, Anchor.CentreTop, Color.white);
+				pos += Vector2.down * 1.5f;
+				var passState = Seb.Vis.UI.UI.InputField(ID_ProjectSharing_CreateAccountPassword, inputTheme, pos, new Vector2(30, 3), "", Anchor.CentreTop, 1f, null, false);
+				pos += Vector2.down * 4;
+
+				Seb.Vis.UI.UI.DrawText("Confirm Password", theme.FontRegular, theme.FontSizeRegular * 0.8f, pos, Anchor.CentreTop, Color.white);
+				pos += Vector2.down * 1.5f;
+				var confirmState = Seb.Vis.UI.UI.InputField(ID_ProjectSharing_CreateAccountConfirm, inputTheme, pos, new Vector2(30, 3), "", Anchor.CentreTop, 1f, null, false);
+				pos += Vector2.down * 4;
+
+				Seb.Vis.UI.UI.DrawText("Username (optional)", theme.FontRegular, theme.FontSizeRegular * 0.8f, pos, Anchor.CentreTop, Color.white);
+				pos += Vector2.down * 1.5f;
+				var usernameState = Seb.Vis.UI.UI.InputField(ID_ProjectSharing_CreateAccountUsername, inputTheme, pos, new Vector2(30, 3), "", Anchor.CentreTop, 1f, null, false);
+				pos += Vector2.down * 5;
+
+				if (!string.IsNullOrEmpty(_projectSharingAuthError))
+					Seb.Vis.UI.UI.DrawText(_projectSharingAuthError, theme.FontRegular, theme.FontSizeRegular * 0.7f, pos, Anchor.CentreTop, Color.red);
+				pos += Vector2.down * 3;
+
+				int btn = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "CREATE" }, theme.MainMenuButtonTheme, pos, 40, UILayoutHelper.DefaultSpacing, 0, Anchor.CentreTop);
+
+				if (btn == 0 || KeyboardShortcuts.CancelShortcutTriggered)
+				{
+					activePopup = PopupKind.None;
+					_projectSharingAuthError = "";
+				}
+				else if (btn == 1)
+				{
+					var email = emailState.text?.Trim() ?? "";
+					var password = passState.text ?? "";
+					var confirm = confirmState.text ?? "";
+					var username = usernameState.text?.Trim() ?? "";
+					if (string.IsNullOrEmpty(email)) _projectSharingAuthError = "Email required.";
+					else if (password.Length < 6) _projectSharingAuthError = "Password must be at least 6 characters.";
+					else if (password != confirm) _projectSharingAuthError = "Passwords do not match.";
+					else
+						_ = ProjectSharingCreateAccountAsync(email, password, username);
+				}
+
+				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+			}
+		}
+
+		static void DrawProjectSharingLoginPopup()
+		{
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			{
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+				InputFieldTheme inputTheme = theme.ChipNameInputField;
+				inputTheme.fontSize = theme.FontSizeRegular;
+				Vector2 centre = Seb.Vis.UI.UI.Centre;
+
+				Seb.Vis.UI.UI.DrawText("Login", theme.FontRegular, theme.FontSizeRegular * 1.1f, centre + Vector2.up * 12, Anchor.CentreTop, Color.white);
+				Vector2 pos = centre + Vector2.up * 8;
+
+				Seb.Vis.UI.UI.DrawText("Email", theme.FontRegular, theme.FontSizeRegular * 0.8f, pos, Anchor.CentreTop, Color.white);
+				pos += Vector2.down * 1.5f;
+				bool loginForceEmailFocus = !_projectSharingLoginInitialFocusDone;
+				var emailState = Seb.Vis.UI.UI.InputField(ID_ProjectSharing_LoginEmail, inputTheme, pos, new Vector2(30, 3), "", Anchor.CentreTop, 1f, null, loginForceEmailFocus);
+				_projectSharingLoginInitialFocusDone = true;
+				pos += Vector2.down * 4;
+
+				Seb.Vis.UI.UI.DrawText("Password", theme.FontRegular, theme.FontSizeRegular * 0.8f, pos, Anchor.CentreTop, Color.white);
+				pos += Vector2.down * 1.5f;
+				var passState = Seb.Vis.UI.UI.InputField(ID_ProjectSharing_LoginPassword, inputTheme, pos, new Vector2(30, 3), "", Anchor.CentreTop, 1f, null, false);
+				pos += Vector2.down * 5;
+
+				if (!string.IsNullOrEmpty(_projectSharingAuthError))
+					Seb.Vis.UI.UI.DrawText(_projectSharingAuthError, theme.FontRegular, theme.FontSizeRegular * 0.7f, pos, Anchor.CentreTop, Color.red);
+				pos += Vector2.down * 3;
+
+				int btn = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "LOGIN" }, theme.MainMenuButtonTheme, pos, 40, UILayoutHelper.DefaultSpacing, 0, Anchor.CentreTop);
+
+				if (btn == 0 || KeyboardShortcuts.CancelShortcutTriggered)
+				{
+					activePopup = PopupKind.None;
+					_projectSharingAuthError = "";
+				}
+				else if (btn == 1)
+				{
+					var email = emailState.text?.Trim() ?? "";
+					var password = passState.text ?? "";
+					if (string.IsNullOrEmpty(email)) _projectSharingAuthError = "Email required.";
+					else if (string.IsNullOrEmpty(password)) _projectSharingAuthError = "Password required.";
+					else
+						_ = ProjectSharingLoginAsync(email, password);
+				}
+
+				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+			}
+		}
+
+		static async Task ProjectSharingCreateAccountAsync(string email, string password, string username)
+		{
+			_projectSharingAuthError = "";
+			try
+			{
+				await FirebaseBootstrap.InitializeAsync();
+				var auth = FirebaseAuth.DefaultInstance;
+				if (auth == null) { _projectSharingAuthError = "Auth not available."; return; }
+
+				// Link anonymous account if signed in as Guest; otherwise create new account
+				var currentUser = auth.CurrentUser;
+				bool isAnonymous = currentUser != null && currentUser.IsAnonymous;
+				bool authSuccess = false;
+
+				if (isAnonymous)
+				{
+					var credential = EmailAuthProvider.GetCredential(email, password);
+					var result = await currentUser.LinkWithCredentialAsync(credential);
+					authSuccess = result?.User != null;
+				}
+				else
+				{
+					var result = await auth.CreateUserWithEmailAndPasswordAsync(email, password);
+					authSuccess = result?.User != null;
+				}
+
+				if (authSuccess)
+				{
+					FirebaseBootstrap.RefreshUserIdFromAuth();
+
+					// Claim or update username if provided (skip in Editor with anon)
+					if (!string.IsNullOrWhiteSpace(username) && FirebaseBootstrap.UserId != "anon")
+					{
+						var validation = UserAuthService.ValidateUsername(username);
+						if (validation.isValid)
+						{
+							var existingProfile = await UserAuthService.GetCurrentUserProfileAsync();
+							if (existingProfile == null || string.IsNullOrEmpty(existingProfile.username))
+							{
+								var claimResult = await UserAuthService.ClaimUsernameAsync(username);
+								if (!claimResult.success)
+									_projectSharingAuthError = claimResult.error ?? "Username claim failed.";
+							}
+							else if (!string.Equals(existingProfile.username, username, StringComparison.OrdinalIgnoreCase))
+							{
+								var changeResult = await UserAuthService.ChangeUsernameAsync(username);
+								if (!changeResult.success)
+									_projectSharingAuthError = changeResult.error ?? "Username update failed.";
+							}
+						}
+						else
+							_projectSharingAuthError = validation.error ?? "Invalid username.";
+					}
+
+					if (string.IsNullOrEmpty(_projectSharingAuthError))
+					{
+						_projectSharingIsGuest = false;
+						_projectSharingSignedIn = true;
+						activePopup = PopupKind.None;
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				_projectSharingAuthError = ex.Message ?? "Create account failed.";
+				Debug.LogError($"[ProjectSharing] Create account failed: {ex.Message}");
+			}
+		}
+
+		static async Task ProjectSharingLoginAsync(string email, string password)
+		{
+			_projectSharingAuthError = "";
+			try
+			{
+				await FirebaseBootstrap.InitializeAsync();
+				var auth = FirebaseAuth.DefaultInstance;
+				if (auth == null) { _projectSharingAuthError = "Auth not available."; return; }
+				var result = await auth.SignInWithEmailAndPasswordAsync(email, password);
+				if (result?.User != null)
+				{
+					FirebaseBootstrap.RefreshUserIdFromAuth();
+					_projectSharingIsGuest = false;
+					_projectSharingSignedIn = true;
+					activePopup = PopupKind.None;
+				}
+			}
+			catch (Exception ex)
+			{
+				_projectSharingAuthError = ex.Message ?? "Login failed.";
+				Debug.LogError($"[ProjectSharing] Login failed: {ex.Message}");
+			}
+		}
+
+		static readonly Seb.Vis.UI.UI.ScrollViewDrawContentFunc projectSharingUploadScrollDrawer = DrawProjectSharingUploadScrollContent;
+		static void DrawProjectSharingUploadScrollContent(Vector2 topLeft, float width, bool isLayoutPass)
+		{
+			if (allProjectDescriptions == null) return;
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			ButtonTheme baseButtonTheme = theme.ProjectSelectionButton;
+			baseButtonTheme.fontSize *= ProjectSharing_ListPopupItemFontScale;
+			ButtonTheme selectedButtonTheme = theme.ProjectSelectionButtonSelected;
+			selectedButtonTheme.fontSize *= ProjectSharing_ListPopupItemFontScale;
+			for (int i = 0; i < allProjectDescriptions.Length; i++)
+			{
+				var desc = allProjectDescriptions[i];
+				bool selected = i == _projectSharingUploadSelectedIndex;
+				var btnTheme = selected ? selectedButtonTheme : baseButtonTheme;
+				if (Seb.Vis.UI.UI.Button(desc.ProjectName, btnTheme, topLeft, new Vector2(width, 0), true, false, true, btnTheme.buttonCols, Anchor.TopLeft))
+					_projectSharingUploadSelectedIndex = i;
+				float rowGap = Seb.Vis.UI.UI.Height * Popup_ProjectRowGapFrac;
+				topLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * rowGap;
+			}
+		}
+
+		static void DrawProjectSharingUploadConfirmPopup()
+		{
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			float w = Seb.Vis.UI.UI.Width;
+			float h = Seb.Vis.UI.UI.Height;
+			Vector2 centre = Seb.Vis.UI.UI.Centre;
+			float popupTopY = centre.y + h * (ProjectSharing_ListPopupContentMaxFrac - 0.5f);
+
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			{
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+
+				Seb.Vis.UI.UI.DrawText("Upload project", theme.FontRegular, theme.FontSizeRegular * ProjectSharing_ListPopupTitleFontScale, new Vector2(centre.x, popupTopY - h * ProjectSharing_ListPopupTitleTopInsetFrac), Anchor.CentreTop, Color.white);
+
+				Vector2 scrollSize = new(w * ProjectSharing_ListPopupWidthFrac, h * ProjectSharing_ListPopupScrollHeightFrac);
+				Vector2 scrollPos = new Vector2(centre.x, popupTopY - h * ProjectSharing_ListPopupScrollTopInsetFrac);
+				Seb.Vis.UI.UI.DrawScrollView(ID_ProjectSharing_UploadScrollView, scrollPos, scrollSize, Anchor.CentreTop, theme.ScrollTheme, projectSharingUploadScrollDrawer);
+				Vector2 pos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * (h * ProjectSharing_ListPopupButtonsTopGapFrac);
+
+				if (!string.IsNullOrEmpty(_projectSharingUploadStatus))
+				{
+					Vector2 statusPos = new Vector2(centre.x, pos.y);
+					Seb.Vis.UI.UI.DrawText(_projectSharingUploadStatus, theme.FontRegular, theme.FontSizeRegular * 0.8f, statusPos, Anchor.CentreTop, _projectSharingUploadStatus.StartsWith("Error") ? Color.red : Color.green);
+					pos += Vector2.down * (h * Popup_SpacingFrac);
+				}
+
+				bool canUpload = !_projectSharingUploadInProgress && allProjectDescriptions != null && _projectSharingUploadSelectedIndex >= 0 && _projectSharingUploadSelectedIndex < allProjectDescriptions.Length;
+				int btn = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "UPLOAD" }, new[] { true, canUpload }, theme.MainMenuButtonTheme, new Vector2(centre.x, pos.y), w * ProjectSharing_ListPopupWidthFrac, UILayoutHelper.DefaultSpacing, 0, Anchor.CentreTop);
+
+				if (btn == 0 || KeyboardShortcuts.CancelShortcutTriggered)
+				{
+					activePopup = PopupKind.None;
+					_projectSharingUploadStatus = "";
+				}
+				else if (btn == 1 && canUpload)
+				{
+					_projectSharingUploadPendingProjectName = allProjectDescriptions[_projectSharingUploadSelectedIndex].ProjectName;
+					_ = ProjectSharingOpenUploadOptionsAsync();
+				}
+
+				Vector2 panelSize = new Vector2(w * ProjectSharing_ListPopupWidthFrac, h * (ProjectSharing_ListPopupHeightFrac + ProjectSharing_ListPopupBottomExtensionFrac)) + Vector2.one * ProjectSharing_ListPopupPanelPadding;
+				Vector2 panelCentre = centre + Vector2.down * (h * ProjectSharing_ListPopupBottomExtensionFrac * 0.5f);
+				Seb.Vis.UI.UI.ModifyPanel(panelID, panelCentre, panelSize, ColHelper.MakeCol255(37, 37, 43));
+			}
+		}
+
+		static readonly string[] ProjectSharingPublicPrivateOptions = { "Public", "Private" };
+
+		static void DrawProjectSharingUploadDisplayNamePopup()
+		{
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			float w = Seb.Vis.UI.UI.Width;
+			float h = Seb.Vis.UI.UI.Height;
+			Vector2 centre = Seb.Vis.UI.UI.Centre;
+
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			{
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+
+				Seb.Vis.UI.UI.DrawText($"Upload \"{_projectSharingUploadPendingProjectName}\"", theme.FontRegular, theme.FontSizeRegular * 1.1f, centre + Vector2.up * (h * Popup_TitleOffsetFrac), Anchor.CentreTop, Color.white);
+
+				if (!_projectSharingUploadProjectDisplayNameInitialized)
+				{
+					Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectSharing_UploadProjectDisplayName).SetText(_projectSharingUploadProjectDisplayNameDefault ?? "");
+					_projectSharingUploadProjectDisplayNameInitialized = true;
+				}
+
+				InputFieldTheme inputTheme = theme.ChipNameInputField;
+				inputTheme.fontSize = theme.FontSizeRegular;
+				Vector2 pos = centre + Vector2.up * (h * (Popup_TitleOffsetFrac - 0.06f));
+				Seb.Vis.UI.UI.DrawText("Project display name", theme.FontRegular, theme.FontSizeRegular * 0.8f, pos, Anchor.CentreTop, Color.white);
+				pos += Vector2.down * (h * Popup_SpacingFrac);
+				float inputHeight = h * 0.032f;
+				var projectDisplayNameState = Seb.Vis.UI.UI.InputField(ID_ProjectSharing_UploadProjectDisplayName, inputTheme, pos, new Vector2(w * Popup_ScrollWidthFrac, inputHeight), "", Anchor.CentreTop, 1f, null, false);
+				pos += Vector2.down * (inputHeight + h * 0.055f);
+				float regionWidth = w * Popup_ScrollWidthFrac;
+				float rowLeft = centre.x - regionWidth / 2f;
+				float rowRight = centre.x + regionWidth / 2f;
+				float wheelWidth = regionWidth * 0.35f;
+				float rowHeight = h * Popup_RowHeightFrac;
+
+				// Row 1: Visibility (label left, wheel right)
+				Seb.Vis.UI.UI.DrawText("Visibility", theme.FontRegular, theme.FontSizeRegular * 0.8f, new Vector2(rowLeft, pos.y), Anchor.CentreLeft, Color.white);
+				int visIdx = Seb.Vis.UI.UI.WheelSelector(_projectSharingUploadIsPublic ? 0 : 1, ProjectSharingPublicPrivateOptions, new Vector2(rowRight, pos.y), new Vector2(wheelWidth, rowHeight), theme.OptionsWheel, Anchor.CentreRight);
+				_projectSharingUploadIsPublic = visIdx == 0;
+				pos += Vector2.down * (rowHeight + h * Popup_SpacingFrac);
+
+				// Row 2: Levels (label left, wheel right)
+				Seb.Vis.UI.UI.DrawText("Levels", theme.FontRegular, theme.FontSizeRegular * 0.8f, new Vector2(rowLeft, pos.y), Anchor.CentreLeft, Color.white);
+				int levelsIdx = Seb.Vis.UI.UI.WheelSelector(_projectSharingUploadIncludeLevels ? 0 : 1, ProjectSharingPublicPrivateOptions, new Vector2(rowRight, pos.y), new Vector2(wheelWidth, rowHeight), theme.OptionsWheel, Anchor.CentreRight);
+				_projectSharingUploadIncludeLevels = levelsIdx == 0;
+				pos += Vector2.down * (rowHeight + h * Popup_SettingsToButtonsGapFrac);
+
+				int btn = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "CONFIRM" }, theme.MainMenuButtonTheme, new Vector2(centre.x, pos.y), w * Popup_ScrollWidthFrac, UILayoutHelper.DefaultSpacing, 0, Anchor.CentreTop);
+
+				if (btn == 0 || KeyboardShortcuts.CancelShortcutTriggered)
+				{
+					activePopup = PopupKind.ProjectSharing_UploadConfirm;
+				}
+				else if (btn == 1)
+				{
+					var projectDisplayName = (projectDisplayNameState.text ?? "").Trim();
+					_projectSharingUploadInProgress = true;
+					_projectSharingUploadStatus = "Uploading...";
+					_ = ProjectSharingUploadAsync(_projectSharingUploadPendingProjectName, projectDisplayName, _projectSharingUploadIsPublic, _projectSharingUploadIncludeLevels);
+					activePopup = PopupKind.ProjectSharing_UploadConfirm;
+				}
+
+				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+			}
+		}
+
+		static async Task ProjectSharingUploadAsync(string projectName, string projectDisplayName, bool isPublic, bool includeLevels)
+		{
+			try
+			{
+				await LibraryService.UploadProjectAsync(projectName, projectDisplayName, isPublic, includeLevels);
+				_projectSharingUploadStatus = "Upload complete!";
+				_projectSharingUploadInProgress = false;
+				await Task.Delay(1500);
+				activePopup = PopupKind.None;
+				_projectSharingUploadStatus = "";
+			}
+			catch (Exception ex)
+			{
+				_projectSharingUploadStatus = ex.Message.Contains("offline", StringComparison.OrdinalIgnoreCase)
+					? "No internet connection. Please check your network and try again."
+					: "Error: " + ex.Message;
+				_projectSharingUploadInProgress = false;
+			}
+		}
+
+		static readonly Seb.Vis.UI.UI.ScrollViewDrawContentFunc projectSharingImportScrollDrawer = DrawProjectSharingImportScrollContent;
+		static void DrawProjectSharingImportScrollContent(Vector2 topLeft, float width, bool isLayoutPass)
+		{
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			ButtonTheme listButtonTheme = theme.MainMenuButtonTheme;
+			listButtonTheme.fontSize *= ProjectSharing_ListPopupItemFontScale;
+			if (_projectSharingLibraryLoading)
+			{
+				float vOffset = width * 0.08f; // screen-relative offset
+				Vector2 textPos = new Vector2(topLeft.x + width / 2, topLeft.y + vOffset);
+				Seb.Vis.UI.UI.DrawText("Loading...", theme.FontRegular, theme.FontSizeRegular, textPos, Anchor.Centre, Color.white);
+				return;
+			}
+			if (_projectSharingLibraryEntries == null || _projectSharingLibraryEntries.Count == 0)
+			{
+				string status = _projectSharingImportStatus ?? "No projects.";
+				float vOffset = width * 0.08f;
+				Vector2 textPos = new Vector2(topLeft.x + width / 2, topLeft.y + vOffset);
+				Seb.Vis.UI.UI.DrawText(WrapText(status, 45), theme.FontRegular, theme.FontSizeRegular, textPos, Anchor.Centre, Color.white);
+				return;
+			}
+			float rowH = 3.5f;
+			foreach (var entry in _projectSharingLibraryEntries)
+			{
+				bool importing = entry.id == _projectSharingImportInProgressId;
+				bool selected = _projectSharingImportSelectedEntry != null && _projectSharingImportSelectedEntry.id == entry.id;
+				string title = !string.IsNullOrEmpty(entry.projectDisplayName) ? entry.projectDisplayName : entry.projectName;
+				string label = $"{title} by {entry.displayName}";
+				if (entry.downloadCount > 0)
+					label += $" ({entry.downloadCount} downloads)";
+				if (importing) label += " (importing...)";
+				if (selected) label = "► " + label;
+				var buttonCols = selected ? new ButtonTheme.StateCols(new Color(0.3f, 0.35f, 0.45f), new Color(0.4f, 0.45f, 0.55f), new Color(0.25f, 0.3f, 0.4f), Color.gray) : theme.MainMenuButtonTheme.buttonCols;
+				if (Seb.Vis.UI.UI.Button(label, listButtonTheme, topLeft, new Vector2(width, rowH), true, false, true, buttonCols, Anchor.TopLeft))
+				{
+					_projectSharingImportSelectedEntry = entry;
+				}
+				float rowGap = Seb.Vis.UI.UI.Height * Popup_ProjectRowGapFrac;
+				topLeft = new Vector2(topLeft.x, Seb.Vis.UI.UI.PrevBounds.BottomLeft.y + rowGap);
+			}
+		}
+
+		static async Task ProjectSharingImportAsync(string projectId)
+		{
+			try
+			{
+				var success = await LibraryService.ImportProjectAsync(projectId);
+				if (success)
+				{
+					RefreshLoadedProjects();
+					_projectSharingImportStatus = "Imported!";
+					_projectSharingImportInProgressId = null;
+					await Task.Delay(800);
+					activePopup = PopupKind.None;
+				}
+				else
+				{
+					_projectSharingImportStatus = "Import failed.";
+					_projectSharingImportInProgressId = null;
+				}
+			}
+			catch (Exception ex)
+			{
+				_projectSharingImportStatus = "Error: " + ex.Message;
+				_projectSharingImportInProgressId = null;
+			}
+		}
+
+		static readonly string[] ProjectSharingImportFilterOptions = { "Public", "Private", "All" };
+		static readonly string[] ProjectSharingImportSortOptions = { "Newest", "Popular", "A B C" };
+
+		static string _projectSharingMyProjectsSyncInProgressId;
+
+		static readonly Seb.Vis.UI.UI.ScrollViewDrawContentFunc projectSharingMyProjectsScrollDrawer = DrawProjectSharingMyProjectsScrollContent;
+		static void DrawProjectSharingMyProjectsScrollContent(Vector2 topLeft, float width, bool isLayoutPass)
+		{
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			ButtonTheme listButtonTheme = theme.MainMenuButtonTheme;
+			listButtonTheme.fontSize *= ProjectSharing_ListPopupItemFontScale;
+			if (_projectSharingMyProjectsLoading)
+			{
+				float vOffset = width * 0.08f;
+				Seb.Vis.UI.UI.DrawText("Loading...", theme.FontRegular, theme.FontSizeRegular, topLeft + new Vector2(width / 2, vOffset), Anchor.Centre, Color.white);
+				return;
+			}
+			if (_projectSharingMyProjectsEntries == null || _projectSharingMyProjectsEntries.Count == 0)
+			{
+				float vOffset = width * 0.08f;
+				Seb.Vis.UI.UI.DrawText("No projects.", theme.FontRegular, theme.FontSizeRegular, topLeft + new Vector2(width / 2, vOffset), Anchor.Centre, Color.white);
+				return;
+			}
+			float rowH = 3.5f;
+			foreach (var entry in _projectSharingMyProjectsEntries)
+			{
+				bool syncing = entry.id == _projectSharingMyProjectsSyncInProgressId;
+				bool selected = _projectSharingMyProjectsSelectedEntry != null && _projectSharingMyProjectsSelectedEntry.id == entry.id;
+				string title = !string.IsNullOrEmpty(entry.projectDisplayName) ? entry.projectDisplayName : entry.projectName;
+				string label = $"{title}";
+				if (!string.IsNullOrEmpty(entry.displayName))
+					label += $" ({entry.displayName})";
+				label += entry.isPublic ? " [Public]" : " [Private]";
+				if (syncing)
+					label += " (syncing...)";
+				if (selected)
+					label = "► " + label;
+
+				var buttonCols = selected ? new ButtonTheme.StateCols(new Color(0.3f, 0.35f, 0.45f), new Color(0.4f, 0.45f, 0.55f), new Color(0.25f, 0.3f, 0.4f), Color.gray) : theme.MainMenuButtonTheme.buttonCols;
+				if (Seb.Vis.UI.UI.Button(label, listButtonTheme, topLeft, new Vector2(width, rowH), true, false, true, buttonCols, Anchor.TopLeft))
+				{
+					_projectSharingMyProjectsSelectedEntry = entry;
+				}
+				float rowGap = Seb.Vis.UI.UI.Height * Popup_ProjectRowGapFrac;
+				topLeft = new Vector2(topLeft.x, Seb.Vis.UI.UI.PrevBounds.BottomLeft.y + rowGap);
+			}
+		}
+
+		static async Task ProjectSharingSyncAsync(LibraryService.LibraryEntry entry)
+		{
+			try
+			{
+				await LibraryService.UploadProjectAsync(entry.projectName, entry.projectDisplayName, entry.isPublic);
+				_projectSharingMyProjectsSyncInProgressId = null;
+				_projectSharingMyProjectsLoading = true;
+				_ = ProjectSharingLoadMyProjectsAsync();
+			}
+			catch (Exception ex)
+			{
+				_projectSharingMyProjectsSyncInProgressId = null;
+				Debug.LogWarning($"[ProjectSharing] Sync failed: {ex.Message}");
+			}
+		}
+
+		static void DrawProjectSharingMyProjectsPopup()
+		{
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			float w = Seb.Vis.UI.UI.Width;
+			float h = Seb.Vis.UI.UI.Height;
+			Vector2 centre = Seb.Vis.UI.UI.Centre;
+			float popupTopY = centre.y + h * (ProjectSharing_ListPopupContentMaxFrac - 0.5f);
+
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			{
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+
+				Seb.Vis.UI.UI.DrawText("My projects", theme.FontRegular, theme.FontSizeRegular * ProjectSharing_ListPopupTitleFontScale, new Vector2(centre.x, popupTopY - h * ProjectSharing_ListPopupTitleTopInsetFrac), Anchor.CentreTop, Color.white);
+
+				float filterY = popupTopY - h * ProjectSharing_ListPopupFilterTopInsetFrac;
+				float filterRegionWidth = w * ProjectSharing_ListPopupWidthFrac;
+				float wheelWidth = filterRegionWidth * 0.35f;
+				WheelSelectorTheme listWheelTheme = theme.OptionsWheel;
+				listWheelTheme.OverrideFontSize(theme.FontSizeRegular * ProjectSharing_ListPopupWheelFontScale);
+				int filterIdx = (int)_projectSharingMyProjectsFilter;
+				int newFilterIdx = Seb.Vis.UI.UI.WheelSelector(filterIdx, ProjectSharingImportFilterOptions, new Vector2(centre.x, filterY), new Vector2(wheelWidth, 2.7f), listWheelTheme, Anchor.Centre);
+				if (newFilterIdx != filterIdx)
+				{
+					_projectSharingMyProjectsFilter = (LibraryService.LibraryFilterMode)newFilterIdx;
+					_projectSharingMyProjectsLoading = true;
+					_ = ProjectSharingLoadMyProjectsAsync();
+				}
+
+				Vector2 scrollSize = new(w * ProjectSharing_ListPopupWidthFrac, h * ProjectSharing_ListPopupScrollHeightFrac);
+				Vector2 scrollPos = new Vector2(centre.x, popupTopY - h * ProjectSharing_ListPopupScrollTopInsetFrac);
+				Seb.Vis.UI.UI.DrawScrollView(ID_ProjectSharing_MyProjectsScrollView, scrollPos, scrollSize, Anchor.CentreTop, theme.ScrollTheme, projectSharingMyProjectsScrollDrawer);
+
+				Vector2 buttonRowPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * (h * ProjectSharing_ListPopupButtonsTopGapFrac);
+				float buttonRowWidth = w * ProjectSharing_ListPopupWidthFrac;
+				bool hasSelection = _projectSharingMyProjectsSelectedEntry != null;
+				bool syncing = hasSelection && _projectSharingMyProjectsSelectedEntry.id == _projectSharingMyProjectsSyncInProgressId;
+				bool hasLocal = hasSelection && Loader.ProjectExists(_projectSharingMyProjectsSelectedEntry.projectName);
+				bool editEnabled = hasSelection && !syncing && _projectSharingEditEntry == null && _projectSharingDeleteConfirmEntry == null;
+				bool deleteEnabled = hasSelection && !syncing && _projectSharingEditEntry == null && _projectSharingDeleteConfirmEntry == null;
+				bool syncEnabled = hasSelection && !syncing && hasLocal && _projectSharingEditEntry == null && _projectSharingDeleteConfirmEntry == null;
+
+				int actionBtn = Seb.Vis.UI.UI.HorizontalButtonGroup(
+					new[] { "EDIT", "DELETE", "SYNC", "CLOSE" },
+					new[] { editEnabled, deleteEnabled, syncEnabled, true },
+					theme.MainMenuButtonTheme,
+					new Vector2(centre.x, buttonRowPos.y),
+					buttonRowWidth,
+					UILayoutHelper.DefaultSpacing,
+					0,
+					Anchor.CentreTop);
+
+				if (actionBtn == 0 && editEnabled)
+				{
+					_projectSharingEditEntry = _projectSharingMyProjectsSelectedEntry;
+					_projectSharingEditIsPublic = _projectSharingMyProjectsSelectedEntry.isPublic;
+					_projectSharingEditProjectDisplayNameInitialized = false;
+					activePopup = PopupKind.ProjectSharing_EditEntry;
+				}
+				else if (actionBtn == 1 && deleteEnabled)
+				{
+					_projectSharingDeleteConfirmEntry = _projectSharingMyProjectsSelectedEntry;
+					activePopup = PopupKind.ProjectSharing_DeleteConfirm;
+				}
+				else if (actionBtn == 2 && syncEnabled)
+				{
+					_projectSharingMyProjectsSyncInProgressId = _projectSharingMyProjectsSelectedEntry.id;
+					_ = ProjectSharingSyncAsync(_projectSharingMyProjectsSelectedEntry);
+				}
+				else if (actionBtn == 3 || KeyboardShortcuts.CancelShortcutTriggered)
+				{
+					activePopup = PopupKind.None;
+				}
+
+				Vector2 panelSize = new Vector2(w * ProjectSharing_ListPopupWidthFrac, h * (ProjectSharing_ListPopupHeightFrac + ProjectSharing_ListPopupBottomExtensionFrac)) + Vector2.one * ProjectSharing_ListPopupPanelPadding;
+				Vector2 panelCentre = centre + Vector2.down * (h * ProjectSharing_ListPopupBottomExtensionFrac * 0.5f);
+				Seb.Vis.UI.UI.ModifyPanel(panelID, panelCentre, panelSize, ColHelper.MakeCol255(37, 37, 43));
+			}
+		}
+
+		static void DrawProjectSharingDeleteConfirmPopup()
+		{
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			{
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+				string msg = _projectSharingDeleteConfirmEntry != null
+					? $"Are you sure you want to delete \"{_projectSharingDeleteConfirmEntry.projectName}\"?"
+					: "Are you sure you want to delete this project?";
+				Seb.Vis.UI.UI.DrawText(msg, theme.FontRegular, theme.FontSizeRegular, Seb.Vis.UI.UI.Centre, Anchor.Centre, Color.yellow);
+
+				Vector2 buttonRegionTopLeft = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
+				float buttonRegionWidth = Seb.Vis.UI.UI.PrevBounds.Width;
+				int buttonIndex = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "DELETE" }, theme.MainMenuButtonTheme, buttonRegionTopLeft, buttonRegionWidth, DrawSettings.HorizontalButtonSpacing, 0, Anchor.TopLeft);
+
+				if (buttonIndex == 0 || KeyboardShortcuts.CancelShortcutTriggered)
+				{
+					_projectSharingDeleteConfirmEntry = null;
+					activePopup = PopupKind.ProjectSharing_MyProjects;
+				}
+				else if (buttonIndex == 1 && _projectSharingDeleteConfirmEntry != null)
+				{
+					var entry = _projectSharingDeleteConfirmEntry;
+					_projectSharingDeleteConfirmEntry = null;
+					activePopup = PopupKind.ProjectSharing_MyProjects;
+					_ = ProjectSharingDeleteEntryAsync(entry.id);
+				}
+
+				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+			}
+		}
+
+		static async Task ProjectSharingDeleteEntryAsync(string documentId)
+		{
+			try
+			{
+				await LibraryService.DeleteEntryAsync(documentId);
+				_projectSharingMyProjectsLoading = true;
+				_ = ProjectSharingLoadMyProjectsAsync();
+			}
+			catch (Exception ex)
+			{
+				Debug.LogWarning($"[ProjectSharing] Delete failed: {ex.Message}");
+			}
+		}
+
+		static void DrawProjectSharingEditEntryPopup()
+		{
+			if (_projectSharingEditEntry == null)
+			{
+				_projectSharingEditEntry = null;
+				activePopup = PopupKind.ProjectSharing_MyProjects;
+				return;
+			}
+
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			float w = Seb.Vis.UI.UI.Width;
+			float h = Seb.Vis.UI.UI.Height;
+			Vector2 centre = Seb.Vis.UI.UI.Centre;
+
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			{
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+
+				Seb.Vis.UI.UI.DrawText($"Edit \"{_projectSharingEditEntry.projectName}\"", theme.FontRegular, theme.FontSizeRegular * 1.1f, centre + Vector2.up * (h * Popup_TitleOffsetFrac), Anchor.CentreTop, Color.white);
+
+				if (!_projectSharingEditProjectDisplayNameInitialized)
+				{
+					string defaultDisplayName = !string.IsNullOrEmpty(_projectSharingEditEntry.projectDisplayName) ? _projectSharingEditEntry.projectDisplayName : _projectSharingEditEntry.projectName;
+					Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectSharing_EditProjectDisplayName).SetText(defaultDisplayName ?? "");
+					_projectSharingEditProjectDisplayNameInitialized = true;
+				}
+
+				InputFieldTheme inputTheme = theme.ChipNameInputField;
+				inputTheme.fontSize = theme.FontSizeRegular;
+				Vector2 pos = centre + Vector2.up * (h * (Popup_TitleOffsetFrac - 0.06f));
+				Seb.Vis.UI.UI.DrawText("Project display name", theme.FontRegular, theme.FontSizeRegular * 0.8f, pos, Anchor.CentreTop, Color.white);
+				pos += Vector2.down * (h * Popup_SpacingFrac);
+				float inputHeight = h * 0.032f;
+				var projectDisplayNameState = Seb.Vis.UI.UI.InputField(ID_ProjectSharing_EditProjectDisplayName, inputTheme, pos, new Vector2(w * Popup_ScrollWidthFrac, inputHeight), "", Anchor.CentreTop, 1f, null, false);
+				pos += Vector2.down * (inputHeight + h * 0.04f);
+				Seb.Vis.UI.UI.DrawText("Visibility", theme.FontRegular, theme.FontSizeRegular * 0.8f, pos, Anchor.CentreTop, Color.white);
+				pos += Vector2.down * 2f;
+				float wheelWidth = w * Popup_ScrollWidthFrac * 0.35f;
+				int visIdx = Seb.Vis.UI.UI.WheelSelector(_projectSharingEditIsPublic ? 0 : 1, ProjectSharingPublicPrivateOptions, new Vector2(centre.x, pos.y), new Vector2(wheelWidth, 2.7f), theme.OptionsWheel, Anchor.Centre);
+				_projectSharingEditIsPublic = visIdx == 0;
+				pos += Vector2.down * 5f;
+
+				int btn = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "SAVE" }, theme.MainMenuButtonTheme, new Vector2(centre.x, pos.y), w * Popup_ScrollWidthFrac, UILayoutHelper.DefaultSpacing, 0, Anchor.CentreTop);
+
+				if (btn == 0 || KeyboardShortcuts.CancelShortcutTriggered)
+				{
+					_projectSharingEditEntry = null;
+					_projectSharingEditProjectDisplayNameInitialized = false;
+					activePopup = PopupKind.ProjectSharing_MyProjects;
+				}
+				else if (btn == 1)
+				{
+					var projectDisplayName = (projectDisplayNameState.text ?? "").Trim();
+					var entry = _projectSharingEditEntry;
+					_projectSharingEditEntry = null;
+					activePopup = PopupKind.ProjectSharing_MyProjects;
+					_ = ProjectSharingUpdateEntryAsync(entry.id, projectDisplayName, _projectSharingEditIsPublic);
+				}
+
+				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+			}
+		}
+
+		static async Task ProjectSharingUpdateEntryAsync(string documentId, string projectDisplayName, bool isPublic)
+		{
+			try
+			{
+				await LibraryService.UpdateEntryAsync(documentId, projectDisplayName, isPublic);
+				_projectSharingMyProjectsLoading = true;
+				_ = ProjectSharingLoadMyProjectsAsync();
+			}
+			catch (Exception ex)
+			{
+				Debug.LogWarning($"[ProjectSharing] Update failed: {ex.Message}");
+			}
+		}
+
+		static bool ProjectSharingValidateUsername(string userName)
+		{
+			if (string.IsNullOrEmpty(userName)) return false;
+			if (userName.Length < 3 || userName.Length > 20) return false;
+			foreach (char c in userName)
+			{
+				if (!char.IsLetterOrDigit(c) && c != ' ' && c != '-' && c != '_')
+					return false;
+			}
+			string lower = userName.ToLower();
+			return lower != "anonymous" && lower != "guest" && lower != "admin";
+		}
+
+		static void DrawProjectSharingChangeUsernamePopup()
+		{
+			if (_projectSharingChangeUsernameShowConfirm)
+			{
+				DrawProjectSharingChangeUsernameConfirmDialog();
+				return;
+			}
+
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			float w = Seb.Vis.UI.UI.Width;
+			float h = Seb.Vis.UI.UI.Height;
+			Vector2 centre = Seb.Vis.UI.UI.Centre;
+
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			{
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+
+				Seb.Vis.UI.UI.DrawText("Change Username", theme.FontRegular, theme.FontSizeRegular * 1.1f, centre + Vector2.up * (h * Popup_TitleOffsetFrac), Anchor.CentreTop, Color.white);
+
+				string subtitle = _projectSharingChangeUsernameHasUsername
+					? "Choose a username that will be displayed on your projects"
+					: "Claim a username to identify yourself on shared projects";
+				Seb.Vis.UI.UI.DrawText(subtitle, theme.FontRegular, theme.FontSizeRegular * 0.8f, centre + Vector2.up * (h * (Popup_TitleOffsetFrac - 0.04f)), Anchor.CentreTop, ColHelper.MakeCol255(200, 200, 200));
+
+				if (!_projectSharingChangeUsernameInitialized)
+				{
+					Seb.Vis.UI.UI.GetInputFieldState(ID_ProjectSharing_ChangeUsername).SetText(_projectSharingChangeUsernameOriginal ?? "");
+					_projectSharingChangeUsernameInitialized = true;
+				}
+
+				InputFieldTheme inputTheme = theme.ChipNameInputField;
+				inputTheme.fontSize = theme.FontSizeRegular;
+				Vector2 pos = centre + Vector2.up * (h * (Popup_TitleOffsetFrac - 0.1f));
+				Seb.Vis.UI.UI.DrawText("Username", theme.FontRegular, theme.FontSizeRegular * 0.8f, pos, Anchor.CentreTop, Color.white);
+				pos += Vector2.down * (h * Popup_SpacingFrac);
+				float inputHeight = h * 0.032f;
+				InputFieldState usernameState;
+				if (_projectSharingChangeUsernameInProgress)
+				{
+					using (Seb.Vis.UI.UI.BeginDisabledScope(true))
+					{
+						usernameState = Seb.Vis.UI.UI.InputField(ID_ProjectSharing_ChangeUsername, inputTheme, pos, new Vector2(w * Popup_ScrollWidthFrac, inputHeight), "Enter username...", Anchor.CentreTop, 1f, null, false);
+					}
+				}
+				else
+				{
+					usernameState = Seb.Vis.UI.UI.InputField(ID_ProjectSharing_ChangeUsername, inputTheme, pos, new Vector2(w * Popup_ScrollWidthFrac, inputHeight), "Enter username...", Anchor.CentreTop, 1f, null, false);
+				}
+				pos += Vector2.down * (inputHeight + h * 0.04f);
+
+				if (!string.IsNullOrEmpty(_projectSharingChangeUsernameError))
+				{
+					Seb.Vis.UI.UI.DrawText(_projectSharingChangeUsernameError, theme.FontRegular, theme.FontSizeRegular * 0.8f, pos, Anchor.CentreTop, Color.red);
+					pos += Vector2.down * (h * 0.04f);
+				}
+
+				pos += Vector2.down * (h * 0.08f); // Extra spacing between input/error and buttons
+				int btn = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "CONFIRM" }, theme.MainMenuButtonTheme, new Vector2(centre.x, pos.y), w * Popup_ScrollWidthFrac, UILayoutHelper.DefaultSpacing, 0, Anchor.CentreTop);
+
+				if (btn == 0 || KeyboardShortcuts.CancelShortcutTriggered)
+				{
+					activePopup = PopupKind.None;
+				}
+				else if (btn == 1 && !_projectSharingChangeUsernameInProgress)
+				{
+					string newName = (usernameState.text ?? "").Trim();
+					if (!ProjectSharingValidateUsername(newName))
+					{
+						_projectSharingChangeUsernameError = "Username must be 3-20 characters (letters, numbers, spaces, hyphens, underscores)";
+					}
+					else if (_projectSharingChangeUsernameHasUsername && string.Equals(newName, _projectSharingChangeUsernameOriginal, StringComparison.OrdinalIgnoreCase))
+					{
+						activePopup = PopupKind.None;
+					}
+					else if (_projectSharingChangeUsernameHasUsername && newName != _projectSharingChangeUsernameOriginal)
+					{
+						_projectSharingChangeUsernameNewName = newName;
+						_projectSharingChangeUsernameShowConfirm = true;
+						_projectSharingChangeUsernameError = "";
+					}
+					else
+					{
+						_projectSharingChangeUsernameError = "";
+						_ = ProjectSharingClaimUsernameAsync(newName);
+					}
+				}
+
+				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+			}
+		}
+
+		static void DrawProjectSharingChangeUsernameConfirmDialog()
+		{
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			float w = Seb.Vis.UI.UI.Width;
+			float h = Seb.Vis.UI.UI.Height;
+			Vector2 centre = Seb.Vis.UI.UI.Centre;
+
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			{
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+
+				Seb.Vis.UI.UI.DrawText("Change Username?", theme.FontRegular, theme.FontSizeRegular * 1.2f, centre + Vector2.up * (h * Popup_TitleOffsetFrac), Anchor.CentreTop, ColHelper.MakeCol255(255, 165, 0));
+				Vector2 msgPos = centre + Vector2.up * (h * (Popup_TitleOffsetFrac - 0.08f));
+				string msg = $"Change from \"{_projectSharingChangeUsernameOriginal}\" to \"{_projectSharingChangeUsernameNewName}\"?\n\nThis will update all your existing projects.";
+				Seb.Vis.UI.UI.DrawText(msg, theme.FontRegular, theme.FontSizeRegular, msgPos, Anchor.CentreTop, Color.white);
+
+				Vector2 btnPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * (h * 0.04f);
+				int btn = Seb.Vis.UI.UI.HorizontalButtonGroup(new[] { "CANCEL", "CONFIRM CHANGE" }, theme.MainMenuButtonTheme, new Vector2(centre.x, btnPos.y), w * Popup_ScrollWidthFrac, UILayoutHelper.DefaultSpacing, 0, Anchor.CentreTop);
+
+				if (btn == 0 || KeyboardShortcuts.CancelShortcutTriggered)
+				{
+					_projectSharingChangeUsernameShowConfirm = false;
+					_projectSharingChangeUsernameNewName = "";
+				}
+				else if (btn == 1)
+				{
+					_ = ProjectSharingChangeUsernameConfirmAsync();
+				}
+
+				Seb.Vis.UI.UI.ModifyPanel(panelID, Seb.Vis.UI.UI.GetCurrentBoundsScope().Centre, Seb.Vis.UI.UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
+			}
+		}
+
+		static async Task ProjectSharingClaimUsernameAsync(string newName)
+		{
+			_projectSharingChangeUsernameInProgress = true;
+			_projectSharingChangeUsernameError = "";
+			try
+			{
+				var result = await UserAuthService.ClaimUsernameAsync(newName);
+				if (result.success)
+				{
+					_projectSharingLoggedInAs = newName;
+					activePopup = PopupKind.None;
+				}
+				else
+				{
+					_projectSharingChangeUsernameError = result.error;
+				}
+			}
+			catch (Exception ex)
+			{
+				_projectSharingChangeUsernameError = ex.Message;
+			}
+			_projectSharingChangeUsernameInProgress = false;
+		}
+
+		static async Task ProjectSharingChangeUsernameConfirmAsync()
+		{
+			_projectSharingChangeUsernameInProgress = true;
+			_projectSharingChangeUsernameError = "";
+			try
+			{
+				var result = await UserAuthService.ChangeUsernameAsync(_projectSharingChangeUsernameNewName);
+				if (result.success)
+				{
+					_projectSharingLoggedInAs = _projectSharingChangeUsernameNewName;
+					_projectSharingChangeUsernameOriginal = _projectSharingChangeUsernameNewName;
+					_projectSharingChangeUsernameShowConfirm = false;
+					_projectSharingChangeUsernameNewName = "";
+					activePopup = PopupKind.None;
+				}
+				else
+				{
+					_projectSharingChangeUsernameError = result.error;
+					_projectSharingChangeUsernameShowConfirm = false;
+					_projectSharingChangeUsernameNewName = "";
+				}
+			}
+			catch (Exception ex)
+			{
+				_projectSharingChangeUsernameError = ex.Message;
+				_projectSharingChangeUsernameShowConfirm = false;
+				_projectSharingChangeUsernameNewName = "";
+			}
+			_projectSharingChangeUsernameInProgress = false;
+		}
+
+		static void DrawProjectSharingImportListPopup()
+		{
+			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
+			Seb.Vis.UI.UI.StartNewLayer();
+			Seb.Vis.UI.UI.DrawFullscreenPanel(theme.MenuBackgroundOverlayCol);
+
+			float w = Seb.Vis.UI.UI.Width;
+			float h = Seb.Vis.UI.UI.Height;
+			Vector2 centre = Seb.Vis.UI.UI.Centre;
+			float popupTopY = centre.y + h * (ProjectSharing_ListPopupContentMaxFrac - 0.5f);
+
+			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
+			{
+				Draw.ID panelID = Seb.Vis.UI.UI.ReservePanel();
+
+				Seb.Vis.UI.UI.DrawText("Import projects", theme.FontRegular, theme.FontSizeRegular * ProjectSharing_ListPopupTitleFontScale, new Vector2(centre.x, popupTopY - h * ProjectSharing_ListPopupTitleTopInsetFrac), Anchor.CentreTop, Color.white);
+
+				float filterY = popupTopY - h * ProjectSharing_ListPopupFilterTopInsetFrac;
+				float rowHeight = 3f;
+				float filterSpacing = w * 0.04f;
+				float filterRegionWidth = w * ProjectSharing_ListPopupWidthFrac;
+				float wheelHeight = rowHeight * 0.9f;
+				float wheelWidth = filterRegionWidth * 0.35f;
+				WheelSelectorTheme listWheelTheme = theme.OptionsWheel;
+				listWheelTheme.OverrideFontSize(theme.FontSizeRegular * ProjectSharing_ListPopupWheelFontScale);
+
+				// Filter row: Public/Private/All wheel (left) | Sort wheel (right)
+				int filterIdx = (int)_projectSharingImportFilter;
+				int newFilterIdx = Seb.Vis.UI.UI.WheelSelector(filterIdx, ProjectSharingImportFilterOptions, new Vector2(centre.x - filterRegionWidth / 2 + wheelWidth / 2 + filterSpacing, filterY), new Vector2(wheelWidth, wheelHeight), listWheelTheme, Anchor.Centre);
+				if (newFilterIdx != filterIdx)
+				{
+					_projectSharingImportFilter = (LibraryService.LibraryFilterMode)newFilterIdx;
+					_projectSharingLibraryLoading = true;
+					_ = ProjectSharingLoadLibraryAsync();
+				}
+
+				float rightX = centre.x + filterRegionWidth / 2 - wheelWidth / 2 - filterSpacing;
+				int sortIdx = Seb.Vis.UI.UI.WheelSelector((int)_projectSharingImportSortOrder, ProjectSharingImportSortOptions, new Vector2(rightX, filterY), new Vector2(wheelWidth, wheelHeight), listWheelTheme, Anchor.Centre);
+				var newSortOrder = (LibraryService.LibrarySortOrder)Mathf.Clamp(sortIdx, 0, 2);
+				if (newSortOrder != _projectSharingImportSortOrder)
+				{
+					_projectSharingImportSortOrder = newSortOrder;
+					_projectSharingLibraryLoading = true;
+					_ = ProjectSharingLoadLibraryAsync();
+				}
+
+				Vector2 scrollSize = new(w * ProjectSharing_ListPopupWidthFrac, h * ProjectSharing_ListPopupScrollHeightFrac);
+				Vector2 scrollPos = new Vector2(centre.x, popupTopY - h * ProjectSharing_ListPopupScrollTopInsetFrac);
+				Seb.Vis.UI.UI.DrawScrollView(ID_ProjectSharing_LibraryScrollView, scrollPos, scrollSize, Anchor.CentreTop, theme.ScrollTheme, projectSharingImportScrollDrawer);
+
+				Vector2 buttonRowPos = Seb.Vis.UI.UI.PrevBounds.BottomLeft + Vector2.down * (h * ProjectSharing_ListPopupButtonsTopGapFrac);
+				float buttonRowWidth = w * ProjectSharing_ListPopupWidthFrac;
+				bool hasSelection = _projectSharingImportSelectedEntry != null;
+				bool importing = !string.IsNullOrEmpty(_projectSharingImportInProgressId);
+				bool importEnabled = hasSelection && !importing;
+
+				int actionBtn = Seb.Vis.UI.UI.HorizontalButtonGroup(
+					new[] { "IMPORT", "CLOSE" },
+					new[] { importEnabled, true },
+					theme.MainMenuButtonTheme,
+					new Vector2(centre.x, buttonRowPos.y),
+					buttonRowWidth,
+					UILayoutHelper.DefaultSpacing,
+					0,
+					Anchor.CentreTop);
+
+				if (actionBtn == 0 && importEnabled)
+				{
+					_projectSharingImportInProgressId = _projectSharingImportSelectedEntry.id;
+					_ = ProjectSharingImportAsync(_projectSharingImportSelectedEntry.id);
+				}
+				else if (actionBtn == 1 || KeyboardShortcuts.CancelShortcutTriggered)
+				{
+					activePopup = PopupKind.None;
+				}
+
+				Vector2 panelSize = new Vector2(w * ProjectSharing_ListPopupWidthFrac, h * (ProjectSharing_ListPopupHeightFrac + ProjectSharing_ListPopupBottomExtensionFrac)) + Vector2.one * ProjectSharing_ListPopupPanelPadding;
+				Vector2 panelCentre = centre + Vector2.down * (h * ProjectSharing_ListPopupBottomExtensionFrac * 0.5f);
+				Seb.Vis.UI.UI.ModifyPanel(panelID, panelCentre, panelSize, ColHelper.MakeCol255(37, 37, 43));
+			}
+		}
+
+		static void DrawAboutScreen()
+		{
+			ButtonTheme theme = DrawSettings.ActiveUITheme.MainMenuButtonTheme;
 		
 		// Show logo GameObjects when About menu is active AND no popup is open
 		if (AboutMenuUIController.Instance != null)
@@ -927,6 +2352,9 @@ namespace DLS.Graphics
 		if (Seb.Vis.UI.UI.Button("What's New?", theme, whatsNewButtonPos, Vector2.zero, true, true, true, theme.buttonCols))
 		{
 			activePopup = PopupKind.PatchNotes;
+			// Reload patch notes each time so we pick up JSON changes without restarting (avoids stale Unity/Resources cache)
+			patchNotesData = null;
+			PatchNotesLoader.ForceReload();
 		}
 		
 		if (Seb.Vis.UI.UI.Button("Back", theme, backButtonPos, Vector2.zero, true, true, true, theme.buttonCols))
@@ -937,6 +2365,12 @@ namespace DLS.Graphics
 
 		static void DrawPatchNotesPopup()
 		{
+			// Load (or reload) so we always show current data after opening the popup
+			if (patchNotesData == null)
+			{
+				patchNotesData = PatchNotesLoader.LoadPatchNotes();
+			}
+
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
 			Seb.Vis.UI.UI.StartNewLayer();
@@ -1095,6 +2529,7 @@ namespace DLS.Graphics
 			Main,
 			LoadProject,
 			Settings,
+			ProjectSharing,
 			About
 		}
 
@@ -1108,6 +2543,15 @@ namespace DLS.Graphics
 		OverwriteConfirmation,
 		ProjectCreationError,
 		PatchNotes,
+		ProjectSharing_CreateAccount,
+		ProjectSharing_Login,
+		ProjectSharing_UploadConfirm,
+		ProjectSharing_UploadDisplayName,
+		ProjectSharing_ImportList,
+		ProjectSharing_MyProjects,
+		ProjectSharing_DeleteConfirm,
+		ProjectSharing_EditEntry,
+		ProjectSharing_ChangeUsername,
 	}
 	}
 }

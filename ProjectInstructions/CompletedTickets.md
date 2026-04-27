@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 73
-- **Most Recent**: Ticket 105 (Hotbar touch drag scrolling)
+- **Total Completed Tickets**: 74
+- **Most Recent**: Ticket 106 (Project Sharing popup layout)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 106** – Project Sharing popup layout (larger list windows)
+**Closed:** 2026  
+**Summary:** Enlarged Export project, Import projects, and My projects list popups in `MainMenu.cs`: dedicated `ProjectSharing_ListPopup*` constants, wider scroll areas and aligned filter/button rows; smaller dialogs unchanged. Report: Ticket_106_Project_Sharing_Popup_Layout_Size_Report.md.
+
+---
 
 ### **Ticket 105** – Bottom bar / hotbar touch drag scrolling
 **Closed:** 2026  

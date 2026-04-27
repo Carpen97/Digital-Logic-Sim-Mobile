@@ -25,6 +25,11 @@
           "text": "Hotbar scrolling – Touch drag mode - In Preferences → Display, \"Hotbar scrolling\" now includes **TOUCH DRAG (no arrows)**: pan the bottom starred-chip bar by dragging horizontally on touch devices, without using the left/right arrow buttons. Existing options (arrows, inverted arrows, off) are unchanged.",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Project Sharing – Larger lists - The **Export project**, **Import projects**, and **My projects** windows now use a bigger layout (wider list area and taller scroll region) so long project names and author lines are easier to read and less likely to overflow.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "bugFixes": []
