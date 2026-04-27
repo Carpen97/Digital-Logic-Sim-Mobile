@@ -17,10 +17,10 @@ namespace DLS.Game
 {
 	public static class Main
 	{
-		public static readonly Version DLSVersion = new(2, 1, 6, 12);
+		public static readonly Version DLSVersion = new(2, 1, 6, 13);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
 		public static readonly CEVersion DLSVersion_ModdedID = new(1, 2, 1);
-		public const string LastUpdatedString = "25 Feb 2026";
+		public const string LastUpdatedString = "27 Apr 2026";
 		public const string LastUpdatedModdedString = "9 Feb 2026";
 		public static AppSettings ActiveAppSettings;
 
@@ -220,6 +220,12 @@ namespace DLS.Game
 				Prefs_Snapping = 2, // Always
 				Prefs_StraightWires = 0, // Hold Shift
 				Prefs_UseDragAndDropMode = true, // Drag and Drop
+				Prefs_RotationEnabled = true,
+				Prefs_RotationSteps = 4, // 4 steps = 90° per rotation
+				Prefs_RotateChipText = true, // Rotate chip name text with chip
+				Prefs_RotateSubchipLabels = true, // Rotate labels under chips with chip
+				Prefs_GroupBackgroundDisplay = 0, // Off
+				Prefs_GroupBackgroundTransparency = 1, // Medium
 			// Simulation preferences
 			Prefs_SimTargetStepsPerSecond = 1000,
 			Prefs_SimStepsPerClockTick = 25,

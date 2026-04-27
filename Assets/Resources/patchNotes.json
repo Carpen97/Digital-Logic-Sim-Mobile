@@ -1,8 +1,15 @@
 {
   "versions": [
     {
-      "version": "2.1.6.13",
+      "version": "2.1.6.14",
       "releaseDate": "TBD",
+      "newFeatures": [],
+      "improvements": [],
+      "bugFixes": []
+    },
+    {
+      "version": "2.1.6.13",
+      "releaseDate": "April 27, 2026",
       "newFeatures": [
         {
           "text": "Component grouping - Select multiple chips (or input/output pins), then use the context menu to \"Make group\". Clicking one member selects the whole group so you can move or edit them together. \"Ungroup\" splits them; \"Save group\" saves to the library (same place as chips, with a [G] marker). Saved groups can be placed like chips. Great for reusable subcircuits and keeping related parts together.",
