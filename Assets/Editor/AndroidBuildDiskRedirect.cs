@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using UnityEditor;
+using UnityEngine;
 
 /// <summary>
 /// Puts Gradle cache and JVM temp on the project drive (e.g. I:) instead of defaulting to
