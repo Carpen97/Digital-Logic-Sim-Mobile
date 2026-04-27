@@ -5,15 +5,16 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Puts Gradle cache and JVM temp on the project drive (e.g. I:) instead of defaulting to
-/// %USERPROFILE%\.gradle and %TEMP% on C:, which avoids "not enough space on the disk" when C: is full.
+/// Puts Gradle cache and JVM temp on the same volume as the project but off C: (e.g. I:\GradleUserHome),
+/// avoiding full C: and avoiding paths nested under the project folder (which can exceed Windows MAX_PATH
+/// when Gradle writes deep transform cache paths for Ninja).
 /// Applies to the Unity editor process and child processes (Gradle) only.
 /// </summary>
 [InitializeOnLoad]
 internal static class AndroidBuildDiskRedirect
 {
-    const string GradleUserHomeFolderName = ".gradle-user-home";
-    const string BuildTempFolderName = ".unity-build-temp";
+    const string GradleDirName = "GradleUserHome";
+    const string BuildTempDirName = "UnityAndroidBuildTemp";
 
     static AndroidBuildDiskRedirect()
     {
@@ -23,8 +24,12 @@ internal static class AndroidBuildDiskRedirect
     static void Apply()
     {
         string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
-        string gradleUserHome = Path.Combine(projectRoot, GradleUserHomeFolderName);
-        string buildTemp = Path.Combine(projectRoot, BuildTempFolderName);
+        string driveRoot = Path.GetPathRoot(projectRoot);
+        if (string.IsNullOrEmpty(driveRoot))
+            return;
+
+        string gradleUserHome = Path.Combine(driveRoot, GradleDirName);
+        string buildTemp = Path.Combine(driveRoot, BuildTempDirName);
 
         try
         {
