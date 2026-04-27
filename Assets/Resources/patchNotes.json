@@ -30,6 +30,11 @@
           "text": "Project Sharing – Larger lists - The **Export project**, **Import projects**, and **My projects** windows now use a bigger layout (wider list area and taller scroll region) so long project names and author lines are easier to read and less likely to overflow.",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Mobile: the bottom bar **MENU** no longer lists **Find chip** (search from the chip library is still available via **Library**). Desktop is unchanged.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
       "bugFixes": []
