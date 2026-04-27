@@ -13,12 +13,24 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 71
-- **Most Recent**: Ticket 095 (Rotate chips)
+- **Total Completed Tickets**: 73
+- **Most Recent**: Ticket 105 (Hotbar touch drag scrolling)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 105** – Bottom bar / hotbar touch drag scrolling
+**Closed:** 2026  
+**Summary:** Hotbar scrolling preference (Preferences → Display) now includes **TOUCH DRAG (no arrows)** as a mode: pan the starred chip strip by horizontal drag on touch devices; arrow buttons hidden in that mode. Complements ARROWS / ARROWS (inverted) / OFF. `BottomBarUI`, `MainMenu` wheel options, `AppSettings`. Ticket: Ticket_105_Bottom_Bar_Touch_Drag_Scroll.md.
+
+---
+
+### **Ticket 100** – Transmitter and Receiver chips
+**Closed:** 2026-02  
+**Summary:** Two chips that communicate by frequency (channel): Transmitter (one input, sends on configurable frequency); Receiver (one output, receives on same frequency). Context menu → Edit to set frequency; only one transmitter per frequency (edit menu rejects occupied frequencies). Multiple receivers may share a frequency. Frequency persists with save/load. Report: Ticket_100_Transmitter_Receiver_Report.md.
+
+---
 
 ### **Ticket 095** – Rotate chips
 **Closed:** 2026-02  

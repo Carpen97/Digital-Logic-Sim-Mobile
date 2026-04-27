@@ -13,9 +13,20 @@
           "text": "Rotate chips - Rotate placed chips in 90° steps. Use the context menu (\"Rotate 90° CW\" / \"Rotate 90° CCW\"), or on PC use Q/E keys or Ctrl+scroll when chips are selected. Rotation is saved with your project and wires stay connected.",
           "userFacing": true,
           "editNotes": ""
+        },
+        {
+          "text": "Transmitter and Receiver - Wireless signal chips! Place a Transmitter (one input) and a Receiver (one output); set the same frequency via context menu → Edit. The receiver outputs whatever the transmitter's input is—no wires between them. Use different frequencies for multiple independent links. Find them in the WIRELESS collection.",
+          "userFacing": true,
+          "editNotes": ""
         }
       ],
-      "improvements": [],
+      "improvements": [
+        {
+          "text": "Hotbar scrolling – Touch drag mode - In Preferences → Display, \"Hotbar scrolling\" now includes **TOUCH DRAG (no arrows)**: pan the bottom starred-chip bar by dragging horizontally on touch devices, without using the left/right arrow buttons. Existing options (arrows, inverted arrows, off) are unchanged.",
+          "userFacing": true,
+          "editNotes": ""
+        }
+      ],
       "bugFixes": []
     },
     {
