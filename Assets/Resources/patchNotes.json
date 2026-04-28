@@ -1,8 +1,8 @@
 {
   "versions": [
     {
-      "version": "2.1.6.13",
-      "releaseDate": "April 27, 2026",
+      "version": "2.1.6.14",
+      "releaseDate": "TBD",
       "newFeatures": [
         {
           "text": "Component grouping - Select multiple chips (or input/output pins), then use the context menu to \"Make group\". Clicking one member selects the whole group so you can move or edit them together. \"Ungroup\" splits them; \"Save group\" saves to the library (same place as chips, with a [G] marker). Saved groups can be placed like chips. Great for reusable subcircuits and keeping related parts together.",
@@ -33,6 +33,11 @@
         },
         {
           "text": "Mobile: the bottom bar **MENU** no longer lists **Find chip** (search from the chip library is still available via **Library**). Desktop is unchanged.",
+          "userFacing": true,
+          "editNotes": ""
+        },
+        {
+          "text": "Google Play: Android build updated to meet current security requirements (Unity runtime). No gameplay changes.",
           "userFacing": true,
           "editNotes": ""
         }

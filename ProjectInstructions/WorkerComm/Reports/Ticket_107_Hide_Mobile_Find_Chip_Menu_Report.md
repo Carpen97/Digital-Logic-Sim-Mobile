@@ -10,7 +10,7 @@ Removed **FIND CHIP** from the mobile (`UNITY_ANDROID || UNITY_IOS`) `menuButton
 ## Files touched
 
 - `Assets/Scripts/Graphics/UI/Menus/BottomBarUI.cs`
-- `Assets/Resources/patchNotes.json` — user-facing line under **2.1.6.13** → `improvements`
+- `Assets/Resources/patchNotes.json` — user-facing line under **2.1.6.14** → `improvements` (rolled from skipped 2.1.6.13 store submission)
 
 ## Testing notes
 

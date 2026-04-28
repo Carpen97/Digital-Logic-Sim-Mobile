@@ -115,8 +115,8 @@ Mobile Port (origin)
 ## 📋 **Project Manager Workflow**
 
 ### **📦 Current Version Information:**
-- **Latest Released Version:** 2.1.6.13 (Released April 27, 2026)
-- **Next Version:** 2.1.6.14 (In Development)
+- **Latest Released Version (Play / public):** 2.1.6.12 (Released February 25, 2026) — *2.1.6.13 was submitted but rejected; it was never live on the store.*
+- **Next store release (in development):** 2.1.6.14 — includes everything planned for the skipped 2.1.6.13 submission, plus the compliant Unity build.
 - **Update this section after each release!**
 
 ---
@@ -141,7 +141,7 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 
 ### **📝 Patch Notes Workflow:**
 - **Location:** `Assets/Resources/patchNotes.json` (single source of truth)
-- **Version Tracking:** All new changes go into the NEXT version (currently 2.1.6.13)
+- **Version Tracking:** All new changes go into the NEXT version (currently **2.1.6.14**; patch notes top entry matches that).
 - **Philosophy:** Log everything, refine before release
 - **After Each Release:** 
   1. Update "Current Version Information" section above with new released version and next version number
@@ -172,6 +172,6 @@ The Project Manager coordinates workflow, manages ticket status, and maintains p
 ### **Current Status:**
 - **7 Open Tickets** available for selection (019, 026, 039, 046, 064, 069, 071, 104)
 - **4 In Progress** (099: User-created levels; 101: Output pin color picker; 102: Verilog exploration; 103: Wire static color)
-- **Tickets 024, 070, 074, 075, 078, 087, 088, 089, 091, 092, 093, 095, 096, 097, 098, 100, 105, 106** completed – completed (098: Label chip) (074: Simulation speed not saving; 087: Level upload & Project Sharing auth) (097: Level cheating – reject solutions with disallowed subchips; 096: Button chip label; 093: Unity Android security – upgraded to latest Unity editor; next release build will be compliant; upload to Play by Feb 26) (pre-release build, wire edit segment deletion, delete-mode ghost hitbox, customization view pin layout, level zero-score loophole fix, RGB LED chip, Discord logo in About menu)
+- **Tickets 024, 070, 074, 075, 078, 087, 088, 089, 091, 092, 093, 095, 096, 097, 098, 100, 105, 106, 107** completed – completed (098: Label chip) (074: Simulation speed not saving; 087: Level upload & Project Sharing auth) (097: Level cheating – reject solutions with disallowed subchips; 096: Button chip label; 093: Unity Android security – upgraded to latest Unity editor; next release build will be compliant; upload to Play by Feb 26) (pre-release build, wire edit segment deletion, delete-mode ghost hitbox, customization view pin layout, level zero-score loophole fix, RGB LED chip, Discord logo in About menu) (**107:** mobile MENU no longer shows Find chip; use Library for chip list)
 - **11 Backlog** tickets (076, 079–086, 090, 094); move to Open Tickets when ready to prioritize. (077 About/Discord iOS removed—icon fix done in 092; link/carpen_swe may need follow-up.)
 - **Note:** After community merge, if ProjectPlan was reverted, restore Backlog and ticket list from this version. 044 (Unity security) may have come from community—add to Open if needed.
