@@ -1,6 +1,6 @@
-# Discord announcement – Release 2.1.6.14 (TBD)
+# Discord announcement – Release 2.1.6.14 (April 28, 2026)
 
-*Copy below into Discord. Replace placeholder links under “Available Now” with your Play Store / Open Testing URLs. Set the date when you publish.*
+*Copy below into Discord. Replace placeholder links under “Available Now” with your Play Store / Open Testing URLs.*
 
 *Note: 2.1.6.13 was not released publicly (Play rejection). This announcement is for **2.1.6.14**, which includes everything that was planned for that submission.*
 
@@ -22,4 +22,4 @@
 
 ---
 
-*Version 2.1.6.14 | [release date when published]*
+*Version 2.1.6.14 | April 28, 2026*
