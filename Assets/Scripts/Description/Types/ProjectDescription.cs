@@ -38,6 +38,18 @@ namespace DLS.Description
 	public int Prefs_SimStepsPerClockTick;
 	public int Perfs_PinIndicators;
 	public bool Prefs_UseDragAndDropMode;
+	/// <summary>Master switch for rotation. When off, rotation is disabled (camera and chips).</summary>
+	public bool Prefs_RotationEnabled;
+	/// <summary>Number of rotation steps per 360° (e.g. 4 = 90° per step, 8 = 45° per step).</summary>
+	public int Prefs_RotationSteps;
+	/// <summary>When true, chip name text rotates with the chip.</summary>
+	public bool Prefs_RotateChipText;
+	/// <summary>When true, labels under chips (e.g. under buttons) rotate with the chip around the chip's center.</summary>
+	public bool Prefs_RotateSubchipLabels;
+	/// <summary>0=Off, 1=Rectangle (semi-transparent fill), 2=Outline only.</summary>
+	public int Prefs_GroupBackgroundDisplay;
+	/// <summary>0=Subtle, 1=Medium, 2=Visible. Controls transparency of group background/outline.</summary>
+	public int Prefs_GroupBackgroundTransparency;
 		
 		// User name preferences for leaderboard uploads
 		public string Prefs_UserName;

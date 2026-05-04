@@ -105,6 +105,55 @@ namespace DLS.Game
 			RecordAddOrDeleteElements(deletedElements, true, hasConnectedWires);
 		}
 
+		public void RecordRotateElements(List<SubChipInstance> rotatedSubchips, int[] originalRotations, int[] newRotations)
+		{
+			RotateUndoAction action = new()
+			{
+				subChipIDs = rotatedSubchips.Select(s => s.ID).ToArray(),
+				originalRotations = originalRotations,
+				newRotations = newRotations
+			};
+			RecordUndoAction(action);
+		}
+
+		public void RecordMakeGroup(List<SubChipInstance> subChips, List<DevPinInstance> devPins, int newGroupId)
+		{
+			GroupUndoAction action = new()
+			{
+				subChipIDs = subChips.Select(s => s.ID).ToArray(),
+				devPinIDs = devPins.Select(d => d.ID).ToArray(),
+				groupId = newGroupId,
+				isMakeGroup = true
+			};
+			RecordUndoAction(action);
+		}
+
+		public void RecordUngroup(List<SubChipInstance> subChips, List<DevPinInstance> devPins, int oldGroupId)
+		{
+			GroupUndoAction action = new()
+			{
+				subChipIDs = subChips.Select(s => s.ID).ToArray(),
+				devPinIDs = devPins.Select(d => d.ID).ToArray(),
+				groupId = oldGroupId,
+				isMakeGroup = false
+			};
+			RecordUndoAction(action);
+		}
+
+		/// <summary>Records both position and rotation changes (e.g. from two-finger chip rotate).</summary>
+		public void RecordRigidTransformElements(List<SubChipInstance> subchips, Vector2[] originalPositions, Vector2[] newPositions, int[] originalRotations, int[] newRotations)
+		{
+			RigidTransformUndoAction action = new()
+			{
+				subChipIDs = subchips.Select(s => s.ID).ToArray(),
+				originalPositions = originalPositions,
+				newPositions = newPositions,
+				originalRotations = originalRotations,
+				newRotations = newRotations
+			};
+			RecordUndoAction(action);
+		}
+
 		public void RecordAddElements(List<IMoveable> addedElements, bool hasWires)
 		{
 			RecordAddOrDeleteElements(addedElements, false, hasWires);
@@ -195,6 +244,18 @@ namespace DLS.Game
 				{
 					wireExistence.Trigger(undo, devChip);
 				}
+				else if (action is RotateUndoAction rotate)
+				{
+					rotate.Trigger(undo, devChip);
+				}
+				else if (action is RigidTransformUndoAction rigid)
+				{
+					rigid.Trigger(undo, devChip);
+				}
+				else if (action is GroupUndoAction groupAction)
+				{
+					groupAction.Trigger(undo, devChip);
+				}
 			}
 			catch (Exception e)
 			{
@@ -281,6 +342,45 @@ namespace DLS.Game
 			}
 		}
 
+		class RotateUndoAction : UndoAction
+		{
+			public int[] subChipIDs;
+			public int[] originalRotations;
+			public int[] newRotations;
+
+			public void Trigger(bool undo, DevChipInstance devChip)
+			{
+				Dictionary<int, IMoveable> elementLookupByID = devChip.Elements.ToDictionary(element => element.ID, element => element);
+				for (int i = 0; i < subChipIDs.Length; i++)
+				{
+					if (elementLookupByID.TryGetValue(subChipIDs[i], out IMoveable element) && element is SubChipInstance subchip)
+						subchip.Rotation = undo ? originalRotations[i] : newRotations[i];
+				}
+			}
+		}
+
+		class RigidTransformUndoAction : UndoAction
+		{
+			public int[] subChipIDs;
+			public Vector2[] originalPositions;
+			public Vector2[] newPositions;
+			public int[] originalRotations;
+			public int[] newRotations;
+
+			public void Trigger(bool undo, DevChipInstance devChip)
+			{
+				Dictionary<int, IMoveable> elementLookupByID = devChip.Elements.ToDictionary(element => element.ID, element => element);
+				for (int i = 0; i < subChipIDs.Length; i++)
+				{
+					if (elementLookupByID.TryGetValue(subChipIDs[i], out IMoveable element) && element is SubChipInstance subchip)
+					{
+						subchip.Position = undo ? originalPositions[i] : newPositions[i];
+						subchip.Rotation = undo ? originalRotations[i] : newRotations[i];
+					}
+				}
+			}
+		}
+
 		class ElementExistenceAction : UndoAction
 		{
 			public string[] chipNames;
@@ -337,6 +437,28 @@ namespace DLS.Game
 				{
 					wireStateBeforeDelete.Restore(devChip);
 				}
+			}
+		}
+
+		class GroupUndoAction : UndoAction
+		{
+			public int[] subChipIDs;
+			public int[] devPinIDs;
+			public int groupId;
+			public bool isMakeGroup; // true = was MakeGroup, false = was Ungroup
+
+			public void Trigger(bool undo, DevChipInstance devChip)
+			{
+				bool setGrouped = (isMakeGroup && !undo) || (!isMakeGroup && undo);
+				var lookup = devChip.Elements.ToDictionary(e => e.ID, e => e);
+				if (subChipIDs != null)
+					foreach (int id in subChipIDs)
+						if (lookup.TryGetValue(id, out IMoveable e) && e is SubChipInstance s)
+							s.GroupId = setGrouped ? groupId : 0;
+				if (devPinIDs != null)
+					foreach (int id in devPinIDs)
+						if (lookup.TryGetValue(id, out IMoveable e) && e is DevPinInstance d)
+							d.GroupId = setGrouped ? groupId : 0;
 			}
 		}
 

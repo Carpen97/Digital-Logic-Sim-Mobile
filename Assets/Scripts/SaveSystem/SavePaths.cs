@@ -23,11 +23,17 @@ namespace DLS.SaveSystem
 		public static string GetProjectPath(string projectName) => Path.Combine(ProjectsPath, projectName);
 		public static string GetDeletedProjectPath(string projectName) => Path.Combine(DeletedProjectsPath, projectName);
 		public static string GetChipsPath(string projectName) => Path.Combine(GetProjectPath(projectName), "Chips");
+		public static string GetGroupsPath(string projectName) => Path.Combine(GetProjectPath(projectName), "Groups");
 		public static string GetDeletedChipsPath(string projectName) => Path.Combine(GetProjectPath(projectName), "Deleted Chips");
 		public static string GetProjectDescriptionPath(string projectName) => Path.Combine(GetProjectPath(projectName), ProjectFileName);
 
 		// Levels
 		public static string GetProjectMetaPath(string projectName) => Path.Combine(GetProjectPath(projectName), "Meta");
 		public static string GetLevelsProgressPath(string projectName) => Path.Combine(GetProjectMetaPath(projectName), "levels_progress.json");
+
+		// User-created levels (My levels) - per project
+		public static string GetUserLevelsPath(string projectName) => Path.Combine(GetProjectPath(projectName), "UserLevels");
+		public static string GetUserLevelFilePath(string projectName, string levelId) =>
+			Path.Combine(GetUserLevelsPath(projectName), SaveUtils.SanitizeFileName(levelId ?? "level") + ".json");
 	}
 }

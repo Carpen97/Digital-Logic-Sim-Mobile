@@ -8,6 +8,7 @@ using Seb.Vis.UI;
 using UnityEngine;
 using ContextMenu = DLS.Graphics.ContextMenu;
 using Object = UnityEngine.Object;
+using ChipType = DLS.Description.ChipType;
 
 namespace DLS.Game
 {
@@ -34,7 +35,8 @@ namespace DLS.Game
 		private static bool isPinching;
 		private static float initialPinchDistance;
 		private static Vector2 initialPinchMidPoint;
-
+		static Vector2 twoFingerAnchorWorld1;
+		static Vector2 twoFingerAnchorWorld2;
 		public static bool PinchFrameStarted { get; private set; }
 
 		static bool CanMove => UIDrawer.ActiveMenu is UIDrawer.MenuType.None or UIDrawer.MenuType.BottomBarMenuPopup or UIDrawer.MenuType.ChipCustomization;
@@ -106,10 +108,9 @@ namespace DLS.Game
 		}
 
 		static bool isTouchPanning;
-        private static Vector2 panTouchStartScreen;
-        static Vector2 t1StartPos;
+        private 		static Vector2 panTouchStartScreen;
+		static Vector2 t1StartPos;
 		static Vector2 t2StartPos;
-		static Vector2 startWorldMidPoint;
 		private static float zoomPrev = 1f;
 		static Vector2 panTouchStartWorld;
 
@@ -117,37 +118,57 @@ namespace DLS.Game
 		{
 			if (Input.touchCount != 2) return;
 
+			if (ChipInteractionController.IsTwoFingerRotatingChip) return;
+
 			Touch t1 = Input.GetTouch(0);
 			Touch t2 = Input.GetTouch(1);
+			Vector2 world1 = camera.ScreenToWorldPoint(t1.position);
+			Vector2 world2 = camera.ScreenToWorldPoint(t2.position);
+			if (ChipInteractionController.ShouldChipControllerHandleTwoFinger(world1, world2)) return;
 
 			Vector2 touch1ScreenPos = t1.position;
 			Vector2 touch2ScreenPos = t2.position;
+			float currentDist = Vector2.Distance(touch1ScreenPos, touch2ScreenPos);
 
-			// When starting pinch
 			if (t1.phase == TouchPhase.Began || t2.phase == TouchPhase.Began)
 			{
 				t1StartPos = touch1ScreenPos;
 				t2StartPos = touch2ScreenPos;
 				zoomPrev = activeView.OrthoSize;
-
-				// Save the midpoint in world coordinates
-				startWorldMidPoint = (camera.ScreenToWorldPoint(t1StartPos) + camera.ScreenToWorldPoint(t2StartPos)) * 0.5f;
+				initialPinchDistance = Mathf.Max(currentDist, 0.001f);
+				twoFingerAnchorWorld1 = camera.ScreenToWorldPoint(t1StartPos);
+				twoFingerAnchorWorld2 = camera.ScreenToWorldPoint(t2StartPos);
 			}
 			else
 			{
-				float oldDist = Vector2.Distance(t1StartPos, t2StartPos);
-				float newDist = Vector2.Distance(touch1ScreenPos, touch2ScreenPos);
+				float zoomFactor = initialPinchDistance / Mathf.Max(currentDist, 0.001f);
+				float newOrtho = Mathf.Clamp(zoomPrev * zoomFactor, zoomRange.x, zoomRange.y);
+				activeView.OrthoSize = newOrtho;
 
-				if (Mathf.Abs(oldDist) < 0.01f) return; // Avoid divide-by-zero
+				bool rotationEnabled = Project.ActiveProject?.description.Prefs_RotationEnabled ?? true;
+				if (rotationEnabled)
+				{
+					int steps = Project.ActiveProject?.description.Prefs_RotationSteps ?? 0;
+					var result = TwoFingerRigidTransform.SolveCameraRigid(
+						twoFingerAnchorWorld1, twoFingerAnchorWorld2,
+						touch1ScreenPos, touch2ScreenPos,
+						newOrtho, activeView.RotationDegrees);
 
-				float zoomFactor = oldDist / newDist;
-				float newZoom = zoomPrev * zoomFactor;
-				SetZoom(newZoom);
+					float rotation = steps > 0 ? TwoFingerRigidTransform.SnapRotation(result.RotationDegrees, steps) : result.RotationDegrees;
+					activeView.Pos = result.Pos;
+					activeView.RotationDegrees = rotation;
+				}
+				else
+				{
+					Vector2 startWorldMid = (twoFingerAnchorWorld1 + twoFingerAnchorWorld2) * 0.5f;
+					Vector2 currentScreenMid = (touch1ScreenPos + touch2ScreenPos) * 0.5f;
+					Vector3 midVec3 = new Vector3(currentScreenMid.x, currentScreenMid.y, 0f);
+					Vector2 currentWorldMid = (Vector2)camera.ScreenToWorldPoint(midVec3);
+					MovePosition(startWorldMid - currentWorldMid);
+				}
 
-				// After zooming, keep the world midpoint under fingers
-				Vector2 currentWorldMidPoint = (camera.ScreenToWorldPoint(touch1ScreenPos) + camera.ScreenToWorldPoint(touch2ScreenPos)) * 0.5f;
-				Vector2 delta = startWorldMidPoint - currentWorldMidPoint;
-				MovePosition(delta);
+				UpdateCameraState();
+				ContextMenu.CloseContextMenu();
 			}
 		}
 
@@ -213,6 +234,7 @@ namespace DLS.Game
 				canPanWithCurrentTouchCount &&
 				Project.ActiveProject.controller.SelectedElements.Count == 0 &&
 				!MobileUIControllerWrapper.IsBoxSelectToolActive &&
+				!BottomBarUI.IsTouchInteractingChipStrip &&
 				!DLS.Game.EraserModeController.IsActive &&  // Disable camera panning when eraser mode is active
 				!isTouchingClickableDisplay  // Disable camera panning when touching clickable displays
 			)
@@ -316,8 +338,9 @@ namespace DLS.Game
 			}
 		}
 
-		// shift scroll reserved for adjusting spacing when placing multiple elements
-		static bool CanMiddleMouseZoom() => !(InputHelper.ShiftIsHeld && Project.ActiveProject.controller.IsPlacingElements) && InputHelper.IsMouseInGameWindow();
+		// Shift scroll reserved for adjusting spacing when placing multiple elements
+		// Ctrl scroll reserved for rotating selected chips or camera (when nothing selected)
+		static bool CanMiddleMouseZoom() => !(InputHelper.ShiftIsHeld && Project.ActiveProject.controller.IsPlacingElements) && !InputHelper.CtrlIsHeld && InputHelper.IsMouseInGameWindow();
 
 		static void MovePosition(Vector2 delta)
 		{
@@ -337,7 +360,31 @@ namespace DLS.Game
 		{
 			Vector2 pos2D = activeView.Pos;
 			camT.position = new Vector3(pos2D.x, pos2D.y, -10);
+			camT.rotation = Quaternion.Euler(0, 0, activeView.RotationDegrees);
 			camera.orthographicSize = activeView.OrthoSize;
+		}
+
+		/// <summary>Rotate the camera view by deltaDegrees around the mouse position. steps=0 = free (no snap).</summary>
+		public static void RotateCamera(float deltaDegrees)
+		{
+			if (!CanZoom || camera == null) return;
+			if (!(Project.ActiveProject?.description.Prefs_RotationEnabled ?? true)) return;
+			int steps = Project.ActiveProject?.description.Prefs_RotationSteps ?? 0;
+			float snappedDelta = steps > 0 ? Mathf.RoundToInt(deltaDegrees / (360f / steps)) * (360f / steps) : deltaDegrees;
+
+			// Pivot around mouse position (or camera center if mouse outside game window)
+			Vector2 pivot = InputHelper.IsMouseInGameWindow() ? InputHelper.MousePosWorld : activeView.Pos;
+			Vector2 offset = activeView.Pos - pivot;
+			float rad = snappedDelta * Mathf.Deg2Rad;
+			float cos = Mathf.Cos(rad);
+			float sin = Mathf.Sin(rad);
+			Vector2 rotatedOffset = new(offset.x * cos - offset.y * sin, offset.x * sin + offset.y * cos);
+			activeView.Pos = pivot + rotatedOffset;
+
+			activeView.RotationDegrees = (activeView.RotationDegrees + snappedDelta) % 360f;
+			if (activeView.RotationDegrees < 0) activeView.RotationDegrees += 360f;
+			UpdateCameraState();
+			ContextMenu.CloseContextMenu();
 		}
 
 		static ViewState GetActiveViewState()
@@ -358,6 +405,13 @@ namespace DLS.Game
 			{
 				activeViewNew = mainMenuView;
 			}
+			else if (UIDrawer.ActiveMenu == UIDrawer.MenuType.LabelEdit &&
+				ContextMenu.interactionContext is SubChipInstance sub &&
+				sub.ChipType == ChipType.Label)
+			{
+				// Pan camera so label is visible in left half of screen; menu goes on right
+				activeViewNew = GetLabelEditViewState(sub.Position);
+			}
 			else
 			{
 				DevChipInstance viewedChip = Project.ActiveProject.ViewedChip;
@@ -371,6 +425,21 @@ namespace DLS.Game
 			}
 
 			return activeViewNew;
+		}
+
+		// Pan camera so label is centred in left half of screen (Edit Label menu is on right)
+		static ViewState GetLabelEditViewState(Vector2 labelWorldPos)
+		{
+			if (camera == null) return activeView;
+			ViewState baseView = chipViewStateLookup.TryGetValue(Project.ActiveProject.ViewedChip.ChipName, out var v) ? v : activeView;
+			float screenHalfWidth = baseView.OrthoSize * camera.aspect;
+			// Offset 0.4 puts label at ~30% from left edge; 0.5 would be 25% (centre of left half)
+			// Use 0.4 to shift label slightly right for better centering in visible left area
+			return new ViewState
+			{
+				OrthoSize = baseView.OrthoSize,
+				Pos = new Vector2(labelWorldPos.x + screenHalfWidth * 0.4f, labelWorldPos.y)
+			};
 		}
 
 		// Calculate view params to fit given chip into screen (or as much as possible within max zoom setting)
@@ -442,6 +511,7 @@ namespace DLS.Game
 		{
 			public float OrthoSize = StartupOrthoSize;
 			public Vector2 Pos = Vector2.zero;
+			public float RotationDegrees;
 		}
 
 		public static void SetViewForCurrentChip(ViewState view)

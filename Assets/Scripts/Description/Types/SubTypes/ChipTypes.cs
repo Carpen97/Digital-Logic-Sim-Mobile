@@ -6,6 +6,9 @@ namespace DLS.Description
 
 		// ---- Basic Chips ----
 		Nand,
+		And,
+		Or,
+		Xor,
 		TriStateBuffer,
 		Clock,
 		Pulse,
@@ -57,7 +60,11 @@ namespace DLS.Description
 	// ---- Time ----
 	RTC,
 
-		// ---- Clock ----
+        // ---- Clock ----
 		SPS,
+
+		// ---- Wireless Communication ----
+		Transmitter,
+		Receiver,
 	}
 }

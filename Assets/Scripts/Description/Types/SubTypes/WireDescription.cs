@@ -17,5 +17,6 @@ namespace DLS.Description
 		public int ConnectedWireIndex;
 		public int ConnectedWireSegmentIndex;
 		public Vector2[] Points;
+		public bool UseStaticColor;
 	}
 }

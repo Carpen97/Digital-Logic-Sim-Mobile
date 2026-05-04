@@ -32,6 +32,8 @@ Shader "Seb.Vis.Text/TextShader"
                 float2 maskMin;
                 float2 maskMax;
                 int useScreenSpace;
+                float rotationDegrees;
+                float2 rotationCentre;
             };
 
             // Data stored for every instance (each individual glyph that needs to be rendered)
@@ -96,6 +98,15 @@ Shader "Seb.Vis.Text/TextShader"
 
                 float2 offset = instance.pos + group.offset;
                 float2 worldVertPos = v.vertex * quadSize * instance.fontSize + offset;
+
+                // Apply rotation around anchor point if requested
+                if (group.rotationDegrees != 0)
+                {
+                    float2 fromCentre = worldVertPos - group.rotationCentre;
+                    float rad = group.rotationDegrees * 0.0174532925; // deg to rad
+                    float cs = cos(rad), sn = sin(rad);
+                    worldVertPos = group.rotationCentre + float2(fromCentre.x * cs - fromCentre.y * sn, fromCentre.x * sn + fromCentre.y * cs);
+                }
 
                 o.vertex = WorldToClipPos(worldVertPos, group.useScreenSpace, ScreenSize);
 
@@ -228,8 +239,8 @@ Shader "Seb.Vis.Text/TextShader"
                     return 0;
                 }
 
-                // Size of pixel in glyph space
-                float pixelSize = ddx(input.pos.x);
+                // Size of pixel in glyph space (use fwidth for rotation-invariance; ddx alone fails at 90°/180°)
+                float pixelSize = max(fwidth(input.pos.x), 1e-7);
                 float alphaSum = 0;
 
                 // Render 3 times (with slight y offset) for anti-aliasing

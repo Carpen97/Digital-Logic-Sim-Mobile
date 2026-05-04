@@ -24,5 +24,18 @@ namespace DLS.Game
 			rng ??= new Random();
 			return rng.Next(minValue, int.MaxValue);
 		}
+
+		/// <summary>Generate a unique group ID for component grouping. Always non-zero.</summary>
+		public static int GenerateNewGroupId(DevChipInstance devChip)
+		{
+			while (true)
+			{
+				int candidateID = GetRandomID();
+				bool isUnique = !devChip.Elements.Any(x =>
+					(x is SubChipInstance s && s.GroupId == candidateID) ||
+					(x is DevPinInstance d && d.GroupId == candidateID));
+				if (isUnique) return candidateID;
+			}
+		}
 	}
 }

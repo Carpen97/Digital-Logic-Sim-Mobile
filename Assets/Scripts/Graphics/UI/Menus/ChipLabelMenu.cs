@@ -123,7 +123,13 @@ namespace DLS.Graphics
 					valY = SnapValue(valY);
 				}
 				if (KeyboardShortcuts.CancelShortcutTriggered || buttonIndex == 0) Cancel();
-				else if (KeyboardShortcuts.ConfirmShortcutTriggered || buttonIndex == 1) Confirm(newName, new Vector2(valX, valY));
+				else if (KeyboardShortcuts.ConfirmShortcutTriggered || buttonIndex == 1)
+				{
+					// Snap to exact -1/0/1 when close so preset and slider-drag produce identical positions
+					valX = SnapValueToThree(valX);
+					valY = SnapValueToThree(valY);
+					Confirm(newName, new Vector2(valX, valY));
+				}
 			}
 		}
 
@@ -154,6 +160,16 @@ namespace DLS.Graphics
 			if (v < -0.5f) return -1f;
 			if (v < 0.5f) return 0f;
 			return 1f;
+		}
+
+		/// <summary>Snap value to -1, 0, or 1 when within tolerance so preset and slider produce identical positions.</summary>
+		static float SnapValueToThree(float v)
+		{
+			const float tol = 0.05f;
+			if (Mathf.Abs(v - (-1f)) <= tol) return -1f;
+			if (Mathf.Abs(v) <= tol) return 0f;
+			if (Mathf.Abs(v - 1f) <= tol) return 1f;
+			return v;
 		}
 	}
 }

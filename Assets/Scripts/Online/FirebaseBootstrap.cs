@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using Firebase;
@@ -40,48 +41,144 @@ namespace DLS.Online
         /// </summary>
         public static string UserId => _userId;
 
+        static bool _firestoreConfigured;
+
+        /// <summary>
+        /// Configures Firestore (disables persistence on desktop) before first use.
+        /// Call this before any Firestore access. Safe to call multiple times.
+        /// Deferred from init to reduce uWS::HttpSocket::upgrade crash risk on Windows (firebase-unity-sdk#1291).
+        /// </summary>
+        public static void EnsureFirestoreConfigured()
+        {
+            if (!_isInitialized || _firestoreConfigured) return;
+            _firestoreConfigured = true;
+#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
+            try
+            {
+                var db = Firebase.Firestore.FirebaseFirestore.DefaultInstance;
+                if (db != null && db.Settings.PersistenceEnabled)
+                {
+                    db.Settings.PersistenceEnabled = false;
+                    Debug.Log("[Firebase] Firestore persistence disabled (deferred config)");
+                }
+            }
+            catch { /* best-effort */ }
+#endif
+        }
+
+        /// <summary>
+        /// Call after SignOut so the next InitializeAsync performs a fresh sign-in.
+        /// Used when user logs out of Project Sharing.
+        /// </summary>
+        public static void ResetAfterSignOut()
+        {
+            _initializationTask = null;
+            _isInitialized = false;
+            _userId = "anon";
+        }
+
+        /// <summary>
+        /// Refresh UserId from the current Firebase Auth state.
+        /// Call after CreateUserWithEmail or SignInWithEmail (when not using anonymous).
+        /// </summary>
+        public static void RefreshUserIdFromAuth()
+        {
+            try
+            {
+                var user = FirebaseAuth.DefaultInstance?.CurrentUser;
+                _userId = user?.UserId ?? "anon";
+            }
+            catch
+            {
+                _userId = "anon";
+            }
+        }
+
+        /// <summary>
+        /// Deletes Firestore and Firebase heartbeat cache folders before init.
+        /// Corrupted cache causes uWS::HttpSocket::upgrade crash on app restart (firebase-unity-sdk#1291).
+        /// </summary>
+        static void TryClearFirebaseCacheFolders()
+        {
+            try
+            {
+                var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                if (string.IsNullOrEmpty(localAppData)) return;
+
+                foreach (var folderName in new[] { "firestore", "firebase-heartbeat" })
+                {
+                    var path = Path.Combine(localAppData, folderName);
+                    if (Directory.Exists(path))
+                    {
+                        try
+                        {
+                            Directory.Delete(path, recursive: true);
+                            Debug.Log($"[Firebase] Cleared cache folder: {path}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogWarning($"[Firebase] Could not clear {path}: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[Firebase] Cache cleanup failed: {ex.Message}");
+            }
+        }
+
         private static async Task InitializeInternalAsync()
         {
             try
             {
+                // Skip Firebase in Unity Editor to prevent crashes (uWS::HttpSocket::upgrade).
+                // Opt-in: DLS → Project Sharing → Use real Firebase in Editor (testing).
+                if (Application.isEditor && !Application.isBatchMode)
+                {
+                    if (PlayerPrefs.GetInt("DLS.UseFirebaseInEditor", 0) != 1)
+                    {
+                        Debug.Log("[Firebase] Skipping init in Editor (mock data). Enable via DLS menu to test real Firebase.");
+                        _userId = "anon";
+                        _isInitialized = true;
+                        return;
+                    }
+                    Debug.Log("[Firebase] Editor mode with real Firebase enabled - initializing...");
+                }
+
                 // Log platform information
                 Debug.Log($"[Firebase] Platform: {Application.platform}");
                 Debug.Log($"[Firebase] Unity Version: {Application.unityVersion}");
                 Debug.Log($"[Firebase] Is Editor: {Application.isEditor}");
-                
+
+                // Clear Firestore/heartbeat cache on Windows (Editor or build) to prevent uWS crash on restart.
+                if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
+                    TryClearFirebaseCacheFolders();
+
                 // Configure Firebase logging to reduce verbosity
                 FirebaseLoggingConfig.ConfigureLogging();
-                
+
                 Debug.Log("[Firebase] Starting Firebase initialization...");
 
-                // Check and fix dependencies with timeout
+                // Check and fix dependencies - use main thread to reduce crash risk
                 Debug.Log("[Firebase] About to call CheckAndFixDependenciesAsync...");
                 var dependencyTask = FirebaseApp.CheckAndFixDependenciesAsync();
-                var dependencyStatus = await Task.Run(async () => 
+                DependencyStatus dependencyStatus;
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
                 {
-                    using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+                    var timeoutTask = Task.Delay(TimeSpan.FromSeconds(15), cts.Token);
+                    var completedTask = await Task.WhenAny(dependencyTask, timeoutTask);
+
+                    if (completedTask == timeoutTask)
                     {
-                        try
-                        {
-                            // Use Task.WhenAny for timeout instead of WaitAsync
-                            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(10), cts.Token);
-                            var completedTask = await Task.WhenAny(dependencyTask, timeoutTask);
-                            
-                            if (completedTask == timeoutTask)
-                            {
-                                Debug.LogWarning("[Firebase] CheckAndFixDependenciesAsync timed out after 10 seconds");
-                                return DependencyStatus.UnavailableOther;
-                            }
-                            
-                            return await dependencyTask;
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            Debug.LogWarning("[Firebase] CheckAndFixDependenciesAsync timed out after 10 seconds");
-                            return DependencyStatus.UnavailableOther;
-                        }
+                        Debug.LogWarning("[Firebase] CheckAndFixDependenciesAsync timed out after 15 seconds");
+                        dependencyStatus = DependencyStatus.UnavailableOther;
                     }
-                });
+                    else
+                    {
+                        dependencyStatus = await dependencyTask;
+                    }
+                }
                 Debug.Log($"[Firebase] CheckAndFixDependenciesAsync completed: {dependencyStatus}");
                 
                 if (dependencyStatus != DependencyStatus.Available)
@@ -109,35 +206,9 @@ namespace DLS.Online
 
                 Debug.Log("[Firebase] Firebase app initialized successfully");
 
-                // IMPORTANT: Disable Firestore persistence on Windows to prevent crashes
-                // Source: https://github.com/firebase/quickstart-unity/issues/1284
-                #if UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX
-                try
-                {
-                    Debug.Log("[Firebase] Configuring Firestore settings for desktop platform...");
-                    var db = Firebase.Firestore.FirebaseFirestore.DefaultInstance;
-                    if (db != null)
-                    {
-                        Debug.Log("[Firebase] Disabling Firestore persistence to prevent Windows crashes...");
-                        db.Settings.PersistenceEnabled = false;
-                        Debug.Log("[Firebase] Firestore persistence disabled successfully");
-                        
-                        // Also clear any existing persistence cache that might be corrupted
-                        Debug.Log("[Firebase] Clearing persistence cache...");
-                        await db.ClearPersistenceAsync();
-                        Debug.Log("[Firebase] Persistence cache cleared");
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[Firebase] Firestore instance is null, skipping persistence configuration");
-                    }
-                }
-                catch (Exception firestoreEx)
-                {
-                    Debug.LogWarning($"[Firebase] Failed to configure Firestore settings (non-critical): {firestoreEx.Message}");
-                    // Continue anyway - this is a best-effort fix
-                }
-                #endif
+                // NOTE: Firestore config is DEFERRED to first actual use (EnsureFirestoreConfigured).
+                // Touching FirebaseFirestore.DefaultInstance during init can trigger uWS::HttpSocket::upgrade
+                // crash on some Windows configs (firebase-unity-sdk#1291). Deferring reduces crash risk.
 
                 // Handle authentication - now enabled for all non-Editor platforms
                 Debug.Log("[Firebase] About to start anonymous authentication...");

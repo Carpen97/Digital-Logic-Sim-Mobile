@@ -20,6 +20,8 @@ namespace DLS.Game
 		public PinStateValue State; // sim state
 		public PinStateValue PlayerInputState;
 		public PinColour Colour;
+		/// <summary>Custom RGB packed. 0 = use Colour preset.</summary>
+		public uint CustomColourPacked;
 		bool faceRight;
 		public float LocalPosY;
 		public string Name;
@@ -34,6 +36,7 @@ namespace DLS.Game
 			Address = address;
 			IsSourcePin = isSourcePin;
 			Colour = desc.Colour;
+			CustomColourPacked = desc.CustomColourPacked;
 
             IsBusPin = parent is SubChipInstance subchip && subchip.IsBus;
 			faceRight = isSourcePin;
@@ -46,19 +49,6 @@ namespace DLS.Game
             // Source pins (outputs) go on right side (face 1), input pins go on left side (face 3)
             face = faceRight ? 1 : 3;
             desc.face = face; // Update the description to match
-            
-            // For custom shapes, use the Position field from description
-            // For builtin shapes, keep face+offset system
-            if (parent is SubChipInstance subChip && subChip.Description.ShapeType != ChipShapeType.Rectangle)
-            {
-                // Custom shapes use Position field (relative to chip center)
-                Debug.Log($"Pin {Name}: Using Position = {desc.Position} for custom shape");
-            }
-            else
-            {
-                // Builtin shapes use face+offset system
-                Debug.Log($"Pin {Name}: Using face+offset system, face = {face}, offset = {LocalPosY}");
-            }
             
 			State.MakeFromPinBitCount(bitCount);
 			PlayerInputState.MakeFromPinBitCount(bitCount);
@@ -73,7 +63,8 @@ namespace DLS.Game
             {
                 if (parent is SubChipInstance subchip)
                 {
-                    return GetFacingDirForShape(subchip.Description.ShapeType, subchip.Description.ShapeRotation, face);
+                    Vector2 baseDir = GetFacingDirForShape(subchip.Description.ShapeType, subchip.Description.ShapeRotation, face);
+                    return RotateVector(baseDir, subchip.Rotation * Mathf.Deg2Rad);
                 }
                 // Default rectangle behavior for other cases
                 return face == 1 ? Vector2.right : face == 3 ? Vector2.left : face == 2 ? Vector2.down : Vector2.up;
@@ -88,49 +79,50 @@ namespace DLS.Game
                     return devPin.PinPosition;
                 case SubChipInstance subchip:
                     {
+                        Vector2 localOffset;
                         // For custom shapes, use Position field from description
                         if (subchip.Description.ShapeType != ChipShapeType.Rectangle)
                         {
-                            // Get the Position from the description (relative to chip center)
-                            Vector2 relativePos = GetPositionFromDescription();
-                            Vector2 worldPos = subchip.Position + relativePos;
-                            Debug.Log($"MAIN GAME: Pin {Name}: Using Position = {relativePos}, chipPos = {subchip.Position}, worldPos = {worldPos}");
-                            return worldPos;
+                            localOffset = GetPositionFromDescription();
                         }
-                        
-                        // For builtin shapes, use face+offset system
-                        Vector2 chipSize = subchip.Size;
-                        Vector2 chipPos = subchip.Position;
-
-                        float halfWidth = chipSize.x / 2f;
-                        float halfHeight = chipSize.y / 2f;
-                        float inset = DrawSettings.SubChipPinInset;
-                        float outlineOffset = DrawSettings.ChipOutlineWidth / 2f;
-
-                        float x = 0f;
-                        float y = 0f;
-
-                        // Handle different shapes
-                        ChipShapeType shapeType = subchip.Description.ShapeType;
-                        float rotation = subchip.Description.ShapeRotation;
-                        
-                        switch (shapeType)
+                        else
                         {
-                            case ChipShapeType.Rectangle:
-                                GetRectanglePinPosition(face, LocalPosY, halfWidth, halfHeight, outlineOffset, inset, out x, out y);
-                                break;
-                            case ChipShapeType.Hexagon:
-                                GetHexagonPinPosition(face, LocalPosY, halfWidth, halfHeight, outlineOffset, inset, rotation, out x, out y);
-                                break;
-                            case ChipShapeType.Triangle:
-                                GetTrianglePinPosition(face, LocalPosY, halfWidth, halfHeight, outlineOffset, inset, rotation, out x, out y);
-                                break;
-                            default:
-                                GetRectanglePinPosition(face, LocalPosY, halfWidth, halfHeight, outlineOffset, inset, out x, out y);
-                                break;
+                            // For builtin shapes, use face+offset system
+                            Vector2 chipSize = subchip.Size;
+
+                            float halfWidth = chipSize.x / 2f;
+                            float halfHeight = chipSize.y / 2f;
+                            float inset = DrawSettings.SubChipPinInset;
+                            float outlineOffset = DrawSettings.ChipOutlineWidth / 2f;
+
+                            float x = 0f;
+                            float y = 0f;
+
+                            ChipShapeType shapeType = subchip.Description.ShapeType;
+                            float descRotation = subchip.Description.ShapeRotation;
+
+                            switch (shapeType)
+                            {
+                                case ChipShapeType.Rectangle:
+                                    GetRectanglePinPosition(face, LocalPosY, halfWidth, halfHeight, outlineOffset, inset, out x, out y);
+                                    break;
+                                case ChipShapeType.Hexagon:
+                                    GetHexagonPinPosition(face, LocalPosY, halfWidth, halfHeight, outlineOffset, inset, descRotation, out x, out y);
+                                    break;
+                                case ChipShapeType.Triangle:
+                                    GetTrianglePinPosition(face, LocalPosY, halfWidth, halfHeight, outlineOffset, inset, descRotation, out x, out y);
+                                    break;
+                                default:
+                                    GetRectanglePinPosition(face, LocalPosY, halfWidth, halfHeight, outlineOffset, inset, out x, out y);
+                                    break;
+                            }
+
+                            localOffset = new Vector2(x, y);
                         }
 
-                        return chipPos + new Vector2(x, y);
+                        // Apply instance rotation around chip centre
+                        Vector2 rotatedOffset = RotateVector(localOffset, subchip.Rotation * Mathf.Deg2Rad);
+                        return subchip.Position + rotatedOffset;
                     }
                 default:
                     throw new Exception("Parent type not supported");
@@ -177,17 +169,19 @@ namespace DLS.Game
 			faceRight = IsSourcePin ^ flipped;
 		}
 
-		public Color GetColLow() => DrawSettings.ActiveTheme.StateLowCol[(int)Colour];
-		public Color GetColHigh() => DrawSettings.ActiveTheme.StateHighCol[(int)Colour];
+		public Color GetColLow() => CustomColourPacked != 0 ? DrawSettings.GetCustomColourLow(CustomColourPacked, false) : DrawSettings.ActiveTheme.StateLowCol[(int)Colour];
+		public Color GetColHigh() => CustomColourPacked != 0 ? DrawSettings.GetCustomColourHigh(CustomColourPacked, false) : DrawSettings.ActiveTheme.StateHighCol[(int)Colour];
 
 		public Color GetStateCol(int bitIndex, bool hover = false, bool canUsePlayerState = true, bool forWires = false)
 		{
 			PinStateValue pinState = (IsSourcePin && canUsePlayerState) ? PlayerInputState : State; // dev input pin uses player state (so it updates even when sim is paused)
 			uint state = pinState.GetTristatedValue(bitIndex);
 			if (state == PinStateValue.LOGIC_DISCONNECTED) return DrawSettings.ActiveTheme.StateDisconnectedCol;
-			if(forWires && bitCount >= 64) { return DrawSettings.GetFlatColour(state == PinStateValue.LOGIC_HIGH, (uint)Colour, hover); }
-			return DrawSettings.GetStateColour(state == PinStateValue.LOGIC_HIGH, (uint)Colour, hover);
-			
+			bool isHigh = state == PinStateValue.LOGIC_HIGH;
+			if (CustomColourPacked != 0)
+				return forWires && bitCount >= 64 ? DrawSettings.GetCustomColourHigh(CustomColourPacked, hover) : (isHigh ? DrawSettings.GetCustomColourHigh(CustomColourPacked, hover) : DrawSettings.GetCustomColourLow(CustomColourPacked, hover));
+			if (forWires && bitCount >= 64) return DrawSettings.GetFlatColour(isHigh, (uint)Colour, hover);
+			return DrawSettings.GetStateColour(isHigh, (uint)Colour, hover);
 		}
 		public void ChangeBitCount(int NewBitCount)
 		{ 
@@ -312,6 +306,16 @@ namespace DLS.Game
 		{
 			float angle = face * 2f * Mathf.PI / 3f + rotation * Mathf.Deg2Rad;
 			return new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+		}
+
+		static Vector2 RotateVector(Vector2 vector, float rotationRad)
+		{
+			float cos = Mathf.Cos(rotationRad);
+			float sin = Mathf.Sin(rotationRad);
+			return new Vector2(
+				vector.x * cos - vector.y * sin,
+				vector.x * sin + vector.y * cos
+			);
 		}
 	}
 }

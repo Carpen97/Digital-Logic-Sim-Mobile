@@ -176,6 +176,7 @@ namespace DLS.Online
 
                 // Get Firestore instance
                 Debug.Log("[Leaderboard] Attempting to get Firestore instance...");
+                FirebaseBootstrap.EnsureFirestoreConfigured();
                 var db = Firebase.Firestore.FirebaseFirestore.DefaultInstance;
                 Debug.Log($"[Leaderboard] Firestore instance: {(db != null ? "OK" : "NULL")}");
                 
@@ -327,6 +328,7 @@ namespace DLS.Online
                     throw new InvalidOperationException("Firebase not initialized");
                 }
 
+                FirebaseBootstrap.EnsureFirestoreConfigured();
                 var db = FirebaseFirestore.DefaultInstance;
                 if (db == null)
                 {
@@ -514,6 +516,7 @@ namespace DLS.Online
                 }
 
                 // Get Firestore instance
+                FirebaseBootstrap.EnsureFirestoreConfigured();
                 var db = FirebaseFirestore.DefaultInstance;
                 if (db == null)
                 {
@@ -642,6 +645,7 @@ namespace DLS.Online
                     throw new InvalidOperationException("Firebase not initialized");
                 }
 
+                FirebaseBootstrap.EnsureFirestoreConfigured();
                 var db = FirebaseFirestore.DefaultInstance;
                 if (db == null)
                 {

@@ -31,6 +31,11 @@ namespace DLS.Game
 		public string Label;
 		public Vector2 LabelOffset; // x in [-1,1], y in [0,1]; (0,1) = centred below chip
 		public bool HasCustomLayout;
+		/// <summary>Instance rotation in degrees: 0, 90, 180, or 270.</summary>
+		public int Rotation { get; set; }
+
+		/// <summary>Group ID for component grouping. 0 = not in a group.</summary>
+		public int GroupId { get; set; }
 
 		public bool anchoredToLevel { get; set; } = false;
 		
@@ -46,6 +51,7 @@ namespace DLS.Game
 			Label = subChipDesc.Label;
 			// LabelOffset is always serialized. Old saves without it deserialize to (0,0); (0,0) is valid (centre) so we use as-is.
 			LabelOffset = subChipDesc.LabelOffset;
+			Rotation = subChipDesc.Rotation;
 			IsBus = ChipTypeHelper.IsBusType(ChipType);
 			MultiLineName = CreateMultiLineName(description.Name);
 			MinSize = CalculateMinChipSize(description.InputPins, description.OutputPins, description.Name);
@@ -473,7 +479,9 @@ namespace DLS.Game
 			}
 
 			Vector2 padFinal = new(pinWidthPad + DrawSettings.ChipOutlineWidth + pad, DrawSettings.ChipOutlineWidth + pad);
-			return Bounds2D.CreateFromCentreAndSize(Position + Vector2.right * offsetX, Size + padFinal);
+			// When rotated 90° or 270°, AABB swaps width/height
+			Vector2 effectiveSize = (Rotation % 180 == 0) ? Size : new Vector2(Size.y, Size.x);
+			return Bounds2D.CreateFromCentreAndSize(Position + Vector2.right * offsetX, effectiveSize + padFinal);
 		}
 
 		public static Vector2 CalculateMinChipSize(PinDescription[] inputPins, PinDescription[] outputPins, string unformattedName)
@@ -560,6 +568,14 @@ namespace DLS.Game
 			return formatted;
 		}
 
+		/// <summary>Rotate by deltaDegrees (positive = clockwise), snapping to the nearest step.</summary>
+		public void RotateBy(int deltaDegrees, int stepDegrees)
+		{
+			if (stepDegrees <= 0) stepDegrees = 90;
+			int newRotation = (Rotation + deltaDegrees + 360) % 360;
+			Rotation = (Mathf.RoundToInt((float)newRotation / stepDegrees) * stepDegrees) % 360;
+		}
+
 		public void FlipBus()
 		{
 			if (!IsBus) throw new Exception("Can't flip non-bus type");
@@ -590,6 +606,7 @@ namespace DLS.Game
 					if (colInfo.PinID == pin.Address.PinID)
 					{
 						pin.Colour = colInfo.PinColour;
+						pin.CustomColourPacked = colInfo.CustomColourPacked;
 					}
 				}
 			}

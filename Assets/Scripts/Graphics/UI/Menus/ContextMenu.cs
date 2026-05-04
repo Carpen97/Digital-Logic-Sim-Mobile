@@ -30,11 +30,15 @@ namespace DLS.Graphics
 			new MenuEntry(Format(Enum.GetName(typeof(PinColour), col)), () => SetCol(col), CanSetCol)
 		).ToArray();
 
+		static readonly MenuEntry setColorEntry = new(Format("Set color"), OpenPinColourPicker, CanSetCol);
+
 
 		static readonly MenuEntry deleteEntry = new(Format("DELETE"), Delete, CanDelete);
 		static readonly MenuEntry openChipEntry = new(Format("OPEN"), OpenChip, CanOpenChip);
 		static readonly MenuEntry labelChipEntry = new(Format("LABEL"), OpenChipLabelPopup, CanLabelChip);
 		static readonly MenuEntry infoEntry = new(Format("INFO"), OpenChipInfo, CanShowChipInfo);
+		static readonly MenuEntry rotateCwEntry = new(Format("ROTATE CW"), () => RotateSelected(GetRotationStep()), CanRotate);
+		static readonly MenuEntry rotateCcwEntry = new(Format("ROTATE CCW"), () => RotateSelected(-GetRotationStep()), CanRotate);
 
 		static readonly MenuEntry[] entries_customSubchip =
 		{
@@ -42,6 +46,8 @@ namespace DLS.Graphics
 			openChipEntry,
 			infoEntry,
 			labelChipEntry,
+			rotateCwEntry,
+			rotateCcwEntry,
 			deleteEntry
 		};
 
@@ -49,6 +55,8 @@ namespace DLS.Graphics
 		{
 			infoEntry,
 			labelChipEntry,
+			rotateCwEntry,
+			rotateCcwEntry,
 			deleteEntry
 		};
 
@@ -61,6 +69,8 @@ namespace DLS.Graphics
 			new(Format("FLIP"), FlipBus, CanFlipBus),
 			infoEntry,
 			labelChipEntry,
+			rotateCwEntry,
+			rotateCcwEntry,
 			deleteEntry
 		};
 
@@ -69,6 +79,8 @@ namespace DLS.Graphics
 			new(Format("REBIND"), OpenKeyBindMenu, CanEditCurrentChip),
 			infoEntry,
 			labelChipEntry,
+			rotateCwEntry,
+			rotateCcwEntry,
 			deleteEntry
 		};
 
@@ -77,6 +89,8 @@ namespace DLS.Graphics
 		new(Format("EDIT"), OpenRomEditMenu, CanEditCurrentChip),
 		infoEntry,
 		labelChipEntry,
+		rotateCwEntry,
+		rotateCcwEntry,
 		deleteEntry
 	};
 
@@ -85,6 +99,8 @@ namespace DLS.Graphics
 		new(Format("EDIT"), OpenTextDisplayEditMenu, CanEditCurrentChip),
 		infoEntry,
 		labelChipEntry,
+		rotateCwEntry,
+		rotateCcwEntry,
 		deleteEntry
 	};
 
@@ -93,6 +109,8 @@ namespace DLS.Graphics
 			new(Format("EDIT"), OpenPulseEditMenu, CanEditCurrentChip),
 			infoEntry,
 			labelChipEntry,
+			rotateCwEntry,
+			rotateCcwEntry,
 			deleteEntry
 		};
 
@@ -101,6 +119,8 @@ namespace DLS.Graphics
             new(Format("EDIT"), OpenConstantEditMenu, CanEditCurrentChip),
             infoEntry,
             labelChipEntry,
+            rotateCwEntry,
+            rotateCcwEntry,
             deleteEntry
         };
 
@@ -108,21 +128,44 @@ namespace DLS.Graphics
 		{
 			new(Format("EDIT"), OpenLabelEditMenu, CanEditCurrentChip),
 			infoEntry,
+			rotateCwEntry,
+			rotateCcwEntry,
+			deleteEntry
+		};
+
+		static readonly MenuEntry[] entries_builtinTransmitterChip =
+		{
+			new(Format("EDIT"), OpenFrequencyEditMenu, CanEditCurrentChip),
+			infoEntry,
+			labelChipEntry,
+			rotateCwEntry,
+			rotateCcwEntry,
+			deleteEntry
+		};
+
+		static readonly MenuEntry[] entries_builtinReceiverChip =
+		{
+			new(Format("EDIT"), OpenFrequencyEditMenu, CanEditCurrentChip),
+			infoEntry,
+			labelChipEntry,
+			rotateCwEntry,
+			rotateCcwEntry,
 			deleteEntry
 		};
 
 
 
-        static readonly MenuEntry[] entries_subChipOutput = pinColEntries;
+        static readonly MenuEntry[] entries_subChipOutput = new[] { setColorEntry, dividerMenuEntry }.Concat(pinColEntries).ToArray();
 
 		static readonly MenuEntry[] entries_inputDevPin = new[]
 		{
 			new(Format("EDIT"), OpenPinEditMenu, CanEditCurrentChip),
 			new(Format("DELETE"), Delete, CanDelete),
-			dividerMenuEntry
+			dividerMenuEntry,
+			setColorEntry
 		}.Concat(pinColEntries).ToArray();
 
-		static readonly MenuEntry[] entries_outputDevPin =
+		static readonly MenuEntry[] entries_outputDevPin = new[]
 		{
 			entries_inputDevPin[0],
 			entries_inputDevPin[1]
@@ -131,6 +174,7 @@ namespace DLS.Graphics
 		static readonly MenuEntry[] entries_wire =
 		{
 			new(Format("EDIT"), EditWire, CanEditWire),
+			new(Format("STATIC COLOR"), ToggleWireStaticColor, CanEditWire),
 			new(Format("DELETE"), Delete, CanDelete)
 		};
 
@@ -149,6 +193,12 @@ namespace DLS.Graphics
 		{
 			new(Format("UN-STAR"), UnstarBottomBarEntry, () => true)
 		};
+
+		static readonly MenuEntry makeGroupEntry = new(Format("MAKE GROUP"), MakeGroup, CanMakeGroup);
+		static readonly MenuEntry ungroupEntry = new(Format("UNGROUP"), Ungroup, CanUngroup);
+		static readonly MenuEntry saveGroupEntry = new(Format("SAVE GROUP"), SaveGroup, CanSaveGroup);
+		static readonly MenuEntry[] entries_multiSelection = { makeGroupEntry };
+		static readonly MenuEntry[] entries_groupActions = { ungroupEntry, saveGroupEntry };
 
 		public static bool IsOpen { get; private set; }
 		public static IInteractable interactionContext { get; private set; }
@@ -218,8 +268,18 @@ namespace DLS.Graphics
 					interactionContextName = string.Empty;
 					interactionContext = hoverElement;
 					string headerName = string.Empty;
+					var controller = Project.ActiveProject.controller;
 
-					if (openSubChipContextMenu)
+					// Multi-selection: multiple groupable elements selected and right-click on one → show group menu
+					bool multiGroupableSelected = controller.SelectedElements.Count >= 2 && controller.SelectedElements.All(e => e is SubChipInstance or DevPinInstance);
+					IMoveable hoveredMoveable = hoverElement is IMoveable m ? m : (hoverElement is PinInstance pHover && pHover.parent is DevPinInstance dp ? dp : null);
+					bool hoveredIsInSelection = hoveredMoveable != null && controller.SelectedElements.Contains(hoveredMoveable);
+					if ((openSubChipContextMenu || openDevPinContextMenu) && multiGroupableSelected && hoveredIsInSelection && (CanUngroup() || CanMakeGroup()))
+					{
+						headerName = "GROUP";
+						activeContextMenuEntries = CanUngroup() ? entries_groupActions : entries_multiSelection;
+					}
+					else if (openSubChipContextMenu)
 					{
 						SubChipInstance subChip = (SubChipInstance)hoverElement;
 						interactionContextName = subChip.Description.Name;
@@ -241,12 +301,17 @@ namespace DLS.Graphics
 							else if (subChip.ChipType == ChipType.Button) activeContextMenuEntries = entries_builtinButton;
 							else if (subChip.ChipType == ChipType.Constant_8Bit) activeContextMenuEntries = entries_builtinConstantChip;
 							else if (subChip.ChipType == ChipType.Label) activeContextMenuEntries = entries_builtinLabelChip;
+							else if (subChip.ChipType == ChipType.Transmitter) activeContextMenuEntries = entries_builtinTransmitterChip;
+							else if (subChip.ChipType == ChipType.Receiver) activeContextMenuEntries = entries_builtinReceiverChip;
 
 							else activeContextMenuEntries = entries_builtinSubchip;
 						}
 						#if !(UNITY_ANDROID || UNITY_IOS)
-						Project.ActiveProject.controller.Select(interactionContext as IMoveable, false);
+						controller.Select(interactionContext as IMoveable, false);
 						#endif
+						// Append Ungroup/Save group if selection is a group
+						if (CanUngroup())
+							activeContextMenuEntries = activeContextMenuEntries.Concat(new[] { dividerMenuEntry }).Concat(entries_groupActions).ToArray();
 					}
 					else if (openDevPinContextMenu)
 					{
@@ -257,6 +322,8 @@ namespace DLS.Graphics
 						interactionContextName = activePin.Name;
 						Project.ActiveProject.controller.Select(activePin.parent, false);
 						activeContextMenuEntries = activePin.IsSourcePin ? entries_inputDevPin : entries_outputDevPin;
+						if (CanUngroup())
+							activeContextMenuEntries = activeContextMenuEntries.Concat(new[] { dividerMenuEntry }).Concat(entries_groupActions).ToArray();
 					}
 					else if (openWireContextMenu)
 					{
@@ -422,6 +489,13 @@ namespace DLS.Graphics
 
 		static bool CanDelete() => Project.ActiveProject.CanEditViewedChip;
 		static bool CanFlipBus() => Project.ActiveProject.CanEditViewedChip;
+		static bool CanRotate() => Project.ActiveProject.CanEditViewedChip && Project.ActiveProject.description.Prefs_RotationEnabled;
+		static int GetRotationStep()
+		{
+			int steps = Project.ActiveProject.description.Prefs_RotationSteps;
+			return steps > 0 ? 360 / steps : 15;
+		}
+		static void RotateSelected(int delta) => Project.ActiveProject.controller.RotateSelected(delta);
 
 		static bool CanSetCol()
 		{
@@ -442,6 +516,7 @@ namespace DLS.Graphics
 			if (interactionContext is PinInstance pin)
 			{
 				pin.Colour = col;
+				pin.CustomColourPacked = 0; // Use preset, not custom
 			}
 
 			if(!(interactionContext is SubChipInstance subchip)) { return; }
@@ -454,6 +529,7 @@ namespace DLS.Graphics
             {
                 Project.ActiveProject.NotifyLEDColourChanged(subchip, (uint)col);
 				subchip.OutputPins[0].Colour = col;
+				subchip.OutputPins[0].CustomColourPacked = 0;
             }
 
         }
@@ -466,6 +542,14 @@ namespace DLS.Graphics
 		public static void EditWire()
 		{
 			Project.ActiveProject.controller.EnterWireEditMode((WireInstance)interactionContext);
+		}
+
+		static void ToggleWireStaticColor()
+		{
+			if (interactionContext is WireInstance wire)
+			{
+				wire.UseStaticColor = !wire.UseStaticColor;
+			}
 		}
 
 		static void Delete()
@@ -497,6 +581,8 @@ namespace DLS.Graphics
 
 		static void OpenConstantEditMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ConstantEdit);
 		static void OpenLabelEditMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.LabelEdit);
+		static void OpenFrequencyEditMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.FrequencyEdit);
+		static void OpenPinColourPicker() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.PinColourPicker);
 
 		static void OpenChipInfo()
 		{
@@ -515,6 +601,53 @@ namespace DLS.Graphics
 		{
 			PinEditMenu.SetTargetPin((DevPinInstance)((PinInstance)interactionContext).parent);
 			UIDrawer.SetActiveMenu(UIDrawer.MenuType.PinRename);
+		}
+
+		static bool CanMakeGroup() => Project.ActiveProject.CanEditViewedChip;
+		static bool CanUngroup()
+		{
+			if (!Project.ActiveProject.CanEditViewedChip) return false;
+			var sel = Project.ActiveProject.controller.SelectedElements;
+			if (sel.Count == 0) return false;
+			int? groupId = null;
+			foreach (var e in sel)
+			{
+				int g = e switch { SubChipInstance s => s.GroupId, DevPinInstance d => d.GroupId, _ => 0 };
+				if (g == 0) return false;
+				groupId ??= g;
+				if (g != groupId) return false;
+			}
+			return true;
+		}
+		static bool CanSaveGroup() => CanUngroup();
+
+		static void MakeGroup()
+		{
+			var controller = Project.ActiveProject.controller;
+			var subChips = controller.SelectedElements.OfType<SubChipInstance>().ToList();
+			var devPins = controller.SelectedElements.OfType<DevPinInstance>().ToList();
+			if (subChips.Count + devPins.Count < 2) return;
+			int newGroupId = IDGenerator.GenerateNewGroupId(Project.ActiveProject.ViewedChip);
+			foreach (var s in subChips) s.GroupId = newGroupId;
+			foreach (var d in devPins) d.GroupId = newGroupId;
+			Project.ActiveProject.ViewedChip.UndoController.RecordMakeGroup(subChips, devPins, newGroupId);
+		}
+
+		static void Ungroup()
+		{
+			var controller = Project.ActiveProject.controller;
+			var subChips = controller.SelectedElements.OfType<SubChipInstance>().ToList();
+			var devPins = controller.SelectedElements.OfType<DevPinInstance>().ToList();
+			if (subChips.Count == 0 && devPins.Count == 0) return;
+			int oldGroupId = subChips.Count > 0 ? subChips[0].GroupId : devPins[0].GroupId;
+			foreach (var s in subChips) s.GroupId = 0;
+			foreach (var d in devPins) d.GroupId = 0;
+			Project.ActiveProject.ViewedChip.UndoController.RecordUngroup(subChips, devPins, oldGroupId);
+		}
+
+		static void SaveGroup()
+		{
+			UIDrawer.SetActiveMenu(UIDrawer.MenuType.GroupSavePopup);
 		}
 
 		static void OpenChip()
@@ -638,6 +771,8 @@ namespace DLS.Graphics
 				else if (subChip.ChipType == ChipType.Button) activeContextMenuEntries = entries_builtinButton;
 				else if (subChip.ChipType == ChipType.Constant_8Bit) activeContextMenuEntries = entries_builtinConstantChip;
 				else if (subChip.ChipType == ChipType.Label) activeContextMenuEntries = entries_builtinLabelChip;
+				else if (subChip.ChipType == ChipType.Transmitter) activeContextMenuEntries = entries_builtinTransmitterChip;
+				else if (subChip.ChipType == ChipType.Receiver) activeContextMenuEntries = entries_builtinReceiverChip;
 				else activeContextMenuEntries = entries_builtinSubchip;
 			}
 			

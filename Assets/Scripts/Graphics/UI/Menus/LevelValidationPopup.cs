@@ -1264,10 +1264,9 @@ namespace DLS.Graphics
 		}
 
 		// ---------- User Name Input Callbacks ----------
-		static void OnUserNameConfirmed(string userName, bool shouldRemember, bool shareSolution)
+		static void OnUserNameConfirmed(string userName, bool shareSolution)
 		{
-			// Start upload with user name and solution sharing preference
-			_ = UploadToLeaderboard(userName, shareSolution);
+			_ = UploadToLeaderboard(userName ?? "", shareSolution);
 		}
 
 		static void OnUserNameCancelled()

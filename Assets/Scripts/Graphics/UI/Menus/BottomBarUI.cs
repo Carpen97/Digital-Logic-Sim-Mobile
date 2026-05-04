@@ -28,20 +28,37 @@ namespace DLS.Graphics
 
 		const float scrollButtonWidth = 1.2f;
 		public static int showScrollingButtons = 0;
+		public const int ScrollModeArrows = 0;
+		public const int ScrollModeArrowsInverted = 1;
+		public const int ScrollModeTouchDrag = 2;
+		public const int ScrollModeOff = 3;
 #if UNITY_ANDROID || UNITY_IOS
+		public static bool IsTouchInteractingChipStrip => isTrackingChipBarTouch;
 
 		static readonly string[] menuButtonNames =
 		{
 			$"  NEW CHIP  ",
 			$"  SAVE CHIP  ",
-			$"  FIND CHIP  ",
 			$"  ADD SPECIAL  ",
 			$"  LIBRARY  ",
+			$"  CREATE LEVEL  ",
+			$"  VERILOG  ",
 			$"  STATS  ",
 			$"  PREFS  ",
 			$"  LEVELS  ",
 			$"  QUIT  "
 		};
+
+		const int NewChipButtonIndex = 0;
+		const int SaveChipButtonIndex = 1;
+		const int AddSpecialButtonIndex = 2;
+		const int LibraryButtonIndex = 3;
+		const int CreateLevelButtonIndex = 4;
+		const int VerilogImportButtonIndex = 5;
+		const int StatsButtonIndex = 6;
+		const int OptionsButtonIndex = 7;
+		const int LevelsButtonIndex = 8;
+		const int QuitButtonIndex = 9;
 #else
 		static readonly string[] menuButtonNames =
 		{
@@ -50,28 +67,40 @@ namespace DLS.Graphics
 			$"FIND CHIP    {shortcutTextCol}Ctrl+F",
 			$"ADD SPECIAL  {shortcutTextCol}Ctrl+B",
 			$"LIBRARY      {shortcutTextCol}Ctrl+L",
+			$"CREATE LEVEL ",
+			$"VERILOG ",
 			$"STATS        {shortcutTextCol}Ctrl+T", // Ctrl+'T' from the T in Stats
 			$"PREFS        {shortcutTextCol}Ctrl+P",
 			$"LEVELS       {shortcutTextCol}Ctrl+E",
 			$"QUIT         {shortcutTextCol}Ctrl+Q"
 		};
-#endif
 
 		const int NewChipButtonIndex = 0;
 		const int SaveChipButtonIndex = 1;
 		const int FindChipButtonIndex = 2;
 		const int AddSpecialButtonIndex = 3;
 		const int LibraryButtonIndex = 4;
-		const int StatsButtonIndex = 5;
-		const int OptionsButtonIndex = 6;
-		const int LevelsButtonIndex = 7; // insert before Options/Quit
-		const int QuitButtonIndex = 8;
+		const int CreateLevelButtonIndex = 5;
+		const int VerilogImportButtonIndex = 6;
+		const int StatsButtonIndex = 7;
+		const int OptionsButtonIndex = 8;
+		const int LevelsButtonIndex = 9;
+		const int QuitButtonIndex = 10;
+#endif
 
 		// ---- State ----
 		static float scrollX;
 		static float chipBarTotalWidthLastFrame;
 		static bool isDraggingChipBar;
 		static float mouseDragPrev;
+#if UNITY_ANDROID || UNITY_IOS
+		static bool isTrackingChipBarTouch;
+		static bool isDraggingChipBarTouch;
+		static int chipBarTouchFingerId = -1;
+		static Vector2 chipBarTouchStartScreenPos;
+		static float chipBarTouchPrevUIX;
+		const float chipBarTouchDragThresholdPixels = 18f;
+#endif
 		static bool closeActiveCollectionMultiModeExit;
 
 		static int toggleMenuFrame;
@@ -92,6 +121,17 @@ namespace DLS.Graphics
 		static float hoverDelayFrames; 
 
 		static bool MenuButtonsAndShortcutsEnabled => Project.ActiveProject.CanEditViewedChip;
+
+		static bool CanOpenCreateLevel()
+		{
+			if (LevelManager.Instance?.IsActive == true) return false;
+			var project = Project.ActiveProject;
+			if (project == null || project.chipViewStack.Count != 1) return false;
+			var desc = DLS.SaveSystem.DescriptionCreator.CreateChipDescription(project.ViewedChip);
+			if (desc.InputPins == null || desc.InputPins.Length == 0) return false;
+			if (desc.OutputPins == null || desc.OutputPins.Length == 0) return false;
+			return desc.ChipType == ChipType.Custom;
+		}
 
 		static bool ShouldHideChipInLevel(ChipType chipType)
 		{
@@ -157,7 +197,18 @@ namespace DLS.Graphics
 			{
 				for (int i = menuButtonNames.Length - 1; i >= 0; i--)
 				{
-					bool buttonEnabled = MenuButtonsAndShortcutsEnabled || i is QuitButtonIndex or OptionsButtonIndex;
+					if (!VerilogImportFeatureGate.IsEnabled && i == VerilogImportButtonIndex)
+					{
+						continue;
+					}
+
+					bool buttonEnabled = i is QuitButtonIndex or OptionsButtonIndex
+					? true
+					: i == CreateLevelButtonIndex
+						? CanOpenCreateLevel()
+						: i == VerilogImportButtonIndex
+							? VerilogImportFeatureGate.IsEnabled && MenuButtonsAndShortcutsEnabled && LevelManager.Instance?.IsActive != true
+							: MenuButtonsAndShortcutsEnabled;
 					string text = menuButtonNames[i];
 
 					// Show "Save" instead of "Save Chip" when in a level
@@ -196,9 +247,13 @@ namespace DLS.Graphics
 			{
 				if (i == NewChipButtonIndex) CreateNewChip();
 				else if (i == SaveChipButtonIndex) OpenSaveMenu();
+#if !(UNITY_ANDROID || UNITY_IOS)
 				else if (i == FindChipButtonIndex) OpenSearchMenu();
+#endif
 				else if (i == AddSpecialButtonIndex) OpenAddSpecialMenu();
 				else if (i == LibraryButtonIndex) OpenLibraryMenu();
+				else if (i == CreateLevelButtonIndex) OpenCreateLevelMenu();
+				else if (i == VerilogImportButtonIndex && VerilogImportFeatureGate.IsEnabled) OpenVerilogImportMenu();
 				else if (i == StatsButtonIndex) OpenStatsMenu();
 				else if (i == OptionsButtonIndex) OpenPreferencesMenu();
 				else if (i == LevelsButtonIndex) OpenLevelsMenu();
@@ -242,9 +297,10 @@ namespace DLS.Graphics
 
 
 #if UNITY_ANDROID || UNITY_IOS
-			if(showScrollingButtons!=2){
+			if (showScrollingButtons is ScrollModeArrows or ScrollModeArrowsInverted)
+			{
 				float scrollAmount = 15f; // Adjust as needed for responsiveness
-				if(showScrollingButtons == 1) scrollAmount *= -1; //invert
+				if (showScrollingButtons == ScrollModeArrowsInverted) scrollAmount *= -1; // invert
 				Vector2 leftButtonPos = new Vector2(Seb.Vis.UI.UI.PrevBounds.Right + buttonSpacing, padY);
 				if (Seb.Vis.UI.UI.Button("←", theme.MenuButtonTheme, leftButtonPos, scrollButtonSize, true, true, false,theme.ButtonTheme.buttonCols, Anchor.BottomLeft))
 				{
@@ -264,6 +320,11 @@ namespace DLS.Graphics
 			using (Seb.Vis.UI.UI.CreateMaskScopeMinMax(new Vector2(Seb.Vis.UI.UI.PrevBounds.Right + buttonSpacing, 0), new Vector2(Seb.Vis.UI.UI.Width, barHeight)))
 			{
 				bool chipButtonsEnabled = !inOtherMenu && project.CanEditViewedChip;
+#if UNITY_ANDROID || UNITY_IOS
+				float chipBarMinX = Seb.Vis.UI.UI.PrevBounds.Right + buttonSpacing;
+				Bounds2D chipBarBoundsUISpace = new(new Vector2(chipBarMinX, 0), new Vector2(Seb.Vis.UI.UI.Width, barHeight));
+				HandleMobileChipBarTouchDrag(Seb.Vis.UI.UI.UIToScreenSpace(chipBarBoundsUISpace));
+#endif
 
 				// -- Chip bar drag/scroll input --
 				if (MouseIsOverBar())
@@ -833,12 +894,112 @@ namespace DLS.Graphics
 
 		static bool MouseIsOverBar() => InputHelper.MouseInBounds_ScreenSpace(barBounds_ScreenSpace);
 
+#if UNITY_ANDROID || UNITY_IOS
+		static void HandleMobileChipBarTouchDrag(Bounds2D chipBarBoundsScreenSpace)
+		{
+			if (showScrollingButtons != ScrollModeTouchDrag)
+			{
+				ResetChipBarTouchDragState();
+				return;
+			}
+
+			if (Input.touchCount <= 0)
+			{
+				ResetChipBarTouchDragState();
+				return;
+			}
+
+			Touch trackedTouch = default;
+			bool hasTrackedTouch = false;
+			for (int i = 0; i < Input.touchCount; i++)
+			{
+				Touch touch = Input.GetTouch(i);
+				if (isTrackingChipBarTouch)
+				{
+					if (touch.fingerId == chipBarTouchFingerId)
+					{
+						trackedTouch = touch;
+						hasTrackedTouch = true;
+						break;
+					}
+					continue;
+				}
+
+				if (touch.phase == TouchPhase.Began && chipBarBoundsScreenSpace.PointInBounds(touch.position))
+				{
+					isTrackingChipBarTouch = true;
+					chipBarTouchFingerId = touch.fingerId;
+					chipBarTouchStartScreenPos = touch.position;
+					chipBarTouchPrevUIX = Seb.Vis.UI.UI.ScreenToUISpace(touch.position).x;
+					trackedTouch = touch;
+					hasTrackedTouch = true;
+					break;
+				}
+			}
+
+			if (!hasTrackedTouch)
+			{
+				ResetChipBarTouchDragState();
+				return;
+			}
+
+			if (trackedTouch.phase is TouchPhase.Ended or TouchPhase.Canceled)
+			{
+				ResetChipBarTouchDragState();
+				return;
+			}
+
+			Vector2 dragDeltaPixels = trackedTouch.position - chipBarTouchStartScreenPos;
+			bool passedThreshold = dragDeltaPixels.sqrMagnitude >= chipBarTouchDragThresholdPixels * chipBarTouchDragThresholdPixels;
+			bool horizontalIntent = Mathf.Abs(dragDeltaPixels.x) > Mathf.Abs(dragDeltaPixels.y);
+
+			// Upward/vertical drag should continue chip-placement behavior instead of strip scrolling.
+			if (passedThreshold && !horizontalIntent)
+			{
+				ResetChipBarTouchDragState();
+				return;
+			}
+
+			if (!isDraggingChipBarTouch)
+			{
+				if (!passedThreshold || !horizontalIntent)
+				{
+					return;
+				}
+
+				isDraggingChipBarTouch = true;
+				chipBarTouchPrevUIX = Seb.Vis.UI.UI.ScreenToUISpace(trackedTouch.position).x;
+				var controller = Project.ActiveProject?.controller;
+				if (controller != null && controller.IsPlacingElements)
+				{
+					controller.CancelEverything();
+				}
+			}
+
+			float touchPosUIX = Seb.Vis.UI.UI.ScreenToUISpace(trackedTouch.position).x;
+			scrollX += touchPosUIX - chipBarTouchPrevUIX;
+			chipBarTouchPrevUIX = touchPosUIX;
+		}
+
+		static void ResetChipBarTouchDragState()
+		{
+			isTrackingChipBarTouch = false;
+			isDraggingChipBarTouch = false;
+			chipBarTouchFingerId = -1;
+		}
+#endif
+
 		/// <summary>
 		/// Try to start placing a chip. If it's an Input/Output pin or special chip in a level, show a message instead.
 		/// Also blocks custom chips that contain disallowed subchips (e.g. ROM nested inside).
 		/// </summary>
 		static void TryStartPlacing(Project project, string chipName)
 		{
+			if (project.chipLibrary.TryGetGroupDescription(chipName, out var groupDesc))
+			{
+				project.controller.StartPlacingGroup(groupDesc, InputHelper.MousePosWorld);
+				return;
+			}
 			ChipDescription desc = project.chipLibrary.GetChipDescription(chipName);
 
 			// Check if trying to add Input/Output pins in a level
@@ -907,6 +1068,12 @@ namespace DLS.Graphics
 			}
 		}
 
+		static void OpenVerilogImportMenu()
+		{
+			if (!VerilogImportFeatureGate.IsEnabled) return;
+			UIDrawer.SetActiveMenu(UIDrawer.MenuType.VerilogImport);
+		}
+
 		static void OpenSaveMenu()
 		{
 			// If in a level, save level progress instead of opening chip save menu
@@ -922,6 +1089,7 @@ namespace DLS.Graphics
 		}
 		static void OpenSearchMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.Search);
 		static void OpenLibraryMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipLibrary);
+		static void OpenCreateLevelMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.CreateLevel);
 		static void OpenStatsMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ProjectStats);
 		static void OpenPreferencesMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.Preferences);
 		static void OpenAddSpecialMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.SpecialChipMaker);
@@ -1001,6 +1169,9 @@ namespace DLS.Graphics
 			scrollX = 0;
 			chipBarTotalWidthLastFrame = 0;
 			isDraggingChipBar = false;
+#if UNITY_ANDROID || UNITY_IOS
+			ResetChipBarTouchDragState();
+#endif
 			activeCollection = null;
 			activeNestedCollection = null;
 #if !(UNITY_ANDROID || UNITY_IOS)

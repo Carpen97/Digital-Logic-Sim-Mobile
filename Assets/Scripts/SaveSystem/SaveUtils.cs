@@ -65,10 +65,21 @@ namespace DLS.SaveSystem
 
 			foreach (char c in name)
 			{
-				if (ForbiddenChars.Contains(c)) return true; //
+				if (ForbiddenChars.Contains(c)) return true;
 			}
 
 			return false;
+		}
+
+		/// <summary>Produces a safe file name by replacing forbidden chars with underscore.</summary>
+		public static string SanitizeFileName(string name)
+		{
+			if (string.IsNullOrEmpty(name)) return "unnamed";
+			var sb = new System.Text.StringBuilder(name.Length);
+			foreach (char c in name)
+				sb.Append(ForbiddenChars.Contains(c) ? '_' : c);
+			string result = sb.ToString().Trim();
+			return string.IsNullOrEmpty(result) ? "unnamed" : result;
 		}
 
 		// Ensure file name is unique by appending a number to it if necessary

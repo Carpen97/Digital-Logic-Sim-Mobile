@@ -16,7 +16,7 @@ MonoBehaviour:
   boxSelectIcon: {fileID: 21300000, guid: 642102cf09cfd7e43bd2cf8bd2e72413, type: 3}
   trashIcon: {fileID: 2731001722924673131, guid: 62dc6d067c2bdd24bb02e698336c8825, type: 3}
   undoIcon: {fileID: -6062914999863570022, guid: 8c88fb6586900404da025b48ea9bd942, type: 3}
-  redoIcon: {fileID: 5453033847968541512, guid: 2207697051949db4f92f7c21c2806c91, type: 3}
+  redoIcon: {fileID: 3286163911610860551, guid: a7a622c0a8baf0046b79e06a92261cbc, type: 3}
   confirmIcon: {fileID: 5545118057803231360, guid: c82f5112644ea1d45a75adbc1aa9e87b, type: 3}
   cancelIcon: {fileID: 9055211082839658301, guid: 6b8dbcc7971a5524cbc9270705580047, type: 3}
   singleStepIcon: {fileID: 9141346441460425236, guid: f40561fae8a2cee4a8d22a2607ce3024, type: 3}

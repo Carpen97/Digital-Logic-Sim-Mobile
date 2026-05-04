@@ -57,6 +57,9 @@ ExportedObj/
 Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_2_0.so
 Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_2_0.bundle
 Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_2_0.dll
+Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_7_0.so
+Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_7_0.bundle
+Assets/Firebase/Plugins/x86_64/FirebaseCppApp-13_7_0.dll
 
 # Mobile build artifacts
 *.apk
@@ -119,7 +122,16 @@ compile_commands.json
 
 # Build output and temporary files
 _utmp/
+.utmp/
+.gradle-user-home/
+.unity-build-temp/
 build-android/
+
+# Local Firebase Unity SDK extract (large; use Assets/Firebase from repo / Package Manager)
+firebase_unity_sdk_13.7.0/
+
+# Local full Firebase backup copy (optional on disk only)
+Assets/Firebase_backup_13.2/
 user.keystore
 Scripts.zip
 Scripts.zip.meta

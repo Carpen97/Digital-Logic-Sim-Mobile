@@ -59,7 +59,14 @@ namespace DLS.Game
 		// ---- Clock ----
 		CreateSPSChip(),
 				// ---- Time ----
-				CreateRTC()
+				CreateRTC(),
+				// ---- Wireless Communication ----
+				CreateTransmitter(PinBitCount.Bit1),
+				CreateTransmitter(PinBitCount.Bit4),
+				CreateTransmitter(PinBitCount.Bit8),
+				CreateReceiver(PinBitCount.Bit1),
+				CreateReceiver(PinBitCount.Bit4),
+				CreateReceiver(PinBitCount.Bit8)
 			}
 			.Concat(CreateInOutPins(description.pinBitCounts))
 			.Concat(CreateSplitMergePins(description.SplitMergePairs))
@@ -185,6 +192,39 @@ namespace DLS.Game
 			PinDescription[] outputPins = { CreatePinDescription("OUT", 2) };
 
 			return CreateBuiltinChipDescription(ChipType.Nand, size, col, inputPins, outputPins);
+		}
+
+		static ChipDescription CreateAnd()
+		{
+			Color col = GetColor(new(0.4f, 0.7f, 0.4f));
+			Vector2 size = new(CalculateGridSnappedWidth(GridSize * 8), GridSize * 4);
+
+			PinDescription[] inputPins = { CreatePinDescription("IN B", 0), CreatePinDescription("IN A", 1) };
+			PinDescription[] outputPins = { CreatePinDescription("OUT", 2) };
+
+			return CreateBuiltinChipDescription(ChipType.And, size, col, inputPins, outputPins);
+		}
+
+		static ChipDescription CreateOr()
+		{
+			Color col = GetColor(new(0.7f, 0.5f, 0.4f));
+			Vector2 size = new(CalculateGridSnappedWidth(GridSize * 8), GridSize * 4);
+
+			PinDescription[] inputPins = { CreatePinDescription("IN B", 0), CreatePinDescription("IN A", 1) };
+			PinDescription[] outputPins = { CreatePinDescription("OUT", 2) };
+
+			return CreateBuiltinChipDescription(ChipType.Or, size, col, inputPins, outputPins);
+		}
+
+		static ChipDescription CreateXor()
+		{
+			Color col = GetColor(new(0.4f, 0.5f, 0.8f));
+			Vector2 size = new(CalculateGridSnappedWidth(GridSize * 8), GridSize * 4);
+
+			PinDescription[] inputPins = { CreatePinDescription("IN B", 0), CreatePinDescription("IN A", 1) };
+			PinDescription[] outputPins = { CreatePinDescription("OUT", 2) };
+
+			return CreateBuiltinChipDescription(ChipType.Xor, size, col, inputPins, outputPins);
 		}
 
 	static ChipDescription CreateBuzzer()
@@ -449,6 +489,26 @@ namespace DLS.Game
 
             return CreateBuiltinChipDescription(ChipType.Detector, size, col, inputPins, outputPins);
         }
+
+		static ChipDescription CreateTransmitter(PinBitCount bitCount)
+		{
+			string suffix = bitCount.BitCount switch { 1 => "", 4 => "-4", 8 => "-8", _ => "" };
+			string name = ChipTypeHelper.GetName(ChipType.Transmitter) + suffix;
+			PinDescription[] inputPins = { CreatePinDescription("IN", 0, bitCount) };
+			Color col = GetColor(new(0.2f, 0.5f, 0.3f));
+			Vector2 size = Vector2.one * GridSize * 4;
+			return CreateBuiltinChipDescription(ChipType.Transmitter, size, col, inputPins, null, null, NameDisplayLocation.Hidden, name);
+		}
+
+		static ChipDescription CreateReceiver(PinBitCount bitCount)
+		{
+			string suffix = bitCount.BitCount switch { 1 => "", 4 => "-4", 8 => "-8", _ => "" };
+			string name = ChipTypeHelper.GetName(ChipType.Receiver) + suffix;
+			PinDescription[] outputPins = { CreatePinDescription("OUT", 0, bitCount) };
+			Color col = GetColor(new(0.2f, 0.5f, 0.3f));
+			Vector2 size = Vector2.one * GridSize * 4;
+			return CreateBuiltinChipDescription(ChipType.Receiver, size, col, null, outputPins, null, NameDisplayLocation.Hidden, name);
+		}
 
 
         static ChipDescription CreateInputKeyChip()
@@ -803,7 +863,8 @@ namespace DLS.Game
 
 		static ChipDescription CreateBuiltinChipDescription(ChipType type, Vector2 size, Color col, PinDescription[] inputs, PinDescription[] outputs, DisplayDescription[] displays = null, NameDisplayLocation nameLoc = NameDisplayLocation.Centre, string name = "", bool canBeCached = true)
 		{
-			if (!ChipTypeHelper.IsDevPin(type) && !ChipTypeHelper.IsMergeSplitChip(type) && !ChipTypeHelper.IsBusType(type)){name = ChipTypeHelper.GetName(type); }
+			if (!ChipTypeHelper.IsDevPin(type) && !ChipTypeHelper.IsMergeSplitChip(type) && !ChipTypeHelper.IsBusType(type) && type != ChipType.Transmitter && type != ChipType.Receiver)
+			name = ChipTypeHelper.GetName(type);
 			
 			ValidatePinIDs(inputs, outputs, name);
 

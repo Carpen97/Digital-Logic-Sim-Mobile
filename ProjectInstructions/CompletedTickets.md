@@ -13,12 +13,18 @@ This document contains a historical record of all completed tickets from the Dig
 
 ## 📊 Statistics
 
-- **Total Completed Tickets**: 74
-- **Most Recent**: Ticket 106 (Project Sharing popup layout)
+- **Total Completed Tickets**: 75
+- **Most Recent**: Ticket 107 (Hide mobile Find chip menu entry)
 
 ---
 
 ## 📋 **Completed Tickets**
+
+### **Ticket 107** – Hide “Find chip” from mobile bottom bar MENU
+**Closed:** 2026-04-28  
+**Summary:** Removed FIND CHIP row from `BottomBarUI` mobile `menuButtonNames`; mobile-specific button index constants (0–9); desktop unchanged. Report: `Ticket_107_Hide_Mobile_Find_Chip_Menu_Report.md`.
+
+---
 
 ### **Ticket 106** – Project Sharing popup layout (larger list windows)
 **Closed:** 2026  

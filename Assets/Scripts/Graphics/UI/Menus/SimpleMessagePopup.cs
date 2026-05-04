@@ -1,3 +1,4 @@
+using System.Text;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis;
@@ -7,18 +8,46 @@ using UnityEngine;
 namespace DLS.Graphics
 {
 	/// <summary>
-	/// A simple popup for displaying a message with an OK button
+	/// A simple popup for displaying a message with an OK button.
+	/// Long messages are wrapped to multiple lines to prevent overflow.
 	/// </summary>
 	public static class SimpleMessagePopup
 	{
+		const int MaxCharsPerLine = 42;
+
 		static string message = "";
 		static System.Action onClosed;
 
 		public static void Open(string messageText, System.Action closedCallback = null)
 		{
-			message = messageText;
+			message = WrapText(messageText ?? "", MaxCharsPerLine);
 			onClosed = closedCallback;
 			UIDrawer.SetActiveMenu(UIDrawer.MenuType.SimpleMessage);
+		}
+
+		static string WrapText(string text, int maxCharsPerLine)
+		{
+			if (string.IsNullOrEmpty(text) || text.Length <= maxCharsPerLine) return text;
+			var words = text.Split(' ');
+			var result = new StringBuilder();
+			var currentLine = new StringBuilder();
+			foreach (string word in words)
+			{
+				if (currentLine.Length > 0 && currentLine.Length + word.Length + 1 > maxCharsPerLine)
+				{
+					if (result.Length > 0) result.Append('\n');
+					result.Append(currentLine);
+					currentLine.Clear();
+				}
+				if (currentLine.Length > 0) currentLine.Append(' ');
+				currentLine.Append(word);
+			}
+			if (currentLine.Length > 0)
+			{
+				if (result.Length > 0) result.Append('\n');
+				result.Append(currentLine);
+			}
+			return result.ToString();
 		}
 
 		public static void DrawMenu()

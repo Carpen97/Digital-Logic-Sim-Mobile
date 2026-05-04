@@ -169,7 +169,7 @@ namespace DLS.Game
 					wireConnectionSegmentIndex = wireDescription.ConnectedWireSegmentIndex
 				};
 
-				loadedWire = new WireInstance(sourceConnection, targetConnection, wireDescription.Points, wireIndex);
+				loadedWire = new WireInstance(sourceConnection, targetConnection, wireDescription.Points, wireIndex, wireDescription.UseStaticColor);
 			}
 			else
 			{
@@ -466,6 +466,7 @@ namespace DLS.Game
 						// Output pins get colour from whichever pin they last received a signal
 						PinInstance colSource = TryFindPinFromSimPinSource(simChip, simPin);
 						devPin.Pin.Colour = colSource.Colour;
+						devPin.Pin.CustomColourPacked = colSource.CustomColourPacked;
 					}
 					// -- Subchip --
 					else if (element is SubChipInstance subChip)
@@ -483,6 +484,7 @@ namespace DLS.Game
 								if (simInputPin.latestSourceID == -1) continue;
 								PinInstance colSource = TryFindPinFromSimPinSource(simChip, simInputPin);
 								subChipOutputPin.Colour = colSource.Colour;
+								subChipOutputPin.CustomColourPacked = colSource.CustomColourPacked;
 							}
 						}
 					}

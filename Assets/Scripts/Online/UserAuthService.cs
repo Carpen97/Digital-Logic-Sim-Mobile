@@ -78,6 +78,7 @@ namespace DLS.Online
             
             try
             {
+                FirebaseBootstrap.EnsureFirestoreConfigured();
                 var db = FirebaseFirestore.DefaultInstance;
                 var docRef = db.Collection(USERS_COLLECTION).Document(userId);
                 var snapshot = await docRef.GetSnapshotAsync();
@@ -111,7 +112,10 @@ namespace DLS.Online
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[UserAuth] Failed to load user profile: {ex.Message}");
+                if (ex.Message.Contains("offline", StringComparison.OrdinalIgnoreCase))
+                    Debug.LogWarning($"[UserAuth] Could not load profile (offline): {ex.Message}");
+                else
+                    Debug.LogError($"[UserAuth] Failed to load user profile: {ex.Message}");
                 return null;
             }
         }
@@ -135,6 +139,7 @@ namespace DLS.Online
                     return false;
                 }
                 
+                FirebaseBootstrap.EnsureFirestoreConfigured();
                 var db = FirebaseFirestore.DefaultInstance;
                 var docRef = db.Collection(USERNAMES_COLLECTION).Document(normalizedUsername);
                 var snapshot = await docRef.GetSnapshotAsync();
@@ -201,6 +206,7 @@ namespace DLS.Online
             
             try
             {
+                FirebaseBootstrap.EnsureFirestoreConfigured();
                 var db = FirebaseFirestore.DefaultInstance;
                 
                 // Use a transaction to ensure atomicity
@@ -327,6 +333,7 @@ namespace DLS.Online
             
             try
             {
+                FirebaseBootstrap.EnsureFirestoreConfigured();
                 var db = FirebaseFirestore.DefaultInstance;
                 
                 // If username changed, update username reservation
@@ -393,6 +400,7 @@ namespace DLS.Online
                 if (string.IsNullOrEmpty(userId) || userId == "anon")
                     return;
                 
+                FirebaseBootstrap.EnsureFirestoreConfigured();
                 var db = FirebaseFirestore.DefaultInstance;
                 var docRef = db.Collection(USERS_COLLECTION).Document(userId);
                 
@@ -541,6 +549,7 @@ namespace DLS.Online
             
             try
             {
+                FirebaseBootstrap.EnsureFirestoreConfigured();
                 var db = FirebaseFirestore.DefaultInstance;
                 
                 // Step 1: Check if new username is available
@@ -580,9 +589,13 @@ namespace DLS.Online
                 Debug.Log($"[UserAuth] Updating leaderboard entries");
                 await UpdateLeaderboardEntriesAsync(db, userId, newUsername);
                 
-                // Step 5: Update all complete solutions
+				// Step 5: Update all complete solutions
                 Debug.Log($"[UserAuth] Updating complete solutions");
                 await UpdateCompleteSolutionsAsync(db, userId, newUsername);
+                
+                // Step 5b: Update all library (project sharing) entries
+                Debug.Log($"[UserAuth] Updating library entries");
+                await LibraryService.UpdateDisplayNameForOwnerAsync(userId, newUsername);
                 
                 // Step 6: Delete old username reservation
                 Debug.Log($"[UserAuth] Releasing old username '{oldUsername}'");

@@ -170,8 +170,9 @@ namespace Seb.Vis.UI
 
 		//  --------------------------- Draw functions ---------------------------
 
-		public static void DrawSlider(Vector2 pos, Vector2 size, Anchor anchor, ref SliderState state)
+		public static void DrawSlider(Vector2 pos, Vector2 size, Anchor anchor, ref SliderState state, float handleSizeMultiplier = 1.5f)
 		{
+			state.progressT = Mathf.Clamp01(state.progressT);  // Prevent values outside [0,1] from dragging or corruption
 			Vector2 centre = CalculateCentre(pos, size, anchor);
 			(Vector2 centre, Vector2 size) ss = UIToScreenSpace(centre, size);
 
@@ -179,7 +180,7 @@ namespace Seb.Vis.UI
 			Draw.Quad(ss.centre, ss.size, trackCol);
 
 			Vector2 handlePos_ss = Vector2.Lerp(ss.centre + Vector2.left * ss.size.x / 2, ss.centre + Vector2.right * ss.size.x / 2, state.progressT);
-			float handleSize_ss = ss.size.y * 1.5f;
+			float handleSize_ss = ss.size.y * handleSizeMultiplier;
 
 			bool mouseOverHandle = InputHelper.MouseInPoint_ScreenSpace(handlePos_ss, handleSize_ss);
 			if (InputHelper.IsMouseDownThisFrame(MouseButton.Left) && mouseOverHandle)
@@ -195,7 +196,7 @@ namespace Seb.Vis.UI
 			{
 				float minX = ss.centre.x - ss.size.x / 2;
 				float maxX = ss.centre.x + ss.size.x / 2;
-				state.progressT = (InputHelper.MousePos.x - minX) / (maxX - minX);
+				state.progressT = Mathf.Clamp01((InputHelper.MousePos.x - minX) / (maxX - minX));
 			}
 
 			Color handleCol = (mouseOverHandle || state.handleSelected) ? new Color(0.85f, 0.85f, 0.85f) : new Color(0.55f, 0.55f, 0.55f);
@@ -521,7 +522,64 @@ namespace Seb.Vis.UI
 
 		public static Vector2 CalculateTextSize(ReadOnlySpan<char> text, float fontSize, FontType font) => Draw.CalculateTextBoundsSize(text, fontSize, font);
 
-	public static InputFieldState InputField(UIHandle id, InputFieldTheme theme, Vector2 pos, Vector2 size, string defaultText, Anchor anchor, float textPad, Func<string, bool> validation = null, bool forceFocus = false)
+		static string WrapTextByWidth(string text, float maxWidth, float fontSize, FontType font)
+		{
+			if (string.IsNullOrEmpty(text) || maxWidth <= 0) return text;
+			StringBuilder result = new();
+			string[] lines = text.Split('\n');
+			for (int lineIdx = 0; lineIdx < lines.Length; lineIdx++)
+			{
+				if (lineIdx > 0) result.Append('\n');
+				string[] words = lines[lineIdx].Split(' ');
+				StringBuilder line = new();
+				foreach (string word in words)
+				{
+					if (string.IsNullOrEmpty(word))
+					{
+						// Empty string from Split(' ') = extra space(s) between words - preserve one space
+						line.Append(' ');
+						continue;
+					}
+					string toTest = line.Length == 0 ? word : line + " " + word;
+					float w = Draw.CalculateTextBoundsSize(toTest, fontSize, font).x;
+					if (w > maxWidth)
+					{
+						if (line.Length > 0)
+						{
+							result.Append(line).Append('\n');
+							line.Clear();
+						}
+						// Break long words by character if they exceed maxWidth
+						if (Draw.CalculateTextBoundsSize(word, fontSize, font).x > maxWidth)
+						{
+							for (int c = 0; c < word.Length; c++)
+							{
+								string testCh = line.Length == 0 ? word[c].ToString() : line + word[c].ToString();
+								if (Draw.CalculateTextBoundsSize(testCh, fontSize, font).x > maxWidth && line.Length > 0)
+								{
+									result.Append(line).Append('\n');
+									line.Clear();
+								}
+								line.Append(word[c]);
+							}
+						}
+						else
+						{
+							line.Append(word);
+						}
+					}
+					else
+					{
+						if (line.Length > 0) line.Append(' ');
+						line.Append(word);
+					}
+				}
+				if (line.Length > 0) result.Append(line);
+			}
+			return result.ToString();
+		}
+
+	public static InputFieldState InputField(UIHandle id, InputFieldTheme theme, Vector2 pos, Vector2 size, string defaultText, Anchor anchor, float textPad, Func<string, bool> validation = null, bool forceFocus = false, bool wrapText = false)
 	{
 		InputFieldState state = GetInputFieldState(id);
 
@@ -532,7 +590,7 @@ namespace Seb.Vis.UI
 
 		if (IsRendering)
 		{
-			Vector2 textCentreLeft_ss = ss.centre + Vector2.right * (-ss.size.x / 2 + textPad * scale);
+			Vector2 textTopLeft_ss = ss.centre + new Vector2(-ss.size.x / 2 + textPad * scale, ss.size.y / 2 - textPad * scale);
 			Draw.Quad(ss.centre, ss.size, theme.bgCol);
 
 			// Focus input
@@ -557,13 +615,13 @@ namespace Seb.Vis.UI
 				#endif
 
 				// Set caret pos based on mouse position
-				if (mouseInBounds) state.SetCursorIndex(CharIndexBeforeMouse(textCentreLeft_ss.x), InputHelper.ShiftIsHeld);
+				if (mouseInBounds) state.SetCursorIndex(CharIndexBeforeMouse(textTopLeft_ss.x), InputHelper.ShiftIsHeld);
 			}
 
 			// Hold-drag left mouse to select
 			if (state.focused && InputHelper.IsMouseHeld(MouseButton.Left) && state.isMouseDownInBounds && !isDisabled)
 			{
-				state.SetCursorIndex(CharIndexBeforeMouse(textCentreLeft_ss.x), true);
+				state.SetCursorIndex(CharIndexBeforeMouse(textTopLeft_ss.x), true);
 			}
 
 			if (forceFocus && !state.focused && !isDisabled)
@@ -595,12 +653,23 @@ namespace Seb.Vis.UI
 				const float outlineWidth = 0.05f;
 				Draw.QuadOutline(ss.centre, ss.size, outlineWidth * scale, theme.focusBorderCol);
 					#if UNITY_ANDROID || UNITY_IOS
-					if (keyboard != null && keyboard.status == TouchScreenKeyboard.Status.Visible)
+					if (keyboard != null)
 					{
-						if (keyboard.text != lastSyncedText)
+						try
 						{
-							state.SetText(keyboard.text);
-							lastSyncedText = keyboard.text;
+							if (keyboard.status == TouchScreenKeyboard.Status.Visible)
+							{
+								if (keyboard.text != lastSyncedText)
+								{
+									state.SetText(keyboard.text);
+									lastSyncedText = keyboard.text;
+								}
+							}
+						}
+						catch (NullReferenceException)
+						{
+							// TouchScreenKeyboard.status can throw on some platforms (e.g. Editor on Windows with Android build target)
+							keyboard = null;
 						}
 					}
 					#else
@@ -702,41 +771,59 @@ namespace Seb.Vis.UI
 				using (CreateMaskScope(centre, size))
 				{
 					float fontSize_ss = theme.fontSize * scale;
+					float maxWidth = size.x - 2f * textPad;
 					bool showDefaultText = string.IsNullOrEmpty(state.text) || !Application.isPlaying;
 					string displayString = showDefaultText ? defaultText : state.text;
+					if (wrapText && !string.IsNullOrEmpty(displayString))
+						displayString = WrapTextByWidth(displayString, maxWidth, theme.fontSize, theme.font);
 
 					Color textCol = showDefaultText ? theme.defaultTextCol : theme.textCol;
-					Draw.Text(theme.font, displayString, fontSize_ss, textCentreLeft_ss, Anchor.TextCentreLeft, textCol);
+					Draw.Text(theme.font, displayString, fontSize_ss, textTopLeft_ss, Anchor.TopLeft, textCol);
 
 					if (Application.isPlaying)
 					{
-						Vector2 boundsSizeUpToCaret = Draw.CalculateTextBoundsSize(displayString.AsSpan(0, state.cursorBeforeCharIndex), theme.fontSize, theme.font);
+						// Map cursor indices from raw text to wrapped display (display has extra \n chars)
+						int caretDisplayIndex = wrapText ? WrapTextByWidth(state.text.Substring(0, Math.Min(state.cursorBeforeCharIndex, state.text.Length)), maxWidth, theme.fontSize, theme.font).Length : state.cursorBeforeCharIndex;
+						int selectionDisplayIndex = wrapText ? WrapTextByWidth(state.text.Substring(0, Math.Min(state.selectionStartIndex, state.text.Length)), maxWidth, theme.fontSize, theme.font).Length : state.selectionStartIndex;
+						Vector2 boundsSizeUpToCaret = Draw.CalculateTextBoundsSize(displayString.AsSpan(0, Math.Min(caretDisplayIndex, displayString.Length)), theme.fontSize, theme.font);
 
 						// Draw selection box
 						if (state.isSelecting)
 						{
-							Vector2 boundsSizeUpToSelect = Draw.CalculateTextBoundsSize(displayString.AsSpan(0, state.selectionStartIndex), theme.fontSize, theme.font);
+							Vector2 boundsSizeUpToSelect = Draw.CalculateTextBoundsSize(displayString.AsSpan(0, Math.Min(selectionDisplayIndex, displayString.Length)), theme.fontSize, theme.font);
 							Color col = new(0.2f, 0.6f, 1, 0.5f);
-							float startX = textCentreLeft_ss.x + boundsSizeUpToCaret.x * scale;
-							float endX = textCentreLeft_ss.x + boundsSizeUpToSelect.x * scale;
+							float startX = textTopLeft_ss.x + boundsSizeUpToCaret.x * scale;
+							float endX = textTopLeft_ss.x + boundsSizeUpToSelect.x * scale;
 							if (startX > endX)
 							{
 								(startX, endX) = (endX, startX);
 							}
 
-							Vector2 c = new((endX + startX) / 2, textCentreLeft_ss.y);
+							Vector2 c = new((endX + startX) / 2, textTopLeft_ss.y - boundsSizeUpToCaret.y * scale / 2);
 							Vector2 s = new(endX - startX, theme.fontSize * 1.2f * scale);
 							Draw.Quad(c, s, col);
 						}
 
-						// Draw caret
+						// Draw caret at end of last line (correct for multiline wrapped text)
 						const float blinkDuration = 0.5f;
 						if (state.focused && (int)((Time.time - state.lastInputTime) / blinkDuration) % 2 == 0)
 						{
-							Vector2 caretTextBoundsTest = Draw.CalculateTextBoundsSize("Mj", theme.fontSize, theme.font);
+							float lineHeight = Draw.CalculateTextBoundsSize("M", theme.fontSize, theme.font).y * 1.2f;
+							float caretYOffset = wrapText && boundsSizeUpToCaret.y > lineHeight
+								? -(boundsSizeUpToCaret.y - lineHeight / 2f) * scale  // Last line's vertical center
+								: -boundsSizeUpToCaret.y * scale / 2f;
+							// Caret X: use last LINE's width, not full bounds (bounds.x = max of all lines = wrong for short last line)
+							float caretX = boundsSizeUpToCaret.x;
+							if (wrapText && caretDisplayIndex > 0)
+							{
+								string displayUpToCaret = displayString.Substring(0, Math.Min(caretDisplayIndex, displayString.Length));
+								int lastNewline = displayUpToCaret.LastIndexOf('\n');
+								string lastLine = lastNewline >= 0 ? displayUpToCaret.Substring(lastNewline + 1) : displayUpToCaret;
+								caretX = Draw.CalculateTextBoundsSize(lastLine, theme.fontSize, theme.font).x;
+							}
 							float caretOffset = 1 * 0.075f * (state.cursorBeforeCharIndex == 0 ? -1 : 1);
-							Vector2 caretPos_ss = textCentreLeft_ss + Vector2.right * ((boundsSizeUpToCaret.x + caretOffset) * scale);
-							Vector2 caretSize = new(0.125f * theme.fontSize, caretTextBoundsTest.y * 1.2f);
+							Vector2 caretPos_ss = textTopLeft_ss + new Vector2((caretX + caretOffset) * scale, caretYOffset);
+							Vector2 caretSize = new(0.125f * theme.fontSize, lineHeight);
 							Draw.Quad(caretPos_ss, caretSize * scale, theme.textCol);
 						}
 					}
@@ -770,7 +857,35 @@ namespace Seb.Vis.UI
 
 			int CharIndexBeforeMouse(float textLeft)
 			{
-				//  (note: currently assumes monospaced)
+				if (wrapText && !string.IsNullOrEmpty(state.text))
+				{
+					Vector2 textTopLeft = ss.centre + new Vector2(-ss.size.x / 2 + textPad * scale, ss.size.y / 2 - textPad * scale);
+					string wrapped = WrapTextByWidth(state.text, size.x - 2f * textPad, theme.fontSize, theme.font);
+					string[] lines = wrapped.Split('\n');
+					float lineHeight = Draw.CalculateTextBoundsSize("M", theme.fontSize, theme.font).y * 1.2f;
+					float textTopY = textTopLeft.y;
+					float mouseY = InputHelper.MousePos.y;
+					int lineIndex = Mathf.Clamp((int)((textTopY - mouseY) / (lineHeight * scale)), 0, lines.Length - 1);
+					string line = lines[lineIndex];
+					float lineLeft = textLeft;
+					int charInLine = 0;
+					for (int i = 0; i <= line.Length; i++)
+					{
+						float w = Draw.CalculateTextBoundsSize(line.AsSpan(0, i), theme.fontSize, theme.font).x * scale;
+						if (lineLeft + w > InputHelper.MousePos.x) break;
+						charInLine = i;
+					}
+					int displayIndex = 0;
+					for (int i = 0; i < lineIndex; i++) displayIndex += lines[i].Length + 1;
+					displayIndex += charInLine;
+					// Map display index (includes \n) to state.text index
+					int textIdx = 0;
+					for (int i = 0; i < displayIndex && textIdx < state.text.Length; i++)
+					{
+						if (wrapped[i] != '\n') textIdx++;
+					}
+					return textIdx;
+				}
 				float textBoundsWidth = Draw.CalculateTextBoundsSize(state.text, theme.fontSize, theme.font).x;
 				float textRight = textLeft + textBoundsWidth * scale;
 				float t = Mathf.InverseLerp(textLeft, textRight, InputHelper.MousePos.x);
@@ -884,7 +999,7 @@ namespace Seb.Vis.UI
 			OnFinishedDrawingUIElement(centre, size);
 		}
 
-		public static Color DrawColourPicker(UIHandle id, Vector2 pos, float width, Anchor anchor = Anchor.Centre)
+		public static Color DrawColourPicker(UIHandle id, Vector2 pos, float width, Anchor anchor = Anchor.Centre, float handleSizeMultiplier = 1f)
 		{
 			ColourPickerState state = GetColourPickerState(id);
 			IsInteractingWithColorPicker = false;
@@ -919,7 +1034,7 @@ namespace Seb.Vis.UI
 
 				float hueHandleY_ss = Mathf.Lerp(hueBottomY_ss, hueTopY_ss, state.hue);
 				Vector2 hueHandlePos_ss = new(hue_ss.centre.x, hueHandleY_ss);
-				Vector2 hueHandleSize_ss = new(hue_ss.size.x * 1.1f, hue_ss.size.x * 0.5f);
+				Vector2 hueHandleSize_ss = new(hue_ss.size.x * 1.1f * handleSizeMultiplier, hue_ss.size.x * 0.5f * handleSizeMultiplier);
 				Draw.Quad(hueHandlePos_ss, hueHandleSize_ss, Color.white);
 
 				// Hue mouse input
@@ -945,7 +1060,7 @@ namespace Seb.Vis.UI
 
 				Vector2 satValHandlePos_ss = new(satPos_ss, valPos_ss);
 				float satValHandleRadius_ss = hueHandleSize_ss.y * 0.5f;
-				float satValHandleRadiusOutline_ss = satValHandleRadius_ss + 0.2f * scale;
+				float satValHandleRadiusOutline_ss = satValHandleRadius_ss + 0.4f * scale * handleSizeMultiplier;
 				colRgb = state.GetRGB();
 				Color handleOutlineCol = ColHelper.ShouldUseBlackText(colRgb) ? Color.black : Color.white;
 				Draw.Point(satValHandlePos_ss, satValHandleRadiusOutline_ss, handleOutlineCol);

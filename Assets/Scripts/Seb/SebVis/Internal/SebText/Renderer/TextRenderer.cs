@@ -60,13 +60,13 @@ namespace Seb.Vis.Text.Rendering
 			}
 		}
 
-		public void AddTextGroup(ReadOnlySpan<char> text, FontData fontData, LayoutSettings settings, Vector2 pos, Color textCol, bool useScreenspace, Vector2 maskMin, Vector2 maskMax, Anchor anchor)
+		public void AddTextGroup(ReadOnlySpan<char> text, FontData fontData, LayoutSettings settings, Vector2 pos, Color textCol, bool useScreenspace, Vector2 maskMin, Vector2 maskMax, Anchor anchor, float rotationDegrees = 0)
 		{
 			InitFrame();
 			BoundingBox localBounds = CreateTextLayout(text, fontData, settings, textCol, true, perGlyphInstanceData, textRenderData, textGroups.Count);
 			Vector2 worldOffset = CalculateWorldOffset(localBounds, fontData, pos, anchor, settings);
 
-			TextGroup groupData = new(worldOffset, maskMin, maskMax, useScreenspace ? 1 : 0);
+			TextGroup groupData = new(worldOffset, maskMin, maskMax, useScreenspace ? 1 : 0, rotationDegrees, pos);
 			textGroups.Add(groupData);
 		}
 
@@ -246,13 +246,17 @@ namespace Seb.Vis.Text.Rendering
 			public readonly Vector2 MaskMin;
 			public readonly Vector2 MaskMax;
 			public readonly int UseScreenSpace;
+			public readonly float RotationDegrees;
+			public readonly Vector2 RotationCentre;
 
-			public TextGroup(Vector2 offset, Vector2 maskMin, Vector2 maskMax, int useScreenSpace)
+			public TextGroup(Vector2 offset, Vector2 maskMin, Vector2 maskMax, int useScreenSpace, float rotationDegrees = 0, Vector2 rotationCentre = default)
 			{
 				Offset = offset;
 				MaskMin = maskMin;
 				MaskMax = maskMax;
 				UseScreenSpace = useScreenSpace;
+				RotationDegrees = rotationDegrees;
+				RotationCentre = rotationCentre;
 			}
 		}
 

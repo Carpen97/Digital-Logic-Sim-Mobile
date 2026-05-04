@@ -254,7 +254,15 @@ namespace DLS.Game
 		}
 		
 		if (elementsToDelete.Count == 0) return;
-		
+
+		// Collect group IDs of deleted elements so we can ungroup remaining elements
+		var groupIdsOfDeleted = new HashSet<int>();
+		foreach (IMoveable e in elementsToDelete)
+		{
+			int g = e switch { SubChipInstance s => s.GroupId, DevPinInstance d => d.GroupId, _ => 0 };
+			if (g != 0) groupIdsOfDeleted.Add(g);
+		}
+
 		ActiveDevChip.UndoController.RecordDeleteElements(elementsToDelete);
 
 		foreach (IMoveable element in elementsToDelete)
@@ -262,6 +270,17 @@ namespace DLS.Game
 			Debug.Log($"Deleting {element}");
 			if (element is SubChipInstance subChip) ActiveDevChip.DeleteSubChip(subChip);
 			else if (element is DevPinInstance devPin) ActiveDevChip.DeleteDevPin(devPin);
+		}
+
+		// Clear GroupId on any remaining elements that were in the same groups, so the background disappears
+		foreach (IMoveable remaining in ActiveDevChip.Elements)
+		{
+			int g = remaining switch { SubChipInstance s => s.GroupId, DevPinInstance d => d.GroupId, _ => 0 };
+			if (g != 0 && groupIdsOfDeleted.Contains(g))
+			{
+				if (remaining is SubChipInstance sc) sc.GroupId = 0;
+				else if (remaining is DevPinInstance dp) dp.GroupId = 0;
+			}
 		}
 
 		if (clearSelection) SelectedElements.Clear();
@@ -404,6 +423,21 @@ namespace DLS.Game
 				}
 			}
 
+			if (project.description.Prefs_RotationEnabled && InputHelper.IsKeyDownThisFrame(KeyCode.E) && !InputHelper.CtrlIsHeld && !IsPlacingOrMovingElementOrCreatingWire)
+			{
+				int steps = project.description.Prefs_RotationSteps;
+				int step = steps > 0 ? 360 / steps : 15;
+				if (HasRotatableSelection) RotateSelected(step);
+				else CameraController.RotateCamera(step);
+			}
+			if (project.description.Prefs_RotationEnabled && InputHelper.IsKeyDownThisFrame(KeyCode.Q) && !InputHelper.CtrlIsHeld && !IsPlacingOrMovingElementOrCreatingWire)
+			{
+				int steps = project.description.Prefs_RotationSteps;
+				int step = steps > 0 ? 360 / steps : 15;
+				if (HasRotatableSelection) RotateSelected(-step);
+				else CameraController.RotateCamera(-step);
+			}
+
 			if (KeyboardShortcuts.DeleteShortcutTriggered)
 			{
 				if (IsCreatingWire)
@@ -432,8 +466,58 @@ namespace DLS.Game
 
         }
 
+		// Two-finger chip rotate: (A) pivot-on-chip when one finger on chip, or (B) rigid transform when selection exists (Logic Puzzler style)
+		static bool isTwoFingerRotatingChips;
+		static bool twoFingerModePivotOnChip; // true = single chip pivot mode, false = selection rigid mode
+		static SubChipInstance twoFingerRotateChip;
+		static List<(SubChipInstance chip, Vector2 startPos, int startRotation)> twoFingerSelectionState;
+		static bool twoFingerPivotIsTouch0;
+		static Vector2 twoFingerPivotAnchorWorld;
+		static Vector2 twoFingerOtherAnchorWorld;
+		static Vector2 twoFingerChipStartPos;
+		static int twoFingerChipStartRotation;
+		static Vector2 twoFingerAnchorWorld1, twoFingerAnchorWorld2;
+
+		/// <summary>True when actively doing two-finger chip rotate. Camera skips two-finger when this is true.</summary>
+		public static bool IsTwoFingerRotatingChip { get; private set; }
+
+		SubChipInstance GetSubChipAtWorldPos(Vector2 worldPos)
+		{
+			var chip = ActiveDevChip;
+			if (chip == null) return null;
+			for (int i = chip.Elements.Count - 1; i >= 0; i--)
+			{
+				if (chip.Elements[i] is SubChipInstance sub &&
+					DevSceneDrawer.PointInsideRotatedBounds_World(sub.Position, sub.Size, sub.Rotation, worldPos))
+					return sub;
+			}
+			return null;
+		}
+
+		/// <summary>True if chip controller should handle two-finger (finger on chip or has selection). Camera skips when this is true.</summary>
+		public static bool ShouldChipControllerHandleTwoFinger(Vector2 worldPos1, Vector2 worldPos2)
+		{
+			var controller = Project.ActiveProject?.controller;
+			if (controller == null) return false;
+			if (controller.HasRotatableSelection) return true;
+			return controller.GetSubChipAtWorldPos(worldPos1) != null || controller.GetSubChipAtWorldPos(worldPos2) != null;
+		}
+
 		void HandleTouchInput()
 		{
+			if (Input.touchCount != 2)
+			{
+				if (isTwoFingerRotatingChips)
+					RecordTwoFingerRotateUndo();
+				isTwoFingerRotatingChips = false;
+				IsTwoFingerRotatingChip = false;
+			}
+
+			if (Input.touchCount == 2 && HasControl && project.description.Prefs_RotationEnabled && !isPlacingNewElements && !IsCreatingWire && !isMovingWireEditPoint)
+			{
+				HandleTwoFingerChipRotate();
+				if (IsTwoFingerRotatingChip) return;
+			}
 
 			if(Input.touchCount == 1){
 				Touch touch = Input.GetTouch(0);
@@ -501,6 +585,138 @@ namespace DLS.Game
 			}
 		}
 
+		void HandleTwoFingerChipRotate()
+		{
+			Touch t1 = Input.GetTouch(0);
+			Touch t2 = Input.GetTouch(1);
+			Vector2 screen1 = t1.position;
+			Vector2 screen2 = t2.position;
+			Camera cam = InputHelper.WorldCam;
+			Vector2 world1 = cam.ScreenToWorldPoint(screen1);
+			Vector2 world2 = cam.ScreenToWorldPoint(screen2);
+
+			SubChipInstance chip1 = GetSubChipAtWorldPos(world1);
+			SubChipInstance chip2 = GetSubChipAtWorldPos(world2);
+
+			if (chip1 == null && chip2 == null && !HasRotatableSelection) return;
+
+			if (IsMovingSelection)
+				CommitCurrentMoveForTwoFingerTransition();
+
+			if (t1.phase == TouchPhase.Began || t2.phase == TouchPhase.Began)
+			{
+				SubChipInstance pivotChip = chip1 ?? chip2;
+				if (pivotChip != null)
+				{
+					isTwoFingerRotatingChips = true;
+					IsTwoFingerRotatingChip = true;
+					twoFingerModePivotOnChip = true;
+					twoFingerRotateChip = pivotChip;
+					twoFingerSelectionState = null;
+					twoFingerPivotIsTouch0 = (pivotChip == chip1);
+					twoFingerPivotAnchorWorld = (pivotChip == chip1) ? world1 : world2;
+					twoFingerOtherAnchorWorld = (pivotChip == chip1) ? world2 : world1;
+					twoFingerChipStartPos = pivotChip.Position;
+					twoFingerChipStartRotation = pivotChip.Rotation;
+				}
+				else if (HasRotatableSelection)
+				{
+					isTwoFingerRotatingChips = true;
+					IsTwoFingerRotatingChip = true;
+					twoFingerModePivotOnChip = false;
+					twoFingerRotateChip = null;
+					twoFingerAnchorWorld1 = world1;
+					twoFingerAnchorWorld2 = world2;
+					twoFingerSelectionState = new List<(SubChipInstance, Vector2, int)>();
+					foreach (var element in SelectedElements)
+						if (element is SubChipInstance sub)
+							twoFingerSelectionState.Add((sub, sub.Position, sub.Rotation));
+				}
+			}
+
+			if (!isTwoFingerRotatingChips) return;
+
+			int steps = project.description.Prefs_RotationSteps;
+			if (steps <= 0) steps = 0;
+
+			if (twoFingerModePivotOnChip && twoFingerRotateChip != null)
+			{
+				Touch pivotTouch = twoFingerPivotIsTouch0 ? t1 : t2;
+				Touch otherTouch = twoFingerPivotIsTouch0 ? t2 : t1;
+				Vector2 pivotWorldNow = GetTouchWorldPos(pivotTouch);
+				Vector2 otherWorldNow = GetTouchWorldPos(otherTouch);
+
+				var result = TwoFingerRigidTransform.SolveChipPivotRotate(
+					twoFingerPivotAnchorWorld, twoFingerOtherAnchorWorld,
+					pivotWorldNow, otherWorldNow, steps);
+
+				twoFingerRotateChip.Position = result.TransformPoint(twoFingerChipStartPos);
+				float totalRot = (twoFingerChipStartRotation + result.RotationDeltaDegrees + 360) % 360f;
+				if (totalRot < 0) totalRot += 360f;
+				if (steps > 0)
+				{
+					int stepDeg = 360 / steps;
+					twoFingerRotateChip.Rotation = (Mathf.RoundToInt(totalRot / stepDeg) * stepDeg) % 360;
+				}
+				else
+					twoFingerRotateChip.Rotation = Mathf.RoundToInt(totalRot) % 360;
+			}
+			else if (twoFingerSelectionState != null)
+			{
+				Vector2 targetWorld1 = GetTouchWorldPos(t1);
+				Vector2 targetWorld2 = GetTouchWorldPos(t2);
+				var result = TwoFingerRigidTransform.SolveChipRigid(
+					twoFingerAnchorWorld1, twoFingerAnchorWorld2,
+					targetWorld1, targetWorld2, steps);
+
+				int stepDeg = steps > 0 ? 360 / steps : 1;
+				foreach (var (chip, startPos, startRotation) in twoFingerSelectionState)
+				{
+					chip.Position = result.TransformPoint(startPos);
+					int totalRot = (startRotation + Mathf.RoundToInt(result.RotationDeltaDegrees) + 360) % 360;
+					if (totalRot < 0) totalRot += 360;
+					chip.Rotation = (Mathf.RoundToInt((float)totalRot / stepDeg) * stepDeg) % 360;
+				}
+			}
+		}
+
+		static Vector2 GetTouchWorldPos(Touch t)
+		{
+			Vector3 p = new Vector3(t.position.x, t.position.y, 0f);
+			return (Vector2)InputHelper.WorldCam.ScreenToWorldPoint(p);
+		}
+
+		void RecordTwoFingerRotateUndo()
+		{
+			if (twoFingerModePivotOnChip && twoFingerRotateChip != null)
+			{
+				Vector2 originalPos = twoFingerChipStartPos;
+				int originalRot = twoFingerChipStartRotation;
+				Vector2 newPos = twoFingerRotateChip.Position;
+				int newRot = twoFingerRotateChip.Rotation;
+				if (originalPos != newPos || originalRot != newRot)
+					ActiveDevChip.UndoController.RecordRigidTransformElements(
+						new List<SubChipInstance> { twoFingerRotateChip },
+						new[] { originalPos }, new[] { newPos },
+						new[] { originalRot }, new[] { newRot });
+				twoFingerRotateChip = null;
+			}
+			else if (twoFingerSelectionState != null)
+			{
+				var toRotate = twoFingerSelectionState.Select(t => t.chip).ToList();
+				Vector2[] originalPositions = twoFingerSelectionState.Select(t => t.startPos).ToArray();
+				Vector2[] newPositions = toRotate.Select(s => s.Position).ToArray();
+				int[] originalRotations = twoFingerSelectionState.Select(t => t.startRotation).ToArray();
+				int[] newRotations = toRotate.Select(s => s.Rotation).ToArray();
+				bool changed = false;
+				for (int i = 0; i < toRotate.Count && !changed; i++)
+					changed = originalPositions[i] != newPositions[i] || originalRotations[i] != newRotations[i];
+				if (changed)
+					ActiveDevChip.UndoController.RecordRigidTransformElements(toRotate, originalPositions, newPositions, originalRotations, newRotations);
+				twoFingerSelectionState = null;
+			}
+		}
+
 		void HandleMouseInput()
 		{
 			if (HasControl) UpdatePositionsToMouse();
@@ -516,6 +732,19 @@ namespace DLS.Game
 			{
 				itemPlacementCurrVerticalSpacing += InputHelper.MouseScrollDelta.y * DrawSettings.GridSize;
 				itemPlacementCurrVerticalSpacing = Mathf.Max(0, itemPlacementCurrVerticalSpacing);
+			}
+			// Ctrl + scroll to rotate selected chips or camera (when nothing selected)
+			else if (project.description.Prefs_RotationEnabled && !isPlacingNewElements && !IsMovingSelection && InputHelper.CtrlIsHeld)
+			{
+				float scroll = InputHelper.MouseScrollDelta.y;
+				if (Mathf.Abs(scroll) > 0.01f)
+				{
+					int steps = project.description.Prefs_RotationSteps;
+					int step = steps > 0 ? 360 / steps : 15;
+					int delta = scroll > 0 ? step : -step;
+					if (HasRotatableSelection) RotateSelected(delta);
+					else CameraController.RotateCamera(delta);
+				}
 			}
 		}
 
@@ -722,9 +951,45 @@ namespace DLS.Game
 			DuplicateElements(SelectedElements);
 		}
 
+		public void RotateSelected(int deltaDegrees)
+		{
+			List<SubChipInstance> toRotate = SelectedElements.OfType<SubChipInstance>().ToList();
+			if (toRotate.Count == 0) return;
+
+			int steps = project.description.Prefs_RotationSteps;
+			int stepDegrees = steps > 0 ? 360 / steps : 1;
+
+			int[] originalRotations = toRotate.Select(s => s.Rotation).ToArray();
+			foreach (SubChipInstance subchip in toRotate)
+				subchip.RotateBy(deltaDegrees, stepDegrees);
+			int[] newRotations = toRotate.Select(s => s.Rotation).ToArray();
+
+			ActiveDevChip.UndoController.RecordRotateElements(toRotate, originalRotations, newRotations);
+		}
+
+		public bool HasRotatableSelection => project.description.Prefs_RotationEnabled && SelectedElements.OfType<SubChipInstance>().Any();
+
 		public void Select(IMoveable element, bool addToCurrentSelection = true)
 		{
 			ExitWireEditMode();
+
+			// Group-aware selection: clicking one element in a group selects the whole group (unless adding to selection)
+			int elementGroupId = element switch { SubChipInstance sc => sc.GroupId, DevPinInstance dp => dp.GroupId, _ => 0 };
+			if (!addToCurrentSelection && elementGroupId != 0)
+			{
+				ClearSelection();
+				foreach (IMoveable e in ActiveDevChip.Elements)
+				{
+					int g = e switch { SubChipInstance s => s.GroupId, DevPinInstance d => d.GroupId, _ => 0 };
+					if (g == elementGroupId)
+					{
+						SelectedElements.Add(e);
+						e.IsSelected = true;
+						e.IsValidMovePos = true;
+					}
+				}
+				return;
+			}
 
 			if (element.IsSelected)
 			{
@@ -748,6 +1013,26 @@ namespace DLS.Game
 			}
 		}
 
+		void ExpandSelectionToIncludeFullGroups()
+		{
+			var groupIdsToAdd = new HashSet<int>();
+			foreach (IMoveable e in SelectedElements)
+			{
+				int g = e switch { SubChipInstance s => s.GroupId, DevPinInstance d => d.GroupId, _ => 0 };
+				if (g != 0) groupIdsToAdd.Add(g);
+			}
+			foreach (IMoveable e in ActiveDevChip.Elements)
+			{
+				int g = e switch { SubChipInstance s => s.GroupId, DevPinInstance d => d.GroupId, _ => 0 };
+				if (g != 0 && groupIdsToAdd.Contains(g) && !e.IsSelected)
+				{
+					SelectedElements.Add(e);
+					e.IsSelected = true;
+					e.IsValidMovePos = true;
+				}
+			}
+		}
+
 		void HandleRightMouseDown()
 		{
 			// Cancel placement by right-clicking
@@ -758,7 +1043,13 @@ namespace DLS.Game
 			}
 
 			IsCreatingSelectionBox = false;
-			ClearSelection();
+			// Don't clear selection when right-clicking on something with multi-selection —
+			// context menu needs the selection intact to show "Make group"
+			bool keepSelectionForContextMenu =
+				SelectedElements.Count >= 2 &&
+				InteractionState.ElementUnderMouse != null;
+			if (!keepSelectionForContextMenu)
+				ClearSelection();
 		}
 
 		void HandleSingleTap(){
@@ -1082,9 +1373,10 @@ namespace DLS.Game
 
 			List<IMoveable> newlyPlacedElements = new(SelectedElements);
 
-			// ---- Add newly placed elements to the chip ----
+			// ---- Add newly placed elements to the chip (skip if already added, e.g. from group placement) ----
 			foreach (IMoveable elementToPlace in SelectedElements)
 			{
+				if (ActiveDevChip.Elements.Contains(elementToPlace)) continue;
 				if (elementToPlace is SubChipInstance subchip)
 				{
 					ActiveDevChip.AddNewSubChip(subchip, false);
@@ -1191,9 +1483,11 @@ namespace DLS.Game
 					{
 						if (element.ShouldBeIncludedInSelectionBox(SelectionBoxCentre, SelectionBoxSize))
 						{
-							Select(element);
+							Select(element, true);
 						}
 					}
+					// Expand selection to include full groups: if any group member was selected, add the rest
+					ExpandSelectionToIncludeFullGroups();
 				}
 			}
 
@@ -1436,6 +1730,185 @@ namespace DLS.Game
 			StartPlacing(chipDescription, InputHelper.MousePosWorld, false);
 		}
 
+	public void StartPlacingGroup(GroupDescription groupDesc, Vector2 position)
+	{
+		bool hasSubChips = groupDesc.SubChips != null && groupDesc.SubChips.Length > 0;
+		bool hasDevPins = (groupDesc.InputPins != null && groupDesc.InputPins.Length > 0) || (groupDesc.OutputPins != null && groupDesc.OutputPins.Length > 0);
+		if (!hasSubChips && !hasDevPins) return;
+		CancelEverything();
+		var lm = LevelsIntegration.LevelManager.Instance;
+		if (lm != null && lm.IsActive && hasDevPins)
+		{
+			ShowInputOutputDisabledMessage();
+			return;
+		}
+		if (lm != null && lm.IsActive && hasSubChips)
+		{
+			foreach (var sc in groupDesc.SubChips)
+			{
+				if (project.chipLibrary.TryGetChipDescription(sc.Name, out var cd) &&
+				    project.chipLibrary.ChipDescriptionContainsDisallowedSubchipsForLevel(cd))
+				{
+					ShowNestedDisallowedMessage();
+					return;
+				}
+			}
+		}
+		var devChip = ActiveDevChip;
+		var library = project.chipLibrary;
+		var oldToNewID = new Dictionary<int, int>();
+		var newSubChips = new List<SubChipInstance>();
+		var newDevPins = new List<DevPinInstance>();
+
+		// Compute anchor (center of bounding box) from subchips and dev pins
+		Vector2 min = new(float.MaxValue, float.MaxValue), max = new(float.MinValue, float.MinValue);
+		if (hasSubChips)
+			foreach (var sc in groupDesc.SubChips)
+			{
+				Vector2 sz = library.TryGetChipDescription(sc.Name, out var cd) ? cd.Size : new Vector2(2f, 1f);
+				min = Vector2.Min(min, sc.Position);
+				max = Vector2.Max(max, sc.Position + sz);
+			}
+		if (groupDesc.InputPins != null)
+			foreach (var p in groupDesc.InputPins)
+			{
+				min = Vector2.Min(min, p.Position);
+				max = Vector2.Max(max, p.Position);
+			}
+		if (groupDesc.OutputPins != null)
+			foreach (var p in groupDesc.OutputPins)
+			{
+				min = Vector2.Min(min, p.Position);
+				max = Vector2.Max(max, p.Position);
+			}
+		if (min.x == float.MaxValue) min = max = Vector2.zero;
+		Vector2 anchor = (min + max) / 2;
+		Vector2 offset = position - anchor;
+
+		// Create subchips with new IDs
+		if (hasSubChips)
+			foreach (var subDesc in groupDesc.SubChips)
+			{
+				if (!library.TryGetChipDescription(subDesc.Name, out ChipDescription fullDesc))
+				{
+					// Verilog title label: skip if LABEL not in library (e.g. level restricts to NAND-only)
+					if (subDesc.Name?.Equals("LABEL", StringComparison.OrdinalIgnoreCase) == true)
+					{
+						Debug.Log($"[Verilog] Skipping title label (LABEL not in library) for group '{groupDesc.Name}'");
+						continue;
+					}
+					bool hasLabel = library.allChips.Any(c => c.Name?.Equals("LABEL", StringComparison.OrdinalIgnoreCase) == true);
+					Debug.LogWarning($"[Verilog] Chip '{subDesc.Name}' not found. HasLabel={hasLabel}, ChipCount={library.allChips.Count}");
+					SimpleMessagePopup.Open($"Chip \"{subDesc.Name}\" not found in library");
+					return;
+				}
+				int newID = IDGenerator.GenerateNewElementID(devChip);
+				oldToNewID[subDesc.ID] = newID;
+				Vector2 finalPos = subDesc.Position + offset;
+				var scDesc = new SubChipDescription(subDesc.Name, newID, subDesc.Label, finalPos, subDesc.OutputPinColourInfo, subDesc.InternalData, subDesc.LabelOffset, subDesc.Rotation);
+				var subChip = new SubChipInstance(fullDesc, scDesc);
+				devChip.AddNewSubChip(subChip, false);
+				newSubChips.Add(subChip);
+				if (fullDesc.ChipType == ChipType.Label)
+					Debug.Log($"[Verilog] Placed Label subchip '{subDesc.Label}' at ({finalPos.x}, {finalPos.y})");
+			}
+
+		// Create dev pins with new IDs
+		if (groupDesc.InputPins != null)
+			foreach (var pd in groupDesc.InputPins)
+			{
+				int newID = IDGenerator.GenerateNewElementID(devChip);
+				oldToNewID[pd.ID] = newID;
+				var pinDesc = new PinDescription(pd.Name, newID, pd.Position + offset, pd.BitCount, pd.Colour, pd.ValueDisplayMode, pd.LocalOffset, pd.face, pd.CustomColourPacked);
+				var devPin = new DevPinInstance(pinDesc, true);
+				devChip.AddNewDevPin(devPin, false);
+				newDevPins.Add(devPin);
+			}
+		if (groupDesc.OutputPins != null)
+			foreach (var pd in groupDesc.OutputPins)
+			{
+				int newID = IDGenerator.GenerateNewElementID(devChip);
+				oldToNewID[pd.ID] = newID;
+				var pinDesc = new PinDescription(pd.Name, newID, pd.Position + offset, pd.BitCount, pd.Colour, pd.ValueDisplayMode, pd.LocalOffset, pd.face, pd.CustomColourPacked);
+				var devPin = new DevPinInstance(pinDesc, false);
+				devChip.AddNewDevPin(devPin, false);
+				newDevPins.Add(devPin);
+			}
+
+		// Create wires: build pin map keyed by ORIGINAL IDs from groupDesc (same as wire descriptions use)
+		DuplicatedWires.Clear();
+		var pinMap = new Dictionary<(int ownerId, int pinId), PinInstance>();
+		int inputCount = groupDesc.InputPins?.Length ?? 0;
+
+		if (groupDesc.SubChips != null)
+			for (int i = 0; i < newSubChips.Count && i < groupDesc.SubChips.Length; i++)
+			{
+				int ownerId = groupDesc.SubChips[i].ID;
+				var pins = newSubChips[i].AllPins;
+				for (int pi = 0; pi < pins.Length; pi++)
+				{
+					var pin = pins[pi];
+					// Use both index and PinID: VerilogImporter uses indices 0,1,2; saved groups use PinID
+					pinMap[(ownerId, pi)] = pin;
+					if (pin.Address.PinID != pi)
+						pinMap[(ownerId, pin.Address.PinID)] = pin;
+				}
+			}
+		if (groupDesc.InputPins != null)
+			for (int i = 0; i < groupDesc.InputPins.Length && i < newDevPins.Count; i++)
+				pinMap[(groupDesc.InputPins[i].ID, 0)] = newDevPins[i].Pin;
+		if (groupDesc.OutputPins != null)
+			for (int j = 0; j < groupDesc.OutputPins.Length && inputCount + j < newDevPins.Count; j++)
+				pinMap[(groupDesc.OutputPins[j].ID, 0)] = newDevPins[inputCount + j].Pin;
+
+		void AddWire(PinInstance src, PinInstance tgt)
+		{
+			Vector2 srcPos = src.GetWorldPos();
+			Vector2 tgtPos = tgt.GetWorldPos();
+			var srcConn = new WireInstance.ConnectionInfo { pin = src, connectedWire = null, connectionPoint = srcPos, wireConnectionSegmentIndex = -1 };
+			var tgtConn = new WireInstance.ConnectionInfo { pin = tgt, connectedWire = null, connectionPoint = tgtPos, wireConnectionSegmentIndex = -1 };
+			var wire = new WireInstance(srcConn, tgtConn, new Vector2[] { srcPos, tgtPos }, devChip.Wires.Count + DuplicatedWires.Count);
+			DuplicatedWires.Add(wire);
+		}
+
+		if (groupDesc.Wires != null && groupDesc.Wires.Length > 0)
+		{
+			foreach (var wd in groupDesc.Wires)
+			{
+				if (!pinMap.TryGetValue((wd.SourcePinAddress.PinOwnerID, wd.SourcePinAddress.PinID), out PinInstance srcPin) ||
+				    !pinMap.TryGetValue((wd.TargetPinAddress.PinOwnerID, wd.TargetPinAddress.PinID), out PinInstance tgtPin))
+				{
+					Debug.LogWarning($"[Verilog] Wire lookup failed: ({wd.SourcePinAddress.PinOwnerID}, {wd.SourcePinAddress.PinID}) -> ({wd.TargetPinAddress.PinOwnerID}, {wd.TargetPinAddress.PinID})");
+					continue;
+				}
+				AddWire(srcPin, tgtPin);
+			}
+		}
+
+		// Assign GroupId and enter placement
+		int groupId = IDGenerator.GenerateNewGroupId(devChip);
+		foreach (var s in newSubChips) s.GroupId = groupId;
+		foreach (var d in newDevPins) d.GroupId = groupId;
+		ClearSelection();
+		foreach (var s in newSubChips) Select(s, true);
+		foreach (var d in newDevPins) Select(d, true);
+		isPlacingNewElements = true;
+		newElementsAreDuplicatedElements = true;
+		hasExittedMultiModeSincePlacementStart = false;
+		moveElementMouseStartPos = position;
+		foreach (var e in SelectedElements)
+		{
+			e.MoveStartPosition = e.Position;
+			e.StraightLineReferencePoint = e.Position;
+			e.HasReferencePointForStraightLineMovement = true;
+		}
+		Obstacles = devChip.Elements.Where(x => !SelectedElements.Contains(x)).ToArray();
+		IsMovingSelection = true;
+		#if UNITY_ANDROID || UNITY_IOS
+		MobileUIControllerWrapper.ShowPlacementButtons(FinishPlacingNewElements, CancelPlacingItems);
+		#endif
+	}
+
 	public IMoveable StartPlacing(ChipDescription chipDescription, Vector2 position, bool isDuplicating)
 	{
 		// Check if trying to add Input/Output pins in a level
@@ -1566,7 +2039,7 @@ namespace DLS.Game
 
 			else // SubChip
 			{
-				SubChipDescription subChipDesc = DescriptionCreator.CreateBuiltinSubChipDescriptionForPlacement(chipDescription.ChipType, chipDescription.Name, instanceID, Vector2.zero);
+				SubChipDescription subChipDesc = DescriptionCreator.CreateBuiltinSubChipDescriptionForPlacement(chipDescription.ChipType, chipDescription.Name, instanceID, Vector2.zero, ActiveDevChip);
 				elementToPlace = new SubChipInstance(chipDescription, subChipDesc);
 			}
 
@@ -1586,9 +2059,16 @@ namespace DLS.Game
 			}
 			else
 			{
-				SubChipDescription subChipDesc = DescriptionCreator.CreateSubChipDescription((SubChipInstance)duplicationSource);
+				SubChipInstance srcSub = (SubChipInstance)duplicationSource;
+				SubChipDescription subChipDesc = DescriptionCreator.CreateSubChipDescription(srcSub);
 				subChipDesc.ID = instanceID;
-				element = new SubChipInstance(((SubChipInstance)duplicationSource).Description, subChipDesc);
+				// For Transmitter: assign first free frequency to avoid conflict
+				if (srcSub.ChipType == ChipType.Transmitter && subChipDesc.InternalData != null && subChipDesc.InternalData.Length > 0)
+				{
+					uint firstFree = DescriptionCreator.GetFirstFreeTransmitterFrequency(ActiveDevChip);
+					subChipDesc.InternalData[0] = firstFree;
+				}
+				element = new SubChipInstance(srcSub.Description, subChipDesc);
 			}
 
 			return element;
@@ -1650,6 +2130,27 @@ namespace DLS.Game
 			#endif
 		}
 
+		/// <summary>Commit the current drag (bake wire offsets) and switch to two-finger rotate. No snap-back - chips stay where they are.</summary>
+		void CommitCurrentMoveForTwoFingerTransition()
+		{
+			if (!IsMovingSelection || SelectedElements.Count == 0) return;
+
+			bool hasMoved = SelectedElements.Any(e => e.MoveStartPosition != e.Position);
+			if (hasMoved)
+				ActiveDevChip.UndoController.RecordMoveElements(SelectedElements);
+
+			foreach (WireInstance wire in ActiveDevChip.Wires)
+				wire.ApplyMoveOffset();
+
+			foreach (IMoveable moveableElement in SelectedElements)
+				moveableElement.MoveStartPosition = moveableElement.Position;
+
+			IsMovingSelection = false;
+			#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+			MobileUIControllerWrapper.HidePlacementButtons();
+			#endif
+		}
+
 		void OnFinishedPlacingItems() => OnFinishedOrCancelledPlacingItems();
 
 		void CancelMovingSelectedItemsOnMobile()
@@ -1664,6 +2165,16 @@ namespace DLS.Game
 					if (element is SubChipInstance subChipInstance && subChipInstance.IsBus)
 					{
 						ActiveDevChip.TryDeleteSubChipByID(subChipInstance.LinkedBusPairID);
+					}
+				}
+
+				// If canceling group placement, remove elements that were already added to the chip
+				foreach (IMoveable element in SelectedElements.ToList())
+				{
+					if (ActiveDevChip.Elements.Contains(element))
+					{
+						if (element is SubChipInstance sc) ActiveDevChip.DeleteSubChip(sc);
+						else if (element is DevPinInstance dp) ActiveDevChip.DeleteDevPin(dp);
 					}
 				}
 			}
@@ -1682,6 +2193,16 @@ namespace DLS.Game
 					if (element is SubChipInstance subChipInstance && subChipInstance.IsBus)
 					{
 						ActiveDevChip.TryDeleteSubChipByID(subChipInstance.LinkedBusPairID);
+					}
+				}
+
+				// If canceling group placement, remove elements that were already added to the chip
+				foreach (IMoveable element in SelectedElements.ToList())
+				{
+					if (ActiveDevChip.Elements.Contains(element))
+					{
+						if (element is SubChipInstance sc) ActiveDevChip.DeleteSubChip(sc);
+						else if (element is DevPinInstance dp) ActiveDevChip.DeleteDevPin(dp);
 					}
 				}
 			}

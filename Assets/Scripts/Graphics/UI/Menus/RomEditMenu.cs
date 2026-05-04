@@ -1104,7 +1104,8 @@ namespace DLS.Graphics
 				position,
 				romChip.InitialSubChipDesc.OutputPinColourInfo,
 				internalData,
-				romChip.LabelOffset
+				romChip.LabelOffset,
+				romChip.Rotation
 			);
 
 			// Add the new chip

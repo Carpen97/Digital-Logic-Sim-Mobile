@@ -47,21 +47,21 @@ namespace Seb.Vis
 		public static (Vector2 min, Vector2 max) GetActiveMaskMinMax() => (activeMaskMin, activeMaskMax);
 		// ------ Core Draw Functions ------
 
-		public static void Text(FontType font, string text, float fontSize, Vector2 pos, Anchor anchor, Color col, float lineSpacing = 1)
+		public static void Text(FontType font, string text, float fontSize, Vector2 pos, Anchor anchor, Color col, float lineSpacing = 1, float rotationDegrees = 0)
 		{
 			if (fontSize <= 0 || col.a == 0 || string.IsNullOrEmpty(text)) return;
 
 			FontData fontData = defaultFontsData[(int)font];
-			TextDrawData data = new(fontData, text, fontSize, lineSpacing, pos, anchor, col, activeMaskMin, activeMaskMax);
+			TextDrawData data = new(fontData, text, fontSize, lineSpacing, pos, anchor, col, activeMaskMin, activeMaskMax, rotationDegrees);
 			textDrawer.AddToLayer(data);
 		}
 
-		public static void Text(FontType font, char[] text, int textLength, float fontSize, Vector2 pos, Anchor anchor, Color col, float lineSpacing = 1)
+		public static void Text(FontType font, char[] text, int textLength, float fontSize, Vector2 pos, Anchor anchor, Color col, float lineSpacing = 1, float rotationDegrees = 0)
 		{
 			if (fontSize <= 0 || col.a == 0 || text == null || text.Length == 0 || textLength == 0) return;
 
 			FontData fontData = defaultFontsData[(int)font];
-			TextDrawData data = new(fontData, text, textLength, fontSize, lineSpacing, pos, anchor, col, activeMaskMin, activeMaskMax);
+			TextDrawData data = new(fontData, text, textLength, fontSize, lineSpacing, pos, anchor, col, activeMaskMin, activeMaskMax, rotationDegrees);
 			textDrawer.AddToLayer(data);
 		}
 

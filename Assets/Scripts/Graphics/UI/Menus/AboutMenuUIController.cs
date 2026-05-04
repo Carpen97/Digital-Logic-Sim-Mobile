@@ -109,7 +109,6 @@ namespace DLS.Graphics
 			{
 				discordLogo.SetActive(false);
 			}
-			Debug.Log("[AboutMenuUIController] Logos hidden");
 		}
 	}
 }

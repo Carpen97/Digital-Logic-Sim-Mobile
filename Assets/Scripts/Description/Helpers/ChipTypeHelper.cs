@@ -12,6 +12,9 @@ namespace DLS.Description
 		{
 			// ---- Basic Chips ----
 			{ ChipType.Nand, "NAND" },
+			{ ChipType.And, "AND" },
+			{ ChipType.Or, "OR" },
+			{ ChipType.Xor, "XOR" },
 			{ ChipType.Clock, "CLOCK" },
 			{ ChipType.Pulse, "PULSE" },
 			{ ChipType.TriStateBuffer, "3-STATE BUFFER" },
@@ -42,6 +45,10 @@ namespace DLS.Description
 
 		{ ChipType.SPS, "SPS" },
 			{ ChipType.RTC, "RTC" },
+
+			// ---- Wireless Communication ----
+			{ ChipType.Transmitter, "TRANSMITTER" },
+			{ ChipType.Receiver, "RECEIVER" },
 
 			// ---- Not really chips (but convenient to treat them as such anyway) ----
 

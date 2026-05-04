@@ -5,6 +5,7 @@ using DLS.Description;
 using ChipCollection = DLS.Description.ChipCollection;
 using DLS.Game;
 using DLS.Game.LevelsIntegration;
+using DLS.SaveSystem;
 using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis;
@@ -17,6 +18,7 @@ namespace DLS.Graphics
 	public static class ChipLibraryMenu
 	{
 	const string defaultOtherChipsCollectionName = "OTHER";
+		const string defaultGroupsCollectionName = "GROUPS";
 	const float previewWindowHeight = 17f; // 10% reduction from 18f
 
 		const int deleteMessageMaxCharsPerLine = 25;
@@ -254,8 +256,8 @@ namespace DLS.Graphics
 			interactableStates_starredList[0] = index < project.description.StarredList.Count - 1; // can move down
 			interactableStates_starredList[1] = index > 0; // can move up
 
-			// Display unified ROM name if a legacy ROM variant was starred
-			string displayName = GetLibraryDisplayName(starredItem.Name);
+			// Display unified ROM name if a legacy ROM variant was starred; add [G] for groups
+			string displayName = GetLibraryDisplayName(starredItem.Name) + (project.chipLibrary.HasGroup(starredItem.Name) ? " [G]" : "");
 			bool entryPressed = Seb.Vis.UI.UI.Button(displayName, theme, topLeft, new Vector2(width, 2), true, false, false, theme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
 			if (entryPressed)
 			{
@@ -279,7 +281,7 @@ namespace DLS.Graphics
 			const float inputControlsHeight = 5f; // Height for text input + CANCEL/CREATE buttons
 			
 			// Make scroll panel as tall as STARRED panel initially, then adjust based on input state
-			float reservedSpace = buttonHeight + buttonMargin * 2; // Space for NEW COLLECTION button
+			float reservedSpace = (buttonHeight + DefaultButtonSpacing) + buttonMargin * 2; // Space for NEW COLLECTION button
 			if (creatingNewCollection || renamingCollection)
 			{
 				reservedSpace += inputControlsHeight + buttonMargin; // Additional space for input controls
@@ -363,9 +365,7 @@ namespace DLS.Graphics
 							if (selectedCollectionIndex != -1 && selectedChipInCollectionIndex == -1 && selectedNestedCollectionIndex == -1)
 							{
 								// Rename top-level collection
-								ChipCollection selectedCollection = collections[selectedCollectionIndex];
-								selectedCollection.Name = nameField.text;
-								project.RenameStarred(nameField.text, selectedCollection.Name, true);
+								project.RenameCollection(selectedCollectionIndex, nameField.text, autoSave: false);
 								Debug.Log($"Renamed collection to '{nameField.text}'");
 							}
 							else if (selectedCollectionIndex != -1 && selectedNestedCollectionIndex != -1 && selectedChipInCollectionIndex == -1)
@@ -374,6 +374,7 @@ namespace DLS.Graphics
 								ChipCollection selectedCollection = collections[selectedCollectionIndex];
 								ChipCollection selectedNestedCollection = selectedCollection.NestedCollections[selectedNestedCollectionIndex];
 								selectedNestedCollection.Name = nameField.text;
+								selectedNestedCollection.UpdateDisplayStrings();
 								Debug.Log($"Renamed nested collection to '{nameField.text}'");
 							}
 							nameField.ClearText();
@@ -464,7 +465,7 @@ namespace DLS.Graphics
 						// Hide ROM variants from UI (only show the default ROM 256×16)
 						if (ShouldHideRomVariantByName(chipName)) continue;
 
-						string displayChipName = GetLibraryDisplayName(chipName);
+						string displayChipName = GetLibraryDisplayName(chipName) + (project.chipLibrary.HasGroup(chipName) ? " [G]" : "");
 							// Check if this chip is selected
 						bool chipHighlighted = (chipIndex == selectedChipInNestedCollectionIndex) && (nestedIndex == selectedNestedCollectionIndex) && (collectionIndex == selectedCollectionIndex);
 							ButtonTheme activeChipTheme = chipHighlighted ? ActiveUITheme.ChipLibraryChipToggleOn : ActiveUITheme.ChipLibraryChipToggleOff;
@@ -491,7 +492,7 @@ namespace DLS.Graphics
 					// Hide ROM variants from UI (only show the default ROM 256×16)
 					if (ShouldHideRomVariantByName(chipName)) continue;
 
-					string displayChipName = GetLibraryDisplayName(chipName);
+					string displayChipName = GetLibraryDisplayName(chipName) + (project.chipLibrary.HasGroup(chipName) ? " [G]" : "");
 					ButtonTheme activeChipTheme = collectionIndex == selectedCollectionIndex && chipIndex == selectedChipInCollectionIndex ? ActiveUITheme.ChipLibraryChipToggleOn : ActiveUITheme.ChipLibraryChipToggleOff;
 					Vector2 chipLabelPos = new(topLeft.x + nestedInset, Seb.Vis.UI.UI.PrevBounds.Bottom - UILayoutHelper.DefaultSpacing);
 					bool chipPressed = Seb.Vis.UI.UI.Button(displayChipName, activeChipTheme, chipLabelPos, new Vector2(width - nestedInset, 2), true, false, false,activeChipTheme.buttonCols, Anchor.TopLeft, true, 1, isScrolling);
@@ -601,8 +602,8 @@ namespace DLS.Graphics
 			// Always draw preview window (even when empty)
 			using (Seb.Vis.UI.UI.BeginBoundsScope(true))
 			{
-				// ---- Draw Chip Preview First (Top Element) ----
-				DrawChipPreview(panelContentBounds, hasChipSelected, hasStarredItemSelected, hasNestedChipSelected);
+				// ---- Draw Chip or Group Preview First (Top Element) ----
+				DrawChipOrGroupPreview(panelContentBounds, hasChipSelected, hasStarredItemSelected, hasNestedChipSelected);
 				
 				// Add spacing below preview
 				topLeft.y -= previewWindowHeight; // Space for preview window
@@ -1274,64 +1275,63 @@ namespace DLS.Graphics
 
 		static void ChipActionButtons(string selectedChipName, ref Vector2 topLeft, float width)
 			{
-				bool isBuiltin = project.chipLibrary.IsBuiltinChip(selectedChipName);
-				bool isSpecialCustom = project.description.isPlayerAddedSpecialChip(selectedChipName); 
-				interactable_chipActionButtons[0] = project.ViewedChip.CanAddSubchip(selectedChipName);
-				interactable_chipActionButtons[1] = !isBuiltin;
-				interactable_chipActionButtons[2] = !(isBuiltin && !isSpecialCustom);
-				int chipActionIndex = DrawHorizontalButtonGroup(buttonNames_chipAction, interactable_chipActionButtons, ref topLeft, width);
+				bool isGroup = project.chipLibrary.HasGroup(selectedChipName);
+				bool isBuiltin = !isGroup && project.chipLibrary.IsBuiltinChip(selectedChipName);
+				bool isSpecialCustom = !isGroup && project.description.isPlayerAddedSpecialChip(selectedChipName);
+				interactable_chipActionButtons[0] = isGroup || project.ViewedChip.CanAddSubchip(selectedChipName);
+				interactable_chipActionButtons[1] = isGroup ? false : !isBuiltin; // OPEN: groups can't be opened
+				interactable_chipActionButtons[2] = isGroup || !(isBuiltin && !isSpecialCustom);
+				string[] buttons = isGroup ? new[] { "USE", "DELETE" } : buttonNames_chipAction;
+				bool[] states = isGroup ? new[] { true, true } : interactable_chipActionButtons;
+				int chipActionIndex = DrawHorizontalButtonGroup(buttons, states, ref topLeft, width);
 
 				if (chipActionIndex == 0) // use
 				{
-					// Resolve legacy ROM variant names to default ROM to avoid missing keys
-					string resolvedName = ResolveLibraryChipName(selectedChipName);
-					var desc = project.chipLibrary.GetChipDescription(resolvedName);
-					var placed = project.controller.StartPlacing(desc, InputHelper.MousePosWorld, false);
-					// Only exit when placement actually started; when blocked (e.g. disallowed chip in level), popup is shown - don't overwrite it
-					if (placed != null)
-						ExitLibrary();
-				}
-				else if (chipActionIndex == 1) // open
-				{
-					chipToOpenName = selectedChipName;
-					if (project.ActiveChipHasUnsavedChanges())
+					if (isGroup)
 					{
-						UnsavedChangesPopup.OpenPopup(OpenChipIfConfirmed);
+						var groupDesc = project.chipLibrary.GetGroupDescription(selectedChipName);
+						project.controller.StartPlacingGroup(groupDesc, InputHelper.MousePosWorld);
+						ExitLibrary();
 					}
 					else
 					{
-						OpenChipIfConfirmed(true);
+						string resolvedName = ResolveLibraryChipName(selectedChipName);
+						var desc = project.chipLibrary.GetChipDescription(resolvedName);
+						var placed = project.controller.StartPlacing(desc, InputHelper.MousePosWorld, false);
+						if (placed != null) ExitLibrary();
 					}
 				}
-				else if (chipActionIndex == 2) // delete
+				else if (chipActionIndex == 2 || (isGroup && chipActionIndex == 1)) // delete (groups: index 1; chips: index 2)
 				{
-					(string msg, bool warn) = CreateDeleteConfirmationMessage(selectedChipName);
+					(string msg, bool warn) = isGroup
+						? ($"Delete group \"{selectedChipName}\"?", false)
+						: CreateDeleteConfirmationMessage(selectedChipName);
 					Color messageColor = warn ? deleteColWarningHigh : deleteColWarningMedium;
-					
-					// Store the chip name to delete
-					string chipNameToDelete = selectedChipName;
-					
-					DeleteConfirmationPopup.OpenPopup(
-						msg,
-						messageColor,
-						(confirmed) =>
+					string nameToDelete = selectedChipName;
+					bool deleteGroup = isGroup;
+					DeleteConfirmationPopup.OpenPopup(msg, messageColor, (confirmed) =>
+					{
+						if (confirmed)
 						{
-							if (confirmed)
+							if (deleteGroup) project.DeleteGroup(nameToDelete);
+							else project.DeleteChip(nameToDelete);
+							if (selectedChipInCollectionIndex != -1)
 							{
-								project.DeleteChip(chipNameToDelete);
-								// Reset selections after delete
-								if (selectedChipInCollectionIndex != -1)
-								{
-									ChipCollection collection = collections[selectedCollectionIndex];
-									selectedChipInCollectionIndex = Mathf.Min(selectedChipInCollectionIndex, collection.Chips.Count - 1);
-								}
-								else if (selectedStarredItemIndex != -1)
-								{
-									selectedStarredItemIndex = Mathf.Min(selectedStarredItemIndex, project.description.StarredList.Count - 1);
-								}
+								ChipCollection collection = collections[selectedCollectionIndex];
+								selectedChipInCollectionIndex = Mathf.Min(selectedChipInCollectionIndex, collection.Chips.Count - 1);
 							}
+							else if (selectedStarredItemIndex != -1)
+								selectedStarredItemIndex = Mathf.Min(selectedStarredItemIndex, project.description.StarredList.Count - 1);
 						}
-					);
+					});
+				}
+				else if (chipActionIndex == 1 && !isGroup) // open (chips only)
+				{
+					chipToOpenName = selectedChipName;
+					if (project.ActiveChipHasUnsavedChanges())
+						UnsavedChangesPopup.OpenPopup(OpenChipIfConfirmed);
+					else
+						OpenChipIfConfirmed(true);
 				}
 			}
 
@@ -1419,23 +1419,38 @@ namespace DLS.Graphics
 			//Debug.Log("Overriding chip collections with defaults");
 			//Project.ActiveProject.description.ChipCollections = new(Main.CreateDefaultChipCollections());
 
-			// Ensure the mandatory "OTHER" collection exists
+			// Ensure the mandatory "OTHER" and "GROUPS" collections exist
 			if (GetDefaultCollection() == null)
 			{
 				collections.Add(new ChipCollection(defaultOtherChipsCollectionName));
 			}
-
+			if (GetGroupsCollection() == null)
+			{
+				collections.Add(new ChipCollection(defaultGroupsCollectionName));
+			}
 
 			// Automatically add any chips not in a collection to the "other" collection
-			HashSet<string> chipsInCollection = new(collections.SelectMany(c => 
+			HashSet<string> itemsInCollection = new(collections.SelectMany(c =>
 				c.Chips.Concat(c.NestedCollections.SelectMany(nc => nc.Chips))), ChipDescription.NameComparer);
 			ChipCollection defaultCollection = GetDefaultCollection();
 
 			foreach (ChipDescription chip in project.chipLibrary.allChips)
 			{
-				if (!chipsInCollection.Contains(chip.Name))
+				if (!itemsInCollection.Contains(chip.Name))
 				{
 					defaultCollection.Chips.Add(chip.Name);
+					itemsInCollection.Add(chip.Name);
+				}
+			}
+
+			// Automatically add any groups not in a collection to the "GROUPS" collection
+			ChipCollection groupsCollection = GetGroupsCollection();
+			foreach (GroupDescription group in project.chipLibrary.allGroups)
+			{
+				if (!itemsInCollection.Contains(group.Name))
+				{
+					groupsCollection.Chips.Add(group.Name);
+					itemsInCollection.Add(group.Name);
 				}
 			}
 
@@ -1489,6 +1504,7 @@ namespace DLS.Graphics
 		}
 
 		static ChipCollection GetDefaultCollection() => collections.FirstOrDefault(c => ChipDescription.NameMatch(c.Name, defaultOtherChipsCollectionName));
+		static ChipCollection GetGroupsCollection() => collections.FirstOrDefault(c => ChipDescription.NameMatch(c.Name, defaultGroupsCollectionName));
 
 		static bool ValidateCollectionNameInput(string name)
 		{
@@ -1659,48 +1675,33 @@ namespace DLS.Graphics
 			}
 		}
 
+		static void DrawChipOrGroupPreview(Bounds2D panelContentBounds, bool hasChipSelected, bool hasStarredItemSelected, bool hasNestedChipSelected = false)
+		{
+			if (!hasChipSelected && !hasStarredItemSelected && !hasNestedChipSelected) return;
+			string selectedName = hasChipSelected ? collections[selectedCollectionIndex].Chips[selectedChipInCollectionIndex]
+				: hasNestedChipSelected ? collections[selectedCollectionIndex].NestedCollections[selectedNestedCollectionIndex].Chips[selectedChipInNestedCollectionIndex]
+				: project.description.StarredList[selectedStarredItemIndex].Name;
+			if (project.chipLibrary.TryGetGroupDescription(selectedName, out GroupDescription groupDesc))
+				DrawGroupPreview(panelContentBounds, groupDesc);
+			else
+				DrawChipPreview(panelContentBounds, hasChipSelected, hasStarredItemSelected, hasNestedChipSelected);
+		}
+
 		static void DrawChipPreview(Bounds2D panelContentBounds, bool hasChipSelected, bool hasStarredItemSelected, bool hasNestedChipSelected = false)
 		{
 			// Always draw preview window
 			const float previewWidth = 28f;
 			const float previewHeight = previewWindowHeight;
 			const float margin = 0.7f;
-			// Position preview in top-right corner
 			Vector2 previewTopLeft = panelContentBounds.TopRight + Vector2.left * previewWidth + Vector2.down * margin;
-
-			// Draw preview background (always)
 			Color previewBgCol = new Color(0.1f, 0.1f, 0.1f, 0.95f);
 			MenuHelper.DrawLeftAlignTextWithBackground("", previewTopLeft, new Vector2(previewWidth, previewHeight), Anchor.TopLeft, Color.white, previewBgCol, true);
 
-			// Only draw chip content if something is selected
-			if (!hasChipSelected && !hasStarredItemSelected && !hasNestedChipSelected)
-			{
-				return; // Empty preview window
-			}
+			if (!hasChipSelected && !hasStarredItemSelected && !hasNestedChipSelected) return;
 
-			// Get the selected chip description
-			string selectedChipName;
-			
-			if (hasChipSelected)
-			{
-				ChipCollection collection = collections[selectedCollectionIndex];
-				selectedChipName = collection.Chips[selectedChipInCollectionIndex];
-			}
-			else if (hasNestedChipSelected)
-			{
-				ChipCollection collection = collections[selectedCollectionIndex];
-				ChipCollection nestedCollection = collection.NestedCollections[selectedNestedCollectionIndex];
-				selectedChipName = nestedCollection.Chips[selectedChipInNestedCollectionIndex];
-			}
-			else if (hasStarredItemSelected)
-			{
-				StarredItem starredItem = project.description.StarredList[selectedStarredItemIndex];
-				selectedChipName = starredItem.Name;
-			}
-			else
-			{
-				return; // No chip selected
-			}
+			string selectedChipName = hasChipSelected ? collections[selectedCollectionIndex].Chips[selectedChipInCollectionIndex]
+				: hasNestedChipSelected ? collections[selectedCollectionIndex].NestedCollections[selectedNestedCollectionIndex].Chips[selectedChipInNestedCollectionIndex]
+				: project.description.StarredList[selectedStarredItemIndex].Name;
 			
 			if (!project.chipLibrary.TryGetChipDescription(selectedChipName, out ChipDescription chipDesc))
 			{
@@ -1839,8 +1840,102 @@ namespace DLS.Graphics
 			return new Color(chipCol.r * 0.7f, chipCol.g * 0.7f, chipCol.b * 0.7f, chipCol.a);
 		}
 		
+		static void DrawGroupPreview(Bounds2D panelContentBounds, GroupDescription groupDesc)
+		{
+			const float previewWidth = 28f;
+			const float previewHeight = previewWindowHeight;
+			const float margin = 0.7f;
+			Vector2 previewTopLeft = panelContentBounds.TopRight + Vector2.left * previewWidth + Vector2.down * margin;
+			Color previewBgCol = new Color(0.1f, 0.1f, 0.1f, 0.95f);
+			MenuHelper.DrawLeftAlignTextWithBackground("", previewTopLeft, new Vector2(previewWidth, previewHeight), Anchor.TopLeft, Color.white, previewBgCol, true);
+
+			bool hasSubChips = groupDesc.SubChips != null && groupDesc.SubChips.Length > 0;
+			bool hasDevPins = (groupDesc.InputPins != null && groupDesc.InputPins.Length > 0) || (groupDesc.OutputPins != null && groupDesc.OutputPins.Length > 0);
+			if (!hasSubChips && !hasDevPins) return;
+			Vector2 min = new(float.MaxValue, float.MaxValue), max = new(float.MinValue, float.MinValue);
+			if (hasSubChips)
+				foreach (var sc in groupDesc.SubChips)
+				{
+					Vector2 sz = project.chipLibrary.TryGetChipDescription(sc.Name, out var cd) ? cd.Size : new Vector2(2f, 1f);
+					min = Vector2.Min(min, sc.Position);
+					max = Vector2.Max(max, sc.Position + sz);
+				}
+			if (groupDesc.InputPins != null)
+				foreach (var p in groupDesc.InputPins)
+				{
+					min = Vector2.Min(min, p.Position);
+					max = Vector2.Max(max, p.Position);
+				}
+			if (groupDesc.OutputPins != null)
+				foreach (var p in groupDesc.OutputPins)
+				{
+					min = Vector2.Min(min, p.Position);
+					max = Vector2.Max(max, p.Position);
+				}
+			if (min.x == float.MaxValue) min = max = Vector2.zero;
+			Vector2 groupSize = Vector2.Max(max - min, new Vector2(1f, 1f));
+			if (groupSize.x <= 0 || groupSize.y <= 0) groupSize = new Vector2(2f, 2f);
+			Vector2 previewCenter = previewTopLeft + new Vector2(previewWidth * 0.5f, -previewHeight * 0.5f);
+			float scale = Mathf.Min(previewWidth * 0.8f / groupSize.x, previewHeight * 0.8f / groupSize.y);
+			scale = Mathf.Max(scale, 0.1f);
+			Vector2 groupCenter = (min + max) / 2;
+
+			if (groupDesc.SubChips != null)
+			foreach (var sc in groupDesc.SubChips)
+			{
+				if (!project.chipLibrary.TryGetChipDescription(sc.Name, out var chipDesc)) continue;
+				Vector2 chipSize = chipDesc.Size;
+				if (chipSize.x <= 0 || chipSize.y <= 0) chipSize = new Vector2(2f, 1f);
+				Vector2 drawCenter = previewCenter + (sc.Position + chipSize * 0.5f - groupCenter) * scale;
+				Vector2 scaledSize = chipSize * scale;
+				Color chipCol = NormalizeColor(chipDesc.Colour);
+				if (chipCol.a <= 0) chipCol = new Color(0.2f, 0.2f, 0.2f, 1f);
+				Color outlineCol = GetChipPreviewOutlineCol(chipCol);
+				float shapeRotation = chipDesc.ShapeRotation + sc.Rotation;
+
+				// Draw in same order as DrawChipPreview: outline, pins, body, text (skip displays for group preview)
+				if (chipDesc.ChipType == ChipType.In_Pin || chipDesc.ChipType == ChipType.Out_Pin)
+				{
+					DrawDevPinStyleDisplay(chipDesc, drawCenter, chipSize, scale);
+				}
+				else
+				{
+					UI_DrawChipOutline(drawCenter, chipSize, outlineCol, scale, chipDesc.ShapeType, shapeRotation, chipDesc.CustomPolygon);
+					try { DrawChipPreviewPins(chipDesc, drawCenter, scaledSize, scale); }
+					catch { /* ignore pin layout errors */ }
+					UI_DrawChipBody(drawCenter, chipSize, chipCol, scale, chipDesc.ShapeType, shapeRotation, chipDesc.CustomPolygon);
+				}
+				DrawChipPreviewText(chipDesc, drawCenter, chipSize, scale, chipCol);
+				if (chipDesc.HasDisplay()) DrawChipPreviewDisplays(chipDesc, drawCenter, chipSize, scale);
+			}
+			if (groupDesc.InputPins != null)
+				foreach (var pd in groupDesc.InputPins)
+				{
+					Vector2 drawCenter = previewCenter + (pd.Position - groupCenter) * scale;
+					var chipDesc = CreateMinimalDevPinChipDescription(pd, true);
+					DrawDevPinStyleDisplay(chipDesc, drawCenter, new Vector2(1f, 1f), scale);
+				}
+			if (groupDesc.OutputPins != null)
+				foreach (var pd in groupDesc.OutputPins)
+				{
+					Vector2 drawCenter = previewCenter + (pd.Position - groupCenter) * scale;
+					var chipDesc = CreateMinimalDevPinChipDescription(pd, false);
+					DrawDevPinStyleDisplay(chipDesc, drawCenter, new Vector2(1f, 1f), scale);
+				}
+		}
+
+		static ChipDescription CreateMinimalDevPinChipDescription(PinDescription pd, bool isInput)
+		{
+			var pinDesc = new PinDescription(pd.Name, pd.ID, Vector2.zero, pd.BitCount, pd.Colour, pd.ValueDisplayMode, pd.LocalOffset, pd.face, pd.CustomColourPacked);
+			return new ChipDescription
+			{
+				ChipType = isInput ? ChipType.In_Pin : ChipType.Out_Pin,
+				InputPins = isInput ? Array.Empty<PinDescription>() : new[] { pinDesc },
+				OutputPins = isInput ? new[] { pinDesc } : Array.Empty<PinDescription>()
+			};
+		}
+
 		// Normalize color values from 0-255 range to 0-1 range if needed
-		// (Some chip descriptions incorrectly use 0-255 values for Unity Color which expects 0-1)
 		static Color NormalizeColor(Color col)
 		{
 			// If any color component is >1, assume it's in 0-255 range and normalize
@@ -2189,6 +2284,29 @@ namespace DLS.Graphics
 
 		static void DrawChipPreviewText(ChipDescription chipDesc, Vector2 chipPos, Vector2 chipSize, float scale, Color chipCol)
 		{
+			Color symbolCol = chipCol.r + chipCol.g + chipCol.b > 1.5f ? Color.black : Color.white;
+			if (chipDesc.ChipType == ChipType.Transmitter)
+			{
+				DrawTransmitterSymbolPreview(chipPos, symbolCol, scale);
+				return;
+			}
+			if (chipDesc.ChipType == ChipType.Receiver)
+			{
+				DrawReceiverSymbolPreview(chipPos, symbolCol, scale);
+				return;
+			}
+			if (chipDesc.ChipType == ChipType.Speaker)
+			{
+				DrawSpeakerSymbolPreview(chipPos, symbolCol, scale);
+				return;
+			}
+			if (chipDesc.ChipType == ChipType.SpeakerV2)
+			{
+				DrawSpeakerSymbolPreview(chipPos, symbolCol, scale);
+				float v2FontSize = DrawSettings.FontSizeChipName * scale * 0.7f;
+				Seb.Vis.UI.UI.DrawText("V2", FontType.JetbrainsMonoBold, v2FontSize, chipPos + Vector2.down * 0.12f * scale, Anchor.TextCentre, symbolCol);
+				return;
+			}
 			// Draw chip text using the same logic as the game
 			if (chipDesc.NameLocation == NameDisplayLocation.Hidden)
 				return;
@@ -2572,7 +2690,59 @@ namespace DLS.Graphics
 				Seb.Vis.UI.UI.DrawPanel(displayPos, size, labelCol, Anchor.Centre);
 				Seb.Vis.UI.UI.DrawText("Label", FontType.JetbrainsMonoBold, DrawSettings.FontSizePinLabel * (size.x / baseSize.x), displayPos, Anchor.Centre, Color.white);
 			}
-			// Add other display types as needed
+				// Add other display types as needed
+		}
+
+		static void DrawTransmitterSymbolPreview(Vector2 centre, Color col, float scale)
+		{
+			float baseRadius = 0.2f * scale;
+			float thickness = 0.02f * scale;
+			Draw.PointOutline(centre, baseRadius * 0.4f, thickness, col);
+			Draw.PointOutline(centre, baseRadius * 0.7f, thickness, col);
+			Draw.PointOutline(centre, baseRadius, thickness, col);
+		}
+
+		static void DrawReceiverSymbolPreview(Vector2 centre, Color col, float scale)
+		{
+			float lobeOffset = 0.114f * scale;
+			float lobeRadius = 0.072f * scale;
+			for (int i = 0; i < 4; i++)
+			{
+				float angle = (i * 90f) * Mathf.Deg2Rad;
+				Vector2 lobeCentre = centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * lobeOffset;
+				Seb.Vis.UI.UI.DrawCircle(lobeCentre, lobeRadius, col, Anchor.Centre);
+			}
+		}
+
+		static void DrawSpeakerSymbolPreview(Vector2 centre, Color col, float scale)
+		{
+			const float thickness = 0.02f;
+			const float arcRadius = 0.045f;
+
+			// 1. Rectangle (left) - vertical, rounded corners
+			Vector2 rectSize = new(0.045f * scale, 0.2f * scale);
+			Vector2 rectCentre = centre + new Vector2(-0.095f * scale, 0);
+			Draw.Squircle(rectCentre, rectSize, 0.008f * scale, col);
+
+			// 2. Trapezoid (middle) - wider left, narrower right
+			Vector2 tl = centre + new Vector2(-0.07f * scale, 0.1f * scale);
+			Vector2 bl = centre + new Vector2(-0.07f * scale, -0.1f * scale);
+			Vector2 br = centre + new Vector2(0.02f * scale, -0.045f * scale);
+			Vector2 tr = centre + new Vector2(0.02f * scale, 0.045f * scale);
+			Draw.Triangle(tl, bl, tr, col);
+			Draw.Triangle(bl, br, tr, col);
+
+			// 3. Three concentric arches (right)
+			Vector2 arcCentre = centre + new Vector2(0.02f * scale, 0);
+			float cos45 = 0.707f;
+			for (int i = 1; i <= 3; i++)
+			{
+				float r = arcRadius * i * scale;
+				Vector2 p0 = arcCentre + new Vector2(-r * cos45, r * cos45);
+				Vector2 p2 = arcCentre + new Vector2(-r * cos45, -r * cos45);
+				Vector2 p1 = arcCentre + new Vector2(r, 0);
+				Draw.QuadraticBezier(p0, p1, p2, thickness * scale, col, 12);
+			}
 		}
 
 		static void UI_DrawDotDisplay(Vector2 centre, float scale)

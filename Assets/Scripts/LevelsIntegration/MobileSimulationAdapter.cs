@@ -119,6 +119,38 @@ public sealed class MobileSimulationAdapter : ISimulationAdapter
 		return true;
 	}
 
+	/// <summary>Read current input pin values from the circuit (PlayerInputState).</summary>
+	public BitVector ReadInputs()
+	{
+		var ins = InputPinsArray;
+		if (ins == null || ins.Length == 0) return new BitVector(0, 0);
+
+		ulong raw = 0UL;
+		int bitOffset = 0;
+		foreach (var inp in ins)
+		{
+			var pin = inp.Pin;
+			var pinBitCount = pin.bitCount.BitCount;
+			if (pinBitCount == 1)
+			{
+				if (pin.PlayerInputState.FirstBitHigh())
+					raw |= (1UL << bitOffset);
+				bitOffset++;
+			}
+			else
+			{
+				uint pinValue = pinBitCount <= 16 ? pin.PlayerInputState.GetShortValues() : pin.PlayerInputState.GetMediumValues();
+				for (int bi = 0; bi < pinBitCount; bi++)
+				{
+					if ((pinValue & (1U << bi)) != 0)
+						raw |= (1UL << bitOffset);
+					bitOffset++;
+				}
+			}
+		}
+		return new BitVector(raw, bitOffset);
+	}
+
 	public BitVector ReadOutputs()
 	{
 		var root = _simChip;

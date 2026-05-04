@@ -438,6 +438,14 @@ namespace DLS.Game
 
         }
 
+		public void NotifyFrequencyEdited(SubChipInstance chip, uint frequency)
+		{
+			chip.InternalData[0] = frequency;
+			var (found, simChip) = rootSimChip.TryGetSubChipFromID(chip.ID);
+			if (found)
+				simChip.UpdateInternalState(chip.InternalData);
+		}
+
         public void DeleteChip(string chipToDeleteName)
 		{
 			// If the current chip only contains the deleted chip directly as a subchip, it will be removed from the sim and everything is fine.
@@ -493,6 +501,15 @@ namespace DLS.Game
 					ViewedChip.RebuildSimulation();
 				}
 			}
+		}
+
+		public void DeleteGroup(string groupToDeleteName)
+		{
+			Saver.DeleteGroup(groupToDeleteName, description.ProjectName);
+			chipLibrary.RemoveGroup(groupToDeleteName);
+			SetStarred(groupToDeleteName, false, false, false);
+			EnsureChipRemovedFromCollections(groupToDeleteName);
+			UpdateAndSaveProjectDescription();
 		}
 
 		// Test if chip's subchips (or any of their subchips, etc...) contain the target subchip

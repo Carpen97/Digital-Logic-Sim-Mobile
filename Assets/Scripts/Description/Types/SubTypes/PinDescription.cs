@@ -12,11 +12,13 @@ namespace DLS.Description
 		public PinBitCount BitCount;
 		public PinColour Colour;
 		public PinValueDisplayMode ValueDisplayMode;
+		/// <summary>Custom RGB packed as (255&lt;&lt;24)|(r&lt;&lt;16)|(g&lt;&lt;8)|b. 0 = use Colour preset.</summary>
+		public uint CustomColourPacked;
         public int face; // Which edge of the chip the pin is on: 0 = top, 1 = right, 2 = bottom, 3 = left
         public float LocalOffset; //offset on chip edge for pin location
 		
 
-        public PinDescription(string name, int id, Vector2 position, PinBitCount bitCount, PinColour colour, PinValueDisplayMode valueDisplayMode, float localoff = 0)
+        public PinDescription(string name, int id, Vector2 position, PinBitCount bitCount, PinColour colour, PinValueDisplayMode valueDisplayMode, float localoff = 0, uint customColourPacked = 0)
 		{
 			Name = name;
 			ID = id;
@@ -24,11 +26,12 @@ namespace DLS.Description
 			BitCount = bitCount;
 			Colour = colour;
 			ValueDisplayMode = valueDisplayMode;
+			CustomColourPacked = customColourPacked;
             LocalOffset = localoff;
 			face = 1;
         }
 
-		public PinDescription(string name, int id, Vector2 position, PinBitCount bitCount, PinColour colour, PinValueDisplayMode valueDisplayMode, float localoff, int side)
+		public PinDescription(string name, int id, Vector2 position, PinBitCount bitCount, PinColour colour, PinValueDisplayMode valueDisplayMode, float localoff, int side, uint customColourPacked = 0)
 		{
             Name = name;
             ID = id;
@@ -36,6 +39,7 @@ namespace DLS.Description
             BitCount = bitCount;
             Colour = colour;
             ValueDisplayMode = valueDisplayMode;
+			CustomColourPacked = customColourPacked;
             LocalOffset = localoff;
 			face = side;
         }

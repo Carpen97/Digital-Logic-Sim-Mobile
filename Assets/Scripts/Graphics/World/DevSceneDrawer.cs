@@ -41,6 +41,7 @@ namespace DLS.Graphics
 			controller = Project.ActiveProject.controller;
 			canEditViewedChip = Project.ActiveProject.CanEditViewedChip;
 
+			DrawGroupBackgrounds();
 			DrawWires();
 			DrawWireEditPoints(controller.wireToEdit);
 
@@ -64,6 +65,56 @@ namespace DLS.Graphics
 			if (controller.IsCreatingSelectionBox)
 			{
 				Draw.Quad(controller.SelectionBoxCentre, controller.SelectionBoxSize, ActiveTheme.SelectionBoxCol);
+			}
+		}
+
+		static void DrawGroupBackgrounds()
+		{
+			int mode = Project.ActiveProject.description.Prefs_GroupBackgroundDisplay;
+			if (mode == 0) return;
+
+			DevChipInstance chip = controller.ActiveDevChip;
+			var groups = new Dictionary<int, Bounds2D>();
+
+			foreach (IMoveable element in chip.Elements)
+			{
+				int groupId = element switch
+				{
+					SubChipInstance sc => sc.GroupId,
+					DevPinInstance dp => dp.GroupId,
+					_ => 0
+				};
+				if (groupId == 0) continue;
+
+				if (!groups.TryGetValue(groupId, out Bounds2D bounds))
+					bounds = Bounds2D.CreateEmpty();
+				bounds = Bounds2D.Grow(bounds, element.SelectionBoundingBox);
+				groups[groupId] = bounds;
+			}
+
+			Color baseCol = ActiveTheme.GridCol;
+			const float padding = 0.1f;
+			const float outlineThickness = 0.04f;
+			int transIdx = Mathf.Clamp(Project.ActiveProject.description.Prefs_GroupBackgroundTransparency, 0, 2);
+			float fillAlpha = PreferencesMenu.GetGroupBackgroundFillAlpha(transIdx);
+			float outlineAlpha = PreferencesMenu.GetGroupBackgroundOutlineAlpha(transIdx);
+
+			foreach (Bounds2D rawBounds in groups.Values)
+			{
+				Bounds2D bounds = Bounds2D.Grow(rawBounds, padding);
+				Vector2 centre = bounds.Centre;
+				Vector2 size = bounds.Size;
+
+				if (mode == 1) // Rectangle (semi-transparent fill)
+				{
+					Color fillCol = new Color(baseCol.r, baseCol.g, baseCol.b, fillAlpha);
+					Draw.Quad(centre, size, fillCol);
+				}
+				else if (mode == 2) // Outline
+				{
+					Color outlineCol = new Color(baseCol.r, baseCol.g, baseCol.b, outlineAlpha);
+					Draw.QuadOutline(centre, size, outlineThickness, outlineCol);
+				}
 			}
 		}
 
@@ -196,7 +247,16 @@ namespace DLS.Graphics
 							else boxCol = ActiveTheme.SelectionBoxMovingCol;
 						}
 
-						Draw.Quad(element.SelectionBoundingBox.Centre, element.SelectionBoundingBox.Size, boxCol);
+						if (element is SubChipInstance subchipRot && subchipRot.Rotation != 0)
+						{
+							Vector2 size = subchipRot.SelectionBoundingBox.Size;
+							Vector2 unrotatedSize = subchipRot.Rotation % 180 == 0 ? size : new Vector2(size.y, size.x);
+							DrawRotatedQuad(element.SelectionBoundingBox.Centre, unrotatedSize, boxCol, subchipRot.Rotation);
+						}
+						else
+						{
+							Draw.Quad(element.SelectionBoundingBox.Centre, element.SelectionBoundingBox.Size, boxCol);
+						}
 					}
 				}
 			}
@@ -282,10 +342,14 @@ namespace DLS.Graphics
 			bool useBlackText = ColHelper.ShouldUseBlackText(bgCol);
 			Color textCol = useBlackText ? Color.black : Color.white;
 
-			Draw.Quad(pos, size, bgCol);
-			Draw.Text(FontBold, wrapped, fontSize, pos, Anchor.TextCentre, textCol);
+			if (subchip.Rotation != 0)
+				DrawRotatedQuad(pos, size, bgCol, subchip.Rotation);
+			else
+				Draw.Quad(pos, size, bgCol);
+			float textRotation = (Project.ActiveProject?.description.Prefs_RotateChipText == true && subchip.Rotation != 0) ? subchip.Rotation : 0f;
+			Draw.Text(FontBold, wrapped, fontSize, pos, Anchor.TextCentre, textCol, 1, textRotation);
 
-			if (InputHelper.MouseInsideBounds_World(pos, size))
+			if (MouseInsideRotatedBounds_World(pos, size, subchip.Rotation))
 			{
 				if (InteractionState.PinUnderMouse == null || InteractionState.PinUnderMouse.parent != subchip)
 					InteractionState.NotifyElementUnderMouse(subchip);
@@ -308,10 +372,15 @@ namespace DLS.Graphics
 			FontType font = FontBold;
 
 			Vector2 size = Draw.CalculateTextBoundsSize(text, FontSizePinLabel, font) + LabelBackgroundPadding;
-			Vector2 centre = chip.Position + offset;
+			bool rotateWithChip = Project.ActiveProject?.description.Prefs_RotateSubchipLabels == true && chip.Rotation != 0;
+			Vector2 centre = rotateWithChip ? chip.Position + RotateVector(offset, chip.Rotation * Mathf.Deg2Rad) : chip.Position + offset;
 
-			Draw.Quad(centre, size, ActiveTheme.PinLabelCol);
-			Draw.Text(font, text, FontSizePinLabel, centre, Anchor.TextFirstLineCentre, Color.white);
+			if (rotateWithChip)
+				DrawRotatedQuad(centre, size, ActiveTheme.PinLabelCol, chip.Rotation);
+			else
+				Draw.Quad(centre, size, ActiveTheme.PinLabelCol);
+			float textRotation = rotateWithChip ? chip.Rotation : 0f;
+			Draw.Text(font, text, FontSizePinLabel, centre, Anchor.TextFirstLineCentre, Color.white, 1, textRotation);
 		}
 
 		static void CopyToCharBuffer(DevPinInstance pin, string text)
@@ -373,6 +442,65 @@ namespace DLS.Graphics
 			return useBlackText ? ColHelper.Darken(chipCol, a) : ColHelper.Brighten(chipCol, a);
 		}
 
+		static void DrawTransmitterSymbol(Vector2 centre, Color col, int rotationDeg)
+		{
+			// Three concentric circle outlines (half size)
+			const float baseRadius = 0.2f;
+			const float thickness = 0.02f;
+			Draw.PointOutline(centre, baseRadius * 0.4f, thickness, col);
+			Draw.PointOutline(centre, baseRadius * 0.7f, thickness, col);
+			Draw.PointOutline(centre, baseRadius, thickness, col);
+		}
+
+		static void DrawReceiverSymbol(Vector2 centre, Color col, int rotationDeg)
+		{
+			// Four-pointed star with circular lobes
+			const float lobeOffset = 0.114f;
+			const float lobeRadius = 0.072f;
+			float rad = rotationDeg * Mathf.Deg2Rad;
+			for (int i = 0; i < 4; i++)
+			{
+				float angle = (i * 90f) * Mathf.Deg2Rad + rad;
+				Vector2 lobeCentre = centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * lobeOffset;
+				Draw.Point(lobeCentre, lobeRadius, col);
+			}
+		}
+
+		static void DrawSpeakerSymbol(Vector2 centre, Color col, int rotationDeg)
+		{
+			const float thickness = 0.02f;
+			const float arcRadius = 0.045f;
+			float rad = rotationDeg * Mathf.Deg2Rad;
+			float c = Mathf.Cos(rad), s = Mathf.Sin(rad);
+			Vector2 Rot(Vector2 v) => new(v.x * c - v.y * s, v.x * s + v.y * c);
+
+			// 1. Rectangle (left) - vertical, rounded corners
+			Vector2 rectSize = new(0.045f, 0.2f);
+			Vector2 rectCentre = centre + Rot(new Vector2(-0.095f, 0));
+			Vector2 rotRectSize = Rot(rectSize);
+			Draw.Squircle(rectCentre, new Vector2(Mathf.Abs(rotRectSize.x), Mathf.Abs(rotRectSize.y)), 0.008f, col);
+
+			// 2. Trapezoid (middle) - wider on left, narrower on right (cone)
+			Vector2 tl = centre + Rot(new Vector2(-0.07f, 0.1f));
+			Vector2 bl = centre + Rot(new Vector2(-0.07f, -0.1f));
+			Vector2 br = centre + Rot(new Vector2(0.02f, -0.045f));
+			Vector2 tr = centre + Rot(new Vector2(0.02f, 0.045f));
+			Draw.Triangle(tl, bl, tr, col);
+			Draw.Triangle(bl, br, tr, col);
+
+			// 3. Three concentric arches (right) - arc centre at narrow end of trapezoid
+			Vector2 arcCentre = centre + Rot(new Vector2(0.02f, 0));
+			float cos45 = 0.707f;
+			for (int i = 1; i <= 3; i++)
+			{
+				float r = arcRadius * i;
+				Vector2 p0 = arcCentre + Rot(new Vector2(-r * cos45, r * cos45));
+				Vector2 p2 = arcCentre + Rot(new Vector2(-r * cos45, -r * cos45));
+				Vector2 p1 = arcCentre + Rot(new Vector2(r, 0));
+				Draw.QuadraticBezier(p0, p1, p2, thickness, col, 12);
+			}
+		}
+
 		public static void DrawSubChip(SubChipInstance subchip)
 		{
 			// Label chip: draw as label box (same look as other labels), fitted to text
@@ -384,6 +512,8 @@ namespace DLS.Graphics
 
 			ChipDescription desc = subchip.Description;
 			Color chipCol = desc.Colour;
+			if (subchip.ChipType == ChipType.Transmitter || subchip.ChipType == ChipType.Receiver)
+				chipCol = FrequencyEditMenu.GetWirelessColourFromStored(subchip, desc.Colour);
 			Vector2 pos = subchip.Position;
 			bool isKeyChip = subchip.ChipType == ChipType.Key;
 
@@ -414,12 +544,13 @@ namespace DLS.Graphics
 			}
 
 
-			// Draw outline and body
-			DrawChipShape(pos, desc.Size + Vector2.one * ChipOutlineWidth, outlineCol, desc.ShapeType, desc.ShapeRotation, desc.CustomPolygon);
-			DrawChipShape(pos, desc.Size, chipCol, desc.ShapeType, desc.ShapeRotation, desc.CustomPolygon);
+			// Draw outline and body (instance rotation + shape rotation)
+			float totalRotation = desc.ShapeRotation + subchip.Rotation;
+			DrawChipShape(pos, desc.Size + Vector2.one * ChipOutlineWidth, outlineCol, desc.ShapeType, totalRotation, desc.CustomPolygon);
+			DrawChipShape(pos, desc.Size, chipCol, desc.ShapeType, totalRotation, desc.CustomPolygon);
 
-			// Mouse over detection
-			if (InputHelper.MouseInsideBounds_World(pos, desc.Size))
+			// Mouse over detection (transform mouse to chip-local space for rotated hit test)
+			if (MouseInsideRotatedBounds_World(pos, desc.Size, subchip.Rotation))
 			{
 				// If mouse is over one of this chip's pins, then prioritize keeping the pin highlighted (so interaction is not too fiddly)
 				if (InteractionState.PinUnderMouse == null || InteractionState.PinUnderMouse.parent != subchip)
@@ -428,8 +559,27 @@ namespace DLS.Graphics
 				}
 			}
 
-			// Draw name
-			if (isKeyChip || desc.NameLocation != NameDisplayLocation.Hidden)
+			// Draw Transmitter/Receiver/Speaker symbol (or name for other chips)
+			if (subchip.ChipType == ChipType.Transmitter)
+			{
+				DrawTransmitterSymbol(pos, nameTextCol, subchip.Rotation);
+			}
+			else if (subchip.ChipType == ChipType.Receiver)
+			{
+				DrawReceiverSymbol(pos, nameTextCol, subchip.Rotation);
+			}
+			else if (subchip.ChipType == ChipType.Speaker)
+			{
+				DrawSpeakerSymbol(pos, nameTextCol, subchip.Rotation);
+			}
+			else if (subchip.ChipType == ChipType.SpeakerV2)
+			{
+				DrawSpeakerSymbol(pos, nameTextCol, subchip.Rotation);
+				float fs = FontSizeChipName * 0.7f;
+				bool rotateText = Project.ActiveProject?.description.Prefs_RotateChipText == true && subchip.Rotation != 0;
+				Draw.Text(FontBold, "V2", fs, pos - Vector2.up * 0.12f, Anchor.TextCentre, nameTextCol, ChipNameLineSpacing, rotateText ? subchip.Rotation : 0f);
+			}
+			else if (isKeyChip || desc.NameLocation != NameDisplayLocation.Hidden)
 			{
 				// Display on single line if name fits comfortably, otherwise use 'formatted' version (split across multiple lines)
 				string displayName = isKeyChip ? subchip.activationKeyString : subchip.MultiLineName;
@@ -437,6 +587,8 @@ namespace DLS.Graphics
 				bool nameCentre = desc.NameLocation == NameDisplayLocation.Centre || isKeyChip;
 				Anchor textAnchor = nameCentre ? Anchor.TextCentre : Anchor.CentreTop;
 				Vector2 textPos = nameCentre ? pos : pos + Vector2.up * (subchip.Size.y / 2 - GridSize / 2);
+				bool rotateText = Project.ActiveProject?.description.Prefs_RotateChipText == true && subchip.Rotation != 0;
+				float textRotation = rotateText ? subchip.Rotation : 0f;
 
 				if (ChipTypeHelper.IsRomType(subchip.ChipType))
 				{
@@ -456,8 +608,8 @@ namespace DLS.Graphics
 					// Draw two lines separately to guarantee perfect centering
 					float fs = FontSizeChipName;
 					float halfGap = fs * 0.6f; // visual spacing between lines
-					Draw.Text(FontBold, line1, fs, textPos + Vector2.up * halfGap, textAnchor, nameTextCol, ChipNameLineSpacing);
-					Draw.Text(FontBold, line2, fs, textPos - Vector2.up * halfGap, textAnchor, nameTextCol, ChipNameLineSpacing);
+					Draw.Text(FontBold, line1, fs, textPos + Vector2.up * halfGap, textAnchor, nameTextCol, ChipNameLineSpacing, textRotation);
+					Draw.Text(FontBold, line2, fs, textPos - Vector2.up * halfGap, textAnchor, nameTextCol, ChipNameLineSpacing, textRotation);
 					// Skip default single-call draw below
 					return;
 				}
@@ -472,7 +624,7 @@ namespace DLS.Graphics
 					// Draw the text in the chip center with custom font size
 					float fontSizeMultiplier = TextDisplayEditMenu.GetFontSizeMultiplier(subchip);
 					float fs = FontSizeChipName * fontSizeMultiplier;
-					Draw.Text(FontBold, displayText, fs, textPos, textAnchor, nameTextCol, ChipNameLineSpacing);
+					Draw.Text(FontBold, displayText, fs, textPos, textAnchor, nameTextCol, ChipNameLineSpacing, textRotation);
 					// Skip default single-call draw below
 					return;
 				}
@@ -494,7 +646,7 @@ namespace DLS.Graphics
 					Draw.Quad(c, s, bgBandCol);
 				}
 
-				Draw.Text(FontBold, displayName, FontSizeChipName, textPos, textAnchor, nameTextCol, ChipNameLineSpacing);
+				Draw.Text(FontBold, displayName, FontSizeChipName, textPos, textAnchor, nameTextCol, ChipNameLineSpacing, textRotation);
 			}
 		}
 
@@ -512,17 +664,19 @@ namespace DLS.Graphics
 				return;
 			}
 
-			Bounds2D subchipMask = Bounds2D.CreateFromCentreAndSize(subchip.Position, subchip.Size);
+			// Use AABB for rotated chip when computing mask
+			Vector2 maskSize = subchip.Rotation % 180 == 0 ? subchip.Size : new Vector2(subchip.Size.y, subchip.Size.x);
+			Bounds2D subchipMask = Bounds2D.CreateFromCentreAndSize(subchip.Position, maskSize);
 
 			Span<Bounds2D> allBounds = outOfBoundsDisplay ? stackalloc Bounds2D[subchip.Displays.Count] : null;
 
 			using (Draw.BeginMaskScope(subchipMask.Min, subchipMask.Max))
 			{
-				// Draw displays
+				// Draw displays (with instance rotation applied to positions)
 				for (int i = 0; i < subchip.Displays.Count; i++)
 				{
 					DisplayInstance display = subchip.Displays[i];
-					Bounds2D bounds = DrawDisplayWithBackground(display, subchip.Position, subchip, sim);
+					Bounds2D bounds = DrawDisplayWithBackground(display, subchip.Position, 1f, subchip.Rotation, subchip, sim);
 					if (outOfBoundsDisplay) allBounds[i] = bounds;
 				}
 			}
@@ -530,7 +684,7 @@ namespace DLS.Graphics
 			if (outOfBoundsDisplay)
 			{
 				Color outOfBoundsCol = new(1, 0, 0, 0.24f);
-				Bounds2D maskBounds = Bounds2D.CreateFromCentreAndSize(subchip.Position, subchip.Size);
+				Bounds2D maskBounds = Bounds2D.CreateFromCentreAndSize(subchip.Position, maskSize);
 
 				foreach (Bounds2D bounds in allBounds)
 				{
@@ -540,7 +694,7 @@ namespace DLS.Graphics
 			}
 		}
 
-		public static Bounds2D DrawDisplayWithBackground(DisplayInstance display, Vector2 pos, SubChipInstance rootChip, SimChip sim = null)
+		public static Bounds2D DrawDisplayWithBackground(DisplayInstance display, Vector2 pos, float parentScale, float rotationDeg, SubChipInstance rootChip, SimChip sim = null)
 		{
 			Color borderCol = GetChipDisplayBorderCol(rootChip.Description.Colour);
 
@@ -548,7 +702,7 @@ namespace DLS.Graphics
 			Draw.ID displayBackingID = Draw.ReserveQuad();
 
 
-			Bounds2D bounds = DrawDisplay(display, pos, 1, rootChip, sim);
+			Bounds2D bounds = DrawDisplay(display, pos, parentScale, rotationDeg, rootChip, sim);
 
 			// Border colour around display
 			Draw.ModifyQuad(displayBorderID, bounds.Centre, bounds.Size + Vector2.one * 0.03f, borderCol);
@@ -558,12 +712,14 @@ namespace DLS.Graphics
 			return bounds;
 		}
 
-		public static Bounds2D DrawDisplay(DisplayInstance display, Vector2 posParent, float parentScale, SubChipInstance rootChip, SimChip sim = null)
+		public static Bounds2D DrawDisplay(DisplayInstance display, Vector2 posParent, float parentScale, float rotationDeg, SubChipInstance rootChip, SimChip sim = null)
 		{
 			Bounds2D bounds = Bounds2D.CreateEmpty();
 
-			Vector2 posLocal = display.Desc.Position;
-			Vector2 posWorld = posParent + posLocal * parentScale;
+			Vector2 posLocal = display.Desc.Position * parentScale;
+			if (rotationDeg != 0)
+				posLocal = RotateVector(posLocal, rotationDeg * Mathf.Deg2Rad);
+			Vector2 posWorld = posParent + posLocal;
 			float scaleWorld = display.Desc.Scale * parentScale;
 
 			if (display.DisplayType is ChipType.Custom)
@@ -572,7 +728,7 @@ namespace DLS.Graphics
 
 				foreach (DisplayInstance child in display.ChildDisplays)
 				{
-					Bounds2D childBounds = DrawDisplay(child, posWorld, scaleWorld, rootChip, sim);
+					Bounds2D childBounds = DrawDisplay(child, posWorld, scaleWorld, 0f, rootChip, sim);
 					bounds = Bounds2D.Grow(bounds, childBounds);
 				}
 			}
@@ -640,14 +796,13 @@ namespace DLS.Graphics
 		{
 			// Get the TextDisplay's sim from the parent sim (same as Custom displays)
 			SimChip textDisplaySim = sim?.GetSubChipFromID(display.Desc.SubChipID);
-			UnityEngine.Debug.Log($"[DrawDisplay] TextDisplay SubChipID={display.Desc.SubChipID}, got sim={textDisplaySim != null}");
 			// TextDisplay as a display component - shows text based on the TextDisplay's simulation state
 			bounds = DrawDisplay_TextDisplay(posWorld, scaleWorld, textDisplaySim, rootChip, display.Desc.SubChipID);
 		}
 
 			else if (ChipTypeHelper.IsClickableDisplayType(display.DisplayType))
 			{
-				bounds = DrawClickableDisplay(display, posParent, parentScale, rootChip, sim);
+				bounds = DrawClickableDisplay(display, posParent, parentScale, rotationDeg, rootChip, sim);
 			}
 
 			display.LastDrawBounds = bounds;
@@ -804,11 +959,13 @@ namespace DLS.Graphics
 			return (null, SubChipDescription.DefaultLabelOffset);
 		}
 
-		public static Bounds2D DrawClickableDisplay(DisplayInstance display, Vector2 posParent, float parentScale, SubChipInstance rootChip, SimChip sim = null)
+		public static Bounds2D DrawClickableDisplay(DisplayInstance display, Vector2 posParent, float parentScale, float rotationDeg, SubChipInstance rootChip, SimChip sim = null)
 		{
 			Bounds2D bounds = Bounds2D.CreateEmpty();
-			Vector2 posLocal = display.Desc.Position;
-			Vector2 posWorld = posParent + posLocal * parentScale;
+			Vector2 posLocal = display.Desc.Position * parentScale;
+			if (rotationDeg != 0)
+				posLocal = RotateVector(posLocal, rotationDeg * Mathf.Deg2Rad);
+			Vector2 posWorld = posParent + posLocal;
 			float scaleWorld = display.Desc.Scale * parentScale;
 
 			bool inBounds = false;
@@ -1570,10 +1727,17 @@ namespace DLS.Graphics
 			float screenHalfWidth = cam.orthographicSize * cam.aspect;
 			Vector2 worldCentre = cam.transform.position;
 
-			float left = ToGrid(-screenHalfWidth + worldCentre.x, GridSize) - GridSize;
-			float right = ToGrid(screenHalfWidth + worldCentre.x, GridSize) + GridSize;
-			float top = ToGrid(screenHalfHeight + worldCentre.y, GridSize) + GridSize;
-			float bottom = ToGrid(-screenHalfHeight + worldCentre.y, GridSize) - GridSize;
+			// When camera is rotated, expand bounds so grid covers the rotated view frustum
+			float rotationRad = cam.transform.eulerAngles.z * Mathf.Deg2Rad;
+			float cos = Mathf.Abs(Mathf.Cos(rotationRad));
+			float sin = Mathf.Abs(Mathf.Sin(rotationRad));
+			float halfExtentX = screenHalfWidth * cos + screenHalfHeight * sin;
+			float halfExtentY = screenHalfWidth * sin + screenHalfHeight * cos;
+
+			float left = ToGrid(-halfExtentX + worldCentre.x, GridSize) - GridSize;
+			float right = ToGrid(halfExtentX + worldCentre.x, GridSize) + GridSize;
+			float top = ToGrid(halfExtentY + worldCentre.y, GridSize) + GridSize;
+			float bottom = ToGrid(-halfExtentY + worldCentre.y, GridSize) - GridSize;
 
 			int skip = cam.orthographicSize < 8 ? 1 : cam.orthographicSize < 32 ? 4 : 16;
 
@@ -1610,6 +1774,13 @@ namespace DLS.Graphics
 			float screenHalfWidth = cam.orthographicSize * cam.aspect;
 			Vector2 worldCentre = cam.transform.position;
 
+			// When camera is rotated, expand bounds so grid covers the rotated view frustum
+			float rotationRad = cam.transform.eulerAngles.z * Mathf.Deg2Rad;
+			float cos = Mathf.Abs(Mathf.Cos(rotationRad));
+			float sin = Mathf.Abs(Mathf.Sin(rotationRad));
+			float halfExtentX = screenHalfWidth * cos + screenHalfHeight * sin;
+			float halfExtentY = screenHalfWidth * sin + screenHalfHeight * cos;
+
 			// Use the same skip logic as square grid
 			int skip = cam.orthographicSize < 8 ? 1 : cam.orthographicSize < 32 ? 4 : 16;
 
@@ -1625,11 +1796,11 @@ namespace DLS.Graphics
 			float horizontalSpacing = hexWidth; // Distance between column centers
 			float verticalSpacing = hexHeight * 0.75f; // Distance between row centers
 
-			// Calculate grid bounds
-			float left = worldCentre.x - screenHalfWidth - hexWidth;
-			float right = worldCentre.x + screenHalfWidth + hexWidth;
-			float bottom = worldCentre.y - screenHalfHeight - hexHeight;
-			float top = worldCentre.y + screenHalfHeight + hexHeight;
+			// Calculate grid bounds (use expanded extents for rotated camera)
+			float left = worldCentre.x - halfExtentX - hexWidth;
+			float right = worldCentre.x + halfExtentX + hexWidth;
+			float bottom = worldCentre.y - halfExtentY - hexHeight;
+			float top = worldCentre.y + halfExtentY + hexHeight;
 
 			// Calculate grid coordinates for proper hexagonal tessellation
 			int colStart = Mathf.FloorToInt(left / horizontalSpacing) - 1;
@@ -1714,7 +1885,10 @@ namespace DLS.Graphics
 			switch (shapeType)
 			{
 				case ChipShapeType.Rectangle:
-					Draw.Quad(centre, size, col);
+					if (Mathf.Abs(rotation) < 0.01f)
+						Draw.Quad(centre, size, col);
+					else
+						DrawRotatedQuad(centre, size, col, rotation);
 					break;
 
 				case ChipShapeType.Hexagon:
@@ -1729,6 +1903,22 @@ namespace DLS.Graphics
 					DrawCustomPolygon(centre, size, col, rotation, customPolygon);
 					break;
 			}
+		}
+
+		static void DrawRotatedQuad(Vector2 centre, Vector2 size, Color col, float rotationDeg)
+		{
+			float halfWidth = size.x * 0.5f;
+			float halfHeight = size.y * 0.5f;
+			float rotationRad = rotationDeg * Mathf.Deg2Rad;
+			Vector2[] corners = new Vector2[4];
+			corners[0] = centre + RotateVector(new Vector2(-halfWidth, -halfHeight), rotationRad);
+			corners[1] = centre + RotateVector(new Vector2(halfWidth, -halfHeight), rotationRad);
+			corners[2] = centre + RotateVector(new Vector2(halfWidth, halfHeight), rotationRad);
+			corners[3] = centre + RotateVector(new Vector2(-halfWidth, halfHeight), rotationRad);
+			Draw.Triangle(centre, corners[0], corners[1], col);
+			Draw.Triangle(centre, corners[1], corners[2], col);
+			Draw.Triangle(centre, corners[2], corners[3], col);
+			Draw.Triangle(centre, corners[3], corners[0], col);
 		}
 
 		static void DrawHexagon(Vector2 centre, Vector2 size, Color col)
@@ -1796,6 +1986,22 @@ namespace DLS.Graphics
 				vector.x * cos - vector.y * sin,
 				vector.x * sin + vector.y * cos
 			);
+		}
+
+		static bool MouseInsideRotatedBounds_World(Vector2 centre, Vector2 size, float rotationDeg)
+		{
+			if (!Application.isPlaying) return false;
+			Vector2 offset = InputHelper.MousePosWorld - centre;
+			Vector2 localOffset = RotateVector(offset, -rotationDeg * Mathf.Deg2Rad);
+			return Mathf.Abs(localOffset.x) < size.x / 2 && Mathf.Abs(localOffset.y) < size.y / 2;
+		}
+
+		/// <summary>Returns true if worldPoint is inside the rotated rectangle. Used for touch hit-testing.</summary>
+		public static bool PointInsideRotatedBounds_World(Vector2 centre, Vector2 size, float rotationDeg, Vector2 worldPoint)
+		{
+			Vector2 offset = worldPoint - centre;
+			Vector2 localOffset = RotateVector(offset, -rotationDeg * Mathf.Deg2Rad);
+			return Mathf.Abs(localOffset.x) <= size.x / 2 && Mathf.Abs(localOffset.y) <= size.y / 2;
 		}
 
 		static void DrawCustomPolygon(Vector2 centre, Vector2 size, Color col, float rotation, CustomPolygonData customPolygon)

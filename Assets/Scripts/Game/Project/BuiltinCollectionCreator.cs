@@ -54,7 +54,13 @@ namespace DLS.Game
 					ChipType.Rom_256x16,
 					ChipType.EEPROM_256x16,
 					ChipType.dev_Ram_8Bit
-				)
+				),
+				CreateChipCollection("WIRELESS",
+					ChipType.Transmitter,
+					ChipType.Receiver
+				),
+				CreateByNames("OTHER"),
+				CreateByNames("GROUPS")
 			};
 		}
 

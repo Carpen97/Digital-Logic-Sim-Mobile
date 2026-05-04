@@ -168,7 +168,7 @@ namespace DLS.Graphics
 			}
 
 
-			Bounds2D bounds = DevSceneDrawer.DrawDisplayWithBackground(SelectedDisplay, Vector2.zero, ChipSaveMenu.ActiveCustomizeChip);
+			Bounds2D bounds = DevSceneDrawer.DrawDisplayWithBackground(SelectedDisplay, Vector2.zero, 1f, 0f, ChipSaveMenu.ActiveCustomizeChip);
 			DrawDisplayBoundsIndicators(bounds, scaleCol);
 
 			if (Project.ActiveProject.ShouldSnapToGrid)
@@ -227,7 +227,7 @@ namespace DLS.Graphics
 				SelectedDisplay.Desc.Position = targetPos;
 			}
 
-			Bounds2D bounds = DevSceneDrawer.DrawDisplayWithBackground(SelectedDisplay, Vector2.zero, ChipSaveMenu.ActiveCustomizeChip);
+			Bounds2D bounds = DevSceneDrawer.DrawDisplayWithBackground(SelectedDisplay, Vector2.zero, 1f, 0f, ChipSaveMenu.ActiveCustomizeChip);
 			DrawDisplayBoundsIndicators(bounds, Color.white);
 
 			if (Project.ActiveProject.ShouldSnapToGrid)

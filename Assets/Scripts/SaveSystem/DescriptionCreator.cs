@@ -120,15 +120,22 @@ namespace DLS.SaveSystem
 				subChip.Label,
 				subChip.Position,
 				// Don't save colour info for bus since it changes based on received input, so would just trigger unnecessary 'unsaved changes' warnings
-				subChip.IsBus ? null : subChip.OutputPins.Select(p => new OutputPinColourInfo(p.Colour, p.Address.PinID)).ToArray(),
+				subChip.IsBus ? null : subChip.OutputPins.Select(p => new OutputPinColourInfo(p.Colour, p.Address.PinID, p.CustomColourPacked)).ToArray(),
 				(uint[])subChip.InternalData?.Clone(),
-				subChip.LabelOffset
+				subChip.LabelOffset,
+				subChip.Rotation
 			);
 		}
 
 		public static SubChipDescription CreateBuiltinSubChipDescriptionForPlacement(ChipType type, string name, int id, Vector2 position)
 		{
+			return CreateBuiltinSubChipDescriptionForPlacement(type, name, id, position, null);
+		}
+
+		public static SubChipDescription CreateBuiltinSubChipDescriptionForPlacement(ChipType type, string name, int id, Vector2 position, DevChipInstance parentChip)
+		{
 			string defaultLabel = type == ChipType.Label ? "Label" : string.Empty;
+			uint[] internalData = CreateDefaultInstanceData(type, parentChip);
 			return new SubChipDescription
 			(
 				name,
@@ -136,13 +143,29 @@ namespace DLS.SaveSystem
 				defaultLabel,
 				position,
 				Array.Empty<OutputPinColourInfo>(),
-				CreateDefaultInstanceData(type)
+				internalData
 			);
 		}
 
-	public static uint[] CreateDefaultInstanceData(ChipType type)
+		public static uint GetFirstFreeTransmitterFrequency(DevChipInstance chip, int excludeSubChipId = -1)
+		{
+			var used = new HashSet<uint>();
+			foreach (var sub in chip.GetSubchips())
+			{
+				if (sub.ID == excludeSubChipId) continue;
+				if (sub.ChipType == ChipType.Transmitter && sub.InternalData != null && sub.InternalData.Length > 0)
+					used.Add(sub.InternalData[0]);
+			}
+			uint f = 0;
+			while (used.Contains(f)) f++;
+			return f;
+		}
+
+	public static uint[] CreateDefaultInstanceData(ChipType type) => CreateDefaultInstanceData(type, null);
+
+	public static uint[] CreateDefaultInstanceData(ChipType type, DevChipInstance parentChip)
 	{
-		return type switch
+		uint[] data = type switch
 		{
 			ChipType.Rom_256x16 => new uint[256], // ROM contents
 			ChipType.EEPROM_256x16 => new uint[257], // EEPROM contents + Rising-Edge detection
@@ -155,8 +178,11 @@ namespace DLS.SaveSystem
 			ChipType.Constant_8Bit => new uint[] { 0 }, // Content
 			ChipType.TextDisplay => new uint[1344], // Text display: 256 strings × max 21 bytes each (1 length + 20 chars) ÷ 4 bytes per uint = 1344 uints
 			ChipType.Label => new uint[] { 0, 70, 200 }, // [0] colour, [1] width×100, [2] fontSize×1000 (70=0.7, 200=0.2)
+			ChipType.Transmitter => new uint[] { parentChip != null ? GetFirstFreeTransmitterFrequency(parentChip) : 0u, 0 }, // [0] frequency, [1] packed colour (0=default)
+			ChipType.Receiver => new uint[] { 0, 0 }, // [0] frequency, [1] packed colour (0=default)
 			_ => ChipTypeHelper.IsBusType(type) ? new uint[2] : null
 		};
+		return data;
 	}
 
 		public static void UpdateWireIndicesForDescriptionCreation(DevChipInstance chip)
@@ -213,7 +239,8 @@ namespace DLS.SaveSystem
 				ConnectionType = connectionType,
 				ConnectedWireIndex = connectedWireIndex,
 				ConnectedWireSegmentIndex = connectedWireSegmentIndex,
-				Points = wirePoints
+				Points = wirePoints,
+				UseStaticColor = wire.UseStaticColor
 			};
 		}
 
@@ -223,11 +250,11 @@ namespace DLS.SaveSystem
 				devPin.ID,
 				devPin.Position, // Use the Position field from DevPinInstance
 				devPin.Pin.bitCount,
-				// Don't save colour info for output pin since it changes based on received input, so would just trigger unecessary 'unsaved changes' warnings
-				devPin.IsInputPin ? devPin.Pin.Colour : default,
+				devPin.Pin.Colour,
 				devPin.pinValueDisplayMode,
 				devPin.Pin.LocalPosY,
-				devPin.Pin.face
+				devPin.Pin.face,
+				devPin.Pin.CustomColourPacked
 			);
 
 		public static PinDescription CreatePinDescriptionAndConserveCustomInfo(DevPinInstance devPin, PinDescription pinDescription) =>
@@ -236,10 +263,11 @@ namespace DLS.SaveSystem
 				devPin.ID,
 				devPin.Position, // Use the Position field from DevPinInstance
 				devPin.Pin.bitCount,
-				devPin.IsInputPin ? devPin.Pin.Colour : default,
+				devPin.Pin.Colour,
 				devPin.pinValueDisplayMode,
 				pinDescription.LocalOffset,
-				pinDescription.face
+				pinDescription.face,
+				devPin.Pin.CustomColourPacked
 			);
 
 		static Color RandomInitialChipColour()
@@ -249,6 +277,77 @@ namespace DLS.SaveSystem
 			float s = Mathf.Lerp(0.2f, 1, (float)rng.NextDouble());
 			float v = Mathf.Lerp(0.2f, 1, (float)rng.NextDouble());
 			return Color.HSVToRGB(h, s, v);
+		}
+
+		/// <summary>Create a GroupDescription from selected elements (SubChipInstance and/or DevPinInstance) and wires between them.</summary>
+		public static GroupDescription CreateGroupDescription(string name, IEnumerable<IMoveable> elements, DevChipInstance devChip)
+		{
+			var subChips = elements.OfType<SubChipInstance>().ToList();
+			var devPins = elements.OfType<DevPinInstance>().ToList();
+			var elementSet = new HashSet<IMoveable>(elements);
+			var subChipDescs = subChips.Select(CreateSubChipDescription).ToArray();
+			var inputPinDescs = devPins.Where(p => p.IsInputPin).Select(CreatePinDescription).ToArray();
+			var outputPinDescs = devPins.Where(p => !p.IsInputPin).Select(CreatePinDescription).ToArray();
+			var wiresBetween = new List<WireInstance>();
+			foreach (var wire in devChip.Wires)
+			{
+				bool srcIn = wire.SourcePin.parent is IMoveable src && elementSet.Contains(src);
+				bool tgtIn = wire.TargetPin.parent is IMoveable tgt && elementSet.Contains(tgt);
+				if (srcIn && tgtIn) wiresBetween.Add(wire);
+			}
+			var wireToIndex = new Dictionary<WireInstance, int>();
+			for (int i = 0; i < wiresBetween.Count; i++)
+				wireToIndex[wiresBetween[i]] = i;
+			var wireDescs = new WireDescription[wiresBetween.Count];
+			for (int i = 0; i < wiresBetween.Count; i++)
+				wireDescs[i] = CreateWireDescriptionWithIndexMap(wiresBetween[i], wireToIndex);
+			return new GroupDescription
+			{
+				Name = name,
+				DLSVersion = Main.DLSVersion.ToString(),
+				SubChips = subChipDescs,
+				InputPins = inputPinDescs.Length > 0 ? inputPinDescs : null,
+				OutputPins = outputPinDescs.Length > 0 ? outputPinDescs : null,
+				Wires = wireDescs
+			};
+		}
+
+		static WireDescription CreateWireDescriptionWithIndexMap(WireInstance wire, Dictionary<WireInstance, int> wireToIndex)
+		{
+			Vector2[] wirePoints = new Vector2[wire.WirePointCount];
+			for (int i = 0; i < wirePoints.Length; i++)
+			{
+				if (i == 0 && !wire.SourceConnectionInfo.IsConnectedAtWire) continue;
+				if (i == wirePoints.Length - 1 && !wire.TargetConnectionInfo.IsConnectedAtWire) continue;
+				wirePoints[i] = wire.GetWirePoint(i);
+			}
+			var connectionType = WireConnectionType.ToPins;
+			int connectedWireIndex = -1;
+			int connectedWireSegmentIndex = -1;
+			if (wire.ConnectedWire != null && wireToIndex.TryGetValue(wire.ConnectedWire, out int idx))
+			{
+				connectedWireIndex = idx;
+				if (wire.SourceConnectionInfo.IsConnectedAtWire)
+				{
+					connectionType = WireConnectionType.ToWireSource;
+					connectedWireSegmentIndex = wire.SourceConnectionInfo.wireConnectionSegmentIndex;
+				}
+				else if (wire.TargetConnectionInfo.IsConnectedAtWire)
+				{
+					connectionType = WireConnectionType.ToWireTarget;
+					connectedWireSegmentIndex = wire.TargetConnectionInfo.wireConnectionSegmentIndex;
+				}
+			}
+			return new WireDescription
+			{
+				SourcePinAddress = wire.SourcePin.Address,
+				TargetPinAddress = wire.TargetPin.Address,
+				ConnectionType = connectionType,
+				ConnectedWireIndex = connectedWireIndex,
+				ConnectedWireSegmentIndex = connectedWireSegmentIndex,
+				Points = wirePoints,
+				UseStaticColor = wire.UseStaticColor
+			};
 		}
 	}
 }

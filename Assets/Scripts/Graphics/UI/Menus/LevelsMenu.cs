@@ -9,6 +9,7 @@ using Seb.Helpers;
 using DLS.Levels; // LevelDefinition
 using DLS.Game;
 using DLS.Game.LevelsIntegration;   // UIDrawer / Project access
+using DLS.SaveSystem;
 using static DLS.Graphics.DrawSettings;
 
 namespace DLS.Graphics
@@ -423,6 +424,7 @@ namespace DLS.Graphics
 		bool hasLevelSelected = _allLevels.Count > 0 && _allLevels[0].def != null;
 		bool canPlay = hasLevelSelected;
 		bool hasProgress = canPlay && HasLevelProgress(_allLevels[0].id);
+		bool isUserLevel = hasLevelSelected && _allLevels[0].id != null && _allLevels[0].id.StartsWith("user.");
 			
 			// Center buttons horizontally
 			Vector2 centeredButtonPos = new(panelContentBounds.Centre.x, buttonPos.y);
@@ -445,14 +447,27 @@ namespace DLS.Graphics
 				bool pressedLeaderboard = Seb.Vis.UI.UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, new Vector2(halfWidth, buttonSize.y), canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 				bool pressedHallOfFame = Seb.Vis.UI.UI.Button("HALL OF FAME", ActiveUITheme.ButtonTheme, hallOfFamePos, new Vector2(halfWidth, buttonSize.y), true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 				
-				// EXIT button at the bottom
-				Vector2 exitPos = new(panelContentBounds.Centre.x, leaderboardPos.y - buttonSize.y - buttonSpacing);
-				bool pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				Vector2 row3Pos = new(panelContentBounds.Centre.x, leaderboardPos.y - buttonSize.y - buttonSpacing);
+				bool pressedDelete = false;
+				bool pressedExit;
+				if (isUserLevel)
+				{
+					float halfW = (buttonSize.x - buttonSpacing) / 2f;
+					Vector2 deletePos = new(panelContentBounds.Centre.x - halfW / 2f - buttonSpacing / 2f, row3Pos.y);
+					Vector2 exitPos = new(panelContentBounds.Centre.x + halfW / 2f + buttonSpacing / 2f, row3Pos.y);
+					pressedDelete = Seb.Vis.UI.UI.Button("DELETE", ActiveUITheme.ButtonTheme, deletePos, new Vector2(halfW, buttonSize.y), true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+					pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, new Vector2(halfW, buttonSize.y), true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				}
+				else
+				{
+					pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, row3Pos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				}
 
 				if (pressedContinue) PlaySelectedLevel(continueFromSave: true);
 				if (pressedRestart) PlaySelectedLevel(continueFromSave: false);
 				if (pressedLeaderboard) OpenLeaderboard();
 				if (pressedHallOfFame) OpenHallOfFame();
+				if (pressedDelete) DeleteSelectedUserLevel();
 				if (pressedExit) Close();
 			}
 			else
@@ -468,13 +483,26 @@ namespace DLS.Graphics
 				bool pressedLeaderboard = Seb.Vis.UI.UI.Button("LEADERBOARD", ActiveUITheme.ButtonTheme, leaderboardPos, new Vector2(halfWidth, buttonSize.y), canPlay, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 				bool pressedHallOfFame = Seb.Vis.UI.UI.Button("HALL OF FAME", ActiveUITheme.ButtonTheme, hallOfFamePos, new Vector2(halfWidth, buttonSize.y), true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
 				
-				// EXIT button at the bottom
-				Vector2 exitPos = new(panelContentBounds.Centre.x, leaderboardPos.y - buttonSize.y - buttonSpacing);
-				bool pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				Vector2 row3Pos = new(panelContentBounds.Centre.x, leaderboardPos.y - buttonSize.y - buttonSpacing);
+				bool pressedDelete = false;
+				bool pressedExit;
+				if (isUserLevel)
+				{
+					float halfW = (buttonSize.x - buttonSpacing) / 2f;
+					Vector2 deletePos = new(panelContentBounds.Centre.x - halfW / 2f - buttonSpacing / 2f, row3Pos.y);
+					Vector2 exitPos = new(panelContentBounds.Centre.x + halfW / 2f + buttonSpacing / 2f, row3Pos.y);
+					pressedDelete = Seb.Vis.UI.UI.Button("DELETE", ActiveUITheme.ButtonTheme, deletePos, new Vector2(halfW, buttonSize.y), true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+					pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, exitPos, new Vector2(halfW, buttonSize.y), true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				}
+				else
+				{
+					pressedExit = Seb.Vis.UI.UI.Button("EXIT", ActiveUITheme.ButtonTheme, row3Pos, buttonSize, true, false, false, ActiveUITheme.ButtonTheme.buttonCols, Anchor.CentreTop);
+				}
 
 				if (pressedPlay) PlaySelectedLevel(continueFromSave: false);
 				if (pressedLeaderboard) OpenLeaderboard();
 				if (pressedHallOfFame) OpenHallOfFame();
+				if (pressedDelete) DeleteSelectedUserLevel();
 				if (pressedExit) Close();
 			}
 		}
@@ -576,6 +604,7 @@ namespace DLS.Graphics
 			if (packAsset == null)
 			{
 				Debug.LogError($"[LevelsMenu] Could not find Resources/{LevelPackResourcePath}.json");
+				InsertMyLevelsPackAtStart();
 				_loaded = true;
 				return;
 			}
@@ -612,6 +641,7 @@ namespace DLS.Graphics
 						_levelPacks.Add(levelPack);
 						Debug.Log($"[LevelsMenu] Added level pack: {levelPack.name} with {levelPack.levels.Count} levels");
 					}
+					InsertMyLevelsPackAtStart();
 					_loaded = true;
 					return;
 				}
@@ -646,6 +676,7 @@ namespace DLS.Graphics
 						_levelPacks.Add(defaultPack);
 						Debug.Log($"[LevelsMenu] Added default level pack (wrapper): {defaultPack.name} with {defaultPack.levels.Count} levels");
 					}
+					InsertMyLevelsPackAtStart();
 					_loaded = true;
 					return;
 				}
@@ -680,8 +711,6 @@ namespace DLS.Graphics
 						_levelPacks.Add(defaultPack);
 						Debug.Log($"[LevelsMenu] Added default level pack (array): {defaultPack.name} with {defaultPack.levels.Count} levels");
 					}
-					_loaded = true;
-					return;
 				}
 			}
 			catch (Exception e)
@@ -689,7 +718,37 @@ namespace DLS.Graphics
 				Debug.LogError($"[LevelsMenu] Failed to parse levels pack in any supported format. {e.Message}");
 			}
 
+			InsertMyLevelsPackAtStart();
 			_loaded = true;
+		}
+
+		static void InsertMyLevelsPackAtStart()
+		{
+			var project = Project.ActiveProject;
+			if (project == null) return;
+
+			string projectName = project.description.ProjectName;
+			if (string.IsNullOrEmpty(projectName)) return;
+
+			var ids = UserLevelStorage.ListUserLevelIds(projectName);
+			var myLevels = new List<LevelDefinition>();
+			foreach (string id in ids)
+			{
+				var def = UserLevelStorage.LoadUserLevel(projectName, id);
+				if (def != null && !string.IsNullOrEmpty(def.id))
+					myLevels.Add(def);
+			}
+
+			var myLevelsPack = new LevelPackEntry
+			{
+				name = "My levels",
+				description = "Levels you created from your chips.",
+				levels = myLevels,
+				isToggledOpen = false
+			};
+			_levelPacks.Insert(0, myLevelsPack);
+			if (myLevels.Count > 0)
+				Debug.Log($"[LevelsMenu] Added My levels pack with {myLevels.Count} levels");
 		}
 
 		// -------- Play flow --------
@@ -785,6 +844,29 @@ namespace DLS.Graphics
 		{
 			PlayerPrefs.SetInt(PlayerPrefsKey_LastIndex + "_Pack", _selectedLevelPackIndex);
 			PlayerPrefs.SetInt(PlayerPrefsKey_LastIndex + "_Level", _selectedLevelIndex);
+		}
+
+		static void DeleteSelectedUserLevel()
+		{
+			if (_allLevels.Count == 0 || _allLevels[0].def == null) return;
+			var entry = _allLevels[0];
+			if (entry.id == null || !entry.id.StartsWith("user.")) return;
+
+			var project = Project.ActiveProject;
+			if (project == null) return;
+
+			if (!UserLevelStorage.DeleteUserLevel(project.description.ProjectName, entry.id))
+			{
+				SimpleMessagePopup.Open("Failed to delete level.", () => UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels));
+				return;
+			}
+
+			LevelProgressService.ClearLevelProgress(entry.id);
+			var pack = _levelPacks[_selectedLevelPackIndex];
+			pack.levels.RemoveAt(_selectedLevelIndex);
+			if (_selectedLevelIndex >= pack.levels.Count) _selectedLevelIndex = Math.Max(0, pack.levels.Count - 1);
+			UpdateSelectedLevel();
+			SimpleMessagePopup.Open($"Level '{entry.name}' deleted.", () => UIDrawer.SetActiveMenu(UIDrawer.MenuType.Levels));
 		}
 
 	/// <summary>

@@ -166,6 +166,7 @@ namespace DLS.Levels
 	{
 		var vectors = new List<LevelDefinition.TestVector>();
 		string previousInputs = "";
+		bool hasClockInput = HasClockLikeInput();
 
 		foreach (var test in tests)
 		{
@@ -194,17 +195,26 @@ namespace DLS.Levels
 
 				// Detect clock edges: look for 0->1 transition on first input (clock)
 				bool isClockEdge = false;
-				if (type == "sequential" && !string.IsNullOrEmpty(previousInputs) && inputs.Length > 0 && previousInputs.Length > 0)
+				if (type == "sequential" && hasClockInput && !string.IsNullOrEmpty(previousInputs) && inputs.Length > 0 && previousInputs.Length > 0)
 				{
 					// Check if first input (clock) transitions from 0 to 1
 					isClockEdge = (previousInputs[0] == '0' && inputs[0] == '1');
+				}
+
+				int settleForVector = 0;
+				if (type == "sequential")
+				{
+					// Clockless sequential levels (e.g. SR latch) need full settle time every vector.
+					settleForVector = hasClockInput
+						? (isClockEdge ? this.settleSteps : 1)
+						: this.settleSteps;
 				}
 
 				vectors.Add(new LevelDefinition.TestVector
 				{
 					inputs = inputs,
 					expected = expected,
-					settleSteps = isClockEdge ? this.settleSteps : 1,  // Use configured settle steps for clock edges
+					settleSteps = settleForVector,
 					isClockEdge = isClockEdge
 				});
 				
@@ -217,6 +227,24 @@ namespace DLS.Levels
 		}
 
 		return vectors.ToArray();
+	}
+
+	private bool HasClockLikeInput()
+	{
+		if (inputStructure == null) return false;
+		for (int i = 0; i < inputStructure.Count; i++)
+		{
+			string name = inputStructure[i].name ?? string.Empty;
+			string abbr = inputStructure[i].abbr ?? string.Empty;
+			if (name.Equals("Clock", StringComparison.OrdinalIgnoreCase) ||
+			    name.Equals("Clk", StringComparison.OrdinalIgnoreCase) ||
+			    abbr.Equals("C", StringComparison.OrdinalIgnoreCase) ||
+			    abbr.Equals("CLK", StringComparison.OrdinalIgnoreCase))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 		/// <summary>

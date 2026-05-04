@@ -112,6 +112,30 @@ namespace DLS.Graphics
 			"Drag and Drop"
 		};
 
+		static readonly string[] RotationStepsOptions =
+		{
+			"Free",
+			"4 (90°)",
+			"6 (60°)",
+			"8 (45°)",
+			"12 (30°)",
+			"24 (15°)",
+			"36 (10°)",
+			"72 (5°)"
+		};
+
+		static readonly int[] RotationStepsValues = { 0, 4, 6, 8, 12, 24, 36, 72 };
+
+		static readonly string[] RotationEnabledOptions = { "On", "Off" };
+		static readonly string[] RotateChipTextOptions = { "On", "Off" };
+		static readonly string[] RotateSubchipLabelsOptions = { "On", "Off" };
+
+		static readonly string[] GroupBackgroundDisplayOptions = { "Off", "Rectangle", "Outline" };
+		static readonly string[] GroupBackgroundTransparencyOptions = { "Subtle", "Medium", "Visible" };
+		/// <summary>Fill alpha per transparency index (0=Subtle, 1=Medium, 2=Visible).</summary>
+		static readonly float[] GroupBackgroundFillAlpha = { 0.35f, 0.5f, 0.65f };
+		/// <summary>Outline alpha per transparency index.</summary>
+		static readonly float[] GroupBackgroundOutlineAlpha = { 0.55f, 0.7f, 0.85f };
 
 		static readonly Vector2 entrySize = new(menuWidth, DrawSettings.SelectorWheelHeight);
 		public static readonly Vector2 settingFieldSize = new(entrySize.x / 3, entrySize.y);
@@ -131,10 +155,18 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_ClockSpeedInput = new("PREFS_ClockSpeed");
 	static readonly UIHandle ID_PinIndicators = new("PREFS_PinIndicators");
 	static readonly UIHandle ID_ControlScheme = new("PREFS_ControlScheme");
+	static readonly UIHandle ID_RotationEnabled = new("PREFS_RotationEnabled");
+	static readonly UIHandle ID_RotationSteps = new("PREFS_RotationSteps");
+		static readonly UIHandle ID_RotateChipText = new("PREFS_RotateChipText");
+	static readonly UIHandle ID_RotateSubchipLabels = new("PREFS_RotateSubchipLabels");
+	static readonly UIHandle ID_GroupBackgroundDisplay = new("PREFS_GroupBackgroundDisplay");
+	static readonly UIHandle ID_GroupBackgroundTransparency = new("PREFS_GroupBackgroundTransparency");
 
 		// Section collapse/expand state
 		static readonly UIHandle ID_DisplaySection = new("PREFS_DisplaySection");
 		static readonly UIHandle ID_EditingSection = new("PREFS_EditingSection");
+		static readonly UIHandle ID_RotationSection = new("PREFS_RotationSection");
+		static readonly UIHandle ID_GroupsSection = new("PREFS_GroupsSection");
 		static readonly UIHandle ID_SimulationSection = new("PREFS_SimulationSection");
 
 		#if UNITY_ANDROID || UNITY_IOS
@@ -150,45 +182,36 @@ namespace DLS.Graphics
 		// Section collapse/expand state
 		static bool displaySectionExpanded = true;
 		static bool editingSectionExpanded = true;
+		static bool rotationSectionExpanded = false;
+		static bool groupsSectionExpanded = false;
 		static bool simulationSectionExpanded = false; // Start collapsed
 		
-		// Track which sections were opened most recently (for limiting to max 2 open)
-		static int lastOpenedSection = 0; // 0=display, 1=editing, 2=simulation
-
 		// Helper methods for collapsible sections
 		static bool IsDisplaySectionExpanded() => displaySectionExpanded;
 		static bool IsEditingSectionExpanded() => editingSectionExpanded;
+		static bool IsRotationSectionExpanded() => rotationSectionExpanded;
+		static bool IsGroupsSectionExpanded() => groupsSectionExpanded;
 		static bool IsSimulationSectionExpanded() => simulationSectionExpanded;
 		
 		static void ToggleDisplaySection() => ToggleSection(0);
 		static void ToggleEditingSection() => ToggleSection(1);
-		static void ToggleSimulationSection() => ToggleSection(2);
+		static void ToggleRotationSection() => ToggleSection(2);
+		static void ToggleGroupsSection() => ToggleSection(3);
+		static void ToggleSimulationSection() => ToggleSection(4);
 		
 		static void ToggleSection(int sectionIndex)
 		{
-			// Count how many sections are currently expanded
-			int expandedCount = 0;
-			if (displaySectionExpanded) expandedCount++;
-			if (editingSectionExpanded) expandedCount++;
-			if (simulationSectionExpanded) expandedCount++;
-			
-			// If we're trying to expand a third section, close the oldest one
-			if (expandedCount >= 2 && !GetSectionExpanded(sectionIndex))
+			bool expanding = !GetSectionExpanded(sectionIndex);
+			if (expanding)
 			{
-				// Close the section that wasn't opened most recently
-				if (lastOpenedSection != 0) displaySectionExpanded = false;
-				if (lastOpenedSection != 1) editingSectionExpanded = false;
-				if (lastOpenedSection != 2) simulationSectionExpanded = false;
+				// Expanding one section: collapse all others (accordion)
+				displaySectionExpanded = false;
+				editingSectionExpanded = false;
+				rotationSectionExpanded = false;
+				groupsSectionExpanded = false;
+				simulationSectionExpanded = false;
 			}
-			
-			// Toggle the requested section
-			SetSectionExpanded(sectionIndex, !GetSectionExpanded(sectionIndex));
-			
-			// Update last opened if we're expanding
-			if (GetSectionExpanded(sectionIndex))
-			{
-				lastOpenedSection = sectionIndex;
-			}
+			SetSectionExpanded(sectionIndex, expanding);
 		}
 		
 		static bool GetSectionExpanded(int sectionIndex)
@@ -197,7 +220,9 @@ namespace DLS.Graphics
 			{
 				0 => displaySectionExpanded,
 				1 => editingSectionExpanded,
-				2 => simulationSectionExpanded,
+				2 => rotationSectionExpanded,
+				3 => groupsSectionExpanded,
+				4 => simulationSectionExpanded,
 				_ => false
 			};
 		}
@@ -208,7 +233,9 @@ namespace DLS.Graphics
 			{
 				case 0: displaySectionExpanded = expanded; break;
 				case 1: editingSectionExpanded = expanded; break;
-				case 2: simulationSectionExpanded = expanded; break;
+				case 2: rotationSectionExpanded = expanded; break;
+				case 3: groupsSectionExpanded = expanded; break;
+				case 4: simulationSectionExpanded = expanded; break;
 			}
 		}
 
@@ -262,6 +289,22 @@ namespace DLS.Graphics
 				#endif
 			}
 
+			DrawCollapsibleHeader("ROTATION:", ID_RotationSection, IsRotationSectionExpanded, ToggleRotationSection);
+			if (IsRotationSectionExpanded())
+			{
+				DrawNextWheel("Enable rotation", RotationEnabledOptions, ID_RotationEnabled);
+				DrawNextWheel("Steps per 360°", RotationStepsOptions, ID_RotationSteps);
+				DrawNextWheel("Rotate chip text", RotateChipTextOptions, ID_RotateChipText);
+				DrawNextWheel("Rotate labels under chips", RotateSubchipLabelsOptions, ID_RotateSubchipLabels);
+			}
+
+			DrawCollapsibleHeader("GROUPS:", ID_GroupsSection, IsGroupsSectionExpanded, ToggleGroupsSection);
+			if (IsGroupsSectionExpanded())
+			{
+				DrawNextWheel("Group background", GroupBackgroundDisplayOptions, ID_GroupBackgroundDisplay);
+				DrawNextWheel("Background transparency", GroupBackgroundTransparencyOptions, ID_GroupBackgroundTransparency);
+			}
+
 				DrawCollapsibleHeader("SIMULATION:", ID_SimulationSection, IsSimulationSectionExpanded, ToggleSimulationSection);
 				if (IsSimulationSectionExpanded())
 				{
@@ -304,6 +347,15 @@ namespace DLS.Graphics
 			#else
 			int controlSchemeMode = project.description.Prefs_UseDragAndDropMode ? 1 : 0; // Always use existing value on PC
 			#endif
+
+			bool rotationEnabled = IsRotationSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_RotationEnabled).index == 0 : project.description.Prefs_RotationEnabled;
+			int rotationStepsIndex = IsRotationSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_RotationSteps).index : GetRotationStepsIndex(project.description.Prefs_RotationSteps);
+			int rotationSteps = RotationStepsValues[Mathf.Clamp(rotationStepsIndex, 0, RotationStepsValues.Length - 1)];
+			bool rotateChipText = IsRotationSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_RotateChipText).index == 0 : project.description.Prefs_RotateChipText;
+			bool rotateSubchipLabels = IsRotationSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_RotateSubchipLabels).index == 0 : project.description.Prefs_RotateSubchipLabels;
+
+			int groupBackgroundDisplay = IsGroupsSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_GroupBackgroundDisplay).index : Mathf.Clamp(project.description.Prefs_GroupBackgroundDisplay, 0, GroupBackgroundDisplayOptions.Length - 1);
+			int groupBackgroundTransparency = IsGroupsSectionExpanded() ? Seb.Vis.UI.UI.GetWheelSelectorState(ID_GroupBackgroundTransparency).index : Mathf.Clamp(project.description.Prefs_GroupBackgroundTransparency, 0, GroupBackgroundTransparencyOptions.Length - 1);
 				
 				// Simulation section: only read and assign when expanded (same pattern as Display/Editing)
 				int simTargetStepsPerSecond = project.description.Prefs_SimTargetStepsPerSecond;
@@ -341,6 +393,12 @@ namespace DLS.Graphics
 				project.description.Prefs_SimPaused = pauseSim;
 				project.description.Perfs_PinIndicators = pinIndicatorsMode;
 				project.description.Prefs_UseDragAndDropMode = controlSchemeMode == 1;
+				project.description.Prefs_RotationEnabled = rotationEnabled;
+				project.description.Prefs_RotationSteps = rotationSteps;
+				project.description.Prefs_RotateChipText = rotateChipText;
+				project.description.Prefs_RotateSubchipLabels = rotateSubchipLabels;
+				project.description.Prefs_GroupBackgroundDisplay = groupBackgroundDisplay;
+				project.description.Prefs_GroupBackgroundTransparency = groupBackgroundTransparency;
 
                 // Cancel / Confirm
                 if (result == MenuHelper.CancelConfirmResult.Cancel)
@@ -404,9 +462,10 @@ namespace DLS.Graphics
 		{
 			originalProjectDesc = Project.ActiveProject.description;
 
-			// Initialize section states (DISPLAY and EDITING expanded, SIMULATION collapsed)
+			// Initialize section states (only DISPLAY expanded; accordion: one section at a time)
 			displaySectionExpanded = true;
-			editingSectionExpanded = true;
+			editingSectionExpanded = false;
+			rotationSectionExpanded = false;
 			simulationSectionExpanded = false;
 
 			UpdateUIFromDescription();
@@ -441,6 +500,12 @@ namespace DLS.Graphics
 			Seb.Vis.UI.UI.GetWheelSelectorState(ID_SimStatus).index = projDesc.Prefs_SimPaused ? 1 : 0;
 			Seb.Vis.UI.UI.GetWheelSelectorState(ID_PinIndicators).index = projDesc.Perfs_PinIndicators;
 			Seb.Vis.UI.UI.GetWheelSelectorState(ID_ControlScheme).index = projDesc.Prefs_UseDragAndDropMode ? 1 : 0;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_RotationEnabled).index = projDesc.Prefs_RotationEnabled ? 0 : 1;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_RotationSteps).index = GetRotationStepsIndex(projDesc.Prefs_RotationSteps);
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_RotateChipText).index = projDesc.Prefs_RotateChipText ? 0 : 1;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_RotateSubchipLabels).index = projDesc.Prefs_RotateSubchipLabels ? 0 : 1;
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_GroupBackgroundDisplay).index = Mathf.Clamp(projDesc.Prefs_GroupBackgroundDisplay, 0, GroupBackgroundDisplayOptions.Length - 1);
+			Seb.Vis.UI.UI.GetWheelSelectorState(ID_GroupBackgroundTransparency).index = Mathf.Clamp(projDesc.Prefs_GroupBackgroundTransparency, 0, GroupBackgroundTransparencyOptions.Length - 1);
             // -- Input fields with default value handling
             int targetStepsPerSecond = projDesc.Prefs_SimTargetStepsPerSecond;
             int stepsPerClockTick = projDesc.Prefs_SimStepsPerClockTick;
@@ -497,6 +562,15 @@ namespace DLS.Graphics
 			}
 		}
 
+		static int GetRotationStepsIndex(int steps)
+		{
+			for (int i = 0; i < RotationStepsValues.Length; i++)
+			{
+				if (RotationStepsValues[i] == steps) return i;
+			}
+			return 0; // Default to Free if invalid
+		}
+
 		public static bool ValidateIntegerInput(string s)
 		{
 			if (string.IsNullOrEmpty(s)) return true;
@@ -521,6 +595,18 @@ namespace DLS.Graphics
 			}
 
 			return frequencyErrorCol;
+		}
+
+		public static float GetGroupBackgroundFillAlpha(int transparencyIndex)
+		{
+			int i = Mathf.Clamp(transparencyIndex, 0, GroupBackgroundFillAlpha.Length - 1);
+			return GroupBackgroundFillAlpha[i];
+		}
+
+		public static float GetGroupBackgroundOutlineAlpha(int transparencyIndex)
+		{
+			int i = Mathf.Clamp(transparencyIndex, 0, GroupBackgroundOutlineAlpha.Length - 1);
+			return GroupBackgroundOutlineAlpha[i];
 		}
 
 		#if UNITY_ANDROID || UNITY_IOS

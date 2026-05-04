@@ -68,6 +68,39 @@ namespace DLS.Graphics
 		}
 
         // ---- Helper functions ----
+		/// <summary>Packs RGB for pin/wire colour. Alpha is always 255.</summary>
+		public static uint PackPinColour(Color col)
+		{
+			Color32 c = col;
+			return (255u << 24) | ((uint)c.r << 16) | ((uint)c.g << 8) | c.b;
+		}
+
+		/// <summary>Unpacks custom colour. Packed format: (a&lt;&lt;24)|(r&lt;&lt;16)|(g&lt;&lt;8)|b.</summary>
+		public static Color UnpackCustomColour(uint packed)
+		{
+			byte r = (byte)((packed >> 16) & 0xFF);
+			byte g = (byte)((packed >> 8) & 0xFF);
+			byte b = (byte)(packed & 0xFF);
+			byte a = (byte)((packed >> 24) & 0xFF);
+			if (a == 0) a = 255;
+			return new Color32(r, g, b, a);
+		}
+
+		/// <summary>Gets low (off) colour for custom packed colour. Darkens the base colour to match theme style.</summary>
+		public static Color GetCustomColourLow(uint packed, bool hover = false)
+		{
+			Color c = UnpackCustomColour(packed);
+			Color low = new Color(c.r * 0.3f, c.g * 0.2f, c.b * 0.2f, 1f);
+			return hover ? Brighten(low, 0.075f) : low;
+		}
+
+		/// <summary>Gets high (on) colour for custom packed colour.</summary>
+		public static Color GetCustomColourHigh(uint packed, bool hover = false)
+		{
+			Color c = UnpackCustomColour(packed);
+			return hover ? Brighten(c, 0.05f) : c;
+		}
+
 		public static Color GetStateColour(bool isHigh, uint index,bool hover = false)
 		{
 			index = (uint)Mathf.Min(index, ActiveTheme.StateHighCol.Length - 1); // clamp just to be safe...

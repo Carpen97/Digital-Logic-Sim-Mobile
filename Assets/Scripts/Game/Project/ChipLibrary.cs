@@ -7,20 +7,25 @@ namespace DLS.Game
 	public class ChipLibrary
 	{
 		public readonly List<ChipDescription> allChips = new();
+		public readonly List<GroupDescription> allGroups = new();
 
 		readonly HashSet<string> builtinChipNames = new(ChipDescription.NameComparer);
 		readonly Dictionary<string, ChipDescription> descriptionFromNameLookup = new(ChipDescription.NameComparer);
+		readonly Dictionary<string, GroupDescription> groupFromNameLookup = new(ChipDescription.NameComparer);
 
 		readonly List<ChipDescription> hiddenChips = new();
 
-		public ChipLibrary(ChipDescription[] customChips, ChipDescription[] builtinChips)
+		public ChipLibrary(ChipDescription[] customChips, ChipDescription[] builtinChips) : this(customChips, builtinChips, null) { }
+
+		public ChipLibrary(ChipDescription[] customChips, ChipDescription[] builtinChips, GroupDescription[] groups)
 		{
 			// Add built-in chips to list of all chips
 			foreach (ChipDescription chip in builtinChips)
 			{
 				// Bus terminus chip should not be shown to the user (it is created automatically upon placement of a bus start point)
 				// ROM variants should not be shown to the user (they are accessible through the ROM editor's pin configuration selector)
-				bool hidden = ChipTypeHelper.IsBusTerminusType(chip.ChipType) || ShouldHideRomVariant(chip.ChipType);
+				// Transmitter/Receiver -4 and -8 variants are hidden (accessible via edit menu on the 1-bit chip)
+				bool hidden = ChipTypeHelper.IsBusTerminusType(chip.ChipType) || ShouldHideRomVariant(chip.ChipType) || ShouldHideWirelessVariant(chip.Name);
 
 				AddChipToLibrary(chip, hidden);
 				builtinChipNames.Add(chip.Name);
@@ -30,6 +35,15 @@ namespace DLS.Game
 			foreach (ChipDescription chip in customChips)
 			{
 				AddChipToLibrary(chip);
+			}
+
+			// Add groups
+			if (groups != null)
+			{
+				foreach (GroupDescription group in groups)
+				{
+					AddGroupToLibrary(group);
+				}
 			}
 
 			RebuildChipDescriptionLookup();
@@ -52,6 +66,12 @@ namespace DLS.Game
 			{
 				// Use TryAdd for hidden chips too, but they won't override visible ones
 				descriptionFromNameLookup.TryAdd(desc.Name, desc);
+			}
+
+			groupFromNameLookup.Clear();
+			foreach (GroupDescription g in allGroups)
+			{
+				groupFromNameLookup[g.Name] = g;
 			}
 		}
 
@@ -76,6 +96,10 @@ namespace DLS.Game
 		}
 
 		public bool TryGetChipDescription(string name, out ChipDescription description) => descriptionFromNameLookup.TryGetValue(name, out description);
+
+		public bool HasGroup(string name) => TryGetGroupDescription(name, out _);
+		public GroupDescription GetGroupDescription(string name) => groupFromNameLookup[name];
+		public bool TryGetGroupDescription(string name, out GroupDescription description) => groupFromNameLookup.TryGetValue(name, out description);
 
 		public void RemoveChip(string chipName)
 		{
@@ -118,6 +142,37 @@ namespace DLS.Game
 			}
 
 			RebuildChipDescriptionLookup();
+		}
+
+		public void NotifyGroupSaved(GroupDescription description)
+		{
+			for (int i = 0; i < allGroups.Count; i++)
+			{
+				if (allGroups[i].NameMatch(description.Name))
+				{
+					allGroups[i] = description;
+					groupFromNameLookup[description.Name] = description;
+					return;
+				}
+			}
+			AddGroupToLibrary(description);
+		}
+
+		public void RemoveGroup(string groupName)
+		{
+			allGroups.RemoveAll(g => g.NameMatch(groupName));
+			groupFromNameLookup.Remove(groupName);
+		}
+
+		public string[] GetAllGroupNames()
+		{
+			return allGroups.Select(g => g.Name).ToArray();
+		}
+
+		void AddGroupToLibrary(GroupDescription description)
+		{
+			allGroups.Add(description);
+			groupFromNameLookup[description.Name] = description;
 		}
 
 		public string[] GetAllCustomChipNames()
@@ -163,10 +218,16 @@ namespace DLS.Game
 		{
 			// Hide ROM variants - only show the original ROM 256x16 in the library
 			// Users can access other pin configurations through the ROM editor's pin configuration selector
-			return chipType == ChipType.Rom_2x8 || 
-			       chipType == ChipType.Rom_1x16 || 
-			       chipType == ChipType.Rom_4x4 || 
+			return chipType == ChipType.Rom_2x8 ||
+			       chipType == ChipType.Rom_1x16 ||
+			       chipType == ChipType.Rom_4x4 ||
 			       chipType == ChipType.Rom_16x1;
+		}
+
+		static bool ShouldHideWirelessVariant(string name)
+		{
+			return ChipDescription.NameMatch(name, "TRANSMITTER-4") || ChipDescription.NameMatch(name, "TRANSMITTER-8") ||
+			       ChipDescription.NameMatch(name, "RECEIVER-4") || ChipDescription.NameMatch(name, "RECEIVER-8");
 		}
 
 		/// <summary>

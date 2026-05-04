@@ -66,17 +66,16 @@ namespace DLS.Graphics
 			// ---- keyboard shortcuts ----
 			if (KeyboardShortcuts.ConfirmShortcutTriggered)
 			{
+				bool isGroup = false;
 				foreach (string chipName in filteredChipNames)
 				{
-					// Open first openable chip on shift/control+enter
-					if ((InputHelper.ShiftIsHeld || InputHelper.CtrlIsHeld) && !Project.ActiveProject.chipLibrary.IsBuiltinChip(chipName))
+					isGroup = Project.ActiveProject.chipLibrary.HasGroup(chipName);
+					if ((InputHelper.ShiftIsHeld || InputHelper.CtrlIsHeld) && !isGroup && !Project.ActiveProject.chipLibrary.IsBuiltinChip(chipName))
 					{
 						OpenChip(chipName);
 						return;
 					}
-					// Use first usable chip on enter
-
-					if (Project.ActiveProject.ViewedChip.CanAddSubchip(chipName))
+					if (isGroup || Project.ActiveProject.ViewedChip.CanAddSubchip(chipName))
 					{
 						UseChip(chipName);
 						return;
@@ -97,25 +96,23 @@ namespace DLS.Graphics
 			if (!isLayoutPass && !offscreen)
 			{
 				string chipName = filteredChipNames[index];
+				bool isGroup = Project.ActiveProject.chipLibrary.HasGroup(chipName);
+				string displayName = chipName + (isGroup ? " [G]" : "");
 				const float nameWidth = 22f;
 
-				// Draw chip name (drawn as non-interactive button)
 				ButtonTheme nameTheme = ActiveUITheme.ChipLibraryChipToggleOn;
-				Seb.Vis.UI.UI.Button(chipName, nameTheme, topLeft, new Vector2(nameWidth, ButtonHeight), true, false, false,nameTheme.buttonCols, Anchor.TopLeft, true, 1, true);
+				Seb.Vis.UI.UI.Button(displayName, nameTheme, topLeft, new Vector2(nameWidth, ButtonHeight), true, false, false, nameTheme.buttonCols, Anchor.TopLeft, true, 1, true);
 
-				// Draw buttons
 				Vector2 buttonsTopLeft = topLeft + Vector2.right * (nameWidth + DefaultButtonSpacing);
 				float buttonsWidth = width - (buttonsTopLeft.x - topLeft.x);
-				bool canPlaceChip = Project.ActiveProject.ViewedChip.CanAddSubchip(chipName);
-				bool canOpenChip = !Project.ActiveProject.chipLibrary.IsBuiltinChip(chipName);
-
+				bool canPlaceChip = isGroup || Project.ActiveProject.ViewedChip.CanAddSubchip(chipName);
+				bool canOpenChip = !isGroup && !Project.ActiveProject.chipLibrary.IsBuiltinChip(chipName);
 
 				bool isStarred = Project.ActiveProject.description.IsStarred(chipName, false);
 				int buttonIndex = MenuHelper.DrawButtonTriplet("USE", "OPEN", isStarred ? "UN-STAR" : "STAR", buttonsTopLeft, buttonsWidth, false, canPlaceChip, canOpenChip, true);
 
-
 				if (buttonIndex == 0) UseChip(chipName);
-				else if (buttonIndex == 1) OpenChip(chipName);
+				else if (buttonIndex == 1 && !isGroup) OpenChip(chipName);
 				else if (buttonIndex == 2)
 				{
 					Project.ActiveProject.SetStarred(chipName, !isStarred, false);
@@ -198,14 +195,21 @@ namespace DLS.Graphics
 			InputFieldState inputField = Seb.Vis.UI.UI.GetInputFieldState(ID_SearchInput);
 			inputField.ClearText();
 
-			allChipNames = Project.ActiveProject.chipLibrary.allChips.Select(c => c.Name).ToArray();
+			var lib = Project.ActiveProject.chipLibrary;
+			var chips = lib.allChips.Select(c => c.Name).ToArray();
+			var groups = lib.GetAllGroupNames();
+			allChipNames = chips.Concat(groups).ToArray();
 			CreateFilteredChipsList(string.Empty);
 		}
 
 		static void UseChip(string chipName)
 		{
 			AddRecentChip(chipName);
-			Project.ActiveProject.controller.StartPlacing(chipName);
+			var project = Project.ActiveProject;
+			if (project.chipLibrary.TryGetGroupDescription(chipName, out var groupDesc))
+				project.controller.StartPlacingGroup(groupDesc, InputHelper.MousePosWorld);
+			else
+				project.controller.StartPlacing(chipName);
 			UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
 		}
 

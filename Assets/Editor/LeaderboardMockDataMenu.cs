@@ -58,6 +58,30 @@ namespace DLS.Editor
                 "OK"
             );
         }
+
+        const string PREF_USE_FIREBASE_IN_EDITOR = "DLS.UseFirebaseInEditor";
+
+        [MenuItem("DLS/Project Sharing/Use real Firebase in Editor (testing)", false, 100)]
+        public static void ToggleUseFirebaseInEditor()
+        {
+            int current = PlayerPrefs.GetInt(PREF_USE_FIREBASE_IN_EDITOR, 0);
+            int next = current == 0 ? 1 : 0;
+            PlayerPrefs.SetInt(PREF_USE_FIREBASE_IN_EDITOR, next);
+            PlayerPrefs.Save();
+            string msg = next == 1
+                ? "Project Sharing will use REAL Firebase in Editor. You can test Import/Browse/Upload without building. " +
+                  "If Editor crashes (uWS), try the Firebase 13.7.0 upgrade (see FIREBASE_WINDOWS_CRASH_FIX.md). Restart Play mode."
+                : "Project Sharing will use mock/dummy data in Editor. Restart Play mode for the change to take effect.";
+            EditorUtility.DisplayDialog("Project Sharing in Editor", msg, "OK");
+        }
+
+        [MenuItem("DLS/Project Sharing/Use real Firebase in Editor (testing)", true)]
+        public static bool ToggleUseFirebaseInEditorValidate()
+        {
+            bool enabled = PlayerPrefs.GetInt(PREF_USE_FIREBASE_IN_EDITOR, 0) == 1;
+            Menu.SetChecked("DLS/Project Sharing/Use real Firebase in Editor (testing)", enabled);
+            return true;
+        }
     }
 }
 

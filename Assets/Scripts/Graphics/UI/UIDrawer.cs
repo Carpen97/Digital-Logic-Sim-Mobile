@@ -27,6 +27,7 @@ namespace DLS.Graphics
 			PulseEdit,
 			ConstantEdit,
 			LabelEdit,
+			FrequencyEdit,
 			UnsavedChanges,
 			LevelUnsavedChanges,
 			Search,
@@ -43,7 +44,11 @@ namespace DLS.Graphics
 			CachingExplanation,
 			UserNameInput,
 			SimpleMessage,
-			ChipDescription
+			ChipDescription,
+			GroupSavePopup,
+			CreateLevel,
+			PinColourPicker,
+			VerilogImport
 		}
 
 		static MenuType activeMenuOld;
@@ -108,6 +113,7 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.PulseEdit) PulseEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ConstantEdit) ConstantEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.LabelEdit) LabelEditMenu.DrawMenu();
+			else if (menuToDraw == MenuType.FrequencyEdit) FrequencyEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.SpecialChipMaker) SpecialChipMakerMenu.DrawMenu();
 			else if (menuToDraw == MenuType.Levels) LevelsMenu.DrawMenu();
 			else if (menuToDraw == MenuType.LevelValidationResult) LevelValidationPopup.DrawMenu();
@@ -123,6 +129,10 @@ namespace DLS.Graphics
 			}
 			else if (menuToDraw == MenuType.SimpleMessage) SimpleMessagePopup.DrawMenu();
 			else if (menuToDraw == MenuType.ChipDescription) ChipDescriptionMenu.DrawMenu();
+			else if (menuToDraw == MenuType.GroupSavePopup) GroupSaveMenu.DrawMenu();
+			else if (menuToDraw == MenuType.CreateLevel) CreateLevelMenu.DrawMenu();
+			else if (menuToDraw == MenuType.PinColourPicker) PinColourPickerMenu.DrawMenu();
+			else if (menuToDraw == MenuType.VerilogImport && VerilogImportFeatureGate.IsEnabled) VerilogImportMenu.DrawMenu();
 			else
 			{
 				bool showSimPausedBanner = project.simPaused;
@@ -130,8 +140,9 @@ namespace DLS.Graphics
 				bool showEraserBanner = DLS.Game.EraserModeController.IsActive;
 				bool showWirePlacementBanner = project.controller?.IsCreatingWire ?? false;
 
-				// Priority order: WirePlacement > Eraser > SimPaused > Level
-				if (showWirePlacementBanner) WirePlacementBanner.DrawBanner();
+				// Priority order: LevelRecording > WirePlacement > Eraser > SimPaused > Level
+				if (LevelRecordingOverlay.IsActive) LevelRecordingOverlay.DrawOverlay();
+				else if (showWirePlacementBanner) WirePlacementBanner.DrawBanner();
 				else if (showEraserBanner) EraserModeBanner.DrawBanner();
 				else if (showSimPausedBanner) SimPausedUI.DrawPausedBanner();
 				else if (showLevelBanner) LevelBannerUI.DrawLevelBanner();
@@ -172,10 +183,14 @@ namespace DLS.Graphics
 				else if (ActiveMenu == MenuType.ProjectStats) ProjectStatsMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.ConstantEdit) ConstantEditMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.LabelEdit) LabelEditMenu.OnMenuOpened();
+				else if (ActiveMenu == MenuType.FrequencyEdit) FrequencyEditMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.SpecialChipMaker) SpecialChipMakerMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.HallOfFame) HallOfFameMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.Levels) LevelsMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.ChipDescription) ChipDescriptionMenu.OnMenuOpened();
+				else if (ActiveMenu == MenuType.GroupSavePopup) GroupSaveMenu.OnMenuOpened();
+				else if (ActiveMenu == MenuType.CreateLevel) CreateLevelMenu.OnMenuOpened();
+				else if (ActiveMenu == MenuType.PinColourPicker) PinColourPickerMenu.OnMenuOpened();
 
 
 				if (InInputBlockingMenu() && Project.ActiveProject != null && Project.ActiveProject.controller != null)
@@ -194,6 +209,11 @@ namespace DLS.Graphics
 
 		public static void SetActiveMenu(MenuType type)
 		{
+			if (type == MenuType.VerilogImport && !VerilogImportFeatureGate.IsEnabled)
+			{
+				type = MenuType.None;
+			}
+
 			// DEBUG: Log menu changes for UserNameInput and LevelValidationResult
 			if (type == MenuType.UserNameInput || type == MenuType.LevelValidationResult ||
 				ActiveMenu == MenuType.UserNameInput || ActiveMenu == MenuType.LevelValidationResult)

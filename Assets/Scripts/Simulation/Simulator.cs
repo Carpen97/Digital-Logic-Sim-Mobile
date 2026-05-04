@@ -26,6 +26,9 @@ namespace DLS.Simulation
 		public static int simulationFrame;
 		static uint pcg_rngState;
 
+		// Frequency bus: maps frequency ID -> value. Cleared each step; transmitters write, receivers read.
+		static readonly Dictionary<uint, uint> frequencyBus = new();
+
 		// When sim is first built, or whenever modified, it needs to run a less efficient pass in which the traversal order of the chips is determined
 		public static bool needsOrderPass;
 
@@ -71,6 +74,9 @@ namespace DLS.Simulation
 			canDynamicReorderThisFrame = simulationFrame % 100 == 0;
 			simulationFrame++; //
 
+			// Clear frequency bus each step (transmitters write during processing, receivers read)
+			frequencyBus.Clear();
+
 			// Step 1) Get player-controlled input states and copy values to the sim
 			foreach (DevPinInstance input in inputPins)
 			{
@@ -86,15 +92,17 @@ namespace DLS.Simulation
 				}
 			}
 			
-			// Process
+			// Process (Transmitters write to frequency bus during this pass)
 			if (needsOrderPass)
 			{
-				StepChipReorder(rootSimChip);
+				StepChipReorder(rootSimChip, skipReceivers: true);
+				StepReceivers(rootSimChip);
 				needsOrderPass = false;
 			}
 			else
 			{
-				StepChip(rootSimChip);
+				StepChip(rootSimChip, skipReceivers: true);
+				StepReceivers(rootSimChip);
 			}
 
 			UpdateAudioState();
@@ -120,7 +128,7 @@ namespace DLS.Simulation
 		}
 
 		// Recursively propagate signals through this chip and its subchips
-		public static void StepChip(SimChip chip)
+		public static void StepChip(SimChip chip, bool skipReceivers = false)
 		{
 			if(SimChip.isCreatingACache)
 				chip.ResetReceivedFlagsOnChildrensPins();
@@ -131,6 +139,9 @@ namespace DLS.Simulation
 			for (int i = chip.SubChips.Length - 1; i >= 0; i--)
 			{
 				SimChip nextSubChip = chip.SubChips[i];
+
+				if (skipReceivers && nextSubChip.ChipType == ChipType.Receiver)
+					continue;
 
 				// Every n frames (for performance reasons) the simulation permits some random modifications to the chip traversal order.
 				// Here two chips may be swapped if they are not 'ready' (i.e. all inputs have not yet been received for this
@@ -152,7 +163,7 @@ namespace DLS.Simulation
 				}
 				else if (!(useCaching && nextSubChip.TryProcessingFromCache()))
 				{
-					StepChip(nextSubChip); // Recursively process custom chip
+					StepChip(nextSubChip, skipReceivers); // Recursively process custom chip
 				}
 
 				// Step 3) Forward the outputs of the processed subchip to connected pins
@@ -163,7 +174,7 @@ namespace DLS.Simulation
 		// Recursively propagate signals through this chip and its subchips
 		// In the process, reorder all subchips based on order in which they become ready for processing (have received all their inputs)
 		// Note: the order here is reversed, so those ready first will be at the end of the array
-		static void StepChipReorder(SimChip chip)
+		static void StepChipReorder(SimChip chip, bool skipReceivers = false)
 		{
 			chip.Sim_PropagateInputs();
 
@@ -175,18 +186,39 @@ namespace DLS.Simulation
 				int nextSubChipIndex = ChooseNextSubChip(subChips, numRemaining);
 				SimChip nextSubChip = subChips[nextSubChipIndex];
 
+				if (skipReceivers && nextSubChip.ChipType == ChipType.Receiver)
+				{
+					// Move to end and skip (will be processed in StepReceivers)
+					(subChips[nextSubChipIndex], subChips[numRemaining - 1]) = (subChips[numRemaining - 1], subChips[nextSubChipIndex]);
+					numRemaining--;
+					continue;
+				}
+
 				// "Remove" the chosen subchip from remaining sub chips.
-				// This is done by moving it to the end of the array and reducing the length of the span by one.
-				// This also places the subchip into (reverse) order, so that the traversal order need to be determined again on the next pass.
 				(subChips[nextSubChipIndex], subChips[numRemaining - 1]) = (subChips[numRemaining - 1], subChips[nextSubChipIndex]);
 				numRemaining--;
 
 				// Process chosen subchip
-				if (nextSubChip.ChipType == ChipType.Custom) StepChipReorder(nextSubChip); // Recursively process custom chip
-				else ProcessBuiltinChip(nextSubChip); // We've reached a built-in chip, so process it directly 
+				if (nextSubChip.ChipType == ChipType.Custom) StepChipReorder(nextSubChip, skipReceivers);
+				else ProcessBuiltinChip(nextSubChip);
 
 				// Step 3) Forward the outputs of the processed subchip to connected pins
 				nextSubChip.Sim_PropagateOutputs();
+			}
+		}
+
+		// Process all Receivers after main step (so Transmitters have populated the frequency bus)
+		static void StepReceivers(SimChip chip)
+		{
+			foreach (SimChip sub in chip.SubChips)
+			{
+				if (sub.ChipType == ChipType.Receiver)
+				{
+					ProcessBuiltinChip(sub);
+					sub.Sim_PropagateOutputs();
+				}
+				else if (sub.ChipType == ChipType.Custom)
+					StepReceivers(sub);
 			}
 		}
 
@@ -255,6 +287,21 @@ namespace DLS.Simulation
 
                         break;
                 }
+				case ChipType.And:
+				{
+					chip.OutputPins[0].State.a = (chip.InputPins[0].State.a & chip.InputPins[1].State.a) & 1;
+					break;
+				}
+				case ChipType.Or:
+				{
+					chip.OutputPins[0].State.a = (chip.InputPins[0].State.a | chip.InputPins[1].State.a) & 1;
+					break;
+				}
+				case ChipType.Xor:
+				{
+					chip.OutputPins[0].State.a = (chip.InputPins[0].State.a ^ chip.InputPins[1].State.a) & 1;
+					break;
+				}
 				case ChipType.Clock:
 				{
                         bool high = stepsPerClockTransition != 0 && ((simulationFrame / stepsPerClockTransition) & 1) == 0;
@@ -644,6 +691,35 @@ namespace DLS.Simulation
 				case ChipType.Constant_8Bit:
 				{
 					chip.OutputPins[0].State.SetShort((ushort)chip.InternalState[0]);
+					break;
+				}
+
+				case ChipType.Transmitter:
+				{
+					uint freq = chip.InternalState.Length > 0 ? chip.InternalState[0] : 0;
+					if (chip.InputPins[0].State.size == 1)
+					{
+						uint value = chip.InputPins[0].State.GetSmallTristatedValue();
+						frequencyBus[freq] = value;
+					}
+					else
+					{
+						frequencyBus[freq] = chip.InputPins[0].State.GetShortValues();
+					}
+					break;
+				}
+
+				case ChipType.Receiver:
+				{
+					uint freq = chip.InternalState.Length > 0 ? chip.InternalState[0] : 0;
+					uint value = frequencyBus.TryGetValue(freq, out uint v) ? v : 0u;
+					if (chip.OutputPins[0].State.size == 1)
+						chip.OutputPins[0].State.SmallSet(value);
+					else
+					{
+						uint mask = (1u << chip.OutputPins[0].State.size) - 1;
+						chip.OutputPins[0].State.SetShort((ushort)(value & mask));
+					}
 					break;
 				}
 

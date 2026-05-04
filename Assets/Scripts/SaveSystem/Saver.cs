@@ -47,6 +47,21 @@ namespace DLS.SaveSystem
 			WriteToFile(serializedDescription, GetChipFilePath(chipDescription.Name, projectName));
 		}
 
+		public static void SaveGroup(GroupDescription groupDescription, string projectName)
+		{
+			string path = GetGroupFilePath(groupDescription.Name, projectName);
+			SavePaths.EnsureDirectoryExists(System.IO.Path.GetDirectoryName(path));
+			string serialized = Serializer.SerializeGroupDescription(groupDescription);
+			WriteToFile(serialized, path);
+		}
+
+		public static void DeleteGroup(string groupName, string projectName)
+		{
+			string filePath = GetGroupFilePath(groupName, projectName);
+			if (System.IO.File.Exists(filePath))
+				System.IO.File.Delete(filePath);
+		}
+
 
 		public static ChipDescription CloneChipDescription(ChipDescription desc)
 		{
@@ -123,6 +138,12 @@ namespace DLS.SaveSystem
 		{
 			string saveDirectoryPath = SavePaths.GetChipsPath(projectName);
 			return Path.Combine(saveDirectoryPath, chipName + ".json");
+		}
+
+		static string GetGroupFilePath(string groupName, string projectName)
+		{
+			string saveDirectoryPath = SavePaths.GetGroupsPath(projectName);
+			return Path.Combine(saveDirectoryPath, groupName + ".json");
 		}
 	}
 }

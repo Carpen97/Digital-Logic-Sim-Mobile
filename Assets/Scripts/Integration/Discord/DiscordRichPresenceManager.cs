@@ -252,7 +252,7 @@ namespace DLS.Integration.Discord
 					// Invoke any pending Discord callbacks (handles connection events, etc.)
 					client.Invoke();
 				}
-				catch (System.Exception e)
+				catch (System.Exception)
 				{
 					// Suppress errors (Discord might have disconnected)
 					// Don't spam console

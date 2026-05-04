@@ -80,6 +80,9 @@ namespace DLS.Game
 
 		public bool anchoredToLevel { get; set; } = false;
 
+		/// <summary>Group ID for component grouping. 0 = not in a group.</summary>
+		public int GroupId { get; set; }
+
         public bool ShouldBeIncludedInSelectionBox(Vector2 selectionCentre, Vector2 selectionSize)
 		{
 			Bounds2D selfBounds = SelectionBoundingBox;

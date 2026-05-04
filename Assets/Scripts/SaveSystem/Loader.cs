@@ -114,7 +114,34 @@ namespace DLS.SaveSystem
             builtinChips = builtinChips.Where(b => !customChipNameHashset.Contains(b.Name)).ToArray();
 
 			UpgradeHelper.ApplyVersionChanges(loadedChips, builtinChips);
-			return new ChipLibrary(loadedChips, builtinChips); 
+
+			// Load groups
+			GroupDescription[] loadedGroups = LoadGroups(projectDescription.ProjectName);
+
+			return new ChipLibrary(loadedChips, builtinChips, loadedGroups);
+		}
+
+		static GroupDescription[] LoadGroups(string projectName)
+		{
+			string groupsPath = SavePaths.GetGroupsPath(projectName);
+			if (!Directory.Exists(groupsPath)) return Array.Empty<GroupDescription>();
+
+			var list = new List<GroupDescription>();
+			foreach (string filePath in Directory.EnumerateFiles(groupsPath, "*.json"))
+			{
+				try
+				{
+					string json = File.ReadAllText(filePath);
+					var group = Serializer.DeserializeGroupDescription(json);
+					if (group != null && !string.IsNullOrEmpty(group.Name))
+						list.Add(group);
+				}
+				catch (Exception ex)
+				{
+					UnityEngine.Debug.LogWarning($"[Loader] Failed to load group from {filePath}: {ex.Message}");
+				}
+			}
+			return list.ToArray();
 		}
 	}
 }

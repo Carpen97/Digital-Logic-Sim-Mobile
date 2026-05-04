@@ -19,8 +19,10 @@ namespace Seb.Vis.Internal
 		public readonly Color col;
 		public readonly Vector2 maskMin;
 		public readonly Vector2 maskMax;
+		/// <summary>Rotation in degrees around the anchor position. 0 = no rotation.</summary>
+		public readonly float rotationDegrees;
 
-		public TextDrawData(FontData fontData, string text, float fontSize, float lineSpacing, Vector2 pos, Anchor anchor, Color col, Vector2 maskMin, Vector2 maskMax)
+		public TextDrawData(FontData fontData, string text, float fontSize, float lineSpacing, Vector2 pos, Anchor anchor, Color col, Vector2 maskMin, Vector2 maskMax, float rotationDegrees = 0)
 		{
 			this.text = text;
 			charArray = null;
@@ -35,9 +37,10 @@ namespace Seb.Vis.Internal
 			this.col = col;
 			this.maskMin = maskMin;
 			this.maskMax = maskMax;
+			this.rotationDegrees = rotationDegrees;
 		}
 
-		public TextDrawData(FontData fontData, char[] text, int textLength, float fontSize, float lineSpacing, Vector2 pos, Anchor anchor, Color col, Vector2 maskMin, Vector2 maskMax)
+		public TextDrawData(FontData fontData, char[] text, int textLength, float fontSize, float lineSpacing, Vector2 pos, Anchor anchor, Color col, Vector2 maskMin, Vector2 maskMax, float rotationDegrees = 0)
 		{
 			this.text = string.Empty;
 			charArray = text;
@@ -52,6 +55,7 @@ namespace Seb.Vis.Internal
 			this.col = col;
 			this.maskMin = maskMin;
 			this.maskMax = maskMax;
+			this.rotationDegrees = rotationDegrees;
 		}
 	}
 }

@@ -32,17 +32,19 @@ namespace DLS.Game
 		// For wires that connect to/from another wire, this is the original connection point (plus move offsets)
 		// This allows the wire to keep its connection as close to this original point as possible when things are moved around.
 		public Vector2 originalWireConnectionPoint;
+		public bool UseStaticColor;
 
 
 		public ConnectionInfo SourceConnectionInfo;
 		public ConnectionInfo TargetConnectionInfo;
 
 		// Create wire from saved info
-		public WireInstance(ConnectionInfo sourceConnection, ConnectionInfo targetConnection, Vector2[] points, int spawnOrder)
+		public WireInstance(ConnectionInfo sourceConnection, ConnectionInfo targetConnection, Vector2[] points, int spawnOrder, bool useStaticColor = false)
 		{
 			bitCount = sourceConnection.pin.bitCount;
 			SourceConnectionInfo = sourceConnection;
 			TargetConnectionInfo = targetConnection;
+			UseStaticColor = useStaticColor;
 
 			WirePoints = new List<Vector2>(points);
 			originalWireConnectionPoint = sourceConnection.IsConnectedAtWire ? points[0] : points[^1];
@@ -57,6 +59,7 @@ namespace DLS.Game
 		{
 			PinInstance firstPin = firstConnectionInfo.pin;
 			FirstPin = firstPin;
+			UseStaticColor = false;
 
 			if (firstPin.IsSourcePin) SourceConnectionInfo = firstConnectionInfo;
 			else TargetConnectionInfo = firstConnectionInfo;
@@ -314,6 +317,8 @@ namespace DLS.Game
 
 		public Color GetColour(int bitIndex)
 		{
+			if (UseStaticColor) return DrawSettings.ActiveTheme.StateDisconnectedCol;
+
 			Color col = IsFullyConnected ? SourcePin.GetStateCol(bitIndex, false, false, true) : DrawSettings.ActiveTheme.StateDisconnectedCol;
 
 			if (bitCount != PinBitCount.Bit1 && bitIndex % 2 == 0 && bitCount < 64)

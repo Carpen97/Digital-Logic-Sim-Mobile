@@ -108,6 +108,10 @@ namespace DLS.Levels
 
 			foreach (var sequence in def.testSequences)
 			{
+				// Reset circuit before each sequence so each runs from a clean slate
+				// (Matches recording flow where each sequence was recorded independently)
+				ResetCircuitStateEnhanced(def);
+
 				// Apply setup vectors if provided (for circuit initialization)
 				if (sequence.setup != null && sequence.setup.Length > 0)
 				{
@@ -187,11 +191,26 @@ namespace DLS.Levels
 			}
 			else
 			{
-				// Fallback: reset all inputs to 0
-				var zeroInputs = new BitVector(0, 0);
+				// Fallback: reset all inputs to 0. Must use correct bit count or ApplyInputs won't set any pins.
+				int totalBits = GetTotalInputBits(def);
+				var zeroInputs = new BitVector(0, totalBits);
 				_sim.ApplyInputs(zeroInputs);
 				_sim.SettleWithin(5, out _);
 			}
+		}
+
+		/// <summary>Compute total input bits from level definition.</summary>
+		private static int GetTotalInputBits(LevelDefinition def)
+		{
+			if (def.inputBitCounts != null && def.inputBitCounts.Length > 0)
+			{
+				int sum = 0;
+				foreach (int bc in def.inputBitCounts) sum += bc;
+				return sum;
+			}
+			if (def.inputCount > 0)
+				return def.inputCount; // Assume 1 bit per pin
+			return 0;
 		}
 
 		/// <summary>
@@ -208,8 +227,62 @@ namespace DLS.Levels
 				return;
 			}
 
-			// Fall back to standard reset
+			// Standard reset: clear all inputs to 0
 			ResetCircuitState(def);
+
+			// If this level is an SR latch, force a deterministic reset state before test playback.
+			if (TryGetSRLatchResetVectors(def, out string resetVector, out string holdVector))
+			{
+				var resetR = BitVector.FromString(resetVector);
+				_sim.ApplyInputs(resetR);
+				_sim.SettleWithin(3, out _);
+				var hold = BitVector.FromString(holdVector);
+				_sim.ApplyInputs(hold);
+				_sim.SettleWithin(3, out _);
+			}
+		}
+
+		private static bool TryGetSRLatchResetVectors(LevelDefinition def, out string resetVector, out string holdVector)
+		{
+			resetVector = null;
+			holdVector = null;
+
+			// Only handle canonical 2-input, 1-bit-per-pin SR latch levels.
+			if (def.inputCount != 2) return false;
+			if (def.inputBitCounts != null && (def.inputBitCounts.Length != 2 || def.inputBitCounts.Any(b => b != 1))) return false;
+
+			var labels = def.inputPinLabels;
+			if (labels == null || labels.Length < 2) return false;
+
+			int resetIndex = -1;
+			int setIndex = -1;
+
+			for (int i = 0; i < 2; i++)
+			{
+				string name = labels[i].name ?? string.Empty;
+				string abbr = labels[i].abbr ?? string.Empty;
+
+				if (resetIndex == -1 && (string.Equals(abbr, "R", StringComparison.OrdinalIgnoreCase) || string.Equals(name, "Reset", StringComparison.OrdinalIgnoreCase)))
+				{
+					resetIndex = i;
+				}
+				if (setIndex == -1 && (string.Equals(abbr, "S", StringComparison.OrdinalIgnoreCase) || string.Equals(name, "Set", StringComparison.OrdinalIgnoreCase)))
+				{
+					setIndex = i;
+				}
+			}
+
+			if (resetIndex == -1 || setIndex == -1 || resetIndex == setIndex) return false;
+
+			// Active-high SR latch semantics:
+			// hold = 00, reset = R=1 and S=0 in whichever pin order this level uses.
+			char[] holdBits = new[] { '0', '0' };
+			char[] resetBits = new[] { '0', '0' };
+			resetBits[resetIndex] = '1';
+
+			holdVector = new string(holdBits);
+			resetVector = new string(resetBits);
+			return true;
 		}
 
 	}

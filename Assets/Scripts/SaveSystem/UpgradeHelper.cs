@@ -26,6 +26,49 @@ namespace DLS.SaveSystem
 					UpdateChipPre_2_1_5(chipDesc);
 					chipDesc.DLSVersion = version_2_1_4.ToString();
 				}
+				UpgradeLabelSubChips(chipDesc);
+				UpgradeWirelessSubChips(chipDesc);
+			}
+			foreach (ChipDescription chipDesc in builtinChips)
+			{
+				UpgradeLabelSubChips(chipDesc);
+			}
+		}
+
+		static void UpgradeLabelSubChips(ChipDescription chipDesc)
+		{
+			if (chipDesc.SubChips == null) return;
+			string labelName = ChipTypeHelper.GetName(ChipType.Label);
+			for (int i = 0; i < chipDesc.SubChips.Length; i++)
+			{
+				SubChipDescription sc = chipDesc.SubChips[i];
+				if (ChipDescription.NameMatch(sc.Name, labelName) && sc.InternalData != null)
+				{
+					if (sc.InternalData.Length == 1)
+						sc.InternalData = new uint[] { sc.InternalData[0], 70, 200 }; // Add width 0.7, fontSize 0.2
+					else if (sc.InternalData.Length == 2)
+						sc.InternalData = new uint[] { sc.InternalData[0], sc.InternalData[1], 200 }; // Add fontSize 0.2
+					chipDesc.SubChips[i] = sc;
+				}
+			}
+		}
+
+		static void UpgradeWirelessSubChips(ChipDescription chipDesc)
+		{
+			if (chipDesc.SubChips == null) return;
+			string transmitterName = ChipTypeHelper.GetName(ChipType.Transmitter);
+			string receiverName = ChipTypeHelper.GetName(ChipType.Receiver);
+			for (int i = 0; i < chipDesc.SubChips.Length; i++)
+			{
+				SubChipDescription sc = chipDesc.SubChips[i];
+				bool isWireless = ChipDescription.NameMatch(sc.Name, transmitterName) || ChipDescription.NameMatch(sc.Name, receiverName) ||
+				                 ChipDescription.NameMatch(sc.Name, transmitterName + "-4") || ChipDescription.NameMatch(sc.Name, transmitterName + "-8") ||
+				                 ChipDescription.NameMatch(sc.Name, receiverName + "-4") || ChipDescription.NameMatch(sc.Name, receiverName + "-8");
+				if (isWireless && sc.InternalData != null && sc.InternalData.Length == 1)
+				{
+					sc.InternalData = new uint[] { sc.InternalData[0], 0 }; // Add colour slot (0 = use default)
+					chipDesc.SubChips[i] = sc;
+				}
 			}
 		}
 
@@ -72,6 +115,10 @@ namespace DLS.SaveSystem
 			MigrateInOutCollectionToNested(ref projectDescription);
 			projectDescription.DLSVersion_LastSavedModdedVersion = moddedVersion_1_2_0.ToString();
 		}
+
+		// AND/OR/XOR should be user-built chips, not starter basics.
+		// Clean old project collections so they don't reference removed builtins.
+		RemoveLegacyBasicLogicEntries(ref projectDescription);
     }
     
     static void MigrateInOutCollectionToNested(ref ProjectDescription projectDescription)
@@ -144,6 +191,38 @@ namespace DLS.SaveSystem
 		}
 		
 		Debug.Log($"[UpgradeHelper] Migrated IN/OUT collection to nested structure with {chipsByBitWidth.Count} bit-width groups");
+	}
+
+	static void RemoveLegacyBasicLogicEntries(ref ProjectDescription projectDescription)
+	{
+		if (projectDescription.ChipCollections == null || projectDescription.ChipCollections.Count == 0)
+		{
+			return;
+		}
+
+		ChipCollection basicCollection = projectDescription.ChipCollections.FirstOrDefault(c => c.Name == "BASIC");
+		if (basicCollection == null)
+		{
+			return;
+		}
+
+		HashSet<string> customNames = new(
+			projectDescription.AllCustomChipNames ?? System.Array.Empty<string>(),
+			ChipDescription.NameComparer
+		);
+
+		// Keep names if the player actually has a custom chip with that name.
+		void RemoveIfOnlyLegacyBuiltin(string name)
+		{
+			if (!customNames.Contains(name))
+			{
+				basicCollection.Chips.RemoveAll(c => ChipDescription.NameMatch(c, name));
+			}
+		}
+
+		RemoveIfOnlyLegacyBuiltin("AND");
+		RemoveIfOnlyLegacyBuiltin("OR");
+		RemoveIfOnlyLegacyBuiltin("XOR");
 	}
 
         static void UpdateChipPre_2_1_5(ChipDescription chipDesc)

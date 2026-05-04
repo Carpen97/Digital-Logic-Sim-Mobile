@@ -44,7 +44,7 @@ namespace Seb.Vis
 				Vector2 maskMax = data.maskMax + layerInfo.offset;
 
 				ReadOnlySpan<char> text = data.useCharArray ? data.charArray.AsSpan(0, data.textLength) : data.text.AsSpan();
-				renderer.AddTextGroup(text, data.fontData, layoutSettings, pos, data.col, layerInfo.useScreenSpace, maskMin, maskMax, data.anchor);
+				renderer.AddTextGroup(text, data.fontData, layoutSettings, pos, data.col, layerInfo.useScreenSpace, maskMin, maskMax, data.anchor, data.rotationDegrees);
 			}
 
 			renderer.Render(cmd);
