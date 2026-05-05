@@ -1,5 +1,7 @@
 # Firebase 13.7.0 Upgrade – Manual Steps
 
+**Repo:** `main` ships **Firebase 13.2** Unity plugins (managed DLLs + Android/iOS artifacts) so clones compile on every OS. GitHub rejects the 13.7 desktop native blobs (>100 MB), so **13.7 is optional** and done only on machines that need the crash fix below.
+
 **Why:** Fixes the Windows crash (uWS::HttpSocket::upgrade).
 
 1. **Close Unity.**
